@@ -109,6 +109,9 @@ jobs:
         run: echo "::warning::No signature verification task defined yet."
 
   # ----- [Build] Build -------------------------------------------------
+  # Linux-only: assembles the host-agnostic outputs (jvm, js, linuxX64). The Windows /
+  # macOS Kotlin/Native targets are compiled and exercised by the OS matrix of the
+  # `test` job below, so they need no separate per-OS build job here.
   build:
     runs-on: ubuntu-latest
     needs: changes
