@@ -10,13 +10,11 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.engine.model
-
-import kotlinx.serialization.Serializable
-import org.pcsoft.framework.simplay.engine.PlatformSerializable
+package org.pcsoft.framework.simplay.engine
 
 /**
- * A whole document made of pages. A plain data holder; an empty document is allowed.
+ * Marker supertype of the raw model. It maps to `java.io.Serializable` on the JVM and to an empty
+ * interface on every other platform, so the raw model can be persisted with JVM serialization
+ * without the common code depending on a platform type.
  */
-@Serializable
-data class Document(val pages: List<Page> = emptyList()) : PlatformSerializable
+expect interface PlatformSerializable

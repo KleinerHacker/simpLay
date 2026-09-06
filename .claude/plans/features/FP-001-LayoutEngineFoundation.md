@@ -144,7 +144,7 @@ also brings the MkDocs documentation in line with the new engine API.
 | IP-01 (COMPLETED) | Persistable Raw Object Model           | Provide the full POJO raw data model, value types, `kotlinx.serialization` wiring, the `TextBlock` parser and counting extensions. | -            |
 | IP-02 (COMPLETED) | Measured Decorator Model               | Provide the full non-persistable `by`-delegating measured model including the `MeasuredLine` level.          | IP-01        |
 | IP-03 (COMPLETED) | Layout Engine              | Provide `SimpLayEngine`, its builder, the font-measuring callback and the line-breaking / pagination logic.  | IP-01, IP-02 |
-| IP-04 | End-to-End Layout & Persistence Tests  | Provide full end-to-end tests over mixed pages / styles plus save / load round-trips in JSON, YAML, XML and JVM serialization. | IP-03        |
+| IP-04 (COMPLETED) | End-to-End Layout & Persistence Tests  | Provide full end-to-end tests over mixed pages / styles plus save / load round-trips in JSON, YAML, XML and JVM serialization. | IP-03        |
 | IP-05 | Documentation Alignment                | Provide dedicated MkDocs pages for the raw model, the measured model, the SimpLayEngine and rendering, plus KDoc. | IP-03, IP-04 |
 
 ## 7. Implementation Plans
@@ -351,7 +351,26 @@ vertical growth and empty-document handling. The engine converts a raw
 * Provides the `SimpLayEngine.measure` entry point that IP-04 exercises and
   IP-05 documents.
 
-### IP-04: End-to-End Layout & Persistence Tests
+### IP-04: End-to-End Layout & Persistence Tests — COMPLETED
+
+**As built**
+
+* End-to-end tests live in `engine/commonTest` package `...engine.e2e`: the
+  `E2ETestData` fixture (a deterministic `FontMeasureCalculator`, a mixed
+  document builder and a small all-types raw document), `MixedDocumentLayoutTest`,
+  `PaginationAndGrowthTest`, `SpecialCasesTest`, `JsonRoundTripTest`,
+  `YamlRoundTripTest`, `XmlRoundTripTest`. `JvmSerializationRoundTripTest` lives
+  in the new `engine/jvmTest` source set.
+* YAML uses `kaml` 0.104.0, XML uses `xmlutil` 0.91.1 (`autoPolymorphic = true`);
+  both are `commonTest`-scoped only, both Apache-2.0 and already covered by the
+  licence allow-list. `kotlin.daemon.jvmargs=-Xmx3g` was added to
+  `gradle.properties` so the JS / Native test compilations have enough heap.
+* Deviation fed back to IP-01: the raw model now carries a `PlatformSerializable`
+  marker — an `expect interface` in `...engine`, an `actual typealias` to
+  `java.io.Serializable` on the JVM and an empty `actual interface` for JS and
+  native. Enums are not changed (already `Serializable` on the JVM). All four
+  format round-trips (JSON, YAML, XML, JVM serialization) are lossless; the
+  matrix is recorded in the feature status file for IP-05.
 
 **Objective**
 
@@ -430,7 +449,7 @@ engine pages plus KDoc on the new public types, all passing `buildDocs`
 IP-01 (COMPLETED)
 └── IP-02 (COMPLETED)
     └── IP-03 (COMPLETED)
-        └── IP-04
+        └── IP-04 (COMPLETED)
             └── IP-05
 ```
 

@@ -9,12 +9,12 @@ Status: IN_PROGRESS
 | IP-01 | Persistable Raw Object Model | COMPLETED |
 | IP-02 | Measured Decorator Model | COMPLETED |
 | IP-03 | Layout Engine | COMPLETED |
-| IP-04 | End-to-End Layout & Persistence Tests | NOT_STARTED |
+| IP-04 | End-to-End Layout & Persistence Tests | COMPLETED |
 | IP-05 | Documentation Alignment | NOT_STARTED |
 
 ## Overall Progress
 
-60%
+80%
 
 ## Notes
 
@@ -87,3 +87,29 @@ several `MeasuredTextBlock` slices and only the block's final line is
 `lastLine`; continuation flow pages deep-copy the `PageLayout` and `pageIndex`
 is document-wide. Follow-up feature plan `FP-002-AdvancedLineBreaking` created
 (balanced / break-opportunity / explicit-break strategies, one IP each).
+
+IP-04 completed: end-to-end tests in `engine/commonTest` package `...engine.e2e`
+(`E2ETestData` fixture with a deterministic `FontMeasureCalculator`,
+`MixedDocumentLayoutTest`, `PaginationAndGrowthTest`, `SpecialCasesTest`,
+`JsonRoundTripTest`, `YamlRoundTripTest`, `XmlRoundTripTest`) plus
+`JvmSerializationRoundTripTest` in the new `engine/jvmTest` source set. Test-only
+format libraries `kaml` 0.104.0 (YAML) and `xmlutil` 0.91.1 (XML) added as
+`commonTest` dependencies; both Apache-2.0, already covered by the allow-list.
+`kotlin.daemon.jvmargs=-Xmx3g` added to `gradle.properties` so the JS / Native
+test compilations have enough heap with the extra libraries.
+
+IP-01 change from IP-04: the raw model now implements a `PlatformSerializable`
+marker (`expect interface` in `...engine`, `actual typealias` to
+`java.io.Serializable` on the JVM, empty `actual interface` for JS and native),
+so every raw type works with `ObjectOutputStream`. Enums are left untouched
+(already `Serializable` on the JVM). Decision taken with the user: make the model
+`java.io.Serializable` rather than document the limitation.
+
+Persistence-format matrix for IP-05:
+
+| Format | Library | Result |
+|--------|---------|--------|
+| JSON | kotlinx-serialization-json 1.11.0 | lossless raw-document round-trip |
+| YAML | kaml 0.104.0 (test scope) | lossless raw-document round-trip |
+| XML | xmlutil 0.91.1 (test scope, `autoPolymorphic = true`) | lossless raw-document round-trip, sealed `Page` / `TextPart` polymorphism kept |
+| JVM serialization | JDK `ObjectOutputStream` / `ObjectInputStream` | lossless raw-document round-trip via the `PlatformSerializable` marker |

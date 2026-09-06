@@ -13,6 +13,7 @@
 package org.pcsoft.framework.simplay.engine.model
 
 import kotlinx.serialization.Serializable
+import org.pcsoft.framework.simplay.engine.PlatformSerializable
 
 /**
  * A font face. A plain data holder; the size is a unit-less double.
@@ -23,4 +24,4 @@ data class Font(
     val size: Double,
     val weight: FontWeight = FontWeight.NORMAL,
     val style: FontStyle = FontStyle.NORMAL,
-)
+) : PlatformSerializable

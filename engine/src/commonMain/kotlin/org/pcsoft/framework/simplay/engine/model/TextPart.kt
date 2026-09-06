@@ -14,12 +14,13 @@ package org.pcsoft.framework.simplay.engine.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.pcsoft.framework.simplay.engine.PlatformSerializable
 
 /**
  * A single atomic piece of text. Whitespace is never stored in a part.
  */
 @Serializable
-sealed interface TextPart {
+sealed interface TextPart : PlatformSerializable {
     val text: String
 }
 

@@ -13,12 +13,13 @@
 package org.pcsoft.framework.simplay.engine.geometry
 
 import kotlinx.serialization.Serializable
+import org.pcsoft.framework.simplay.engine.PlatformSerializable
 
 /**
  * Vertical metrics of a font. All values are unit-less doubles.
  */
 @Serializable
-data class FontMetrics(val ascent: Double, val descent: Double, val leading: Double) {
+data class FontMetrics(val ascent: Double, val descent: Double, val leading: Double) : PlatformSerializable {
     /** The distance from one baseline to the next. */
     val lineHeight: Double
         get() = ascent + descent + leading
@@ -28,4 +29,4 @@ data class FontMetrics(val ascent: Double, val descent: Double, val leading: Dou
  * Metrics of a measured piece of text. All values are unit-less doubles.
  */
 @Serializable
-data class TextMetrics(val width: Double, val ascent: Double, val descent: Double)
+data class TextMetrics(val width: Double, val ascent: Double, val descent: Double) : PlatformSerializable

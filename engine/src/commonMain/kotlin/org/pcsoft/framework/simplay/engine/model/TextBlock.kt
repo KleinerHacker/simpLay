@@ -15,6 +15,7 @@ package org.pcsoft.framework.simplay.engine.model
 import kotlin.collections.plusAssign
 import kotlin.text.iterator
 import kotlinx.serialization.Serializable
+import org.pcsoft.framework.simplay.engine.PlatformSerializable
 
 /**
  * A run of styled text made of [TextPart]s. A plain data holder.
@@ -24,7 +25,7 @@ import kotlinx.serialization.Serializable
 data class TextBlock private constructor(
     val parts: List<TextPart>,
     val style: TextStyle,
-) {
+) : PlatformSerializable {
     /**
      * Rejoins the parts, putting a single space before every [TextWord] except the first and no
      * space before a [TextSymbol].

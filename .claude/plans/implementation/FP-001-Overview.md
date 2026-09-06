@@ -10,7 +10,7 @@
 - IP-01 Persistable Raw Object Model — COMPLETED (plan file removed)
 - IP-02 Measured Decorator Model — COMPLETED (plan file removed)
 - IP-03 Layout Engine — COMPLETED (plan file removed)
-- IP-04 End-to-End Layout & Persistence Tests — `FP-001-IP-04-EndToEndLayoutAndPersistenceTests.md`
+- IP-04 End-to-End Layout & Persistence Tests — COMPLETED (plan file removed)
 - IP-05 Documentation Alignment — `FP-001-IP-05-DocumentationAlignment.md`
 
 ## Reihenfolge und Voraussetzungen

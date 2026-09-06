@@ -14,6 +14,7 @@ package org.pcsoft.framework.simplay.engine.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.pcsoft.framework.simplay.engine.PlatformSerializable
 import org.pcsoft.framework.simplay.engine.geometry.Margins
 import org.pcsoft.framework.simplay.engine.geometry.Size
 
@@ -21,7 +22,7 @@ import org.pcsoft.framework.simplay.engine.geometry.Size
  * The physical frame of a page: its [size] and its inner [margins].
  */
 @Serializable
-data class PageLayout(val size: Size, val margins: Margins) {
+data class PageLayout(val size: Size, val margins: Margins) : PlatformSerializable {
     /** Width available for content between the left and right margins. */
     val contentWidth: Double
         get() = size.width - margins.left - margins.right
@@ -35,7 +36,7 @@ data class PageLayout(val size: Size, val margins: Margins) {
  * A page holding text blocks. Implementations are plain data holders.
  */
 @Serializable
-sealed interface Page {
+sealed interface Page : PlatformSerializable {
     val layout: PageLayout
     val blocks: List<TextBlock>
 }

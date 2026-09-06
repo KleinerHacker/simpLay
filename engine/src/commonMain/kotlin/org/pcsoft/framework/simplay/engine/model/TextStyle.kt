@@ -13,12 +13,13 @@
 package org.pcsoft.framework.simplay.engine.model
 
 import kotlinx.serialization.Serializable
+import org.pcsoft.framework.simplay.engine.PlatformSerializable
 
 /**
  * Multiplicative and additive line spacing. All values are unit-less doubles.
  */
 @Serializable
-data class LineSpacing(val factor: Double = 1.0, val extraLeading: Double = 0.0)
+data class LineSpacing(val factor: Double = 1.0, val extraLeading: Double = 0.0) : PlatformSerializable
 
 /**
  * The visual style of a text block. A plain data holder.
@@ -28,4 +29,4 @@ data class TextStyle(
     val font: Font,
     val lineSpacing: LineSpacing = LineSpacing(),
     val alignment: TextAlignment = TextAlignment.LEFT,
-)
+) : PlatformSerializable

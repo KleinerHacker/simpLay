@@ -24,6 +24,12 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            // Test-only serialization formats for the IP-04 raw-model round-trip tests.
+            implementation(libs.kaml)
+            implementation(libs.xmlutilSerialization)
+        }
+        jvmTest.dependencies {
+            implementation(kotlin("test"))
         }
     }
 }
