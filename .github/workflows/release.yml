@@ -177,13 +177,29 @@ jobs:
   # ----- [Release] Push artifacts -----------------------------------
   # Own job so a failed GitHub Packages upload (e.g. 403 on a missing packages: write scope) is
   # obvious in the run overview. Allowed to fail: the release notes are still written afterwards.
+  # Runs on every OS: a Kotlin/Native publication can only be produced on a matching host.
+  #   Linux  -> shared metadata + jvm + js + linuxX64 (plain `publish`)
+  #   Windows -> mingwX64 publication only
+  #   macOS  -> macosArm64 + macosX64 publications only
+  # Splitting the tasks per host avoids re-publishing the shared publications three times.
   publish:
-    runs-on: ubuntu-latest
+    name: publish (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     continue-on-error: true
     needs:
       - build
       - licences
       - deploy-docs
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            publishTasks: publish
+          - os: windows-latest
+            publishTasks: publishMingwX64PublicationToGitHubPackagesRepository
+          - os: macos-latest
+            publishTasks: publishMacosArm64PublicationToGitHubPackagesRepository publishMacosX64PublicationToGitHubPackagesRepository
 
     permissions:
       contents: read
@@ -199,13 +215,14 @@ jobs:
           cache: gradle
 
       - name: Make Gradle wrapper executable
+        if: runner.os != 'Windows'
         run: chmod +x ./gradlew
 
       - name: Push artifacts
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ github.token }}
-        run: ./gradlew publish -PreleaseVersion="${{ github.ref_name }}" --stacktrace
+        run: ./gradlew ${{ matrix.publishTasks }} -PreleaseVersion="${{ github.ref_name }}" --stacktrace
 
   # ----- [Release] Write release ----------------------------------
   release:
