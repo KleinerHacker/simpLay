@@ -5,7 +5,7 @@ description: Rules for KDoc, README, MkDocs under docs and CHANGELOG.md. Load af
 
 # Documentation
 
-* Project Name: `simPLay`
+* Project Name: `simpLay`
 
 ## Code
 

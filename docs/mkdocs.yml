@@ -57,8 +57,14 @@ plugins:
 
 nav:
   - Home: index.md
+  - console:
+      - Implementation: console/implementation.md
   - engine:
       - Implementation: engine/implementation.md
+      - Raw model: engine/raw-model.md
+      - Measured model: engine/measured-model.md
+      - SimpLayEngine: engine/simplay-engine.md
+      - Rendering: engine/rendering.md
   - fx:
       - Implementation: fx/implementation.md
   - j-pdf:

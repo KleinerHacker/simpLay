@@ -4,7 +4,7 @@ name: development
 
 # Development
 
-* Base Package name: `org.pcsoft.framework.playsim`
+* Base Package name: `org.pcsoft.framework.simplay`
   * Each module adds its name to the root package name
 
 ## Planning
