@@ -139,7 +139,7 @@ also brings the MkDocs documentation in line with the new engine API.
 
 | ID    | Implementation Plan                    | Objective                                                                                                    | Dependencies |
 | ----- | ------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------ |
-| IP-01 | Persistable Raw Object Model           | Provide the full POJO raw data model, value types, `kotlinx.serialization` wiring, the `TextBlock` parser and counting extensions. | -            |
+| IP-01 (COMPLETED) | Persistable Raw Object Model           | Provide the full POJO raw data model, value types, `kotlinx.serialization` wiring, the `TextBlock` parser and counting extensions. | -            |
 | IP-02 | Measured Decorator Model               | Provide the full non-persistable `by`-delegating measured model including the `MeasuredLine` level.          | IP-01        |
 | IP-03 | Layout Engine                          | Provide `SimPLayEngine`, its builder, the font-measuring callback and the line-breaking / pagination logic.  | IP-01, IP-02 |
 | IP-04 | End-to-End Layout & Persistence Tests  | Provide full end-to-end tests over mixed pages / styles plus save / load round-trips in JSON, YAML, XML and JVM serialization. | IP-03        |
@@ -147,7 +147,29 @@ also brings the MkDocs documentation in line with the new engine API.
 
 ## 7. Implementation Plans
 
-### IP-01: Persistable Raw Object Model
+### IP-01: Persistable Raw Object Model — COMPLETED
+
+**As built**
+
+* `Document`, `Font`, `TextStyle` and `TextBlock` are direct `@Serializable data class`
+  types instead of an interface plus a `...Data` implementation and a top-level
+  factory. Only `Page` and `TextPart` stay `sealed` (they have real subtypes).
+* Each of those four data classes implements a matching `@PublishedApi internal`
+  structural contract interface (`IDocument`, `IFont`, `ITextStyle`, `ITextBlock`)
+  in `...engine.model`. The contracts carry no serialization and are not public
+  API; they exist so the IP-02 measured decorator model can use `by` delegation.
+* `TextBlock.toString()` inserts a single space before every `TextWord` except the
+  first and no space before a `TextSymbol`, normalizing whitespace runs.
+* `TextBlock.of(text, style)` is the only way to build a `TextBlock`: the primary
+  constructor is `private` and the class is `@ConsistentCopyVisibility` (so `copy`
+  is private too). `@Serializable` still works with the private constructor.
+* The tokenizer is a `private` file-level function inside `TextBlock.kt`, not a
+  public `tokenize` in its own file; it is exercised through `TextBlock.of`.
+* `TextSymbol`'s public constructor takes a `Char`; the primary constructor is
+  `private` and stores it as the single-character `text` (`@ConsistentCopyVisibility`),
+  with a `symbol: Char` accessor. `TextWord` keeps its `String` constructor.
+* `Counting.kt` carries `@file:JvmName("CountingUtil")` so on the JVM the counting
+  extensions are static methods of a `CountingUtil` class for non-Kotlin callers.
 
 **Objective**
 
@@ -322,7 +344,7 @@ engine pages plus KDoc on the new public types, all passing `buildDocs`
 ## 8. Dependency Graph
 
 ```text
-IP-01
+IP-01 (COMPLETED)
 └── IP-02
     └── IP-03
         └── IP-04
