@@ -120,7 +120,9 @@ also brings the MkDocs documentation in line with the new engine API.
   `TextBlock` parser and the counting extension functions. `@Serializable` is
   the only serialisation coupling; no format instance is owned here.
 * `...engine.measure` - the non-persistable measured decorator model: the
-  `MeasuredXxx` types delegating to their raw type via `by`, and `MeasuredLine`.
+  `MeasuredXxx` types, each holding a `raw` handle, forwarding unchanged
+  properties by hand and exposing replaced ones as measured types; plus
+  `MeasuredLine`.
 * `...engine.engine` - `SimPLayEngine`, its builder, the font-measuring callback
   type, the greedy line breaker, the `WordBreaker` seam and the pagination /
   page-supply logic.
@@ -128,8 +130,8 @@ also brings the MkDocs documentation in line with the new engine API.
   format of its choice, then calls `SimPLayEngine.measure(document)`; the engine
   measures each `TextBlock` through the callback, groups parts into
   `MeasuredLine` objects, fills pages, supplies pages for a `FlowPage` and grows
-  a `SinglePage`, and returns a transient `MeasuredDocument` that delegates to
-  the raw document. A renderer then walks the `MeasuredDocument` geometry.
+  a `SinglePage`, and returns a transient `MeasuredDocument` that wraps the raw
+  document. A renderer then walks the `MeasuredDocument` geometry.
 * Documentation: new pages under `docs/docs/engine/`, referenced from the
   `engine` section of `docs/mkdocs.yml`; KDoc on the new public API.
 * No persistence implementation and no configuration in this feature; the raw
@@ -140,7 +142,7 @@ also brings the MkDocs documentation in line with the new engine API.
 | ID    | Implementation Plan                    | Objective                                                                                                    | Dependencies |
 | ----- | ------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------ |
 | IP-01 (COMPLETED) | Persistable Raw Object Model           | Provide the full POJO raw data model, value types, `kotlinx.serialization` wiring, the `TextBlock` parser and counting extensions. | -            |
-| IP-02 | Measured Decorator Model               | Provide the full non-persistable `by`-delegating measured model including the `MeasuredLine` level.          | IP-01        |
+| IP-02 (COMPLETED) | Measured Decorator Model               | Provide the full non-persistable `by`-delegating measured model including the `MeasuredLine` level.          | IP-01        |
 | IP-03 | Layout Engine                          | Provide `SimPLayEngine`, its builder, the font-measuring callback and the line-breaking / pagination logic.  | IP-01, IP-02 |
 | IP-04 | End-to-End Layout & Persistence Tests  | Provide full end-to-end tests over mixed pages / styles plus save / load round-trips in JSON, YAML, XML and JVM serialization. | IP-03        |
 | IP-05 | Documentation Alignment                | Provide dedicated MkDocs pages for the raw model, the measured model, the SimPLayEngine and rendering, plus KDoc. | IP-03, IP-04 |
@@ -154,10 +156,12 @@ also brings the MkDocs documentation in line with the new engine API.
 * `Document`, `Font`, `TextStyle` and `TextBlock` are direct `@Serializable data class`
   types instead of an interface plus a `...Data` implementation and a top-level
   factory. Only `Page` and `TextPart` stay `sealed` (they have real subtypes).
-* Each of those four data classes implements a matching `@PublishedApi internal`
+* Each of those four data classes implemented a matching `@PublishedApi internal`
   structural contract interface (`IDocument`, `IFont`, `ITextStyle`, `ITextBlock`)
-  in `...engine.model`. The contracts carry no serialization and are not public
-  API; they exist so the IP-02 measured decorator model can use `by` delegation.
+  in `...engine.model` for IP-02's `by` delegation. IP-02 dropped `by` delegation
+  in favour of hand-written forwarders, so all four interfaces are removed again;
+  the raw data classes are plain `@Serializable data class` with no extra
+  supertype.
 * `TextBlock.toString()` inserts a single space before every `TextWord` except the
   first and no space before a `TextSymbol`, normalizing whitespace runs.
 * `TextBlock.of(text, style)` is the only way to build a `TextBlock`: the primary
@@ -168,7 +172,7 @@ also brings the MkDocs documentation in line with the new engine API.
 * `TextSymbol`'s public constructor takes a `Char`; the primary constructor is
   `private` and stores it as the single-character `text` (`@ConsistentCopyVisibility`),
   with a `symbol: Char` accessor. `TextWord` keeps its `String` constructor.
-* `Counting.kt` carries `@file:JvmName("CountingUtil")` so on the JVM the counting
+* `MeasuredCounting.kt` carries `@file:JvmName("CountingUtil")` so on the JVM the counting
   extensions are static methods of a `CountingUtil` class for non-Kotlin callers.
 
 **Objective**
@@ -206,7 +210,43 @@ types, the `kotlinx.serialization` wiring and the counting extension functions.
 * Provides `FontMetrics` / `TextMetrics` as the result shape of the IP-03
   callback and the input of the IP-03 algorithm.
 
-### IP-02: Measured Decorator Model
+### IP-02: Measured Decorator Model — COMPLETED
+
+**As built**
+
+* The measured model lives in its own package `...engine.measure`: `MeasuredFont`,
+  `MeasuredTextStyle`, `MeasuredTextPart`, `MeasuredLine`, `MeasuredTextBlock`,
+  `MeasuredPage` with `MeasuredFlowPage` / `MeasuredSinglePage`, and
+  `MeasuredDocument`.
+* No Kotlin `by` delegation and no `I*` contract interfaces. Every measured type
+  holds a public `raw` handle; an unchanged property is a hand-written forwarder
+  (`val x get() = raw.x`); a property that becomes a measured type is exposed
+  **once**, as the measured type, with the original reachable only via `raw`. No
+  property is held twice.
+  * `MeasuredFont(raw, metrics)` forwards `family` / `size` / `weight` / `style`.
+  * `MeasuredTextStyle(raw, font)` forwards `lineSpacing` / `alignment`; `font` is
+    a `MeasuredFont`; `resolvedLineHeight`
+    (`(ascent + descent) * lineSpacing.factor + lineSpacing.extraLeading`) is
+    derived from `font.metrics` and `lineSpacing`, not stored.
+  * `MeasuredFlowPage` / `MeasuredSinglePage` forward `layout` (via a default
+    getter on `MeasuredPage`); the block list is `List<MeasuredTextBlock>`.
+  * `MeasuredTextBlock` and `MeasuredDocument` have no unchanged property, so they
+    are plain wrappers (`raw` + measured children).
+  * `MeasuredTextPart(raw, bounds)` forwards `text`.
+* `MeasuredPage` / `MeasuredTextPart` are **not** subtypes of `Page` / `TextPart`,
+  so `Page` stays a closed `when` target.
+* `measure/Counting.kt` (`@file:JvmName("CountingUtil")`) mirrors `model/Counting.kt`
+  with `wordCount` / `symbolCount` / `charCount` for `MeasuredTextBlock` (delegating
+  to the raw block), `MeasuredPage` and `MeasuredDocument`.
+* `MeasuredTextStyle.resolvedLineHeight` =
+  `(ascent + descent) * lineSpacing.factor + lineSpacing.extraLeading`.
+* `MeasuredPage.contentArea`, `requiredContentHeight` and `effectiveSize` are
+  derived on the fly (from `layout` and `blocks`), not stored. The page
+  constructors take only `raw`, `pageIndex` and `blocks`.
+  `MeasuredSinglePage.effectiveSize` keeps the layout width and grows its height
+  to `margins.top + requiredContentHeight + margins.bottom` when that exceeds the
+  layout height; `MeasuredFlowPage.effectiveSize` is always the layout size.
+* `toString()` is not carried by `by` delegation (it is a member of `Any`).
 
 **Objective**
 
@@ -345,7 +385,7 @@ engine pages plus KDoc on the new public types, all passing `buildDocs`
 
 ```text
 IP-01 (COMPLETED)
-└── IP-02
+└── IP-02 (COMPLETED)
     └── IP-03
         └── IP-04
             └── IP-05

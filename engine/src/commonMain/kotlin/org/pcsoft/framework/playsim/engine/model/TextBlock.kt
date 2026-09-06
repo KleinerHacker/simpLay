@@ -3,26 +3,14 @@ package org.pcsoft.framework.playsim.engine.model
 import kotlinx.serialization.Serializable
 
 /**
- * Internal structural contract for [TextBlock].
- *
- * It exists only so the measured decorator model (`...engine.measure`) can wrap a raw text block
- * with Kotlin's `by` delegation. It is not part of the public API and carries no serialization.
- */
-@PublishedApi
-internal interface ITextBlock {
-    val parts: List<TextPart>
-    val style: TextStyle
-}
-
-/**
  * A run of styled text made of [TextPart]s. A plain data holder.
  */
 @Serializable
 @ConsistentCopyVisibility
 data class TextBlock private constructor(
-    override val parts: List<TextPart>,
-    override val style: TextStyle,
-) : ITextBlock {
+    val parts: List<TextPart>,
+    val style: TextStyle,
+) {
     /**
      * Rejoins the parts, putting a single space before every [TextWord] except the first and no
      * space before a [TextSymbol].
