@@ -1,0 +1,46 @@
+# Version catalog is a central place for you to declare and version dependencies
+# https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
+# https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
+
+[versions]
+kotlin = "2.4.10"
+kotlinxDatetime = "0.8.0"
+kotlinxSerializationJSON = "1.11.0"
+kotlinxCoroutines = "1.10.2"
+dokka = "2.2.0"
+kover = "0.9.9"
+licensee = "1.14.1"
+licenseReport = "3.1.4"
+cyclonedx = "3.4.1"
+junit = "5.11.4"
+testfx = "4.0.18"
+monocle = "21.0.2"
+javafxPlugin = "0.1.0"
+
+[libraries]
+kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+dokkaGradlePlugin = { module = "org.jetbrains.dokka:org.jetbrains.dokka.gradle.plugin", version.ref = "dokka" }
+koverGradlePlugin = { module = "org.jetbrains.kotlinx:kover-gradle-plugin", version.ref = "kover" }
+licenseeGradlePlugin = { module = "app.cash.licensee:licensee-gradle-plugin", version.ref = "licensee" }
+kotlinxDatetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
+kotlinxSerialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJSON" }
+kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
+junitJupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+junitPlatformLauncher = { module = "org.junit.platform:junit-platform-launcher" }
+testfxCore = { module = "org.testfx:testfx-core", version.ref = "testfx" }
+testfxJunit5 = { module = "org.testfx:testfx-junit5", version.ref = "testfx" }
+testfxMonocle = { module = "org.testfx:openjfx-monocle", version.ref = "monocle" }
+
+# Libraries can be bundled together for easier import
+[bundles]
+kotlinxEcosystem = ["kotlinxDatetime", "kotlinxSerialization", "kotlinxCoroutines"]
+
+[plugins]
+kotlinPluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+licensee = { id = "app.cash.licensee", version.ref = "licensee" }
+licenseReport = { id = "com.github.jk1.dependency-license-report", version.ref = "licenseReport" }
+cyclonedxBom = { id = "org.cyclonedx.bom", version.ref = "cyclonedx" }
+javafx = { id = "org.openjfx.javafxplugin", version.ref = "javafxPlugin" }

@@ -1,0 +1,7 @@
+* text=auto
+
+# The start script must keep LF endings, otherwise it does not run on Linux and macOS.
+*.sh text eol=lf
+*.bat text eol=crlf
+gradlew text eol=lf
+*.jar binary

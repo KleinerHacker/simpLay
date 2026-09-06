@@ -1,0 +1,206 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+# Structure (see .claude/skills/ci-pipeline):
+#   [Build]  Build -> Test -> Verify plugin
+#   [Verify] Licences / Signature / Build and verify MkDocs
+# "Build" and "Verify" run in parallel; every job inside "Verify" also runs in parallel.
+# NOTE: simPLay is a Kotlin framework, not an IntelliJ plugin - the "Verify plugin" and
+# signature stages have no Gradle task and are kept as explicit placeholders.
+
+permissions:
+  contents: read
+
+jobs:
+  # Detects which parts of the repository changed, so only the affected jobs run.
+  # code    -> build, test, licences
+  # docs    -> validate-docs
+  # .github -> everything
+  changes:
+    runs-on: ubuntu-latest
+
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+      docs: ${{ steps.filter.outputs.docs }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed areas
+        id: filter
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${BASE_SHA}" ] || [ "${BASE_SHA}" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            echo "No usable base commit - running everything."
+            echo "code=true" >> "$GITHUB_OUTPUT"
+            echo "docs=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          FILES="$(git diff --name-only "${BASE_SHA}" "${GITHUB_SHA}")"
+          echo "Changed files:"
+          echo "${FILES}"
+
+          code=false
+          docs=false
+
+          while IFS= read -r file; do
+            [ -n "${file}" ] || continue
+            case "${file}" in
+              .github/*)
+                code=true
+                docs=true
+                ;;
+              docs/*|README.md|CHANGELOG.md|LICENSE|NOTICE)
+                docs=true
+                ;;
+              *)
+                code=true
+                docs=true
+                ;;
+            esac
+          done <<< "${FILES}"
+
+          echo "code=${code}" >> "$GITHUB_OUTPUT"
+          echo "docs=${docs}" >> "$GITHUB_OUTPUT"
+
+  # ----- [Verify] Licences -----------------------------------------------
+  check-licences:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Check licences
+        run: ./gradlew licensee --stacktrace --info
+
+  # ----- [Verify] Signature --------------------------------------------
+  check-signature:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+
+    steps:
+      - name: Verify signature
+        run: echo "::warning::No signature verification task defined yet."
+
+  # ----- [Build] Build -------------------------------------------------
+  build:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Build
+        run: ./gradlew build -x test --stacktrace --info
+
+      - name: Verify plugin
+        run: echo "::warning::No plugin verification task defined for this framework project."
+
+  # ----- [Build] Test ------------------------------------------------
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: [ changes, build ]
+    if: needs.changes.outputs.code == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        if: runner.os != 'Windows'
+        run: chmod +x ./gradlew
+
+      - name: Run tests
+        run: ./gradlew test --stacktrace --info
+
+      - name: Coverage report (Kover)
+        run: ./gradlew koverXmlReport --stacktrace
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: kover-report-${{ matrix.os }}
+          path: build/reports/kover
+          if-no-files-found: warn
+
+  # ----- [Verify] Build and verify MkDocs ---------------------------
+  validate-docs:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.docs == 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: 3.x
+
+      - name: Pip Update
+        run: pip install --upgrade pip
+
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Build docs
+        run: ./gradlew buildDocs --stacktrace --info

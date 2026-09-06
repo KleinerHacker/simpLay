@@ -1,0 +1,260 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+# Structure (see .claude/skills/ci-pipeline):
+#   [Changelog] Verify against version
+#     -> ( [Build]  Build -> Test -> Verify plugin
+#          [Verify] Verify licences / Create signature
+#          [MkDocs] Build -> Deploy
+#          [Release] Push artifacts / Deploy to marketplace -> Write release )
+# "Changelog" runs first; "Build", "Verify", "MkDocs" run in parallel afterwards.
+# "Push artifacts" is its own job ("publish") so a failed package upload is visible at a
+# glance instead of hiding in a step of the final job; it is allowed to fail (continue-on-error)
+# so the release notes are still written. "release" runs at the end.
+# NOTE: Kotlin framework project - "Verify plugin", signing and "marketplace"
+# stages are placeholders until the corresponding Gradle logic exists.
+
+permissions:
+  contents: write
+
+jobs:
+  # ----- [Changelog] --------------------------------------------------
+  # Fail fast: make sure the tag has a matching changelog entry before anything else runs.
+  verify-changelog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Verify changelog entry exists
+        run: |
+          TAG="${{ github.ref_name }}"
+          NOTES=$(awk "/^## \[$TAG\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
+          NOTES=$(echo "$NOTES" | sed '/./,$!d' | sed -e :a -e '/^\n*$/{$d;N;ba}')
+          if [ -z "$NOTES" ]; then
+            echo "ERROR: No changelog entry found for tag $TAG"
+            exit 1
+          fi
+          echo "Changelog entry for tag $TAG found."
+
+  # ----- [Verify] --------------------------------------------------
+  licences:
+    runs-on: ubuntu-latest
+    needs: verify-changelog
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Check licences
+        run: ./gradlew licensee --stacktrace
+
+      - name: Create signature
+        run: echo "::warning::No signing task defined yet."
+
+  # ----- [Build] -------------------------------------------------
+  build:
+    name: build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: verify-changelog
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        if: runner.os != 'Windows'
+        run: chmod +x ./gradlew
+
+      - name: Build and test
+        run: ./gradlew build -PreleaseVersion="${{ github.ref_name }}" --stacktrace
+
+      - name: Verify plugin
+        run: echo "::warning::No plugin verification task defined for this framework project."
+
+      - name: Upload framework artifacts
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v7
+        with:
+          name: libs
+          path: '**/build/libs/*.jar'
+          if-no-files-found: error
+
+  # ----- [MkDocs] Build ----------------------------------------
+  validate-docs:
+    runs-on: ubuntu-latest
+    needs: verify-changelog
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: 3.x
+
+      - name: Pip Update
+        run: pip install --upgrade pip
+
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Build docs
+        run: ./gradlew buildDocs --stacktrace --info
+
+  # ----- [MkDocs] Deploy -------------------------------------
+  # A deployment failure must not fail the release.
+  deploy-docs:
+    runs-on: ubuntu-latest
+    needs: validate-docs
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: 3.x
+
+      - name: Pip Update
+        run: pip install --upgrade pip
+
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Configure git for gh-deploy
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Deploy docs
+        continue-on-error: true
+        run: ./gradlew deployDocs -PdocsVersion="${{ github.ref_name }}" --stacktrace --info
+
+      - name: Set default docs version
+        continue-on-error: true
+        run: ./gradlew setDefaultDocs --stacktrace --info
+
+  # ----- [Release] Push artifacts -----------------------------------
+  # Own job so a failed GitHub Packages upload (e.g. 403 on a missing packages: write scope) is
+  # obvious in the run overview. Allowed to fail: the release notes are still written afterwards.
+  publish:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    needs:
+      - build
+      - licences
+      - deploy-docs
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Push artifacts
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./gradlew publish -PreleaseVersion="${{ github.ref_name }}" --stacktrace
+
+  # ----- [Release] Write release ----------------------------------
+  release:
+    runs-on: ubuntu-latest
+    needs:
+      - publish
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download framework artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: libs
+          path: dist
+
+      - name: Deploy to marketplace
+        continue-on-error: true
+        run: echo "::warning::No marketplace deployment defined for this framework project."
+
+      - name: Extract changelog
+        run: |
+          TAG="${{ github.ref_name }}"
+          NOTES=$(awk "/^## \[$TAG\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
+          NOTES=$(echo "$NOTES" | sed '/./,$!d' | sed -e :a -e '/^\n*$/{$d;N;ba}')
+          if [ -z "$NOTES" ]; then
+            echo "ERROR: No changelog entry found for tag $TAG"
+            exit 1
+          fi
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+          echo "$NOTES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Write release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [[ "$TAG" =~ ^(0|[a-zA-Z]) ]]; then
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --notes "$RELEASE_NOTES" \
+              --prerelease \
+              --latest=false \
+              dist/**/*.jar
+          else
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --notes "$RELEASE_NOTES" \
+              --latest \
+              dist/**/*.jar
+          fi

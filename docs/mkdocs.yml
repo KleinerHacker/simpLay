@@ -1,0 +1,71 @@
+site_name: simPLay
+site_description: A Kotlin Multiplatform framework for building simulations, with JVM integrations for JavaFX, Swing, PDF export and printing
+# Must include the mike version segment (here the "latest" alias): mike deploys every version
+# under /simPlay/<version>/, so links derived from site_url need that segment.
+site_url: https://kleinerhacker.github.io/simPlay/latest/
+repo_name: simPlay
+repo_url: https://github.com/KleinerHacker/simPlay
+edit_uri: edit/master/docs/docs/
+
+docs_dir: docs
+site_dir: ../build/docs
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+
+extra:
+  version:
+    provider: mike
+    default: latest
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - engine:
+      - Implementation: engine/implementation.md
+  - fx:
+      - Implementation: fx/implementation.md
+  - j-pdf:
+      - Implementation: j-pdf/implementation.md
+  - j-print:
+      - Implementation: j-print/implementation.md
+  - swing:
+      - Implementation: swing/implementation.md
+  - API Docs: dokka/html/index.html
+  - Licences: licences/index.html
