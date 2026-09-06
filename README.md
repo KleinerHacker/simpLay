@@ -73,6 +73,12 @@ Build tasks relevant for consumers and maintainers:
 
 * [x] Multi-module project layout (`engine`, `fx`, `j-pdf`, `j-print`, `swing`)
 * [ ] Simulation engine core (`engine`)
+    * [x] Persistable raw document model with `kotlinx.serialization` wiring
+    * [x] Non-persistable measured model
+    * [x] Measure engine (`SimpLayEngine`): font-measuring callback, pluggable line
+      breaking, alignment, `FlowPage` continuation, `SinglePage` growth
+    * [ ] End-to-end layout and persistence tests
+    * [ ] Engine user documentation (MkDocs, KDoc alignment)
 * [ ] JavaFX integration (`fx`)
 * [ ] PDF export integration (`j-pdf`)
 * [ ] Printing integration (`j-print`)

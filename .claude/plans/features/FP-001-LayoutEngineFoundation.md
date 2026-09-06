@@ -51,14 +51,14 @@ also brings the MkDocs documentation in line with the new engine API.
   `MeasuredPage`, `MeasuredTextBlock`, `MeasuredTextStyle` and `MeasuredFont`,
   `MeasuredTextPart`, plus a new intermediate `MeasuredLine` level that does not
   exist in the raw model.
-* `SimPLayEngine`, created through a builder that receives a font-measuring
+* `SimpLayEngine`, created through a builder that receives a font-measuring
   callback; one explicit call converts a raw `Document` into a
   `MeasuredDocument` using greedy word / symbol line breaking with an empty
   `WordBreaker` hook, line spacing and alignment applied, page filling,
   `FlowPage` page supply by cloning the last flow page's `PageLayout`, and
   `SinglePage` vertical growth.
 * MkDocs carries four dedicated engine pages: the raw data model, the measured
-  data model, the SimPLayEngine (detailed function and usage) and a rendering
+  data model, the SimpLayEngine (detailed function and usage) and a rendering
   guide, all wired into `mkdocs.yml` and passing `buildDocs --strict`.
 
 ## 4. Requirements
@@ -76,7 +76,7 @@ also brings the MkDocs documentation in line with the new engine API.
 * `TextStyle` carries line spacing, alignment and font.
 * The measured decorator model mirrors the raw model via `by` delegation and
   adds geometry plus the `MeasuredLine` level; it is not persisted.
-* A builder produces a `SimPLayEngine` from a font-measuring callback.
+* A builder produces a `SimpLayEngine` from a font-measuring callback.
 * One engine call converts a raw `Document` into a `MeasuredDocument`.
 * Text in a `TextBlock` wraps automatically to the page content width according
   to its `TextStyle`.
@@ -123,11 +123,11 @@ also brings the MkDocs documentation in line with the new engine API.
   `MeasuredXxx` types, each holding a `raw` handle, forwarding unchanged
   properties by hand and exposing replaced ones as measured types; plus
   `MeasuredLine`.
-* `...engine.engine` - `SimPLayEngine`, its builder, the font-measuring callback
+* `...engine.engine` - `SimpLayEngine`, its builder, the font-measuring callback
   type, the greedy line breaker, the `WordBreaker` seam and the pagination /
   page-supply logic.
 * Data flow: the caller builds and optionally persists a raw `Document` with a
-  format of its choice, then calls `SimPLayEngine.measure(document)`; the engine
+  format of its choice, then calls `SimpLayEngine.measure(document)`; the engine
   measures each `TextBlock` through the callback, groups parts into
   `MeasuredLine` objects, fills pages, supplies pages for a `FlowPage` and grows
   a `SinglePage`, and returns a transient `MeasuredDocument` that wraps the raw
@@ -143,9 +143,9 @@ also brings the MkDocs documentation in line with the new engine API.
 | ----- | ------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------ |
 | IP-01 (COMPLETED) | Persistable Raw Object Model           | Provide the full POJO raw data model, value types, `kotlinx.serialization` wiring, the `TextBlock` parser and counting extensions. | -            |
 | IP-02 (COMPLETED) | Measured Decorator Model               | Provide the full non-persistable `by`-delegating measured model including the `MeasuredLine` level.          | IP-01        |
-| IP-03 | Layout Engine                          | Provide `SimPLayEngine`, its builder, the font-measuring callback and the line-breaking / pagination logic.  | IP-01, IP-02 |
+| IP-03 (COMPLETED) | Layout Engine              | Provide `SimpLayEngine`, its builder, the font-measuring callback and the line-breaking / pagination logic.  | IP-01, IP-02 |
 | IP-04 | End-to-End Layout & Persistence Tests  | Provide full end-to-end tests over mixed pages / styles plus save / load round-trips in JSON, YAML, XML and JVM serialization. | IP-03        |
-| IP-05 | Documentation Alignment                | Provide dedicated MkDocs pages for the raw model, the measured model, the SimPLayEngine and rendering, plus KDoc. | IP-03, IP-04 |
+| IP-05 | Documentation Alignment                | Provide dedicated MkDocs pages for the raw model, the measured model, the SimpLayEngine and rendering, plus KDoc. | IP-03, IP-04 |
 
 ## 7. Implementation Plans
 
@@ -263,7 +263,7 @@ delegation (`MeasuredDocument`, `MeasuredPage`, `MeasuredTextBlock`,
   metrics.
 * In: `MeasuredFont` / `MeasuredTextStyle` adding the resolved font metrics.
 * In: constructors / factories that let a test build a measured model directly.
-* Out: `SimPLayEngine` and any code that populates the model from a raw one.
+* Out: `SimpLayEngine` and any code that populates the model from a raw one.
 * Out: any persistence or serialisation of these types.
 
 **Dependencies**
@@ -275,11 +275,54 @@ delegation (`MeasuredDocument`, `MeasuredPage`, `MeasuredTextBlock`,
 * Provides the measured model that IP-03 populates and returns, that IP-04
   asserts against and that IP-05 documents.
 
-### IP-03: Layout Engine
+### IP-03: Layout Engine — COMPLETED
+
+**As built**
+
+* The engine class is `SimpLayEngine` (lower-case `p`, upper-case `L`), package
+  `org.pcsoft.framework.simplay.engine.engine`, created through
+  `SimpLayEngine.builder(measurer).lineBreakerStrategy(...).wordBreakerStrategy(...).build()`;
+  the strategies are fixed once and default to `GreedyWordLineBreakerStrategy` and
+  `NoOpWordBreakerStrategy`. The internal measure stages share the family name and
+  the same construction style: `SimpLayFontEngine`, `SimpLayBlockEngine` and
+  `SimpLayPageEngine` under `...engine.engine.internal` are each a `class` with a
+  private constructor plus a nested `Builder` and a `companion.builder(...)`.
+  `SimpLayFontEngine` keeps a per-instance `Font` cache; `SimpLayPageEngine`'s
+  builder wires in a `SimpLayFontEngine`, a `SimpLayBlockEngine` and the two
+  strategies. The pipeline vocabulary is "measure" throughout (no "layout"
+  wording).
+* The font-measuring callback is `FontMeasureCalculator` (not `FontMeasurer`),
+  a `fun interface` with `measure(font, text): TextMetrics`.
+* The `WordBreaker` seam is `WordBreakerStrategy` with the no-op default
+  `NoOpWordBreakerStrategy`; it is passed into the line breaker.
+* Deviation: the greedy line filler is not fixed. Line breaking is an
+  exchangeable `LineBreakerStrategy` (public `fun interface`) producing
+  positionless `UnplacedLine` / `UnplacedPart`. Three implementations ship:
+  `GreedyWordLineBreakerStrategy` (default, word/symbol aware, consults the
+  `WordBreakerStrategy`), `CharacterLineBreakerStrategy` (breaks mid-word) and
+  `NoWrapLineBreakerStrategy` (never breaks). Both strategies are set on
+  `SimpLayEngine.Builder` and fixed once the engine is built.
+* Font line metrics come from one `measure` call over a fixed `REFERENCE_GLYPHS`
+  string (`A-Z`, `a-z`, `0-9`, Scandinavian/French/Spanish/East-European
+  diacritics and common punctuation); `leading` is `0.0`. Measured fonts are
+  cached in a per-`measure` map keyed by `Font`; the `MeasuredTextStyle` wrapper
+  is created fresh each time.
+* `measure(document)` is a member function of a built `SimpLayEngine`, not a
+  top-level extension.
+* `FlowPage` pagination is per line: a single raw `TextBlock` can be split into
+  several `MeasuredTextBlock` slices across pages; only the final line of the
+  block carries `lastLine == true`. Continuation pages get a deep copy of the
+  `PageLayout`; `pageIndex` runs continuously across the whole document.
+* `SinglePage` places every line without clipping; the extra height is reported
+  through the already-derived `MeasuredSinglePage.effectiveSize` /
+  `requiredContentHeight`.
+* Follow-up feature plan `FP-002-AdvancedLineBreaking` was created for the
+  advanced strategies (balanced, break-opportunity, explicit-break), each as its
+  own implementation plan.
 
 **Objective**
 
-Implement `SimPLayEngine` and a builder that receives a font-measuring callback,
+Implement `SimpLayEngine` and a builder that receives a font-measuring callback,
 fix the callback contract, and implement greedy word / symbol line breaking with
 the empty `WordBreaker` hook, line spacing and alignment, page filling,
 `FlowPage` page supply by cloning the last flow page's `PageLayout`, `SinglePage`
@@ -288,7 +331,7 @@ vertical growth and empty-document handling. The engine converts a raw
 
 **Scope**
 
-* In: `SimPLayEngine`, its builder, the font-measuring callback type and input
+* In: `SimpLayEngine`, its builder, the font-measuring callback type and input
   validation.
 * In: the greedy line filler over `TextPart`, the `WordBreaker` interface with a
   no-op default, alignment handling (including the last-line seam).
@@ -305,7 +348,7 @@ vertical growth and empty-document handling. The engine converts a raw
 **Interfaces to Other Plans**
 
 * Consumes the IP-01 raw model and the IP-02 measured model.
-* Provides the `SimPLayEngine.measure` entry point that IP-04 exercises and
+* Provides the `SimpLayEngine.measure` entry point that IP-04 exercises and
   IP-05 documents.
 
 ### IP-04: End-to-End Layout & Persistence Tests
@@ -314,7 +357,7 @@ vertical growth and empty-document handling. The engine converts a raw
 
 Provide one or more complete end-to-end tests that build a document mixing
 `FlowPage` and `SinglePage` with different page layouts, multiple text blocks
-and different text styles, run it through `SimPLayEngine` with a deterministic
+and different text styles, run it through `SimpLayEngine` with a deterministic
 font-measuring callback and assert the resulting `MeasuredDocument`; and verify
 that the raw document survives a save / load round-trip in JSON, YAML, XML and
 JVM serialization.
@@ -357,7 +400,7 @@ engine pages plus KDoc on the new public types, all passing `buildDocs`
   counting extensions, the confirmed persistence-format matrix from IP-04).
 * In: a measured data model page (`by` delegation, `MeasuredLine`, geometry,
   why it is not persisted).
-* In: a detailed SimPLayEngine page (builder, font-measuring callback contract,
+* In: a detailed SimpLayEngine page (builder, font-measuring callback contract,
   greedy line breaking, `WordBreaker` seam, `FlowPage` supply, `SinglePage`
   growth, empty document, worked example).
 * In: a rendering page explaining how to consume a `MeasuredDocument` to render
@@ -386,7 +429,7 @@ engine pages plus KDoc on the new public types, all passing `buildDocs`
 ```text
 IP-01 (COMPLETED)
 └── IP-02 (COMPLETED)
-    └── IP-03
+    └── IP-03 (COMPLETED)
         └── IP-04
             └── IP-05
 ```
@@ -449,7 +492,7 @@ IP-01 (COMPLETED)
 * The counting extensions return correct word, symbol and character totals.
 * The measured decorator model mirrors the raw model via `by` delegation and can
   be built directly in a test.
-* `SimPLayEngine` is built from a font-measuring callback and converts a
+* `SimpLayEngine` is built from a font-measuring callback and converts a
   document in one explicit call.
 * A block whose text exceeds the content width is wrapped into multiple
   `MeasuredLine` objects.
@@ -460,6 +503,6 @@ IP-01 (COMPLETED)
 * The `WordBreaker` seam exists with a no-op default and no hyphenation occurs.
 * One or more end-to-end tests over a mixed document (page types, layouts,
   blocks, styles) pass.
-* MkDocs has the four engine pages (raw model, measured model, SimPLayEngine,
+* MkDocs has the four engine pages (raw model, measured model, SimpLayEngine,
   rendering), they are in the `mkdocs.yml` nav, KDoc covers the new public API
   and `buildDocs` (`--strict`) passes.

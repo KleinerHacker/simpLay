@@ -8,13 +8,13 @@ Status: IN_PROGRESS
 |----|---------------------|--------|
 | IP-01 | Persistable Raw Object Model | COMPLETED |
 | IP-02 | Measured Decorator Model | COMPLETED |
-| IP-03 | Layout Engine | NOT_STARTED |
+| IP-03 | Layout Engine | COMPLETED |
 | IP-04 | End-to-End Layout & Persistence Tests | NOT_STARTED |
 | IP-05 | Documentation Alignment | NOT_STARTED |
 
 ## Overall Progress
 
-40%
+60%
 
 ## Notes
 
@@ -57,3 +57,33 @@ derived on the fly (from `layout` and `blocks`), not stored; the page
 constructors take only `raw`, `pageIndex` and `blocks`. `measure/Counting.kt`
 mirrors `model/Counting.kt` (`wordCount` / `symbolCount` / `charCount` for
 `MeasuredTextBlock` / `MeasuredPage` / `MeasuredDocument`, `CountingUtil` JvmName).
+
+IP-03 completed: layout engine in `engine/commonMain` package `...engine.engine`
+(`SimpLayEngine` built via `SimpLayEngine.builder(measurer)....build()`;
+`FontMeasureCalculator`,
+`WordBreakerStrategy` / `NoOpWordBreakerStrategy`, `LineBreakerStrategy` with
+`UnplacedLine` / `UnplacedPart` and the objects `GreedyWordLineBreakerStrategy`,
+`CharacterLineBreakerStrategy`, `NoWrapLineBreakerStrategy`), plus the `internal`
+measure stages `SimpLayFontEngine`, `SimpLayBlockEngine` and `SimpLayPageEngine`
+under `...engine.engine.internal` (shared `SimpLay*Engine` family name, each a
+`class` with a private constructor plus a nested `Builder` and
+`companion.builder(...)` like `SimpLayEngine`; `SimpLayPageEngine`'s builder
+wires in a `SimpLayFontEngine` and a `SimpLayBlockEngine`; "measure" vocabulary
+throughout, no "layout" wording).
+Tests: `SimpLayFontEngineTest`, `GreedyWordLineBreakerStrategyTest`, `SymbolAttachTest`,
+`CharacterLineBreakerStrategyTest`, `NoWrapLineBreakerStrategyTest`,
+`LineBreakerStrategySwapTest`, `AlignmentTest`, `FlowPaginationTest`,
+`SinglePageTest`, `EmptyDocumentTest`, `WordBreakerStrategyHookTest` with the
+shared `EngineTestData` fixture. Deviations vs. the plan: the greedy line filler
+became an exchangeable `LineBreakerStrategy` seam with three shipped
+implementations, all set on `SimpLayEngine.Builder` and fixed once built; the
+measuring callback is named `FontMeasureCalculator` and the word-break seam
+`WordBreakerStrategy`; font metrics are derived from a fixed `REFERENCE_GLYPHS`
+string (letters, digits, diacritics, punctuation), `leading = 0.0`, measured
+fonts cached per `Font` per `SimpLayFontEngine` instance (style wrapper built
+fresh); `measure(document)` is a member of the built engine, not a top-level
+extension; `FlowPage` pagination is per line, so one raw `TextBlock` may become
+several `MeasuredTextBlock` slices and only the block's final line is
+`lastLine`; continuation flow pages deep-copy the `PageLayout` and `pageIndex`
+is document-wide. Follow-up feature plan `FP-002-AdvancedLineBreaking` created
+(balanced / break-opportunity / explicit-break strategies, one IP each).

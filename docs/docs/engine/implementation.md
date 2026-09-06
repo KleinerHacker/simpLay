@@ -18,8 +18,53 @@ rely on Gradle metadata resolution.
 
 ## Entry points
 
-!!! note
+### Measuring a document
 
-    The public API of the simulation core is not available yet. This page will
-    document the entry points, configuration and lifecycle as soon as the
-    `engine` API is released.
+`SimpLayEngine` is created through a builder. `SimpLayEngine.measure(document)`
+turns a raw `Document` (from the `...engine.model` package) into a
+`MeasuredDocument` (from `...engine.measure`). Text measuring is delegated to a
+`FontMeasureCalculator` that the caller supplies, so the engine stays free of any
+platform text stack:
+
+```kotlin
+import org.pcsoft.framework.simplay.engine.engine.FontMeasureCalculator
+import org.pcsoft.framework.simplay.engine.engine.SimpLayEngine
+import org.pcsoft.framework.simplay.engine.geometry.TextMetrics
+
+val engine = SimpLayEngine.builder(
+    FontMeasureCalculator { font, text ->
+        // delegate to AWT, Skia, a headless stub, ...
+        TextMetrics(width = /* ... */, ascent = /* ... */, descent = /* ... */)
+    },
+).build()
+
+val measured = engine.measure(document)
+```
+
+The result is deterministic: the same document and callback always produce the
+same `MeasuredDocument`.
+
+### Choosing strategies
+
+Two aspects of line breaking are pluggable and are fixed on the builder:
+
+* `lineBreakerStrategy(...)` - how parts become lines. Defaults to
+  `GreedyWordLineBreakerStrategy` (word- and symbol-aware). Also available:
+  `CharacterLineBreakerStrategy` (breaks inside a word) and
+  `NoWrapLineBreakerStrategy` (never breaks).
+* `wordBreakerStrategy(...)` - where an over-long single word may be split.
+  Defaults to `NoOpWordBreakerStrategy`, which never hyphenates.
+
+```kotlin
+val engine = SimpLayEngine.builder(measurer)
+    .lineBreakerStrategy(NoWrapLineBreakerStrategy)
+    .build()
+```
+
+### Pagination behaviour
+
+* A `FlowPage` whose content exceeds the content height is continued on further
+  `MeasuredFlowPage`s; every continuation page carries a deep copy of the page
+  frame and page indices run continuously across the document.
+* A `SinglePage` never continues onto another page. When its content is taller
+  than the page, `MeasuredSinglePage.effectiveSize` reports the grown height.
