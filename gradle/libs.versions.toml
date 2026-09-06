@@ -6,7 +6,7 @@
 kotlin = "2.4.10"
 kotlinxDatetime = "0.8.0"
 kotlinxSerializationJSON = "1.11.0"
-kotlinxCoroutines = "1.10.2"
+kotlinxCoroutines = "1.11.0"
 dokka = "2.2.0"
 kover = "0.9.9"
 licensee = "1.14.1"
