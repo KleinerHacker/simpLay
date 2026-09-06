@@ -1,6 +1,6 @@
 # Feature Status: Layout Engine Foundation
 
-Status: IN_PROGRESS
+Status: COMPLETED
 
 ## Implementation Plans
 
@@ -10,11 +10,11 @@ Status: IN_PROGRESS
 | IP-02 | Measured Decorator Model | COMPLETED |
 | IP-03 | Layout Engine | COMPLETED |
 | IP-04 | End-to-End Layout & Persistence Tests | COMPLETED |
-| IP-05 | Documentation Alignment | NOT_STARTED |
+| IP-05 | Documentation Alignment | COMPLETED |
 
 ## Overall Progress
 
-80%
+100%
 
 ## Notes
 
@@ -113,3 +113,15 @@ Persistence-format matrix for IP-05:
 | YAML | kaml 0.104.0 (test scope) | lossless raw-document round-trip |
 | XML | xmlutil 0.91.1 (test scope, `autoPolymorphic = true`) | lossless raw-document round-trip, sealed `Page` / `TextPart` polymorphism kept |
 | JVM serialization | JDK `ObjectOutputStream` / `ObjectInputStream` | lossless raw-document round-trip via the `PlatformSerializable` marker |
+
+IP-05 completed: four dedicated engine pages added under `docs/docs/engine/`
+(`raw-model.md`, `measured-model.md`, `simplay-engine.md`, `rendering.md`) and
+wired into the `engine` section of `docs/mkdocs.yml` in that order.
+`engine/implementation.md` now cross-links the four pages and its prose no longer
+implies `SimpLayEngine.measure` is static. `buildDocs` (`--strict`) and
+`dokkaGeneratePublicationHtml` pass. Deviations vs. the plan: no KDoc had to be
+added - every public `commonMain` type and the `PlatformSerializable` `expect` /
+`actual` declarations were already documented from IP-01..IP-03, so the KDoc task
+reduced to a verification pass. `CHANGELOG.md` gained `[UNRELEASED]` entries for
+the raw model and the measured model (not only the pre-existing engine entry),
+because that public API had no changelog record yet.

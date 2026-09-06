@@ -145,7 +145,7 @@ also brings the MkDocs documentation in line with the new engine API.
 | IP-02 (COMPLETED) | Measured Decorator Model               | Provide the full non-persistable `by`-delegating measured model including the `MeasuredLine` level.          | IP-01        |
 | IP-03 (COMPLETED) | Layout Engine              | Provide `SimpLayEngine`, its builder, the font-measuring callback and the line-breaking / pagination logic.  | IP-01, IP-02 |
 | IP-04 (COMPLETED) | End-to-End Layout & Persistence Tests  | Provide full end-to-end tests over mixed pages / styles plus save / load round-trips in JSON, YAML, XML and JVM serialization. | IP-03        |
-| IP-05 | Documentation Alignment                | Provide dedicated MkDocs pages for the raw model, the measured model, the SimpLayEngine and rendering, plus KDoc. | IP-03, IP-04 |
+| IP-05 (COMPLETED) | Documentation Alignment                | Provide dedicated MkDocs pages for the raw model, the measured model, the SimpLayEngine and rendering, plus KDoc. | IP-03, IP-04 |
 
 ## 7. Implementation Plans
 
@@ -404,7 +404,26 @@ JVM serialization.
 * Consumes IP-01 to IP-03; feeds any model-shape corrections back into IP-01 if
   a format round-trip fails, and hands the confirmed format matrix to IP-05.
 
-### IP-05: Documentation Alignment
+### IP-05: Documentation Alignment — COMPLETED
+
+**As built**
+
+* Four dedicated engine pages were added under `docs/docs/engine/` and wired into
+  the `engine` section of `docs/mkdocs.yml` in this order: `raw-model.md`,
+  `measured-model.md`, `simplay-engine.md`, `rendering.md`.
+* `docs/docs/engine/implementation.md` now cross-links the four pages from its
+  intro and its "Measuring a document" prose no longer implies
+  `SimpLayEngine.measure` is a static call.
+* No KDoc had to be added: every public type in `...engine.model`,
+  `...engine.geometry`, `...engine.measure` and `...engine.engine`, and the
+  `PlatformSerializable` `expect` / `actual` declarations, were already
+  documented from IP-01..IP-03. The KDoc task was a verification pass only.
+* `CHANGELOG.md` gained `[UNRELEASED]` entries for the raw model and the measured
+  model in addition to the pre-existing engine entry, because that public API had
+  no changelog record yet.
+* `buildDocs` runs `mkdocs build --clean --strict`; there is no `--strict` /
+  `failOnWarning` flag configured for Dokka, so "no Dokka warnings" is a manual
+  expectation verified by reading the `dokkaGeneratePublicationHtml` output.
 
 **Objective**
 
@@ -450,7 +469,7 @@ IP-01 (COMPLETED)
 └── IP-02 (COMPLETED)
     └── IP-03 (COMPLETED)
         └── IP-04 (COMPLETED)
-            └── IP-05
+            └── IP-05 (COMPLETED)
 ```
 
 ## 9. Risks and Open Questions
