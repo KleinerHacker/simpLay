@@ -5,84 +5,84 @@ import kotlin.test.assertEquals
 
 class TokenizerTest {
 
-    private val style: org.pcsoft.framework.simplay.engine.model.TextStyle =
-        _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextStyle(
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.model.Font(
+    private val style: TextStyle =
+        TextStyle(
+            Font(
                 "Serif",
                 12.0
             )
         )
 
-    private fun parts(text: String): List<org.pcsoft.framework.simplay.engine.model.TextPart> = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextBlock.Companion.of(text, style).parts
+    private fun parts(text: String): List<TextPart> = TextBlock.of(text, style).parts
 
     /**
-     * Verifies that a plain sentence is split into one [org.pcsoft.framework.simplay.engine.model.TextWord] per space-separated token and
+     * Verifies that a plain sentence is split into one [TextWord] per space-separated token and
      * that no whitespace is kept.
      */
     @Test
     fun splitsPlainWords() {
         assertEquals(
             listOf(
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextWord("The"),
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextWord("quick"),
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextWord("fox")
+                TextWord("The"),
+                TextWord("quick"),
+                TextWord("fox")
             ),
             parts("The quick fox"),
         )
     }
 
     /**
-     * Verifies that a trailing punctuation mark becomes its own [org.pcsoft.framework.simplay.engine.model.TextSymbol] separate from the
+     * Verifies that a trailing punctuation mark becomes its own [TextSymbol] separate from the
      * preceding word.
      */
     @Test
     fun splitsTrailingPunctuation() {
         assertEquals(
             listOf(
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextWord("Hello"),
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextSymbol(','),
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextWord("world"),
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextSymbol('!')
+                TextWord("Hello"),
+                TextSymbol(','),
+                TextWord("world"),
+                TextSymbol('!')
             ),
             parts("Hello, world!"),
         )
     }
 
     /**
-     * Verifies that letters and digits inside one run are kept together in a single [org.pcsoft.framework.simplay.engine.model.TextWord].
+     * Verifies that letters and digits inside one run are kept together in a single [TextWord].
      */
     @Test
     fun keepsLettersAndDigitsTogether() {
-        assertEquals(listOf(_root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextWord("abc123")), parts("abc123"))
+        assertEquals(listOf(TextWord("abc123")), parts("abc123"))
     }
 
     /**
-     * Verifies that a hyphen between two words is emitted as a standalone [org.pcsoft.framework.simplay.engine.model.TextSymbol].
+     * Verifies that a hyphen between two words is emitted as a standalone [TextSymbol].
      */
     @Test
     fun splitsHyphen() {
         assertEquals(
             listOf(
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextWord("state"),
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextSymbol('-'),
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextWord("of"),
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextSymbol('-'),
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextWord("art")
+                TextWord("state"),
+                TextSymbol('-'),
+                TextWord("of"),
+                TextSymbol('-'),
+                TextWord("art")
             ),
             parts("state-of-art"),
         )
     }
 
     /**
-     * Verifies that quotation marks around a word are emitted as individual [org.pcsoft.framework.simplay.engine.model.TextSymbol]s.
+     * Verifies that quotation marks around a word are emitted as individual [TextSymbol]s.
      */
     @Test
     fun splitsQuotes() {
         assertEquals(
             listOf(
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextSymbol('"'),
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextWord("hi"),
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextSymbol('"')
+                TextSymbol('"'),
+                TextWord("hi"),
+                TextSymbol('"')
             ),
             parts("\"hi\""),
         )
@@ -94,8 +94,8 @@ class TokenizerTest {
     @Test
     fun treatsLineBreakAsSeparator() {
         assertEquals(listOf(
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextWord("first"),
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextWord("second")
+            TextWord("first"),
+            TextWord("second")
         ), parts("first\nsecond"))
     }
 
@@ -105,8 +105,8 @@ class TokenizerTest {
     @Test
     fun collapsesMultipleWhitespace() {
         assertEquals(listOf(
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextWord("a"),
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextWord("b")
+            TextWord("a"),
+            TextWord("b")
         ), parts("a    \t  b"))
     }
 

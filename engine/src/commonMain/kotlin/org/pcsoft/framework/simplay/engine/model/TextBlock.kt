@@ -1,25 +1,25 @@
 package org.pcsoft.framework.simplay.engine.model
 
-import kotlinx.serialization.Serializable
 import kotlin.collections.plusAssign
 import kotlin.text.iterator
+import kotlinx.serialization.Serializable
 
 /**
- * A run of styled text made of [org.pcsoft.framework.simplay.engine.model.TextPart]s. A plain data holder.
+ * A run of styled text made of [TextPart]s. A plain data holder.
  */
 @Serializable
 @ConsistentCopyVisibility
 data class TextBlock private constructor(
-    val parts: List<org.pcsoft.framework.simplay.engine.model.TextPart>,
-    val style: org.pcsoft.framework.simplay.engine.model.TextStyle,
+    val parts: List<TextPart>,
+    val style: TextStyle,
 ) {
     /**
-     * Rejoins the parts, putting a single space before every [org.pcsoft.framework.simplay.engine.model.TextWord] except the first and no
-     * space before a [org.pcsoft.framework.simplay.engine.model.TextSymbol].
+     * Rejoins the parts, putting a single space before every [TextWord] except the first and no
+     * space before a [TextSymbol].
      */
     override fun toString(): String = buildString {
         parts.forEachIndexed { index, part ->
-            if (part is org.pcsoft.framework.simplay.engine.model.TextWord && index > 0) append(' ')
+            if (part is TextWord && index > 0) append(' ')
             append(part.text)
         }
     }
@@ -28,26 +28,26 @@ data class TextBlock private constructor(
         /**
          * Builds a [TextBlock] by tokenizing [text] with the given [style].
          */
-        fun of(text: String, style: org.pcsoft.framework.simplay.engine.model.TextStyle): org.pcsoft.framework.simplay.engine.model.TextBlock =
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextBlock(
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.model.tokenize(text), style
+        fun of(text: String, style: TextStyle): TextBlock =
+            TextBlock(
+                tokenize(text), style
             )
     }
 }
 
 /**
- * Splits [text] into [org.pcsoft.framework.simplay.engine.model.TextPart]s.
+ * Splits [text] into [TextPart]s.
  *
- * Maximal runs of [Char.isLetterOrDigit] become a [org.pcsoft.framework.simplay.engine.model.TextWord], every other non-whitespace
- * character becomes its own [org.pcsoft.framework.simplay.engine.model.TextSymbol], and whitespace separates parts without being stored.
+ * Maximal runs of [Char.isLetterOrDigit] become a [TextWord], every other non-whitespace
+ * character becomes its own [TextSymbol], and whitespace separates parts without being stored.
  */
-private fun tokenize(text: String): List<org.pcsoft.framework.simplay.engine.model.TextPart> {
-    val parts = mutableListOf<org.pcsoft.framework.simplay.engine.model.TextPart>()
+private fun tokenize(text: String): List<TextPart> {
+    val parts = mutableListOf<TextPart>()
     val word = StringBuilder()
 
     fun flushWord() {
         if (word.isNotEmpty()) {
-            parts += _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextWord(word.toString())
+            parts += TextWord(word.toString())
             word.clear()
         }
     }
@@ -58,7 +58,7 @@ private fun tokenize(text: String): List<org.pcsoft.framework.simplay.engine.mod
             ch.isLetterOrDigit() -> word.append(ch)
             else -> {
                 flushWord()
-                parts += _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextSymbol(ch)
+                parts += TextSymbol(ch)
             }
         }
     }

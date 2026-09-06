@@ -9,6 +9,6 @@ import kotlinx.serialization.Serializable
 data class Font(
     val family: String,
     val size: Double,
-    val weight: org.pcsoft.framework.simplay.engine.model.FontWeight = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.FontWeight.NORMAL,
-    val style: org.pcsoft.framework.simplay.engine.model.FontStyle = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.FontStyle.NORMAL,
+    val weight: FontWeight = FontWeight.NORMAL,
+    val style: FontStyle = FontStyle.NORMAL,
 )

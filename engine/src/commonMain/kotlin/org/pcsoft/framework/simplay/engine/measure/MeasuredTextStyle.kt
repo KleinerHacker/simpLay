@@ -5,7 +5,7 @@ import org.pcsoft.framework.simplay.engine.model.TextAlignment
 import org.pcsoft.framework.simplay.engine.model.TextStyle
 
 /**
- * A raw [org.pcsoft.framework.simplay.engine.model.TextStyle] with its font replaced by a [org.pcsoft.framework.simplay.engine.measure.MeasuredFont] and the [resolvedLineHeight]
+ * A raw [TextStyle] with its font replaced by a [MeasuredFont] and the [resolvedLineHeight]
  * derived.
  *
  * The unchanged properties (`lineSpacing`, `alignment`) are forwarded to [raw] by hand. The font
@@ -16,14 +16,14 @@ import org.pcsoft.framework.simplay.engine.model.TextStyle
  * @property font the measured font of this style.
  */
 class MeasuredTextStyle(
-    val raw: org.pcsoft.framework.simplay.engine.model.TextStyle,
-    val font: org.pcsoft.framework.simplay.engine.measure.MeasuredFont,
+    val raw: TextStyle,
+    val font: MeasuredFont,
 ) {
     /** The line spacing of [raw]. */
-    val lineSpacing: org.pcsoft.framework.simplay.engine.model.LineSpacing get() = raw.lineSpacing
+    val lineSpacing: LineSpacing get() = raw.lineSpacing
 
     /** The horizontal alignment of [raw]. */
-    val alignment: org.pcsoft.framework.simplay.engine.model.TextAlignment get() = raw.alignment
+    val alignment: TextAlignment get() = raw.alignment
 
     /**
      * The line advance in layout units, derived from [font]'s metrics and [lineSpacing]:

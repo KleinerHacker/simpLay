@@ -18,9 +18,9 @@ The shared build logic is provided by convention plugins in `buildSrc`
 (`kotlin-jvm`, `kotlin-multiplatform`). Every module lives in its own top-level
 directory; the repository root contains no source code.
 
-The base package is `org.pcsoft.framework.playsim`; each module appends its own
-name (`...playsim.engine`, `...playsim.fx`, `...playsim.jpdf`,
-`...playsim.jprint`, `...playsim.swing`).
+The base package is `org.pcsoft.framework.simplay`; each module appends its own
+name (`...simplay.engine`, `...simplay.fx`, `...simplay.jpdf`,
+`...simplay.jprint`, `...simplay.swing`).
 
 ## Checkout and build
 

@@ -1,10 +1,8 @@
 package org.pcsoft.framework.simplay.engine.measure
 
-import org.pcsoft.framework.simplay.engine.measure.charCount
-import org.pcsoft.framework.simplay.engine.measure.symbolCount
-import org.pcsoft.framework.simplay.engine.measure.wordCount
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.SinglePage
 import org.pcsoft.framework.simplay.engine.model.TextBlock
@@ -14,14 +12,14 @@ import org.pcsoft.framework.simplay.engine.model.TextBlock
  */
 class CountingTest {
 
-    private fun block(text: String) = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredTextBlock(
-        raw = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextBlock.Companion.of(
+    private fun block(text: String) = MeasuredTextBlock(
+        raw = TextBlock.of(
             text,
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.bodyStyle
+            MeasureTestData.bodyStyle
         ),
         lines = emptyList(),
-        bounds = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.someRect(),
-        style = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.measuredBodyStyle(),
+        bounds = MeasureTestData.someRect(),
+        style = MeasureTestData.measuredBodyStyle(),
     )
 
     /**
@@ -42,8 +40,8 @@ class CountingTest {
      */
     @Test
     fun countsOnMeasuredPage() {
-        val page = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredFlowPage(
-            raw = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.FlowPage(layout = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.pageLayout),
+        val page = MeasuredFlowPage(
+            raw = FlowPage(layout = MeasureTestData.pageLayout),
             pageIndex = 0,
             blocks = listOf(block("one two"), block("three.")),
         )
@@ -58,17 +56,17 @@ class CountingTest {
      */
     @Test
     fun countsOnMeasuredDocument() {
-        val document = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredDocument(
-            raw = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.Document(),
+        val document = MeasuredDocument(
+            raw = Document(),
             pages = listOf(
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredFlowPage(
-                    _root_ide_package_.org.pcsoft.framework.simplay.engine.model.FlowPage(
-                        layout = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.pageLayout
+                MeasuredFlowPage(
+                    FlowPage(
+                        layout = MeasureTestData.pageLayout
                     ), 0, listOf(block("a b"))
                 ),
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredSinglePage(
-                    _root_ide_package_.org.pcsoft.framework.simplay.engine.model.SinglePage(
-                        layout = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.pageLayout
+                MeasuredSinglePage(
+                    SinglePage(
+                        layout = MeasureTestData.pageLayout
                     ), 1, listOf(block("c d!"))
                 ),
             ),

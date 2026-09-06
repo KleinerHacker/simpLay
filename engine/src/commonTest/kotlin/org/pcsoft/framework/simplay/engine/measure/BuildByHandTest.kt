@@ -11,7 +11,7 @@ import org.pcsoft.framework.simplay.engine.model.TextBlock
 
 /**
  * Verifies that a complete measured model can be assembled by hand, without any engine, and that
- * every level is reachable from the resulting [org.pcsoft.framework.simplay.engine.measure.MeasuredDocument].
+ * every level is reachable from the resulting [MeasuredDocument].
  */
 class BuildByHandTest {
 
@@ -21,13 +21,13 @@ class BuildByHandTest {
      */
     @Test
     fun fullMeasuredModelAssembledByHand() {
-        val measuredStyle = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.measuredBodyStyle()
+        val measuredStyle = MeasureTestData.measuredBodyStyle()
 
-        val rawBlock = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextBlock.Companion.of("Engine core", _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.bodyStyle)
+        val rawBlock = TextBlock.of("Engine core", MeasureTestData.bodyStyle)
         val parts = rawBlock.parts.mapIndexed { index, part ->
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredTextPart(
+            MeasuredTextPart(
                 part,
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.geometry.Rect(
+                Rect(
                     x = index * 30.0,
                     y = 0.0,
                     width = 28.0,
@@ -35,24 +35,24 @@ class BuildByHandTest {
                 )
             )
         }
-        val line = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredLine(
+        val line = MeasuredLine(
             parts = parts,
-            lineBox = _root_ide_package_.org.pcsoft.framework.simplay.engine.geometry.Rect(
+            lineBox = Rect(
                 x = 0.0,
                 y = 0.0,
                 width = 160.0,
                 height = 19.0
             ),
             baseline = 9.0,
-            ascent = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.bodyMetrics.ascent,
-            descent = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.bodyMetrics.descent,
-            alignment = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.bodyStyle.alignment,
+            ascent = MeasureTestData.bodyMetrics.ascent,
+            descent = MeasureTestData.bodyMetrics.descent,
+            alignment = MeasureTestData.bodyStyle.alignment,
             lastLine = true,
         )
-        val block = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredTextBlock(
+        val block = MeasuredTextBlock(
             raw = rawBlock,
             lines = listOf(line),
-            bounds = _root_ide_package_.org.pcsoft.framework.simplay.engine.geometry.Rect(
+            bounds = Rect(
                 x = 0.0,
                 y = 0.0,
                 width = 160.0,
@@ -61,18 +61,18 @@ class BuildByHandTest {
             style = measuredStyle,
         )
 
-        val rawPage = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.FlowPage(
-            layout = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.pageLayout,
+        val rawPage = FlowPage(
+            layout = MeasureTestData.pageLayout,
             blocks = listOf(rawBlock)
         )
-        val page = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredFlowPage(
+        val page = MeasuredFlowPage(
             raw = rawPage,
             pageIndex = 0,
             blocks = listOf(block),
         )
 
-        val rawDocument = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.Document(pages = listOf(rawPage))
-        val document = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredDocument(
+        val rawDocument = Document(pages = listOf(rawPage))
+        val document = MeasuredDocument(
             rawDocument,
             pages = listOf(page)
         )
@@ -87,13 +87,13 @@ class BuildByHandTest {
             .first()
 
         assertEquals("Engine", reachedPart.text)
-        assertEquals(_root_ide_package_.org.pcsoft.framework.simplay.engine.geometry.Rect(0.0, 0.0, 28.0, 12.0), reachedPart.bounds)
+        assertEquals(Rect(0.0, 0.0, 28.0, 12.0), reachedPart.bounds)
         assertSame(measuredStyle, document.pages.single().blocks.single().style)
         assertEquals(
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.bodyResolvedLineHeight,
+            MeasureTestData.bodyResolvedLineHeight,
             document.pages.single().blocks.single().style.resolvedLineHeight,
         )
-        assertTrue(document.pages.single() is org.pcsoft.framework.simplay.engine.measure.MeasuredFlowPage)
+        assertTrue(document.pages.single() is MeasuredFlowPage)
         assertSame(rawDocument, document.raw)
         assertEquals(rawBlock.parts.size, page.blocks.single().lines.single().parts.size)
     }
@@ -104,9 +104,9 @@ class BuildByHandTest {
      */
     @Test
     fun emptyMeasuredDocumentIsAllowed() {
-        val raw = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.Document()
+        val raw = Document()
         val document =
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredDocument(raw, pages = emptyList())
+            MeasuredDocument(raw, pages = emptyList())
 
         assertTrue(document.pages.isEmpty())
         assertSame(raw, document.raw)

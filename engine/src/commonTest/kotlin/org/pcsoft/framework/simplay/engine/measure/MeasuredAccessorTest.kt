@@ -22,11 +22,11 @@ class MeasuredAccessorTest {
      */
     @Test
     fun styleExposesMeasuredFontOnly() {
-        val style = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.measuredBodyStyle()
+        val style = MeasureTestData.measuredBodyStyle()
 
-        assertEquals(_root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.bodyMetrics, style.font.metrics)
-        assertSame(_root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.bodyFont, style.font.raw)
-        assertSame(_root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.bodyFont, style.raw.font)
+        assertEquals(MeasureTestData.bodyMetrics, style.font.metrics)
+        assertSame(MeasureTestData.bodyFont, style.font.raw)
+        assertSame(MeasureTestData.bodyFont, style.raw.font)
     }
 
     /**
@@ -35,12 +35,12 @@ class MeasuredAccessorTest {
      */
     @Test
     fun blockExposesMeasuredStyleOnly() {
-        val raw = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextBlock.Companion.of("Measured accessors", _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.bodyStyle)
-        val measuredStyle = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.measuredBodyStyle()
-        val block = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredTextBlock(
+        val raw = TextBlock.of("Measured accessors", MeasureTestData.bodyStyle)
+        val measuredStyle = MeasureTestData.measuredBodyStyle()
+        val block = MeasuredTextBlock(
             raw,
             emptyList(),
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.someRect(),
+            MeasureTestData.someRect(),
             measuredStyle
         )
 
@@ -56,17 +56,17 @@ class MeasuredAccessorTest {
     @Test
     fun pageExposesMeasuredBlocksAndContentArea() {
         val raw =
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.model.FlowPage(layout = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.pageLayout)
-        val block = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredTextBlock(
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextBlock.Companion.of(
+            FlowPage(layout = MeasureTestData.pageLayout)
+        val block = MeasuredTextBlock(
+            TextBlock.of(
                 "Page content",
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.bodyStyle
+                MeasureTestData.bodyStyle
             ),
             emptyList(),
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.someRect(),
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.measuredBodyStyle(),
+            MeasureTestData.someRect(),
+            MeasureTestData.measuredBodyStyle(),
         )
-        val page = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredFlowPage(
+        val page = MeasuredFlowPage(
             raw,
             pageIndex = 3,
             blocks = listOf(block)
@@ -74,7 +74,7 @@ class MeasuredAccessorTest {
 
         assertEquals(listOf(block), page.blocks)
         assertEquals(3, page.pageIndex)
-        assertEquals(_root_ide_package_.org.pcsoft.framework.simplay.engine.geometry.Rect(20.0, 20.0, 160.0, 260.0), page.contentArea)
+        assertEquals(Rect(20.0, 20.0, 160.0, 260.0), page.contentArea)
         assertSame(raw, page.raw)
     }
 
@@ -85,25 +85,25 @@ class MeasuredAccessorTest {
     @Test
     fun documentExposesMeasuredPagesOnly() {
         val rawFlow =
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.model.FlowPage(layout = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.pageLayout)
+            FlowPage(layout = MeasureTestData.pageLayout)
         val rawSingle =
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.model.SinglePage(layout = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.pageLayout)
+            SinglePage(layout = MeasureTestData.pageLayout)
         val raw =
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.model.Document(pages = listOf(rawFlow, rawSingle))
+            Document(pages = listOf(rawFlow, rawSingle))
         val measuredPages = listOf(
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredFlowPage(rawFlow, 0, emptyList()),
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredSinglePage(
+            MeasuredFlowPage(rawFlow, 0, emptyList()),
+            MeasuredSinglePage(
                 rawSingle,
                 1,
                 emptyList()
             ),
         )
         val document =
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredDocument(raw, measuredPages)
+            MeasuredDocument(raw, measuredPages)
 
         assertEquals(measuredPages, document.pages)
         assertSame(raw, document.raw)
         assertSame(raw.pages, document.raw.pages)
-        assertTrue(document.pages[1] is org.pcsoft.framework.simplay.engine.measure.MeasuredSinglePage)
+        assertTrue(document.pages[1] is MeasuredSinglePage)
     }
 }

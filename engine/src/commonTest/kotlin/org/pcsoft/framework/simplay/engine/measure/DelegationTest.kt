@@ -15,15 +15,15 @@ import org.pcsoft.framework.simplay.engine.model.TextWord
 class DelegationTest {
 
     /**
-     * Use case: a [org.pcsoft.framework.simplay.engine.measure.MeasuredFont] must expose the wrapped font's family, size, weight and style
+     * Use case: a [MeasuredFont] must expose the wrapped font's family, size, weight and style
      * unchanged (all delegated) while adding its own metrics.
      */
     @Test
     fun measuredFontDelegatesEveryRawProperty() {
-        val raw = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.bodyFont
-        val measured = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredFont(
+        val raw = MeasureTestData.bodyFont
+        val measured = MeasuredFont(
             raw,
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.bodyMetrics
+            MeasureTestData.bodyMetrics
         )
 
         assertEquals(raw.family, measured.family)
@@ -31,17 +31,17 @@ class DelegationTest {
         assertEquals(raw.weight, measured.weight)
         assertEquals(raw.style, measured.style)
         assertSame(raw, measured.raw)
-        assertEquals(_root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.bodyMetrics, measured.metrics)
+        assertEquals(MeasureTestData.bodyMetrics, measured.metrics)
     }
 
     /**
-     * Use case: a [org.pcsoft.framework.simplay.engine.measure.MeasuredTextStyle] must delegate the pass-through properties `lineSpacing` and
+     * Use case: a [MeasuredTextStyle] must delegate the pass-through properties `lineSpacing` and
      * `alignment`; `font` is not delegated but replaced by the measured font.
      */
     @Test
     fun measuredTextStyleDelegatesPassThroughProperties() {
-        val raw = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.bodyStyle
-        val measured = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.measuredBodyStyle()
+        val raw = MeasureTestData.bodyStyle
+        val measured = MeasureTestData.measuredBodyStyle()
 
         assertEquals(raw.lineSpacing, measured.lineSpacing)
         assertEquals(raw.alignment, measured.alignment)
@@ -49,19 +49,19 @@ class DelegationTest {
     }
 
     /**
-     * Use case: a [org.pcsoft.framework.simplay.engine.measure.MeasuredTextPart] forwards the wrapped part's text (a word and a symbol) and
+     * Use case: a [MeasuredTextPart] forwards the wrapped part's text (a word and a symbol) and
      * keeps the raw part reachable.
      */
     @Test
     fun measuredTextPartForwardsText() {
-        val rawWord = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextWord("Layout")
-        val word = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredTextPart(
+        val rawWord = TextWord("Layout")
+        val word = MeasuredTextPart(
             rawWord,
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.someRect()
+            MeasureTestData.someRect()
         )
-        val symbol = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredTextPart(
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextSymbol('!'),
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.someRect()
+        val symbol = MeasuredTextPart(
+            TextSymbol('!'),
+            MeasureTestData.someRect()
         )
 
         assertEquals("Layout", word.text)
@@ -70,14 +70,14 @@ class DelegationTest {
     }
 
     /**
-     * Use case: a [org.pcsoft.framework.simplay.engine.measure.MeasuredFlowPage] delegates the pass-through `layout` and keeps the raw page
+     * Use case: a [MeasuredFlowPage] delegates the pass-through `layout` and keeps the raw page
      * reachable; it exposes no raw block list.
      */
     @Test
     fun measuredFlowPageDelegatesLayout() {
         val raw =
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.model.FlowPage(layout = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.pageLayout)
-        val measured = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredFlowPage(
+            FlowPage(layout = MeasureTestData.pageLayout)
+        val measured = MeasuredFlowPage(
             raw = raw,
             pageIndex = 0,
             blocks = emptyList(),
@@ -93,19 +93,19 @@ class DelegationTest {
      */
     @Test
     fun measuredLineStoresItsOwnValues() {
-        val box = _root_ide_package_.org.pcsoft.framework.simplay.engine.geometry.Rect(
+        val box = Rect(
             x = 1.0,
             y = 2.0,
             width = 30.0,
             height = 12.0
         )
-        val line = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredLine(
+        val line = MeasuredLine(
             parts = emptyList(),
             lineBox = box,
             baseline = 9.0,
             ascent = 9.0,
             descent = 3.0,
-            alignment = _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasureTestData.bodyStyle.alignment,
+            alignment = MeasureTestData.bodyStyle.alignment,
             lastLine = true,
         )
 

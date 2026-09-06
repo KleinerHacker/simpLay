@@ -17,32 +17,32 @@ import org.pcsoft.framework.simplay.engine.model.TextStyle
 internal object MeasureTestData {
 
     /** A plain body font. */
-    val bodyFont = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.Font(family = "Helvetica", size = 12.0)
+    val bodyFont = Font(family = "Helvetica", size = 12.0)
 
     /** Vertical metrics that go with [bodyFont]. */
-    val bodyMetrics = _root_ide_package_.org.pcsoft.framework.simplay.engine.geometry.FontMetrics(
+    val bodyMetrics = FontMetrics(
         ascent = 9.0,
         descent = 3.0,
         leading = 2.0
     )
 
     /** A left-aligned style over [bodyFont] with 1.5x line spacing and one extra unit of leading. */
-    val bodyStyle = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextStyle(
+    val bodyStyle = TextStyle(
         font = bodyFont,
-        lineSpacing = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.LineSpacing(
+        lineSpacing = LineSpacing(
             factor = 1.5,
             extraLeading = 1.0
         ),
-        alignment = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextAlignment.LEFT,
+        alignment = TextAlignment.LEFT,
     )
 
     /** The expected derived line height for [bodyStyle]: `(9 + 3) * 1.5 + 1`. */
     const val bodyResolvedLineHeight = 19.0
 
     /** An A-ish page frame with symmetric margins. */
-    val pageLayout = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.PageLayout(
-        size = _root_ide_package_.org.pcsoft.framework.simplay.engine.geometry.Size(width = 200.0, height = 300.0),
-        margins = _root_ide_package_.org.pcsoft.framework.simplay.engine.geometry.Margins(
+    val pageLayout = PageLayout(
+        size = Size(width = 200.0, height = 300.0),
+        margins = Margins(
             left = 20.0,
             top = 20.0,
             right = 20.0,
@@ -50,16 +50,16 @@ internal object MeasureTestData {
         ),
     )
 
-    /** Builds the [bodyFont] wrapped as a [org.pcsoft.framework.simplay.engine.measure.MeasuredFont]. */
+    /** Builds the [bodyFont] wrapped as a [MeasuredFont]. */
     fun measuredBodyFont() =
-        _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredFont(bodyFont, bodyMetrics)
+        MeasuredFont(bodyFont, bodyMetrics)
 
-    /** Builds the [bodyStyle] wrapped as a [org.pcsoft.framework.simplay.engine.measure.MeasuredTextStyle]. */
+    /** Builds the [bodyStyle] wrapped as a [MeasuredTextStyle]. */
     fun measuredBodyStyle() =
-        _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredTextStyle(bodyStyle, measuredBodyFont())
+        MeasuredTextStyle(bodyStyle, measuredBodyFont())
 
     /** A throwaway rectangle used where the concrete value does not matter. */
-    fun someRect() = _root_ide_package_.org.pcsoft.framework.simplay.engine.geometry.Rect(
+    fun someRect() = Rect(
         x = 0.0,
         y = 0.0,
         width = 10.0,
@@ -71,13 +71,13 @@ internal object MeasureTestData {
      * so a page holding just this block reports `requiredContentHeight == bottom`.
      */
     fun measuredBlockReaching(bottom: Double) =
-        _root_ide_package_.org.pcsoft.framework.simplay.engine.measure.MeasuredTextBlock(
-            raw = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextBlock.Companion.of(
+        MeasuredTextBlock(
+            raw = TextBlock.of(
                 "Block",
                 bodyStyle
             ),
             lines = emptyList(),
-            bounds = _root_ide_package_.org.pcsoft.framework.simplay.engine.geometry.Rect(
+            bounds = Rect(
                 x = 0.0,
                 y = 0.0,
                 width = 100.0,

@@ -6,7 +6,7 @@ import org.pcsoft.framework.simplay.engine.model.FontStyle
 import org.pcsoft.framework.simplay.engine.model.FontWeight
 
 /**
- * A raw [org.pcsoft.framework.simplay.engine.model.Font] enriched with the vertical [metrics] resolved for it.
+ * A raw [Font] enriched with the vertical [metrics] resolved for it.
  *
  * The unchanged font properties are forwarded to [raw] by hand; nothing is stored twice. This type
  * is not persistable.
@@ -14,7 +14,7 @@ import org.pcsoft.framework.simplay.engine.model.FontWeight
  * @property raw the wrapped raw font.
  * @property metrics the vertical metrics resolved for [raw], in layout units.
  */
-class MeasuredFont(val raw: org.pcsoft.framework.simplay.engine.model.Font, val metrics: org.pcsoft.framework.simplay.engine.geometry.FontMetrics) {
+class MeasuredFont(val raw: Font, val metrics: FontMetrics) {
     /** The family of [raw]. */
     val family: String get() = raw.family
 
@@ -22,8 +22,8 @@ class MeasuredFont(val raw: org.pcsoft.framework.simplay.engine.model.Font, val 
     val size: Double get() = raw.size
 
     /** The weight of [raw]. */
-    val weight: org.pcsoft.framework.simplay.engine.model.FontWeight get() = raw.weight
+    val weight: FontWeight get() = raw.weight
 
     /** The slant of [raw]. */
-    val style: org.pcsoft.framework.simplay.engine.model.FontStyle get() = raw.style
+    val style: FontStyle get() = raw.style
 }

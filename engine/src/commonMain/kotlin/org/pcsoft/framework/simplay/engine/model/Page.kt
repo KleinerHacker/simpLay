@@ -9,7 +9,7 @@ import org.pcsoft.framework.simplay.engine.geometry.Size
  * The physical frame of a page: its [size] and its inner [margins].
  */
 @Serializable
-data class PageLayout(val size: org.pcsoft.framework.simplay.engine.geometry.Size, val margins: org.pcsoft.framework.simplay.engine.geometry.Margins) {
+data class PageLayout(val size: Size, val margins: Margins) {
     /** Width available for content between the left and right margins. */
     val contentWidth: Double
         get() = size.width - margins.left - margins.right
@@ -24,8 +24,8 @@ data class PageLayout(val size: org.pcsoft.framework.simplay.engine.geometry.Siz
  */
 @Serializable
 sealed interface Page {
-    val layout: org.pcsoft.framework.simplay.engine.model.PageLayout
-    val blocks: List<org.pcsoft.framework.simplay.engine.model.TextBlock>
+    val layout: PageLayout
+    val blocks: List<TextBlock>
 }
 
 /**
@@ -34,9 +34,9 @@ sealed interface Page {
 @Serializable
 @SerialName("flow")
 data class FlowPage(
-    override val layout: org.pcsoft.framework.simplay.engine.model.PageLayout,
-    override val blocks: List<org.pcsoft.framework.simplay.engine.model.TextBlock> = emptyList(),
-) : org.pcsoft.framework.simplay.engine.model.Page
+    override val layout: PageLayout,
+    override val blocks: List<TextBlock> = emptyList(),
+) : Page
 
 /**
  * A page whose content is confined to itself.
@@ -44,6 +44,6 @@ data class FlowPage(
 @Serializable
 @SerialName("single")
 data class SinglePage(
-    override val layout: org.pcsoft.framework.simplay.engine.model.PageLayout,
-    override val blocks: List<org.pcsoft.framework.simplay.engine.model.TextBlock> = emptyList(),
-) : org.pcsoft.framework.simplay.engine.model.Page
+    override val layout: PageLayout,
+    override val blocks: List<TextBlock> = emptyList(),
+) : Page

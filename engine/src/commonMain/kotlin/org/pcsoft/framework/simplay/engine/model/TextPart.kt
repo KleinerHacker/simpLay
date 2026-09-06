@@ -16,7 +16,7 @@ sealed interface TextPart {
  */
 @Serializable
 @SerialName("word")
-data class TextWord(override val text: String) : org.pcsoft.framework.simplay.engine.model.TextPart
+data class TextWord(override val text: String) : TextPart
 
 /**
  * A single non-letter, non-digit, non-whitespace character.
@@ -27,7 +27,7 @@ data class TextWord(override val text: String) : org.pcsoft.framework.simplay.en
 @SerialName("symbol")
 @ConsistentCopyVisibility
 data class TextSymbol private constructor(override val text: String) :
-    org.pcsoft.framework.simplay.engine.model.TextPart {
+    TextPart {
 
     constructor(symbol: Char) : this(symbol.toString())
 

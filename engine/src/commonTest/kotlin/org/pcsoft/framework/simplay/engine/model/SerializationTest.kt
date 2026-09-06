@@ -9,42 +9,42 @@ import org.pcsoft.framework.simplay.engine.geometry.Size
 class SerializationTest {
 
     private val json = Json { prettyPrint = false }
-    private val style = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextStyle(
-        _root_ide_package_.org.pcsoft.framework.simplay.engine.model.Font(
+    private val style = TextStyle(
+        Font(
             "Serif",
             12.0,
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.model.FontWeight.BOLD,
-            _root_ide_package_.org.pcsoft.framework.simplay.engine.model.FontStyle.ITALIC
+            FontWeight.BOLD,
+            FontStyle.ITALIC
         )
     )
-    private val layout = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.PageLayout(
-        _root_ide_package_.org.pcsoft.framework.simplay.engine.geometry.Size(
+    private val layout = PageLayout(
+        Size(
             210.0,
             297.0
-        ), _root_ide_package_.org.pcsoft.framework.simplay.engine.geometry.Margins(20.0, 20.0, 20.0, 20.0)
+        ), Margins(20.0, 20.0, 20.0, 20.0)
     )
 
     /**
-     * Verifies that a document containing a [org.pcsoft.framework.simplay.engine.model.FlowPage] and a [org.pcsoft.framework.simplay.engine.model.SinglePage] survives a JSON
+     * Verifies that a document containing a [FlowPage] and a [SinglePage] survives a JSON
      * encode/decode round trip without loss.
      */
     @Test
     fun roundTripsDocumentWithBothPageKinds() {
-        val document = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.Document(
+        val document = Document(
             listOf(
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.model.FlowPage(
+                FlowPage(
                     layout,
                     listOf(
-                        _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextBlock.Companion.of(
+                        TextBlock.of(
                             "Hello, world!",
                             style
                         )
                     )
                 ),
-                _root_ide_package_.org.pcsoft.framework.simplay.engine.model.SinglePage(
+                SinglePage(
                     layout,
                     listOf(
-                        _root_ide_package_.org.pcsoft.framework.simplay.engine.model.TextBlock.Companion.of(
+                        TextBlock.of(
                             "Second page.",
                             style
                         )
@@ -53,8 +53,8 @@ class SerializationTest {
             ),
         )
 
-        val encoded = json.encodeToString(_root_ide_package_.org.pcsoft.framework.simplay.engine.model.Document.serializer(), document)
-        val decoded = json.decodeFromString(_root_ide_package_.org.pcsoft.framework.simplay.engine.model.Document.serializer(), encoded)
+        val encoded = json.encodeToString(Document.serializer(), document)
+        val decoded = json.decodeFromString(Document.serializer(), encoded)
 
         assertEquals(document, decoded)
     }
@@ -64,8 +64,8 @@ class SerializationTest {
      */
     @Test
     fun roundTripsEmptyDocument() {
-        val document = _root_ide_package_.org.pcsoft.framework.simplay.engine.model.Document()
-        val encoded = json.encodeToString(_root_ide_package_.org.pcsoft.framework.simplay.engine.model.Document.serializer(), document)
-        assertEquals(document, json.decodeFromString(_root_ide_package_.org.pcsoft.framework.simplay.engine.model.Document.serializer(), encoded))
+        val document = Document()
+        val encoded = json.encodeToString(Document.serializer(), document)
+        assertEquals(document, json.decodeFromString(Document.serializer(), encoded))
     }
 }

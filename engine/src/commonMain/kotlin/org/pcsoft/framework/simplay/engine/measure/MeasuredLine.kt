@@ -15,11 +15,11 @@ import org.pcsoft.framework.simplay.engine.model.TextAlignment
  * @property lastLine `true` for the final line of its block (relevant for justified alignment).
  */
 class MeasuredLine(
-    val parts: List<org.pcsoft.framework.simplay.engine.measure.MeasuredTextPart>,
-    val lineBox: org.pcsoft.framework.simplay.engine.geometry.Rect,
+    val parts: List<MeasuredTextPart>,
+    val lineBox: Rect,
     val baseline: Double,
     val ascent: Double,
     val descent: Double,
-    val alignment: org.pcsoft.framework.simplay.engine.model.TextAlignment,
+    val alignment: TextAlignment,
     val lastLine: Boolean,
 )

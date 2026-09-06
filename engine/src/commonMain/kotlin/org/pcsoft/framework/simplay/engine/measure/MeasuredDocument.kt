@@ -3,7 +3,7 @@ package org.pcsoft.framework.simplay.engine.measure
 import org.pcsoft.framework.simplay.engine.model.Document
 
 /**
- * A raw [org.pcsoft.framework.simplay.engine.model.Document] with its pages replaced by measured pages.
+ * A raw [Document] with its pages replaced by measured pages.
  *
  * `Document` has no pass-through properties to delegate (`pages` is replaced), so this is a plain
  * wrapper: the raw pages stay reachable via `raw.pages`. An empty document with no pages is
@@ -13,6 +13,6 @@ import org.pcsoft.framework.simplay.engine.model.Document
  * @property pages the measured pages of this document, in order.
  */
 class MeasuredDocument(
-    val raw: org.pcsoft.framework.simplay.engine.model.Document,
-    val pages: List<org.pcsoft.framework.simplay.engine.measure.MeasuredPage>,
+    val raw: Document,
+    val pages: List<MeasuredPage>,
 )
