@@ -7,9 +7,9 @@
 
 ## Implementierungspläne
 
-- IP-01 Balanced Line Breaking — `FP-002-IP-01-BalancedLineBreaking.md` (noch anzulegen)
-- IP-02 Break-Opportunity Line Breaking — `FP-002-IP-02-BreakOpportunityLineBreaking.md` (noch anzulegen)
-- IP-03 Explicit Break Line Breaking — `FP-002-IP-03-ExplicitBreakLineBreaking.md` (noch anzulegen)
+- IP-01 Balanced Line Breaking — `FP-002-IP-01-BalancedLineBreaking.md`
+- IP-02 Break-Opportunity Line Breaking — `FP-002-IP-02-BreakOpportunityLineBreaking.md`
+- IP-03 Explicit Break Line Breaking — `FP-002-IP-03-ExplicitBreakLineBreaking.md`
 
 ## Reihenfolge und Voraussetzungen
 

@@ -1,13 +1,15 @@
 # simPLay
 
 simPLay is a Kotlin framework for building simulations. The core is a Kotlin
-Multiplatform engine; dedicated JVM modules add integrations for JavaFX, Swing,
-PDF export and printing.
+Multiplatform engine; a Kotlin Multiplatform module adds console output and
+dedicated JVM modules add integrations for JavaFX, Swing, PDF export and
+printing.
 
 ## Modules
 
 | Module    | Type                   | Artifact           | Purpose                                  |
 |-----------|------------------------|--------------------|------------------------------------------|
+| `console` | Kotlin Multiplatform   | `simplay-console`  | Console output integration for the engine |
 | `engine`  | Kotlin Multiplatform   | `simplay-engine`   | Platform-independent simulation core     |
 | `fx`      | Kotlin JVM             | `simplay-fx`       | JavaFX integration for the engine        |
 | `j-pdf`   | Kotlin JVM             | `simplay-j-pdf`    | PDF export integration for the engine    |
@@ -19,8 +21,8 @@ The shared build logic is provided by convention plugins in `buildSrc`
 directory; the repository root contains no source code.
 
 The base package is `org.pcsoft.framework.simplay`; each module appends its own
-name (`...simplay.engine`, `...simplay.fx`, `...simplay.jpdf`,
-`...simplay.jprint`, `...simplay.swing`).
+name (`...simplay.console`, `...simplay.engine`, `...simplay.fx`,
+`...simplay.jpdf`, `...simplay.jprint`, `...simplay.swing`).
 
 ## Checkout and build
 
@@ -71,7 +73,7 @@ Build tasks relevant for consumers and maintainers:
 
 ## Implementation state
 
-* [x] Multi-module project layout (`engine`, `fx`, `j-pdf`, `j-print`, `swing`)
+* [x] Multi-module project layout (`console`, `engine`, `fx`, `j-pdf`, `j-print`, `swing`)
 * [ ] Simulation engine core (`engine`)
     * [x] Persistable raw document model with `kotlinx.serialization` wiring
     * [x] Non-persistable measured model
@@ -79,6 +81,7 @@ Build tasks relevant for consumers and maintainers:
       breaking, alignment, `FlowPage` continuation, `SinglePage` growth
     * [ ] End-to-end layout and persistence tests
     * [ ] Engine user documentation (MkDocs, KDoc alignment)
+* [ ] Console output integration (`console`)
 * [ ] JavaFX integration (`fx`)
 * [ ] PDF export integration (`j-pdf`)
 * [ ] Printing integration (`j-print`)
