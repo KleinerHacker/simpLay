@@ -8,14 +8,15 @@ Status: IN_PROGRESS
 |----|---------------------|--------|
 | IP-01 | FX Rendering Foundation | COMPLETED |
 | IP-02 | Canvas Renderer | COMPLETED |
-| IP-03 | Paper Sheet Component | NOT_STARTED |
-| IP-04 | Editing And Key Commands | NOT_STARTED |
-| IP-05 | Paper Component Styling | NOT_STARTED |
-| IP-06 | Documentation | NOT_STARTED |
+| IP-03 | Paper Sheet Component | COMPLETED |
+| IP-04 | Floating Overlays | NOT_STARTED |
+| IP-05 | Editing And Key Commands | NOT_STARTED |
+| IP-06 | Paper Component Styling | NOT_STARTED |
+| IP-07 | Documentation | NOT_STARTED |
 
 ## Overall Progress
 
-33%
+43%
 
 ## Notes
 
@@ -43,7 +44,33 @@ tab is filled with `CanvasDemoTab` (sample, unit scale, page gap, line-/word-
 break strategy, whole/single-page mode, canvas-size read-back).
 `./gradlew :engine:build :fx:build` is green.
 
-IP-03 depends on IP-01 and is unblocked and parallelizable with IP-02; IP-04
-(editing) and IP-05 (JavaFX CSS styling) both depend on IP-03 and are
-parallelizable with each other. IP-06 comes last and writes the three
-`docs/docs/fx/` pages.
+IP-03 is done: the `fx` module now exposes the public `PaperSheetView` (package
+`...fx.control`), a read-only `Control` that stacks a `Document`'s pages as sheets
+(white fill, grey border, drop-shadow rectangle) in a viewport-sized `Canvas`,
+scaled by `zoom` (clamped to `[minZoom, maxZoom]`) via `GraphicsContext.scale`,
+drawing only the pages in view (simple virtualisation) and driving a vertical
+`ScrollBar` whose `max` is `contentHeight*zoom - viewport`. Mouse drag selects
+text over the measured geometry (`DocumentTextIndex` + the IP-01 `hitTest`),
+double-click selects a word, `Ctrl+C` copies styled HTML + RTF + plain text;
+`contentSize` is a read-only output. The demo `Readonly` tab is filled with
+`ReadonlyDemoTab` (sample, outer margin, page gap, min/max/current zoom, zoom and
+selection read-back). `./gradlew :fx:build` is green. The internal `TextSelection`
+and `PaperSheetViewSkin` stay module-private; the canvas painting (virtualisation
+loop, sheet chrome, selection highlight, page text) sits in the internal
+`PaperSheetCanvasPainter` and the `renderPage` frame hook is left null;
+`contentSize` is `0 x 0` for a null document.
+
+Post-IP-03 follow-up (plan `FP-003-TextSelectionModel.md`, done): the selection is
+exposed through a public `TextSelectionModel` reached via `PaperSheetView.selectionModel`
+- read-only `text`, `startIndex` / `endIndex` / `length` / `empty`, `bounds` and
+  styled `runs` (`TextSelectionData`: family, size, bold, italic) - plus the
+`selectRange` / `selectAll` / `clearSelection` commands (a command issued before
+  the skin exists is buffered and replayed on skin init). `selectedText` and
+`selectionBounds` remain as delegates on the view. The `Readonly` demo tab gained
+`Select all` / `Clear` buttons and a range/run-count read-out.
+
+IP-04 (floating overlays, FXML-compatible), IP-05 (editing) and IP-06 (JavaFX CSS
+styling) all depend on IP-03 and are parallelizable with each other; IP-05
+optionally wires the `CARET` overlay trigger from IP-04. IP-07 comes last and
+writes the four `docs/docs/fx/` pages (canvas rendering, paper-sheet usage,
+floating overlays, styling).

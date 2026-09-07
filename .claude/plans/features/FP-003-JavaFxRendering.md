@@ -116,14 +116,16 @@ artifact.
 | ----- | ------------------------------ | ---------------------------------------------------------------------------------------------------- | ------------ |
 | IP-01 ✅ | FX Rendering Foundation (COMPLETED) | JavaFX `FontMeasureCalculator`, measured-tree draw walk, size computation, hit-testing helper; `src/demo` source set with an empty three-tab shell. | -            |
 | IP-02 ✅ | Canvas Renderer (COMPLETED)   | Public `Document`-only renderer drawing the whole document on one `Canvas` with dashed page breaks; `Canvas` demo tab with toolbar.  | IP-01        |
-| IP-03 | Paper Sheet Component          | Public scrollable, zoomable sheet `Control` with margins, page gaps and selectable/copyable text; `Readonly` demo tab with toolbar.    | IP-01        |
-| IP-04 | Editing And Key Commands       | Add caret, text editing, Ctrl+V and standard navigation commands to the paper component; `Read/Write` demo tab with toolbar.             | IP-03        |
-| IP-05 | Paper Component Styling         | Make the paper `Control` styleable through the standard JavaFX CSS mechanism (`-fx-` properties, default stylesheet, pseudo-classes).    | IP-03        |
-| IP-06 | Documentation                  | `docs/docs/fx/` pages: direct canvas rendering (incl. single-page), paper-sheet usage + shortcuts, paper-sheet styling.                 | IP-02, IP-03, IP-04, IP-05 |
+| IP-03 ✅ | Paper Sheet Component (COMPLETED) | Public scrollable, zoomable sheet `Control` with margins, page gaps and selectable/copyable text; `Readonly` demo tab with toolbar.    | IP-01        |
+| IP-04 | Floating Overlays              | FXML-compatible API for externally registered floating components shown, positioned and hidden on selection, paragraph-hover and page-hover triggers.  | IP-03        |
+| IP-05 | Editing And Key Commands       | Add caret, text editing, Ctrl+V and standard navigation commands to the paper component; `Read/Write` demo tab with toolbar.             | IP-03        |
+| IP-06 | Paper Component Styling         | Make the paper `Control` styleable through the standard JavaFX CSS mechanism (`-fx-` properties, default stylesheet, pseudo-classes).    | IP-03        |
+| IP-07 | Documentation                  | `docs/docs/fx/` pages: direct canvas rendering (incl. single-page), paper-sheet usage + shortcuts, floating overlays, paper-sheet styling.                 | IP-02, IP-03, IP-04, IP-05, IP-06 |
 
 IP-02 and IP-03 are independent of each other and parallelizable once IP-01 is
-done; IP-04 and IP-05 both build on IP-03 and are parallelizable with each
-other. IP-06 comes last and consolidates the documentation for all components.
+done; IP-04, IP-05 and IP-06 all build on IP-03 and are parallelizable with each
+other (IP-05 optionally wires the `CARET` trigger of IP-04 when present). IP-07
+comes last and consolidates the documentation for all components.
 
 ## 7. Implementation Plans
 
@@ -234,7 +236,34 @@ and the next begins.
 * Consumes IP-01. Provides the per-page render entry point that IP-03 may reuse
   for drawing a single sheet.
 
-### IP-03: Paper Sheet Component
+### IP-03: Paper Sheet Component ✅ (COMPLETED)
+
+**As built (deviations from plan)**
+
+* `TextSelection` and `PaperSheetViewSkin` ship module-private (`internal`), not
+  public; `PaperSheetView` is the only public type. The measured-position <->
+  `Document`-position mapping lives in the internal `DocumentTextIndex` (one
+  linear text axis over `pages -> blocks -> lines -> parts`).
+* The canvas painting (clear, per-page virtualisation loop, sheet chrome -
+  shadow rectangle, white fill, grey border -, selection highlight, then page
+  text via `CanvasRenderer.renderPage`) lives in the internal
+  `PaperSheetCanvasPainter`, not in the skin; the `renderPage` frame-decorator
+  hook is left `null`. The `segmentSpanX` glyph-span helper shared by the painter
+  and the skin's `computeSelectionBounds` is a free function in `fx.internal`.
+* The skin measures with a plain `RenderConfiguration()`; no `PaperSheetView`
+  config subclass. Page sizes come from `MeasuredPage.effectiveSize` directly.
+* `contentSize` is `0 x 0` for a `null`/empty document (not `2 * outerMargin`).
+* Virtualisation is a viewport-sized `Canvas` redrawn per change, painting only
+  pages whose band intersects the viewport; zoom is a `GraphicsContext.scale`
+  with selection geometry scaled to match, no re-measure.
+* `selectionBounds` is delivered already in IP-03 (IP-04 needs it); the
+  `hoveredParagraph` / `hoveredPage` read-only properties are deferred to IP-04.
+* Follow-up (post-IP-03, plan `FP-003-TextSelectionModel.md`, done): the selection
+  is exposed through a public `TextSelectionModel` (`selectionModel` property) with
+  `text`, `startIndex` / `endIndex` / `length` / `empty`, `bounds`, styled `runs`
+  (`TextSelectionData`: family, size, bold, italic) and the `selectRange` /
+  `selectAll` / `clearSelection` commands. `selectedText` / `selectionBounds` stay
+  as delegates. `Ctrl+C` now copies styled HTML + RTF + plain text.
 
 **Objective**
 
@@ -261,11 +290,45 @@ the component's readonly mode: selectable text, no caret.
 
 **Interfaces to Other Plans**
 
-* Provides to IP-04 and IP-05: the `Control` class, its skin, the selection
-  model and the measured-position <-> `Document`-position mapping. IP-04 extends
-  it with editing, IP-05 with CSS-styleable properties.
+* Provides to IP-04, IP-05 and IP-06: the `Control` class, its skin, the
+  selection model, `selectionBounds` and the measured-position <->
+  `Document`-position mapping. IP-04 adds the floating-overlay API, IP-05 adds
+  editing, IP-06 adds CSS-styleable properties - all on the same class.
 
-### IP-04: Editing And Key Commands
+### IP-04: Floating Overlays
+
+**Objective**
+
+Give the paper component an FXML-compatible API for externally registered
+floating components. The `PaperSheetView` shows, positions and hides them when a
+trigger fires: text selection present/cleared, mouse over a paragraph, mouse over
+a sheet. A `CARET` trigger constant exists but stays inert until IP-05.
+
+**Scope**
+
+* In: `FloatingOverlay` bean (`content`, `trigger`, `anchor`, `offsetX/Y`,
+  `autoHide`) with a no-arg constructor, `FloatingOverlayTrigger` enum,
+  `PaperSheetView.getFloatingOverlays()` observable list fillable from FXML,
+  per-overlay read-only fields (`active`, `activeBounds`, `activeIndex`,
+  `activeText`, `activeDocumentRange`) bindable via `${overlayId.prop}`,
+  `onShown`/`onHidden` handlers, read-only `hoveredParagraph`/`hoveredPage`
+  (+bounds) on the control, skin overlay layer with trigger detection,
+  anchor+offset positioning, scroll/zoom tracking, viewport-edge clamping,
+  `Readonly` demo overlays, headless tests incl. an `FXMLLoader` test.
+* Out: the `CARET` trigger logic (IP-05), CSS styling of overlays (IP-06), a
+  layout manager for many overlays sharing one anchor.
+
+**Dependencies**
+
+* Requires IP-03 (control, skin, selection model, `selectionBounds`, position
+  mapping) and the IP-01 draw walk / hit-testing.
+
+**Interfaces to Other Plans**
+
+* Provides the overlay API that IP-05 extends with the `CARET` trigger and IP-06
+  makes CSS-styleable; IP-07 documents it.
+
+### IP-05: Editing And Key Commands
 
 **Objective**
 
@@ -289,12 +352,14 @@ Readonly stays exactly the IP-03 behaviour.
 **Dependencies**
 
 * Requires IP-03 (component, skin, selection model, position mapping).
+* Optionally uses IP-04 to wire the `CARET` overlay trigger.
 
 **Interfaces to Other Plans**
 
-* Consumes IP-03 and IP-01. Provides nothing to later plans in this feature.
+* Consumes IP-03 and IP-01; optionally IP-04. Provides nothing to later plans in
+  this feature.
 
-### IP-05: Paper Component Styling
+### IP-06: Paper Component Styling
 
 **Objective**
 
@@ -309,18 +374,20 @@ stylesheet without touching Kotlin.
   line), a default stylesheet returned by `getUserAgentStylesheet`, a style
   class and relevant pseudo-classes, skin reacting to style changes, tests.
 * In: a stylesheet switcher in the `Readonly`/`Read/Write` demo toolbars.
+* In: a `paper-sheet-overlay` style class for the IP-04 overlay container when present.
 * Out: styling the `Canvas` renderer, theming API beyond JavaFX CSS, FXML.
 
 **Dependencies**
 
-* Requires IP-03 (the `Control` and its skin).
+* Requires IP-03 (the `Control` and its skin); optionally IP-04 for the overlay
+  style class.
 
 **Interfaces to Other Plans**
 
-* Consumes IP-03. May overlap the IP-04 skin; the two coordinate on the skin
+* Consumes IP-03. May overlap the IP-05 skin; the two coordinate on the skin
   class.
 
-### IP-06: Documentation
+### IP-07: Documentation
 
 **Objective**
 
@@ -334,7 +401,8 @@ to style it.
   values, `Canvas` sizing, dynamic-growth outcome, unit scaling); a paper-sheet
   usage page (all properties and settings, readonly/normal mode, integration
   into a scene, loading and saving a `Document`, selection/clipboard) with a
-  table of supported shortcuts; a paper-sheet styling page (style class,
+  table of supported shortcuts; a floating-overlays page (API, triggers, FXML
+  declaration, binding fields, events); a paper-sheet styling page (style class,
   `-fx-` properties, pseudo-classes, default stylesheet, override example);
   `mkdocs.yml` navigation entries.
 * In: keeping the pages consistent with the `project-docs` skill.
@@ -343,25 +411,26 @@ to style it.
 
 **Dependencies**
 
-* Requires IP-02, IP-03, IP-04 and IP-05 - it documents their final surface.
+* Requires IP-02, IP-03, IP-04, IP-05 and IP-06 - it documents their final surface.
 
 **Interfaces to Other Plans**
 
-* Consumes the public API of IP-02 through IP-05. Provides nothing back.
+* Consumes the public API of IP-02 through IP-06. Provides nothing back.
   Terminal plan.
 
 ## 8. Dependency Graph
 
 ```text
 IP-01 ✅
-├── IP-02 ✅ ──────────┐
-└── IP-03              │
-    ├── IP-04 ─────────┤
-    └── IP-05 ─────────┤
-                       └── IP-06
+├── IP-02 ✅ ──────────────┐
+└── IP-03 ✅               │
+    ├── IP-04 ─────────────┤
+    ├── IP-05 (opt. IP-04) ┤
+    └── IP-06 ─────────────┤
+                           └── IP-07
 ```
 
-Completed plans: IP-01, IP-02.
+Completed plans: IP-01, IP-02, IP-03.
 
 ## 9. Risks and Open Questions
 
@@ -369,7 +438,7 @@ Completed plans: IP-01, IP-02.
   up front from `documentSize` (IP-02 spike).
 * Very tall documents may exceed the practical `Canvas` pixel limit; whether
   IP-02 needs tiling or an explicit size cap.
-* `engine` raw model may be immutable with no edit API; IP-04 must define how an
+* `engine` raw model may be immutable with no edit API; IP-05 must define how an
   edited `Document` is produced and may need user approval for an `engine`
   change.
 * Character-offset hit-testing accuracy depends on measuring sub-word glyph
@@ -378,7 +447,9 @@ Completed plans: IP-01, IP-02.
 * Whether the paper `Control` should virtualize pages for large documents or
   render all sheets eagerly.
 * Which visual values become CSS-styleable vs. stay plain properties, and how
-  IP-04 and IP-05 share the single skin class without conflicts.
+  IP-04, IP-05 and IP-06 share the single skin class without conflicts.
+* Accuracy of paragraph/sheet hover hit-testing for the overlay triggers, and
+  overlay flicker on rapid hover changes (IP-04).
 * TestFX headless setup on the CI runners (Monocle) - confirm with the
   `ci-pipeline` skill.
 * Wiring a `src/demo` source set with the JavaFX Gradle plugin and a `run` task,
@@ -400,6 +471,9 @@ Completed plans: IP-01, IP-02.
   margin and page gap are configurable.
 * Text in the paper component can be selected with the mouse and copied with
   Ctrl+C.
+* Externally registered floating components - also when declared in FXML - are
+  shown, hidden and positioned on selection, paragraph-hover and sheet-hover, and
+  follow scroll and zoom.
 * In readonly mode the component shows no caret; switching to normal mode adds
   the caret and editing, and readonly then behaves exactly as after IP-03.
 * With editing enabled, the component accepts typing, Ctrl+V, and
@@ -410,7 +484,7 @@ Completed plans: IP-01, IP-02.
   stylesheet.
 * The canvas renderer can draw a single selected `Document` page, and the paper
   component reuses that per-page path.
-* `docs/docs/fx/` has three pages - direct canvas rendering (incl. single-page),
-  paper-sheet usage with a shortcut table, paper-sheet styling - linked in
-  `mkdocs.yml`.
+* `docs/docs/fx/` has four pages - direct canvas rendering (incl. single-page),
+  paper-sheet usage with a shortcut table, floating overlays, paper-sheet styling
+  - linked in `mkdocs.yml`.
 * Each implementation plan ships with its own tests; all are green.

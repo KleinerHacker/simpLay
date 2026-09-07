@@ -23,8 +23,10 @@ import javafx.stage.Stage
 /**
  * Demo application for the `fx` module. Hosts a [TabPane] with the tabs `Canvas`, `Readonly` and
  * `Read/Write`. The `Canvas` tab shows the [org.pcsoft.framework.simplay.fx.canvas.CanvasDocumentRenderer]
- * via [CanvasDemoTab]; the remaining tabs stay empty shells - a [ToolBar] placeholder on top, an
- * empty content area - that the later implementation plans fill with their component and controls.
+ * via [CanvasDemoTab]; the `Readonly` tab shows the
+ * [org.pcsoft.framework.simplay.fx.control.PaperSheetView] via [ReadonlyDemoTab]; the `Read/Write`
+ * tab stays an empty shell - a [ToolBar] placeholder on top, an empty content area - that a later
+ * implementation plan fills with its component and controls.
  */
 class DemoApp : Application() {
 
@@ -33,7 +35,7 @@ class DemoApp : Application() {
             tabClosingPolicy = TabPane.TabClosingPolicy.UNAVAILABLE
             tabs.addAll(
                 Tab("Canvas", CanvasDemoTab()),
-                emptyTab("Readonly"),
+                Tab("Readonly", ReadonlyDemoTab()),
                 emptyTab("Read/Write"),
             )
         }

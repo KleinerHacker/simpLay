@@ -38,7 +38,31 @@ the page count through `pageCount`). The configuration lambda runs over
 `CanvasRenderConfiguration` (`unitScale`, `pageGap`, and the shared
 `lineBreakerStrategy` / `wordBreakerStrategy`).
 
+For a ready-made, scrollable and zoomable view, `PaperSheetView` in
+`org.pcsoft.framework.simplay.fx.control` takes a `Document` and shows its pages
+as sheets with a border and a drop shadow:
+
+```kotlin
+val view = PaperSheetView().apply {
+    document = myDocument
+    outerMargin = 24.0
+    pageGap = 16.0
+    minZoom = 0.5
+    maxZoom = 3.0
+    zoom = 1.0
+}
+```
+
+`zoom` is always kept within `[minZoom, maxZoom]`. Text is selected with the
+mouse and copied with `Ctrl+C` as styled HTML, RTF and plain text. The read-only
+`contentSize` property reports the laid-out size; the selection is exposed
+through `selectionModel` (a `TextSelectionModel` with `text`, `startIndex` /
+`endIndex` / `length`, `bounds`, the styled `runs`, and the `selectRange` /
+`selectAll` / `clearSelection` commands), with `selectedText` and
+`selectionBounds` kept as convenience delegates. There is no caret - editing is
+added by a later plan.
+
 !!! note
 
     A full usage page for the canvas renderer and the paper-sheet component
-    follows with the `fx` documentation plan (IP-06).
+    follows with the `fx` documentation plan (IP-07).

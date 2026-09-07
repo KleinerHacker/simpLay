@@ -87,7 +87,10 @@ Build tasks relevant for consumers and maintainers:
       walk, size and hit-test helpers)
     * [x] `CanvasDocumentRenderer`: whole-document and single-page rendering onto a
       `Canvas` with dashed page breaks and configurable unit scale / page gap
-    * [ ] Scrollable, zoomable paper-sheet component with text selection
+    * [x] Scrollable, zoomable paper-sheet component (`PaperSheetView`) with sheet
+      chrome, page virtualisation, mouse text selection, styled `Ctrl+C` copy and
+      an observable `TextSelectionModel` (range, bounds, styled runs, commands)
+    * [ ] Floating overlay API for the paper-sheet component (FXML-compatible)
     * [ ] In-place editing with standard key bindings
     * [ ] JavaFX CSS styling for the paper-sheet component
     * [ ] `fx` user documentation

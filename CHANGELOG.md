@@ -14,6 +14,27 @@ excluded.
 
 ### Added
 
+- `fx`: `PaperSheetView` (package `org.pcsoft.framework.simplay.fx.control`), a
+  read-only JavaFX `Control` that renders a `Document` as physical-looking sheets
+  - each with a border and a drop shadow - stacked vertically in a scrollable,
+  zoomable viewport. Only the pages currently in the viewport are drawn (simple
+  page virtualisation), and `zoom` is always kept within `[minZoom, maxZoom]`.
+  Layout is controlled by `outerMargin` and `pageGap`. Text is selected with the
+  mouse (drag to extend, double-click for a word), the highlight also covering
+  the whitespace between selected words, and copied to the system clipboard with
+  `Ctrl+C` as plain text plus styled HTML and RTF that carry the font (family,
+  size, weight, slant) so a rich paste target keeps the text style; there is no
+  caret. The pointer shows a text (I-beam)
+  cursor while it is over a page's content area. The read-only `contentSize`
+  property reports the laid-out size; the selection is exposed through
+  `selectionModel`, a `TextSelectionModel` carrying the selected `text`, the
+  character range (`startIndex` / `endIndex` / `length`, `empty`), the viewport
+  `bounds` and the styled `runs` (one per covered text part, with font family,
+  size, bold and italic), and offering the `selectRange`, `selectAll` and
+  `clearSelection` commands. `selectedText` and `selectionBounds` remain as
+  convenience delegates. The demo's `Readonly` tab hosts the control with a
+  toolbar for every setting plus `Select all` / `Clear` buttons and a live
+  read-out of the selection range and run count.
 - `fx`: `CanvasDocumentRenderer` (package `org.pcsoft.framework.simplay.fx.canvas`)
   - the first public entry point of the module. Created for one fixed document
   through `CanvasDocumentRenderer.for(document) { /* configuration */ }`, which
