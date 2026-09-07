@@ -115,7 +115,7 @@ artifact.
 | ID    | Implementation Plan            | Objective                                                                                             | Dependencies |
 | ----- | ------------------------------ | ---------------------------------------------------------------------------------------------------- | ------------ |
 | IP-01 ✅ | FX Rendering Foundation (COMPLETED) | JavaFX `FontMeasureCalculator`, measured-tree draw walk, size computation, hit-testing helper; `src/demo` source set with an empty three-tab shell. | -            |
-| IP-02 | Canvas Renderer                | Public `Document`-only renderer drawing the whole document on one `Canvas` with dashed page breaks; `Canvas` demo tab with toolbar.  | IP-01        |
+| IP-02 ✅ | Canvas Renderer (COMPLETED)   | Public `Document`-only renderer drawing the whole document on one `Canvas` with dashed page breaks; `Canvas` demo tab with toolbar.  | IP-01        |
 | IP-03 | Paper Sheet Component          | Public scrollable, zoomable sheet `Control` with margins, page gaps and selectable/copyable text; `Readonly` demo tab with toolbar.    | IP-01        |
 | IP-04 | Editing And Key Commands       | Add caret, text editing, Ctrl+V and standard navigation commands to the paper component; `Read/Write` demo tab with toolbar.             | IP-03        |
 | IP-05 | Paper Component Styling         | Make the paper `Control` styleable through the standard JavaFX CSS mechanism (`-fx-` properties, default stylesheet, pseudo-classes).    | IP-03        |
@@ -173,7 +173,40 @@ inside a measured part to a character offset.
 * Provides the `src/demo` source set, `run` task and the three-tab shell each
   later plan fills with its tab and toolbar.
 
-### IP-02: Canvas Renderer
+### IP-02: Canvas Renderer ✅ (COMPLETED)
+
+**As built (deviations from plan)**
+
+* The shared render configuration and the measure/size helpers were lifted into
+  the `engine` module (agreed special case, the only `engine` change in FP-003):
+  `RenderConfiguration` (open base class with `lineBreakerStrategy` /
+  `wordBreakerStrategy`) plus the extensions `RenderConfiguration.createEngine`,
+  `Document.measure(measurer, config)`, `MeasuredDocument.documentSize(gap)` and
+  `MeasuredPage.pageSize()`. `fx` calls those engine extensions directly; the old
+  `fx` `RenderSizing` and `DocumentMeasuring` wrappers were dropped - the renderer
+  measures via `document.measure(FxFontMeasureCalculator(), config)`.
+* `CanvasRenderConfiguration` derives from the `engine` `RenderConfiguration`.
+* `CanvasDocumentRenderer` binds one document at creation via the factory
+  `CanvasDocumentRenderer.`for`(document) { unitScale = ...; pageGap = ... }`
+  (Kotlin builder lambda, not a fluent Java-style builder). The document is
+  measured and the whole canvas layout (`MeasuredCanvasData`) computed once in the
+  factory; the render / size methods no longer take a `Document`.
+* Added `pageCount(document)` as a public sibling of the size helpers (needed by
+  the demo page spinner).
+* The surface-free layout maths lives in an internal `MeasuredCanvasData`; the
+  dashed line is drawn via the `PageSeparatorDecorator` seam in the middle of the
+  gap band. `documentCanvasSize` is a `javafx.geometry.Dimension2D` property; the
+  per-page sizes are exposed through the nested `PageCanvasSizes` accessor as
+  `pageCanvasSizes[pageIndex]` (`operator get`, plus `count`).
+* The IP-01 draw walk (`RenderWalk.kt`, top-level `walkPage` / `renderPage` /
+  `renderDocument` plus the `PageFrameDecorator` / `PageSeparatorDecorator`
+  interfaces) was moved into an internal `object CanvasRenderer`
+  (`CanvasRenderer.kt`); the interfaces are now nested in it. `RenderWalkTest`
+  became `CanvasRendererTest`.
+* Spike result: a `Canvas` can be resized through `width` / `height` at any time,
+  but a resize clears it and very tall documents hit the backend texture limit
+  (commonly a few thousand to `16384` px per axis) and heap pressure; the
+  renderer therefore pre-sizes from `documentCanvasSize` and does no tiling.
 
 **Objective**
 
@@ -321,12 +354,14 @@ to style it.
 
 ```text
 IP-01 ✅
-├── IP-02 ─────────────┐
+├── IP-02 ✅ ──────────┐
 └── IP-03              │
     ├── IP-04 ─────────┤
     └── IP-05 ─────────┤
                        └── IP-06
 ```
+
+Completed plans: IP-01, IP-02.
 
 ## 9. Risks and Open Questions
 

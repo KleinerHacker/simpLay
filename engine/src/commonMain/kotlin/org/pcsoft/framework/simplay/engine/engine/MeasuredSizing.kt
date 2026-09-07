@@ -10,27 +10,32 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.fx.internal
+package org.pcsoft.framework.simplay.engine.engine
 
 import org.pcsoft.framework.simplay.engine.geometry.Size
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.engine.measure.MeasuredPage
 
 /**
- * The size of a single measured [page]; identical to [MeasuredPage.effectiveSize].
+ * The size a single measured [MeasuredPage] occupies; identical to [MeasuredPage.effectiveSize].
+ *
+ * Provided as a renderer-agnostic helper so every renderer computes a page box the same way.
  */
-internal fun pageSize(page: MeasuredPage): Size = page.effectiveSize
+fun MeasuredPage.pageSize(): Size = effectiveSize
 
 /**
- * The size of a whole [document] when its pages are stacked vertically with [gap] layout units
- * between neighbouring pages.
+ * The size of a whole [MeasuredDocument] when its pages are stacked vertically with [gap] layout
+ * units between neighbouring pages.
  *
  * Width is the widest page, height is the sum of all page heights plus one [gap] per page boundary
  * (never before the first or after the last page). An empty document has size `0 x 0`.
+ *
+ * @param gap the vertical space inserted between two consecutive pages, in layout units.
+ * @return the stacked document size.
  */
-internal fun documentSize(document: MeasuredDocument, gap: Double): Size {
-    if (document.pages.isEmpty()) return Size(0.0, 0.0)
-    val width = document.pages.maxOf { it.effectiveSize.width }
-    val height = document.pages.sumOf { it.effectiveSize.height } + gap * (document.pages.size - 1)
+fun MeasuredDocument.documentSize(gap: Double): Size {
+    if (pages.isEmpty()) return Size(0.0, 0.0)
+    val width = pages.maxOf { it.effectiveSize.width }
+    val height = pages.sumOf { it.effectiveSize.height } + gap * (pages.size - 1)
     return Size(width, height)
 }

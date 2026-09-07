@@ -14,6 +14,7 @@ package org.pcsoft.framework.simplay.fx.internal
 
 import kotlin.test.assertEquals
 import org.junit.jupiter.api.Test
+import org.pcsoft.framework.simplay.engine.engine.measure
 import org.pcsoft.framework.simplay.engine.geometry.Margins
 import org.pcsoft.framework.simplay.engine.geometry.Size
 import org.pcsoft.framework.simplay.engine.measure.MeasuredPage
@@ -26,9 +27,9 @@ import org.pcsoft.framework.simplay.engine.model.TextStyle
 import org.pcsoft.framework.simplay.fx.JavaFxTestBase
 
 /**
- * Tests for the [walkPage] measured-tree walk, recording the emitted draw calls.
+ * Tests for the [CanvasRenderer.walkPage] measured-tree walk, recording the emitted draw calls.
  */
-class RenderWalkTest : JavaFxTestBase() {
+class CanvasRendererTest : JavaFxTestBase() {
 
     private data class Emitted(val text: String, val x: Double, val baselineY: Double)
 
@@ -46,12 +47,12 @@ class RenderWalkTest : JavaFxTestBase() {
                 ),
             ),
         )
-        return onFxThread { measureDocument(document) }.pages.single()
+        return onFxThread { document.measure(FxFontMeasureCalculator()) }.pages.single()
     }
 
     private fun record(page: MeasuredPage, originX: Double = 0.0, originY: Double = 0.0): List<Emitted> {
         val emitted = mutableListOf<Emitted>()
-        walkPage(
+        CanvasRenderer.walkPage(
             page = page,
             originX = originX,
             originY = originY,

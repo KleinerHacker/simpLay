@@ -22,15 +22,20 @@ import javafx.stage.Stage
 
 /**
  * Demo application for the `fx` module. Hosts a [TabPane] with the tabs `Canvas`, `Readonly` and
- * `Read/Write`. Each tab is an empty shell - a [ToolBar] placeholder on top, an empty content area -
- * that the later implementation plans fill with their component and controls.
+ * `Read/Write`. The `Canvas` tab shows the [org.pcsoft.framework.simplay.fx.canvas.CanvasDocumentRenderer]
+ * via [CanvasDemoTab]; the remaining tabs stay empty shells - a [ToolBar] placeholder on top, an
+ * empty content area - that the later implementation plans fill with their component and controls.
  */
 class DemoApp : Application() {
 
     override fun start(stage: Stage) {
         val tabs = TabPane().apply {
             tabClosingPolicy = TabPane.TabClosingPolicy.UNAVAILABLE
-            tabs.addAll(emptyTab("Canvas"), emptyTab("Readonly"), emptyTab("Read/Write"))
+            tabs.addAll(
+                Tab("Canvas", CanvasDemoTab()),
+                emptyTab("Readonly"),
+                emptyTab("Read/Write"),
+            )
         }
 
         stage.title = "SimpLay - fx demo"

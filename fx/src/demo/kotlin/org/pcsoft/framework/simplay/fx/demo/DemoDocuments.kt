@@ -29,6 +29,9 @@ import org.pcsoft.framework.simplay.engine.model.TextStyle
  */
 object DemoDocuments {
 
+    /** Body paragraphs in the [novella] sample; tuned so the document is about 150 A4 pages. */
+    private const val NOVELLA_PARAGRAPHS = 2300
+
     private val a4 = PageLayout(
         size = Size(width = 595.0, height = 842.0),
         margins = Margins(left = 60.0, top = 60.0, right = 60.0, bottom = 60.0),
@@ -62,7 +65,23 @@ object DemoDocuments {
                 layout = a4,
                 blocks = buildList {
                     add(TextBlock.of("A Longer Story", heading))
-                    repeat(12) { add(TextBlock.of(lorem, body)) }
+                    repeat(20) { add(TextBlock.of(lorem, body)) }
+                },
+            ),
+        ),
+    )
+
+    /**
+     * A novella-length flow document of roughly 150 A4 pages, meant as a rendering performance
+     * test. The exact page count depends on the platform font metrics.
+     */
+    val novella: Document = Document(
+        pages = listOf(
+            FlowPage(
+                layout = a4,
+                blocks = buildList {
+                    add(TextBlock.of("A Novella", heading))
+                    repeat(NOVELLA_PARAGRAPHS) { add(TextBlock.of(lorem, body)) }
                 },
             ),
         ),
@@ -73,18 +92,17 @@ object DemoDocuments {
         pages = listOf(
             SinglePage(
                 layout = a4,
-                blocks = listOf(
-                    TextBlock.of("Single Page", heading),
-                    TextBlock.of(lorem, body),
-                    TextBlock.of(lorem, body),
-                ),
+                blocks = buildList {
+                    add(TextBlock.of("Single Page", heading))
+                    repeat(20) { add(TextBlock.of(lorem, body)) }
+                },
             ),
             FlowPage(
                 layout = a4,
-                blocks = listOf(
-                    TextBlock.of("Flow Page", heading),
-                    TextBlock.of(lorem, body),
-                ),
+                blocks = buildList {
+                    add(TextBlock.of("Flow Page", heading))
+                    repeat(20) { add(TextBlock.of(lorem, body)) }
+                },
             ),
         ),
     )
@@ -94,5 +112,6 @@ object DemoDocuments {
         "Short" to short,
         "Multi-page" to multiPage,
         "Mixed" to mixed,
+        "Novella (~150 pages)" to novella,
     )
 }

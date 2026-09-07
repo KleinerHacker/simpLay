@@ -14,10 +14,32 @@ excluded.
 
 ### Added
 
+- `fx`: `CanvasDocumentRenderer` (package `org.pcsoft.framework.simplay.fx.canvas`)
+  - the first public entry point of the module. Created for one fixed document
+  through `CanvasDocumentRenderer.for(document) { /* configuration */ }`, which
+  measures the document and computes the whole canvas layout once, up front. It
+  paints that document onto a JavaFX `Canvas`, either the whole document with a
+  dashed page-break line between pages (`renderDocument`) or a single page
+  (`renderPage`); `documentCanvasSize`, the index-addressable
+  `pageCanvasSizes[pageIndex]` and `pageCount` report the geometry. The
+  configuration lambda runs over `CanvasRenderConfiguration`
+  (`unitScale`, `pageGap`, plus the shared `lineBreakerStrategy` /
+  `wordBreakerStrategy`). A `Canvas` can be resized through its `width` /
+  `height` at any time, but very tall documents hit the backend texture limit
+  and a resize clears the canvas, so the renderer sizes the canvas up front and
+  does no tiling.
+- `engine`: `RenderConfiguration` (package `org.pcsoft.framework.simplay.engine.engine`),
+  a mutable, renderer-agnostic base configuration carrying the
+  `lineBreakerStrategy` and `wordBreakerStrategy` a measure step needs, plus the
+  `RenderConfiguration.createEngine(measurer)`, `Document.measure(measurer, config)`,
+  `MeasuredDocument.documentSize(gap)` and `MeasuredPage.pageSize()` extensions
+  so any renderer builds the engine and computes page/document boxes the same
+  way.
+
 - `fx`: module-internal JavaFX rendering foundation - `FxFontMeasureCalculator`
   (a `FontMeasureCalculator` backed by the JavaFX text stack), the measured-tree
-  draw walk onto a `GraphicsContext`, `pageSize` / `documentSize` helpers and a
-  glyph-level hit-testing helper. No public entry point yet.
+  draw walk onto a `GraphicsContext` and a glyph-level hit-testing helper. No
+  public entry point yet.
 
 - `engine`: raw document model in `...engine.model` - `Document`, `FlowPage` /
   `SinglePage`, `PageLayout`, `TextBlock` with `TextBlock.of(text, style)` and a

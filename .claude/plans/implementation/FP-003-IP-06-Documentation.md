@@ -65,7 +65,7 @@ Status: `.claude/plans/features/FP-003-JavaFxRendering-Status.md`
 
 * `project-docs`-Skill laden.
 * `canvas-rendering.md` mit Minimalbeispiel `Document` → `Canvas` schreiben.
-* Voll- und Einzelseiten-Rendering, `CanvasRenderConfig`, `documentCanvasSize`/`pageCanvasSize` erklären.
+* Voll- und Einzelseiten-Rendering, `CanvasDocumentRenderer.for(document) { ... }`, `CanvasRenderConfiguration`, `documentCanvasSize` und `pageCanvasSizes[pageIndex]` erklären.
 * Dynamic-Growth-Ergebnis und Pixel-Limit-Hinweis aufnehmen; Unit-Scaling beschreiben.
 
 ### Aufgabe 2 — Seite Paper sheet component

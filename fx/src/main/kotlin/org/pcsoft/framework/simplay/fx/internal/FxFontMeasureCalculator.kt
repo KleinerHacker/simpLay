@@ -35,7 +35,7 @@ import org.pcsoft.framework.simplay.engine.model.FontWeight
  * [javafx.application.Application] is running, or a headless toolkit such as Monocle was started for
  * tests). No internal `com.sun.*` API is used.
  */
-class FxFontMeasureCalculator : FontMeasureCalculator {
+internal open class FxFontMeasureCalculator : FontMeasureCalculator {
 
     private val cache = HashMap<CacheKey, TextMetrics>()
     private val fontCache = HashMap<Font, FxFont>()

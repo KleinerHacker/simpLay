@@ -83,6 +83,14 @@ Build tasks relevant for consumers and maintainers:
     * [ ] Engine user documentation (MkDocs, KDoc alignment)
 * [ ] Console output integration (`console`)
 * [ ] JavaFX integration (`fx`)
+    * [x] Internal rendering foundation (JavaFX font measuring, measured-tree draw
+      walk, size and hit-test helpers)
+    * [x] `CanvasDocumentRenderer`: whole-document and single-page rendering onto a
+      `Canvas` with dashed page breaks and configurable unit scale / page gap
+    * [ ] Scrollable, zoomable paper-sheet component with text selection
+    * [ ] In-place editing with standard key bindings
+    * [ ] JavaFX CSS styling for the paper-sheet component
+    * [ ] `fx` user documentation
 * [ ] PDF export integration (`j-pdf`)
 * [ ] Printing integration (`j-print`)
 * [ ] Swing integration (`swing`)

@@ -26,6 +26,11 @@ val measured = engine.measure(document)
 `SimpLayEngine.builder(measurer)` takes the mandatory `FontMeasureCalculator` and
 returns a `Builder`. The strategies are fixed once `build()` is called.
 
+A renderer that keeps its measure settings in a `RenderConfiguration` can skip
+the builder and use `config.createEngine(measurer)` or the one-shot
+`document.measure(measurer, config)` instead; see
+[Implementation](implementation.md#measuring-from-a-renderconfiguration).
+
 ## The FontMeasureCalculator contract
 
 `FontMeasureCalculator` is a `fun interface` with one method:
