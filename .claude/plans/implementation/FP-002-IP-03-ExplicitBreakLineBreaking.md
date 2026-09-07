@@ -1,57 +1,54 @@
 # FP-002 / IP-03: Explicit Break Line Breaking
 
 Feature Plan: `.claude/plans/features/FP-002-AdvancedLineBreaking.md`
-Status file: `.claude/plans/features/FP-002-AdvancedLineBreaking-Status.md`
+Status: `.claude/plans/features/FP-002-AdvancedLineBreaking-Status.md`
 
-## 1. Objective
+## Ziel
 
-Introduce an explicit line-break token in the raw model (`TextBreak`, a `TextPart`) that the
-tokenizer produces for `\n`, and add `ExplicitBreakLineBreakerStrategy` that breaks lines only at
-those tokens and never on width. Opt-in via `SimpLayEngine.Builder`; default unchanged. The new
-token must survive all existing serialization round-trips.
+* Explizites Umbruch-Token `TextBreak` (`TextPart`) im Rohmodell; Tokenizer erzeugt es für `\n`.
+* `ExplicitBreakLineBreakerStrategy`, die nur an diesen Tokens umbricht, nie auf Breite; Opt-in über Builder.
+* Neues Token übersteht alle vorhandenen Serialisierungs-Round-Trips.
 
-## 2. Scope
+## Umfang
 
-### In scope
+### Enthalten
 
-* New sealed subtype `TextBreak` of `TextPart` in `engine.model`, with `@SerialName("break")`.
-* Tokenizer change: a newline (`\n`, and `\r\n` collapsed to one) emits one `TextBreak`; other
-  whitespace behaviour unchanged.
-* `kotlinx.serialization` wiring for JSON / YAML / XML plus JVM (Java) serialization.
-* Counting (`wordCount`, `symbolCount`, `charCount`) and `TextBlock.toString()` handling.
-* Measured-model pass-through: `TextBreak` is not measured, produces no `MeasuredTextPart`.
-* `ExplicitBreakLineBreakerStrategy` in `engine.engine`, builder-selectable.
-* Tests: tokenizer, counting, `toString`, JSON/YAML/XML/JVM round-trips, strategy behaviour,
-  builder swap.
+* Neuer versiegelter Untertyp `TextBreak` von `TextPart` in `engine.model`, mit `@SerialName("break")`.
+* Tokenizer-Änderung: Newline (`\n`, `\r\n` zu einem zusammengefasst) erzeugt ein `TextBreak`;
+  übriges Whitespace-Verhalten unverändert.
+* `kotlinx.serialization`-Verdrahtung für JSON / YAML / XML plus JVM-(Java-)Serialisierung.
+* Zählung (`wordCount`, `symbolCount`, `charCount`) und `TextBlock.toString()`-Behandlung.
+* Measured-Modell-Durchreichung: `TextBreak` wird nicht gemessen, erzeugt kein `MeasuredTextPart`.
+* `ExplicitBreakLineBreakerStrategy` in `engine.engine`, builder-wählbar.
+* Tests: Tokenizer, Zählung, `toString`, JSON/YAML/XML/JVM-Round-Trips, Strategieverhalten, Builder-Swap.
 
-### Out of scope
+### Nicht enthalten
 
-* Width-based wrapping inside `ExplicitBreakLineBreakerStrategy` (it never wraps on width).
-* Hyphenation, balanced breaking, break-opportunity classes.
-* A public API on `TextBlock.of` to inject breaks other than via `\n` in the source text.
-* Rendering-side changes beyond "no measured part emitted".
+* Breitenbasiertes Umbrechen in `ExplicitBreakLineBreakerStrategy` (bricht nie auf Breite).
+* Silbentrennung, balanciertes Umbrechen, Break-Opportunity-Klassen.
+* Öffentliche API an `TextBlock.of`, um Umbrüche anders als über `\n` im Quelltext einzufügen.
+* Renderseitige Änderungen über „kein Measured-Part erzeugt" hinaus.
 
-## 3. Dependencies
+## Abhängigkeiten
 
-* Independent within FP-002 (parallel to IP-01 and IP-02).
-* External precondition: FP-001/IP-03 seam.
-* Touches `engine.model` (a sealed hierarchy owned by FP-001/IP-01) — coordinate with the
-  raw-model owners; this is the only FP-002 plan that changes the raw model.
+* Unabhängig innerhalb FP-002, parallel zu IP-01 und IP-02.
+* Externe Voraussetzung: FP-001/IP-03-Naht.
+* Berührt `engine.model` (versiegelte Hierarchie, FP-001/IP-01) — mit den Rohmodell-Eignern abstimmen;
+  einziger FP-002-Plan, der das Rohmodell ändert.
 
-## 4. Interfaces to Other Plans
+## Schnittstellen zu anderen Plänen
 
-* Provides the raw `TextBreak` token to every `engine.model` consumer (counting, `toString`,
-  serialization, the measure pipeline). Other FP-002 strategies must tolerate `TextBreak` in
-  their `parts` input:
-  * IP-01 / IP-02 treat `TextBreak` as a hard break point (flush current line, drop the token).
-  * This plan adds a shared private/internal helper `List<TextPart>.splitAtBreaks()` in
-    `engine.engine` reused by all three strategies; if IP-01/IP-02 land first they add a TODO
-    and this plan wires them up.
-* Consumes the FP-001 seam unchanged.
+* Liefert das rohe `TextBreak`-Token an jeden `engine.model`-Konsumenten (Zählung, `toString`,
+  Serialisierung, Measure-Pipeline).
+* Andere FP-002-Strategien müssen `TextBreak` in ihrer `parts`-Eingabe tolerieren:
+  IP-01 / IP-02 behandeln `TextBreak` als harten Umbruchpunkt (aktuelle Zeile umbrechen, Token verwerfen).
+* Dieser Plan ergänzt einen geteilten `internal`-Helfer `List<TextPart>.splitAtBreaks()` in `engine.engine`,
+  von allen drei Strategien genutzt; landen IP-01/IP-02 zuerst, setzen sie ein TODO und dieser Plan verdrahtet.
+* Verbraucht die FP-001-Naht unverändert.
 
-## 5. Design
+## Entwurf
 
-### 5.1 `TextBreak` token
+### `TextBreak`-Token
 
 ```kotlin
 @Serializable
@@ -61,143 +58,133 @@ data object TextBreak : TextPart {
 }
 ```
 
-* `data object` — there is only one kind of break; keeps equality/`hashCode` free and
-  serialization a bare discriminator.
-* `text == "\n"` so `charCount` and `toString` stay well-defined; alternatives considered:
-  `text == ""` (would make `charCount` ignore it) — rejected, a break is one source character.
+* `data object` — es gibt nur eine Art Umbruch; hält `equals`/`hashCode` frei und Serialisierung als bloßen Diskriminator.
+* `text == "\n"`, damit `charCount` und `toString` wohldefiniert bleiben.
+* Alternative `text == ""` verworfen: `charCount` würde es ignorieren, ein Umbruch ist ein Quellzeichen.
 
-### 5.2 Tokenizer
+### Tokenizer
 
-* In `tokenize(text)`: on `\n` (after collapsing a preceding `\r`), `flushWord()` then
-  `parts += TextBreak`. Runs of newlines emit one `TextBreak` per newline (blank line ⇒ two).
-* All other `Char.isWhitespace()` still just separate parts without being stored.
-* `TextBlock.of` is unchanged in signature.
+* In `tokenize(text)`: bei `\n` (nach Zusammenfassen eines vorangehenden `\r`) `flushWord()`, dann `parts += TextBreak`.
+* Läufe von Newlines erzeugen ein `TextBreak` je Newline (Leerzeile ⇒ zwei).
+* Alle anderen `Char.isWhitespace()` trennen weiterhin nur Parts, ohne gespeichert zu werden.
+* `TextBlock.of` bleibt in der Signatur unverändert.
 
-### 5.3 `toString()`
+### `toString()`
 
-* `TextBlock.toString()` currently prefixes a space before every non-first `TextWord`.
-  New rule: a `TextWord` that immediately follows a `TextBreak` gets **no** leading space;
-  a `TextBreak` appends its `"\n"`. Symbols unchanged.
+* Aktuell setzt `TextBlock.toString()` ein Leerzeichen vor jedes nicht-erste `TextWord`.
+* Neue Regel: ein `TextWord` direkt nach einem `TextBreak` erhält kein führendes Leerzeichen;
+  ein `TextBreak` hängt sein `"\n"` an. Symbole unverändert.
 
-### 5.4 Counting
+### Zählung
 
-* `wordCount` / `symbolCount` unchanged (they filter by concrete type; `TextBreak` counts as
-  neither).
-* `charCount` counts `TextBreak.text.length == 1`. Add a KDoc note. Existing `CountingTest`
-  expectations without breaks stay valid.
+* `wordCount` / `symbolCount` unverändert (filtern nach konkretem Typ; `TextBreak` zählt als keines).
+* `charCount` zählt `TextBreak.text.length == 1`; KDoc-Hinweis ergänzen.
+* Bestehende `CountingTest`-Erwartungen ohne Umbrüche bleiben gültig.
 
-### 5.5 Serialization
+### Serialisierung
 
-* JSON (`kotlinx.serialization`): `TextBreak` participates via the sealed `TextPart` serializer;
-  discriminator `"break"`. `data object` serializes as `{"type":"break"}`.
-* YAML / XML round-trip tests (`e2e/YamlRoundTripTest`, `e2e/XmlRoundTripTest`): add a document
-  containing `\n` and assert equality after decode. Confirm the XML format handles a
-  discriminator-only object (mirrors FP-001/IP-01 concern in the feature plan risks).
-* JVM Java serialization (`PlatformSerializable`, `jvmTest/e2e/JvmSerializationRoundTripTest`):
-  `data object` must resolve to the same singleton after deserialize; add a case.
+* JSON (`kotlinx.serialization`): `TextBreak` über den versiegelten `TextPart`-Serializer; Diskriminator `"break"`.
+* `data object` serialisiert als `{"type":"break"}`.
+* YAML / XML Round-Trip (`e2e/YamlRoundTripTest`, `e2e/XmlRoundTripTest`): Dokument mit `\n` ergänzen,
+  Gleichheit nach Decode prüfen; XML-Umgang mit reinem Diskriminator-Objekt bestätigen.
+* JVM-Java-Serialisierung (`PlatformSerializable`, `jvmTest/e2e/JvmSerializationRoundTripTest`):
+  `data object` muss nach Deserialisierung auf dasselbe Singleton auflösen; Fall ergänzen.
 
-### 5.6 Measured-model pass-through
+### Measured-Modell-Durchreichung
 
-* Line breakers consume `TextBreak` and never emit it into an `UnplacedLine`, so
-  `SimpLayBlockEngine` and `MeasuredTextPart` need no change.
-* Add a guard/assert in the block engine path only if a stray `TextBreak` could reach it; the
-  default greedy/character/no-wrap strategies must also skip `TextBreak` (treat as a hard
-  break for greedy/character, ignore for no-wrap) — small change to
-  `LineBreakerStrategy.kt` implementations, covered by regression tests.
+* Line-Breaker konsumieren `TextBreak` und geben es nie in eine `UnplacedLine`;
+  `SimpLayBlockEngine` und `MeasuredTextPart` brauchen keine Änderung.
+* Guard/Assert im Block-Engine-Pfad nur, falls ein verirrtes `TextBreak` ihn erreichen könnte.
+* Default-Strategien greedy/character/no-wrap müssen `TextBreak` überspringen (harter Umbruch für
+  greedy/character, ignorieren für no-wrap) — kleine Änderung an `LineBreakerStrategy.kt`, per Regressionstests abgedeckt.
 
-### 5.7 `ExplicitBreakLineBreakerStrategy`
+### `ExplicitBreakLineBreakerStrategy`
 
-* Split `parts` at every `TextBreak` into segments (helper `splitAtBreaks()`).
-* Each segment becomes exactly one `UnplacedLine` regardless of `maxWidth` (no wrapping),
-  measured with the same `spaceBefore` / ascent / descent rules as `NoWrapLineBreakerStrategy`.
-* An empty segment (consecutive breaks) produces an empty line using font-metric ascent/descent
-  so blank lines take vertical space.
-* `WordBreakerStrategy` is accepted but ignored.
+* `parts` an jedem `TextBreak` in Segmente teilen (Helfer `splitAtBreaks()`).
+* Jedes Segment wird genau eine `UnplacedLine` unabhängig von `maxWidth` (kein Umbruch),
+  gemessen mit denselben `spaceBefore`-/Ascent-/Descent-Regeln wie `NoWrapLineBreakerStrategy`.
+* Leeres Segment (aufeinanderfolgende Umbrüche) erzeugt eine leere Zeile mit Font-Metrik-Ascent/Descent,
+  damit Leerzeilen vertikalen Raum einnehmen.
+* `WordBreakerStrategy` wird akzeptiert, aber ignoriert.
 
-## 6. Affected Files
+## Betroffene Dateien
 
-| File | Change |
-| ---- | ------ |
-| `engine/.../engine/model/TextPart.kt` | Add `TextBreak` `data object`, KDoc. Single `Write`. |
-| `engine/.../engine/model/TextBlock.kt` | Tokenizer emits `TextBreak` for `\n`; `toString()` spacing rule. Single `Write`. |
-| `engine/.../engine/model/Counting.kt` | KDoc note on `charCount`; no logic change (verify). |
-| `engine/.../engine/engine/LineBreakerStrategy.kt` | Default strategies skip/hard-break on `TextBreak`; KDoc list mentions new strategy. |
-| `engine/.../engine/engine/ExplicitBreakLineBreakerStrategy.kt` | New: strategy + `splitAtBreaks()` helper. |
-| `engine/.../engine/PlatformSerializable.kt` (jvm) | Only if `data object` needs an explicit `readResolve`; confirm first. |
-| `engine/src/commonTest/.../model/TokenizerTest.kt` | Cases for `\n`, `\r\n`, blank lines. |
-| `engine/src/commonTest/.../model/CountingTest.kt` | `charCount` with breaks. |
-| `engine/src/commonTest/.../model/TextBlockTest.kt` | `toString()` with breaks. |
-| `engine/src/commonTest/.../model/SerializationTest.kt` | JSON round-trip with a break. |
-| `engine/src/commonTest/.../e2e/YamlRoundTripTest.kt`, `XmlRoundTripTest.kt`, `JsonRoundTripTest.kt` | Document containing `\n`. |
-| `engine/src/jvmTest/.../e2e/JvmSerializationRoundTripTest.kt` | `data object` singleton round-trip. |
-| `engine/src/commonTest/.../engine/ExplicitBreakLineBreakerStrategyTest.kt` | New: behaviour + builder swap. |
-| `docs/` (raw model + engine strategy pages) | Document `TextBreak` and the strategy; load `project-docs` skill. |
-| `CHANGELOG.md` | New unreleased entry. |
+| Datei | Änderung |
+| ----- | -------- |
+| `engine/.../engine/model/TextPart.kt` | `TextBreak` `data object`, KDoc. Ein `Write`. |
+| `engine/.../engine/model/TextBlock.kt` | Tokenizer erzeugt `TextBreak` für `\n`; `toString()`-Abstandsregel. Ein `Write`. |
+| `engine/.../engine/model/Counting.kt` | KDoc-Hinweis an `charCount`; keine Logikänderung (verifizieren). |
+| `engine/.../engine/engine/LineBreakerStrategy.kt` | Default-Strategien überspringen/harter Umbruch bei `TextBreak`; KDoc-Liste nennt neue Strategie. |
+| `engine/.../engine/engine/ExplicitBreakLineBreakerStrategy.kt` | Neu: Strategie plus `splitAtBreaks()`-Helfer. |
+| `engine/.../engine/PlatformSerializable.kt` (jvm) | Nur falls `data object` ein explizites `readResolve` braucht; zuerst bestätigen. |
+| `engine/src/commonTest/.../model/TokenizerTest.kt` | Fälle für `\n`, `\r\n`, Leerzeilen. |
+| `engine/src/commonTest/.../model/CountingTest.kt` | `charCount` mit Umbrüchen. |
+| `engine/src/commonTest/.../model/TextBlockTest.kt` | `toString()` mit Umbrüchen. |
+| `engine/src/commonTest/.../model/SerializationTest.kt` | JSON-Round-Trip mit einem Umbruch. |
+| `engine/src/commonTest/.../e2e/YamlRoundTripTest.kt`, `XmlRoundTripTest.kt`, `JsonRoundTripTest.kt` | Dokument mit `\n`. |
+| `engine/src/jvmTest/.../e2e/JvmSerializationRoundTripTest.kt` | `data object`-Singleton-Round-Trip. |
+| `engine/src/commonTest/.../engine/ExplicitBreakLineBreakerStrategyTest.kt` | Neu: Verhalten plus Builder-Swap. |
+| `docs/` (Rohmodell- plus Engine-Strategieseite) | `TextBreak` und Strategie dokumentieren; `project-docs`-Skill laden. |
+| `CHANGELOG.md` | Neuer Eintrag unter „Unreleased". |
 
-## 7. Test Design
+## Testentwurf
 
-Load the `testing` skill first. Developer tests, package-mirrored, deterministic measurer double.
-
+* `testing`-Skill zuerst laden; Entwicklertests, paketgespiegelt, deterministischer Measurer-Double.
 * Tokenizer: `newlineBecomesSingleTextBreak`, `crlfBecomesSingleTextBreak`,
   `blankLineBecomesTwoTextBreaks`, `spacesStillNotStored`.
-* Counting: `charCountIncludesTextBreak`, `wordAndSymbolCountIgnoreTextBreak`.
+* Zählung: `charCountIncludesTextBreak`, `wordAndSymbolCountIgnoreTextBreak`.
 * `toString`: `breakRendersAsNewlineWithoutExtraSpace`.
-* Serialization: `textBreakRoundTripsJson`, `...Yaml`, `...Xml`, `...JvmSerialization`
-  (singleton identity preserved).
-* Strategy: `emptyPartsProduceNoLines`, `oneLinePerSegment`,
-  `neverWrapsOnWidthEvenWhenOverflowing`, `consecutiveBreaksProduceEmptyLine`,
-  `wordBreakerIsIgnored`, `deterministicAcrossRuns`, `swapViaBuilderRoutesToStrategy`.
-* Regression: `greedyStrategyTreatsTextBreakAsHardBreak`,
-  `noWrapStrategyIgnoresTextBreakGracefully`, existing FP-001 tests unchanged.
+* Serialisierung: `textBreakRoundTripsJson`, `...Yaml`, `...Xml`, `...JvmSerialization` (Singleton-Identität erhalten).
+* Strategie: `emptyPartsProduceNoLines`, `oneLinePerSegment`, `neverWrapsOnWidthEvenWhenOverflowing`,
+  `consecutiveBreaksProduceEmptyLine`, `wordBreakerIsIgnored`, `deterministicAcrossRuns`, `swapViaBuilderRoutesToStrategy`.
+* Regression: `greedyStrategyTreatsTextBreakAsHardBreak`, `noWrapStrategyIgnoresTextBreakGracefully`,
+  bestehende FP-001-Tests unverändert.
 
-## 8. Task Breakdown
+## Aufgaben
 
-### Task 1 — Raw model token
+### Aufgabe 1 — Rohmodell-Token
 
-* Add `TextBreak` `data object` to `TextPart.kt` with KDoc (single `Write`).
-* Update `tokenize` in `TextBlock.kt`: `\n` / `\r\n` ⇒ one `TextBreak`; adjust `toString()`
-  spacing rule (single `Write`).
-* Add KDoc note to `charCount` in `Counting.kt`; verify no logic change needed.
+* `TextBreak` `data object` in `TextPart.kt` mit KDoc ergänzen (ein `Write`).
+* `tokenize` in `TextBlock.kt` anpassen: `\n` / `\r\n` ⇒ ein `TextBreak`; `toString()`-Abstandsregel anpassen (ein `Write`).
+* KDoc-Hinweis an `charCount` in `Counting.kt`; prüfen, dass keine Logikänderung nötig ist.
 
-### Task 2 — Serialization wiring and verification
+### Aufgabe 2 — Serialisierungs-Verdrahtung und Verifikation
 
-* Confirm sealed `TextPart` JSON discriminator picks up `TextBreak` (`@SerialName("break")`).
-* Check YAML and XML formats handle a discriminator-only object; adjust config if required.
-* Check JVM `data object` deserializes to the singleton; add `readResolve` only if needed.
+* Bestätigen, dass der versiegelte `TextPart`-JSON-Diskriminator `TextBreak` erfasst (`@SerialName("break")`).
+* Prüfen, ob YAML- und XML-Format ein reines Diskriminator-Objekt handhaben; Konfiguration bei Bedarf anpassen.
+* Prüfen, ob JVM-`data object` zum Singleton deserialisiert; `readResolve` nur bei Bedarf ergänzen.
 
-### Task 3 — Line-breaker changes
+### Aufgabe 3 — Line-Breaker-Änderungen
 
-* Add `ExplicitBreakLineBreakerStrategy.kt` with `splitAtBreaks()` helper and the no-wrap-style
-  segment-to-line assembly, including empty-line handling.
-* Update default strategies in `LineBreakerStrategy.kt` to treat `TextBreak` as a hard break
-  (greedy, character) or skip it (no-wrap); update KDoc strategy list.
+* `ExplicitBreakLineBreakerStrategy.kt` mit `splitAtBreaks()`-Helfer und no-wrap-artigem Segment-zu-Zeile-Aufbau
+  inklusive Leerzeilen-Behandlung anlegen.
+* Default-Strategien in `LineBreakerStrategy.kt` `TextBreak` als harten Umbruch (greedy, character) behandeln
+  oder überspringen (no-wrap) lassen; KDoc-Strategieliste aktualisieren.
 
-### Task 4 — Tests
+### Aufgabe 4 — Tests
 
-* Load `testing` skill.
-* Add/extend tokenizer, counting, `toString`, JSON/YAML/XML/JVM round-trip tests.
-* Add `ExplicitBreakLineBreakerStrategyTest` and the regression cases from section 7.
+* `testing`-Skill laden.
+* Tokenizer-, Zählungs-, `toString`-, JSON/YAML/XML/JVM-Round-Trip-Tests ergänzen bzw. erweitern.
+* `ExplicitBreakLineBreakerStrategyTest` und die Regressionsfälle aus Abschnitt „Testentwurf" ergänzen.
 
-### Task 5 — Docs, changelog, build, close-out
+### Aufgabe 5 — Doku, Changelog, Build, Abschluss
 
-* Load `project-docs` skill; document `TextBreak` in the raw-model page and the strategy in the
-  engine strategy page.
-* Add `CHANGELOG.md` entry.
-* Run `./gradlew :engine:build`; fix findings.
-* Same change set: status file IP-03 `COMPLETED` and feature `COMPLETED` when it is the last
-  plan, tick IP-03 across `FP-002-AdvancedLineBreaking.md`, `git rm` this plan file and, when
-  it is the last remaining plan, `git rm FP-002-Overview.md`.
+* `project-docs`-Skill laden; `TextBreak` auf der Rohmodellseite und die Strategie auf der Engine-Strategieseite dokumentieren.
+* `CHANGELOG.md`-Eintrag ergänzen.
+* `./gradlew :engine:build` ausführen; Befunde beheben.
+* Im selben Change-Set: Status IP-03 `COMPLETED` und Feature `COMPLETED`, wenn letzter Plan;
+  IP-03 in `FP-002-AdvancedLineBreaking.md` abhaken, diese Plandatei mit `git rm` entfernen und,
+  wenn letzter verbliebener Plan, `git rm FP-002-Overview.md`.
 
-## 9. Risks and Open Questions
+## Risiken und offene Punkte
 
-* `text` value for `TextBreak` (`"\n"` vs `""`) drives `charCount` and `toString`; chosen
-  `"\n"`, revisit if a consumer double-counts.
-* XML format may reject or mangle a discriminator-only element — mirrors the FP-001/IP-01
-  concern; fallback is giving `TextBreak` a dummy body field, decided during Task 2.
-* JVM `data object` singleton identity after Java deserialization is Kotlin-version dependent;
-  an explicit `readResolve` may be required.
-* Ordering with IP-01/IP-02: if they land first, the shared `splitAtBreaks()` helper and the
-  "treat `TextBreak` as hard break" behaviour must be retrofitted here; if this lands first the
-  helper is already in place.
-* Blank-line vertical spacing depends on font-metric ascent/descent fallback being correct in
-  `LineAccumulator`; covered by `consecutiveBreaksProduceEmptyLine`.
+* `text`-Wert für `TextBreak` (`"\n"` vs `""`) steuert `charCount` und `toString`;
+  `"\n"` gewählt, bei Doppelzählung eines Konsumenten neu bewerten.
+* XML-Format kann ein reines Diskriminator-Element ablehnen oder verstümmeln — spiegelt die FP-001/IP-01-Sorge;
+  Fallback ist ein Dummy-Body-Feld für `TextBreak`, in Aufgabe 2 entschieden.
+* JVM-`data object`-Singleton-Identität nach Java-Deserialisierung ist Kotlin-versionsabhängig;
+  ein explizites `readResolve` kann nötig sein.
+* Reihenfolge mit IP-01/IP-02: landen sie zuerst, müssen `splitAtBreaks()` und das „harter Umbruch"-Verhalten
+  hier nachgerüstet werden; landet dieser Plan zuerst, ist der Helfer schon vorhanden.
+* Vertikaler Abstand von Leerzeilen hängt vom korrekten Font-Metrik-Ascent/Descent-Fallback im
+  `LineAccumulator` ab; per `consecutiveBreaksProduceEmptyLine` abgedeckt.

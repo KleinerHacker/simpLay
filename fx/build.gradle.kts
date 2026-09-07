@@ -25,9 +25,45 @@ javafx {
     configuration = "api"
 }
 
+// A dedicated source set for the runnable demo application. It depends on `main` and its
+// dependencies, is never published and is kept out of the licensee scan (only `main`'s runtime
+// classpath is scanned) and out of the `java` component.
+val demo: SourceSet = sourceSets.create("demo") {
+    compileClasspath += sourceSets.main.get().output
+    runtimeClasspath += sourceSets.main.get().output
+}
+
+configurations.named("demoImplementation") { extendsFrom(configurations.named("implementation").get()) }
+configurations.named("demoRuntimeOnly") { extendsFrom(configurations.named("runtimeOnly").get()) }
+
 dependencies {
     implementation(project(":engine"))
+
     testImplementation(kotlin("test"))
+    testImplementation(libs.testfxCore)
+    testImplementation(libs.testfxJunit5)
+    testImplementation(libs.testfxMonocle)
+}
+
+// Run the demo application. The main entry point is a top-level `main` function (main class
+// `DemoAppKt`), not an `Application` subclass, so JavaFX starts fine from the plain classpath
+// without an explicit module path.
+tasks.register<JavaExec>("run") {
+    group = "application"
+    description = "Runs the JavaFX demo application."
+    mainClass.set("org.pcsoft.framework.simplay.fx.demo.DemoAppKt")
+    classpath = demo.runtimeClasspath
+}
+
+// Headless JavaFX for the UI tests via TestFX + Monocle.
+tasks.withType<Test>().configureEach {
+    systemProperty("java.awt.headless", "true")
+    systemProperty("testfx.robot", "glass")
+    systemProperty("testfx.headless", "true")
+    systemProperty("glass.platform", "Monocle")
+    systemProperty("monocle.platform", "Headless")
+    systemProperty("prism.order", "sw")
+    systemProperty("prism.text", "t2k")
 }
 
 // Third-party licences accepted by this module.

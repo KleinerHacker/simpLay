@@ -14,6 +14,11 @@ excluded.
 
 ### Added
 
+- `fx`: module-internal JavaFX rendering foundation - `FxFontMeasureCalculator`
+  (a `FontMeasureCalculator` backed by the JavaFX text stack), the measured-tree
+  draw walk onto a `GraphicsContext`, `pageSize` / `documentSize` helpers and a
+  glyph-level hit-testing helper. No public entry point yet.
+
 - `engine`: raw document model in `...engine.model` - `Document`, `FlowPage` /
   `SinglePage`, `PageLayout`, `TextBlock` with `TextBlock.of(text, style)` and a
   normalizing `toString()`, `TextPart` (`TextWord` / `TextSymbol`), `TextStyle`,
