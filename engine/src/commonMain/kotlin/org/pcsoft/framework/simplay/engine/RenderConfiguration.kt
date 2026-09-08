@@ -10,7 +10,7 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.engine.engine
+package org.pcsoft.framework.simplay.engine
 
 /**
  * Mutable, renderer-agnostic configuration that every concrete renderer needs before it can measure

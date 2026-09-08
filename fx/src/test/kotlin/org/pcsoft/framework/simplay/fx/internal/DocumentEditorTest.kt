@@ -12,8 +12,8 @@
 
 package org.pcsoft.framework.simplay.fx.internal
 
-import org.pcsoft.framework.simplay.engine.engine.RenderConfiguration
-import org.pcsoft.framework.simplay.engine.engine.measure
+import org.pcsoft.framework.simplay.engine.RenderConfiguration
+import org.pcsoft.framework.simplay.engine.measure
 import org.pcsoft.framework.simplay.engine.geometry.Margins
 import org.pcsoft.framework.simplay.engine.geometry.Size
 import org.pcsoft.framework.simplay.engine.model.Document

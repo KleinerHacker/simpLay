@@ -10,14 +10,14 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.engine.engine
+package org.pcsoft.framework.simplay.engine
 
 import org.pcsoft.framework.simplay.engine.geometry.Size
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.engine.measure.MeasuredPage
 
 /**
- * The size a single measured [MeasuredPage] occupies; identical to [MeasuredPage.effectiveSize].
+ * The size a single measured [MeasuredPage] occupies; identical to [effectiveSize].
  *
  * Provided as a renderer-agnostic helper so every renderer computes a page box the same way.
  */

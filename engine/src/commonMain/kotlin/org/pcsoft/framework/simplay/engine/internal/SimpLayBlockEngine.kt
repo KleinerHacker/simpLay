@@ -10,9 +10,9 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.engine.engine.internal
+package org.pcsoft.framework.simplay.engine.internal
 
-import org.pcsoft.framework.simplay.engine.engine.UnplacedLine
+import org.pcsoft.framework.simplay.engine.UnplacedLine
 import org.pcsoft.framework.simplay.engine.geometry.Rect
 import org.pcsoft.framework.simplay.engine.measure.MeasuredLine
 import org.pcsoft.framework.simplay.engine.measure.MeasuredTextBlock
@@ -26,7 +26,7 @@ import org.pcsoft.framework.simplay.engine.model.TextBlock
  * coordinates relative to the page content area.
  *
  * One of the internal `SimpLay*Engine` stages driven by
- * [org.pcsoft.framework.simplay.engine.engine.SimpLayEngine], invoked by [SimpLayPageEngine];
+ * [org.pcsoft.framework.simplay.engine.SimpLayEngine], invoked by [SimpLayPageEngine];
  * created through [builder]. It carries no configuration. Lines are stacked from `startY`
  * downwards, one [MeasuredTextStyle.resolvedLineHeight] apart. The horizontal offset follows the
  * block alignment: `LEFT` at `0`, `RIGHT` at the remaining width, `CENTER` at half of it.

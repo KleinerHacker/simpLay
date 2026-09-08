@@ -88,7 +88,7 @@ excluded.
   `height` at any time, but very tall documents hit the backend texture limit
   and a resize clears the canvas, so the renderer sizes the canvas up front and
   does no tiling.
-- `engine`: `RenderConfiguration` (package `org.pcsoft.framework.simplay.engine.engine`),
+- `engine`: `RenderConfiguration` (package `org.pcsoft.framework.simplay.engine`),
   a mutable, renderer-agnostic base configuration carrying the
   `lineBreakerStrategy` and `wordBreakerStrategy` a measure step needs, plus the
   `RenderConfiguration.createEngine(measurer)`, `Document.measure(measurer, config)`,

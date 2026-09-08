@@ -12,8 +12,8 @@
 
 package org.pcsoft.framework.simplay.engine.e2e
 
-import org.pcsoft.framework.simplay.engine.engine.FontMeasureCalculator
-import org.pcsoft.framework.simplay.engine.engine.SimpLayEngine
+import org.pcsoft.framework.simplay.engine.FontMeasureCalculator
+import org.pcsoft.framework.simplay.engine.SimpLayEngine
 import org.pcsoft.framework.simplay.engine.geometry.Margins
 import org.pcsoft.framework.simplay.engine.geometry.Size
 import org.pcsoft.framework.simplay.engine.geometry.TextMetrics

@@ -24,8 +24,8 @@ import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.ScrollEvent
-import org.pcsoft.framework.simplay.engine.engine.RenderConfiguration
-import org.pcsoft.framework.simplay.engine.engine.measure
+import org.pcsoft.framework.simplay.engine.RenderConfiguration
+import org.pcsoft.framework.simplay.engine.measure
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.fx.internal.DocumentTextIndex
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator

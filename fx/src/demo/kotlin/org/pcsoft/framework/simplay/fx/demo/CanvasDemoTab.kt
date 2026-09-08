@@ -26,11 +26,11 @@ import javafx.scene.layout.BorderPane
 import javafx.scene.layout.Pane
 import javafx.scene.paint.Color
 import javafx.scene.text.Font as FxFont
-import org.pcsoft.framework.simplay.engine.engine.CharacterLineBreakerStrategy
-import org.pcsoft.framework.simplay.engine.engine.GreedyWordLineBreakerStrategy
-import org.pcsoft.framework.simplay.engine.engine.LineBreakerStrategy
-import org.pcsoft.framework.simplay.engine.engine.NoOpWordBreakerStrategy
-import org.pcsoft.framework.simplay.engine.engine.NoWrapLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.CharacterLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.GreedyWordLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.LineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.NoOpWordBreakerStrategy
+import org.pcsoft.framework.simplay.engine.NoWrapLineBreakerStrategy
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.SinglePage

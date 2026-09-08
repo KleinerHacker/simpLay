@@ -15,7 +15,7 @@ package org.pcsoft.framework.simplay.fx.internal
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import org.junit.jupiter.api.Test
-import org.pcsoft.framework.simplay.engine.engine.measure
+import org.pcsoft.framework.simplay.engine.measure
 import org.pcsoft.framework.simplay.engine.geometry.Margins
 import org.pcsoft.framework.simplay.engine.geometry.Size
 import org.pcsoft.framework.simplay.engine.measure.MeasuredTextPart

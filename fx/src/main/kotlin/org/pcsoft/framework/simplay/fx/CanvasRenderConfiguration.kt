@@ -12,7 +12,7 @@
 
 package org.pcsoft.framework.simplay.fx
 
-import org.pcsoft.framework.simplay.engine.engine.RenderConfiguration
+import org.pcsoft.framework.simplay.engine.RenderConfiguration
 
 /**
  * Mutable configuration for [CanvasDocumentRenderer]. Extends the shared, renderer-agnostic

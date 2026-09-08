@@ -10,19 +10,15 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.engine.engine.internal
+package org.pcsoft.framework.simplay.engine.internal
 
-import org.pcsoft.framework.simplay.engine.engine.FontMeasureCalculator
-import org.pcsoft.framework.simplay.engine.engine.GreedyWordLineBreakerStrategy
-import org.pcsoft.framework.simplay.engine.engine.LineBreakerStrategy
-import org.pcsoft.framework.simplay.engine.engine.NoOpWordBreakerStrategy
-import org.pcsoft.framework.simplay.engine.engine.UnplacedLine
-import org.pcsoft.framework.simplay.engine.engine.WordBreakerStrategy
-import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
-import org.pcsoft.framework.simplay.engine.measure.MeasuredFlowPage
-import org.pcsoft.framework.simplay.engine.measure.MeasuredPage
-import org.pcsoft.framework.simplay.engine.measure.MeasuredSinglePage
-import org.pcsoft.framework.simplay.engine.measure.MeasuredTextBlock
+import org.pcsoft.framework.simplay.engine.FontMeasureCalculator
+import org.pcsoft.framework.simplay.engine.GreedyWordLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.LineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.NoOpWordBreakerStrategy
+import org.pcsoft.framework.simplay.engine.UnplacedLine
+import org.pcsoft.framework.simplay.engine.WordBreakerStrategy
+import org.pcsoft.framework.simplay.engine.measure.*
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.SinglePage
@@ -31,7 +27,7 @@ import org.pcsoft.framework.simplay.engine.model.SinglePage
  * Measure stage that turns the pages of a raw [Document] into measured pages.
  *
  * The outermost of the internal `SimpLay*Engine` stages driven by
- * [org.pcsoft.framework.simplay.engine.engine.SimpLayEngine]; created through [builder], which
+ * [org.pcsoft.framework.simplay.engine.SimpLayEngine]; created through [builder], which
  * wires in a [SimpLayFontEngine] and a [SimpLayBlockEngine]. A [SinglePage] keeps all its blocks;
  * nothing is clipped and its height grows through the measured model. A [FlowPage] is filled line
  * by line: when the next line would cross the content height the page is closed and a new

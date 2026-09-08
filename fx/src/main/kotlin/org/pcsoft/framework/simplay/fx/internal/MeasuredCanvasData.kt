@@ -12,7 +12,7 @@
 
 package org.pcsoft.framework.simplay.fx.internal
 
-import org.pcsoft.framework.simplay.engine.engine.documentSize
+import org.pcsoft.framework.simplay.engine.documentSize
 import org.pcsoft.framework.simplay.engine.geometry.Size
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 

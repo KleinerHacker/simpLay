@@ -18,7 +18,7 @@ import javafx.scene.text.FontPosture
 import javafx.scene.text.FontWeight as FxFontWeight
 import javafx.scene.text.Text
 import javafx.scene.text.TextBoundsType
-import org.pcsoft.framework.simplay.engine.engine.FontMeasureCalculator
+import org.pcsoft.framework.simplay.engine.FontMeasureCalculator
 import org.pcsoft.framework.simplay.engine.geometry.TextMetrics
 import org.pcsoft.framework.simplay.engine.model.Font
 import org.pcsoft.framework.simplay.engine.model.FontStyle

@@ -10,13 +10,13 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.engine.engine
+package org.pcsoft.framework.simplay.engine
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import org.pcsoft.framework.simplay.engine.engine.internal.SimpLayBlockEngine
+import org.pcsoft.framework.simplay.engine.internal.SimpLayBlockEngine
 import org.pcsoft.framework.simplay.engine.model.TextAlignment
 import org.pcsoft.framework.simplay.engine.model.TextBlock
 

@@ -10,8 +10,9 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.engine.engine
+package org.pcsoft.framework.simplay.engine
 
+import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
@@ -33,7 +34,7 @@ class RenderConfigurationTest {
         ),
     )
 
-    private fun lineCount(measured: org.pcsoft.framework.simplay.engine.measure.MeasuredDocument): Int =
+    private fun lineCount(measured: MeasuredDocument): Int =
         measured.pages.sumOf { page -> page.blocks.sumOf { it.lines.size } }
 
     /**

@@ -10,13 +10,13 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.engine.engine
+package org.pcsoft.framework.simplay.engine
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
-import org.pcsoft.framework.simplay.engine.engine.internal.SimpLayFontEngine
+import org.pcsoft.framework.simplay.engine.internal.SimpLayFontEngine
 
 /**
  * Verifies that [SimpLayFontEngine] derives vertical font metrics from the reference glyphs, sets

@@ -10,9 +10,9 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.engine.engine.internal
+package org.pcsoft.framework.simplay.engine.internal
 
-import org.pcsoft.framework.simplay.engine.engine.FontMeasureCalculator
+import org.pcsoft.framework.simplay.engine.FontMeasureCalculator
 import org.pcsoft.framework.simplay.engine.geometry.FontMetrics
 import org.pcsoft.framework.simplay.engine.measure.MeasuredFont
 import org.pcsoft.framework.simplay.engine.measure.MeasuredTextStyle
@@ -23,7 +23,7 @@ import org.pcsoft.framework.simplay.engine.model.TextStyle
  * Measure stage that resolves [Font] and [TextStyle] into their measured counterparts.
  *
  * One of the internal `SimpLay*Engine` stages driven by
- * [org.pcsoft.framework.simplay.engine.engine.SimpLayEngine]; created through [builder]. The
+ * [org.pcsoft.framework.simplay.engine.SimpLayEngine]; created through [builder]. The
  * vertical metrics of a font come from a single [FontMeasureCalculator] call over
  * [REFERENCE_GLYPHS], a fixed string covering the Latin alphabet, digits, common diacritics and
  * common punctuation, so ascenders, descenders and accents are all represented. Resolved fonts are
@@ -62,15 +62,15 @@ internal class SimpLayFontEngine private constructor(
         /** Reference glyphs used to derive a font's ascent and descent. */
         const val REFERENCE_GLYPHS: String =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-                "abcdefghijklmnopqrstuvwxyz" +
-                "0123456789" +
-                "ÅÄÖØåäöø" +
-                "ÀÂÉÈÊËÇàâéèêëç" +
-                "ÑÁÍÓÚñáíóú" +
-                "ĄĆĘŁŃŚŹŻ" +
-                "ąćęłńśźż" +
-                "ČŠŽčšžĂÎăî" +
-                ".,;:!?'\"()[]{}<>-/\\|@#%&*+=~^"
+                    "abcdefghijklmnopqrstuvwxyz" +
+                    "0123456789" +
+                    "ÅÄÖØåäöø" +
+                    "ÀÂÉÈÊËÇàâéèêëç" +
+                    "ÑÁÍÓÚñáíóú" +
+                    "ĄĆĘŁŃŚŹŻ" +
+                    "ąćęłńśźż" +
+                    "ČŠŽčšžĂÎăî" +
+                    ".,;:!?'\"()[]{}<>-/\\|@#%&*+=~^"
 
         /** Starts a [Builder] with the mandatory [measurer]. */
         fun builder(measurer: FontMeasureCalculator): Builder = Builder(measurer)

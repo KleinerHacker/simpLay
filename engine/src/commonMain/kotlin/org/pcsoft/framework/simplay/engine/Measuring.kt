@@ -10,14 +10,14 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.engine.engine
+package org.pcsoft.framework.simplay.engine
 
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.engine.model.Document
 
 /**
  * Builds a [SimpLayEngine] from this [RenderConfiguration] and the given [measurer], applying the
- * configured [RenderConfiguration.lineBreakerStrategy] and [RenderConfiguration.wordBreakerStrategy].
+ * configured [lineBreakerStrategy] and [wordBreakerStrategy].
  *
  * Renderers share this so the mapping from a configuration to an engine stays in one place; the
  * platform-specific [FontMeasureCalculator] is the only thing a caller still has to supply.

@@ -16,7 +16,7 @@ import javafx.geometry.Dimension2D
 import javafx.scene.canvas.Canvas
 import javafx.scene.canvas.GraphicsContext
 import javafx.scene.paint.Color
-import org.pcsoft.framework.simplay.engine.engine.measure
+import org.pcsoft.framework.simplay.engine.measure
 import org.pcsoft.framework.simplay.engine.geometry.Size
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.engine.measure.MeasuredPage

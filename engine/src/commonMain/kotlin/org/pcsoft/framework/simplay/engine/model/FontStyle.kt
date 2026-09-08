@@ -13,7 +13,6 @@
 package org.pcsoft.framework.simplay.engine.model
 
 
-
 /**
  * Slant of a font face.
  */

@@ -35,8 +35,8 @@ to a `FontMeasureCalculator` that the caller supplies, so the engine stays free 
 any platform text stack:
 
 ```kotlin
-import org.pcsoft.framework.simplay.engine.engine.FontMeasureCalculator
-import org.pcsoft.framework.simplay.engine.engine.SimpLayEngine
+import org.pcsoft.framework.simplay.engine.FontMeasureCalculator
+import org.pcsoft.framework.simplay.engine.SimpLayEngine
 import org.pcsoft.framework.simplay.engine.geometry.TextMetrics
 
 val engine = SimpLayEngine.builder(
@@ -55,15 +55,15 @@ same `MeasuredDocument`.
 #### Measuring from a RenderConfiguration
 
 A renderer usually keeps its measure settings in a `RenderConfiguration` (an
-`open` class in `...engine.engine` holding the `lineBreakerStrategy` and the
+`open` class in `...engine` holding the `lineBreakerStrategy` and the
 `wordBreakerStrategy`, both defaulting to the engine defaults). Two extensions
 turn such a configuration and a platform `FontMeasureCalculator` into a result
 without touching the builder by hand:
 
 ```kotlin
-import org.pcsoft.framework.simplay.engine.engine.RenderConfiguration
-import org.pcsoft.framework.simplay.engine.engine.createEngine
-import org.pcsoft.framework.simplay.engine.engine.measure
+import org.pcsoft.framework.simplay.engine.RenderConfiguration
+import org.pcsoft.framework.simplay.engine.createEngine
+import org.pcsoft.framework.simplay.engine.measure
 
 val config = RenderConfiguration().apply {
     lineBreakerStrategy = NoWrapLineBreakerStrategy
@@ -80,7 +80,7 @@ settings in one place.
 #### Document and page size
 
 `MeasuredDocument.documentSize(gap)` and `MeasuredPage.pageSize()` (both in
-`...engine.engine`) compute the box a renderer needs: `pageSize()` is the page's
+`...engine`) compute the box a renderer needs: `pageSize()` is the page's
 `effectiveSize`; `documentSize(gap)` stacks the pages vertically, taking the
 widest page as the width and the summed page heights plus one `gap` per page
 boundary as the height (never before the first or after the last page). An empty

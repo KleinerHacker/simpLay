@@ -10,9 +10,9 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.engine.engine
+package org.pcsoft.framework.simplay.engine
 
-import org.pcsoft.framework.simplay.engine.engine.internal.SimpLayFontEngine
+import org.pcsoft.framework.simplay.engine.internal.SimpLayFontEngine
 import org.pcsoft.framework.simplay.engine.geometry.Margins
 import org.pcsoft.framework.simplay.engine.geometry.Size
 import org.pcsoft.framework.simplay.engine.geometry.TextMetrics
