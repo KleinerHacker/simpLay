@@ -10,18 +10,13 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.fx.control
+package org.pcsoft.framework.simplay.fx
 
-import javafx.collections.ListChangeListener
 import javafx.event.EventHandler
-import javafx.geometry.BoundingBox
 import javafx.geometry.Bounds
 import javafx.geometry.Dimension2D
-import javafx.geometry.HPos
 import javafx.geometry.Orientation
-import javafx.geometry.VPos
 import javafx.scene.Cursor
-import javafx.scene.Node
 import javafx.scene.canvas.Canvas
 import javafx.scene.control.ScrollBar
 import javafx.scene.control.SkinBase
@@ -29,41 +24,37 @@ import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.ScrollEvent
-import javafx.scene.layout.Pane
-import javafx.scene.shape.Rectangle
-import kotlin.math.max
-import kotlin.math.min
 import org.pcsoft.framework.simplay.engine.engine.RenderConfiguration
 import org.pcsoft.framework.simplay.engine.engine.measure
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
-import org.pcsoft.framework.simplay.engine.model.FontStyle
-import org.pcsoft.framework.simplay.engine.model.FontWeight
 import org.pcsoft.framework.simplay.fx.internal.DocumentTextIndex
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
 import org.pcsoft.framework.simplay.fx.internal.hitTest
-import org.pcsoft.framework.simplay.fx.internal.segmentSpanX
+import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetCanvasPainter
+import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetCaret
+import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetEditor
+import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetHoverTracker
+import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetOverlays
+import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetSelection
 
 /**
- * The anchor box and context a satisfied [FloatingOverlayTrigger] hands to the skin: [bounds] in
- * viewport pixels, a trigger-specific [index] (selection start, paragraph ordinal, page index), the
- * trigger [text] and, for [FloatingOverlayTrigger.SELECTION], the covered [range].
- */
-internal class TriggerGeometry(val bounds: Bounds, val index: Int, val text: String, val range: IntRange?)
-
-/**
- * Skin of [PaperSheetView]. Owns the measuring, the vertical [ScrollBar], the mouse and keyboard
- * handling and the selection model; the actual canvas painting is delegated to
- * [PaperSheetCanvasPainter], which draws only the pages currently in the viewport (simple page
- * virtualisation) scaled by [PaperSheetView.zoom]. Mouse dragging selects text over the measured
- * geometry, `Ctrl+C` copies it as styled HTML, RTF and plain text at once so a paste target keeps
- * the text style. The pointer turns into a text (I-beam) cursor while it is over a page's content
- * area.
+ * Skin of [PaperSheetView]. Owns the measuring, the vertical [ScrollBar], the pointer / mouse
+ * routing and the canvas painting (delegated to [PaperSheetCanvasPainter], which draws only the pages
+ * currently in the viewport - simple page virtualisation - scaled by [PaperSheetView.zoom]).
  *
- * The skin is the only writer of [PaperSheetView.selectionModel] and the sink for its commands. It
- * also drives the registered [FloatingOverlay]s: the text selection is tracked here, the paragraph
- * and sheet under the mouse in [PaperSheetHoverTracker], and each overlay's node is shown, positioned
- * (following scroll and zoom, clamped to the viewport edge) and hidden in an internal overlay [Pane]
- * on top of the viewport.
+ * The concerns of a text control live in their own per-view helpers the skin creates and forwards
+ * events to:
+ *
+ * * [PaperSheetSelection] - the anchor/focus selection, its geometry, the styled runs and the
+ *   [PaperSheetView.SelectionCommands] sink;
+ * * [PaperSheetCaret] - the caret position, blink, geometry and navigation moves (in
+ *   [PaperSheetMode.EDITABLE]);
+ * * [PaperSheetEditor] - the keyboard shortcuts (typing, `Backspace` / `Delete`, `Ctrl+C` / `V` /
+ *   `X` / `D`, caret navigation) and the [org.pcsoft.framework.simplay.fx.internal.DocumentEditor]
+ *   mutations they trigger, plus drag-and-drop of the selection;
+ * * [PaperSheetHoverTracker] - the hovered paragraph / sheet;
+ * * [PaperSheetOverlays] - the registered [FloatingOverlay]s and the overlay layer on top of the
+ *   viewport.
  */
 internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheetView>(control) {
 
@@ -74,13 +65,6 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         orientation = Orientation.VERTICAL
         min = 0.0
         value = 0.0
-    }
-
-    private val overlayClip = Rectangle()
-    private val overlayPane = Pane().apply {
-        isManaged = false
-        isPickOnBounds = false
-        clip = overlayClip
     }
 
     private val measurer = FxFontMeasureCalculator()
@@ -95,8 +79,43 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     private var contentWidthUnscaled = 0.0
     private var contentHeightUnscaled = 0.0
 
-    private val selection = TextSelection()
+    /** `true` while the mouse extends a selection by dragging. */
     private var dragging = false
+
+    /** `true` while the mouse drags an existing selection to a new drop position. */
+    private var draggingSelection = false
+
+    /** The text selection: anchor/focus, geometry, styled runs and the model command sink. */
+    private val selection = PaperSheetSelection(
+        view = control,
+        measurer = measurer,
+        textIndex = { index },
+        pageTops = { pageTops },
+        scrollOffset = ::scrollOffset,
+        requestRedraw = ::redraw,
+        onProgrammaticChange = { dragging = false },
+    )
+
+    /** The edit caret: position, blink, geometry and the navigation moves. */
+    private val caret = PaperSheetCaret(
+        view = control,
+        selection = selection,
+        measurer = measurer,
+        textIndex = { index },
+        measuredDocument = { measured },
+        pageTops = { pageTops },
+        scrollOffset = ::scrollOffset,
+        requestRedraw = ::redraw,
+    )
+
+    /** The keyboard shortcuts, the text mutations they trigger and the selection drop. */
+    private val editor = PaperSheetEditor(
+        view = control,
+        selection = selection,
+        caret = caret,
+        textIndex = { index },
+        requestRedraw = ::redraw,
+    )
 
     /** Tracks the paragraph and sheet under the mouse for the hover overlay triggers. */
     private val hover = PaperSheetHoverTracker(
@@ -107,37 +126,16 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         nearestPage = ::nearestPage,
     )
 
-    private val keyHandler = EventHandler<KeyEvent> { onKeyPressed(it) }
+    /** The registered floating overlays and the overlay layer on top of the viewport. */
+    private val overlays = PaperSheetOverlays(
+        view = control,
+        selection = selection,
+        caret = caret,
+        hover = hover,
+    )
 
-    /** Overlays whose node currently sits in [overlayPane]. */
-    private val activeOverlays = HashSet<FloatingOverlay>()
-
-    private val overlaysListener = ListChangeListener<FloatingOverlay> { change ->
-        while (change.next()) change.removed.forEach { detachOverlay(it, fireEvent = false) }
-        refreshOverlays()
-    }
-
-    /** Sink for the programmatic selection commands of [PaperSheetView.selectionModel]. */
-    private val selectionCommands = object : PaperSheetView.SelectionCommands {
-        override fun selectRange(start: Int, end: Int) {
-            if (index == null) return
-            selection.selectRange(start, end)
-            dragging = false
-            redraw()
-        }
-
-        override fun selectAll() {
-            selection.selectAll()
-            dragging = false
-            redraw()
-        }
-
-        override fun clearSelection() {
-            selection.reset()
-            dragging = false
-            redraw()
-        }
-    }
+    private val keyHandler = EventHandler<KeyEvent> { editor.onKeyPressed(it) }
+    private val keyTypedHandler = EventHandler<KeyEvent> { editor.onKeyTyped(it) }
 
     /** Page indices drawn in the last [redraw]; for tests. */
     internal var renderedPageIndices: List<Int> = emptyList()
@@ -147,8 +145,8 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     internal var sheetChromeDrawCount: Int = 0
         private set
 
-    /** No caret is ever drawn in the read-only component; for tests. */
-    internal val caretDrawCount: Int = 0
+    /** Number of caret strokes drawn in the last [redraw] (`0` in read-only mode); for tests. */
+    internal val caretDrawCount: Int get() = painter.caretDrawCount
 
     /** Number of measured pages of the current document; for tests. */
     internal val pageCount: Int get() = measured?.pages?.size ?: 0
@@ -159,40 +157,46 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     /** The current viewport height in pixels; for tests. */
     internal val viewportHeight: Double get() = canvas.height
 
+    private val mode: PaperSheetMode get() = skinnable.mode
+
     //endregion
 
     //region Wiring
 
     init {
-        children.addAll(canvas, scrollBar, overlayPane)
+        children.addAll(canvas, scrollBar, overlays.layer)
 
         remeasure()
-        skinnable.registerSelectionCommands(selectionCommands)
-        skinnable.floatingOverlays.addListener(overlaysListener)
+        skinnable.registerSelectionCommands(selection)
+        skinnable.registerCaretCommands(caret)
 
         registerChangeListener(control.documentProperty) { remeasure(); control.requestLayout() }
         registerChangeListener(control.outerMarginProperty) { relayout() }
         registerChangeListener(control.pageGapProperty) { relayout() }
         registerChangeListener(control.zoomProperty) { relayout() }
+        registerChangeListener(control.modeProperty) { caret.onModeChanged() }
+        registerChangeListener(control.smoothCaretBlinkProperty) { caret.restartBlink() }
+        registerChangeListener(control.focusedProperty()) { caret.restartBlink() }
 
         scrollBar.valueProperty().addListener { _, _, _ -> redraw() }
 
         canvas.addEventHandler(ScrollEvent.SCROLL, ::onScroll)
         canvas.addEventHandler(MouseEvent.MOUSE_PRESSED, ::onMousePressed)
         canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, ::onMouseDragged)
-        canvas.addEventHandler(MouseEvent.MOUSE_RELEASED) { dragging = false }
+        canvas.addEventHandler(MouseEvent.MOUSE_RELEASED, ::onMouseReleased)
         canvas.addEventHandler(MouseEvent.MOUSE_CLICKED, ::onMouseClicked)
         canvas.addEventHandler(MouseEvent.MOUSE_MOVED) {
             canvas.cursor = cursorFor(it.x, it.y)
             hover.update(it.x, it.y)
-            refreshOverlays()
+            overlays.refresh()
         }
         canvas.addEventHandler(MouseEvent.MOUSE_EXITED) {
             canvas.cursor = Cursor.DEFAULT
             hover.clear()
-            refreshOverlays()
+            overlays.refresh()
         }
         control.addEventHandler(KeyEvent.KEY_PRESSED, keyHandler)
+        control.addEventHandler(KeyEvent.KEY_TYPED, keyTypedHandler)
     }
 
     //endregion
@@ -203,11 +207,11 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         val document = skinnable.document
         measured = document?.measure(measurer, renderConfig)
         index = measured?.let { DocumentTextIndex(it) }
-        selection.index = index
-        selection.reset()
+        selection.onDocumentChanged(index)
         hover.clear()
         computeLayoutMetrics()
-        updateSelectionOutputs()
+        selection.publish()
+        caret.onDocumentRemeasured()
     }
 
     private fun relayout() {
@@ -249,9 +253,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         canvas.relocate(x, y)
         scrollBar.resizeRelocate(x + viewportWidth, y, barWidth, h)
 
-        overlayPane.resizeRelocate(x, y, viewportWidth, h)
-        overlayClip.width = viewportWidth
-        overlayClip.height = h
+        overlays.layout(x, y, viewportWidth, h)
 
         updateScrollBar(h)
         redraw()
@@ -275,9 +277,12 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         top + bottom + (skinnable.contentSize.height * skinnable.zoom).coerceIn(PREF_MIN, PREF_MAX)
 
     override fun dispose() {
+        caret.dispose()
+        overlays.dispose()
         skinnable?.removeEventHandler(KeyEvent.KEY_PRESSED, keyHandler)
-        skinnable?.unregisterSelectionCommands(selectionCommands)
-        skinnable?.floatingOverlays?.removeListener(overlaysListener)
+        skinnable?.removeEventHandler(KeyEvent.KEY_TYPED, keyTypedHandler)
+        skinnable?.unregisterSelectionCommands(selection)
+        skinnable?.unregisterCaretCommands(caret)
         super.dispose()
     }
 
@@ -298,66 +303,15 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
             selectionStart = selection.start,
             selectionEnd = selection.end,
             fonts = measurer,
+            caret = caret.caretPaint(),
+            caretOpacity = caret.currentOpacity(),
         )
         renderedPageIndices = painter.renderedPageIndices
         sheetChromeDrawCount = painter.sheetChromeDrawCount
-        updateSelectionOutputs()
+        selection.publish()
         hover.publishOutputs()
-        refreshOverlays()
-    }
-
-    //endregion
-
-    //region Selection outputs
-
-    private fun updateSelectionOutputs() {
-        val idx = index
-        if (idx == null || selection.isEmpty) {
-            skinnable.selectionModel.update("", 0, 0, null, emptyList())
-            return
-        }
-        val start = selection.start
-        val end = selection.end
-        val runs = idx.styledRuns(start, end).mapNotNull { run ->
-            val font = run.font ?: return@mapNotNull null
-            TextSelectionData(
-                text = run.text,
-                fontFamily = font.family,
-                fontSize = font.size,
-                bold = font.weight == FontWeight.BOLD,
-                italic = font.style == FontStyle.ITALIC,
-            )
-        }
-        skinnable.selectionModel.update(idx.substring(start, end), start, end, computeSelectionBounds(), runs)
-    }
-
-    private fun computeSelectionBounds(): Bounds? {
-        val idx = index ?: return null
-        if (selection.isEmpty) return null
-        val zoom = skinnable.zoom
-        val outer = skinnable.outerMargin
-        val scroll = scrollOffset()
-        var minX = Double.MAX_VALUE
-        var minY = Double.MAX_VALUE
-        var maxX = -Double.MAX_VALUE
-        var maxY = -Double.MAX_VALUE
-        val lo = selection.start
-        val hi = selection.end
-        for (seg in idx.segments) {
-            if (seg.end <= lo || seg.start >= hi) continue
-            val (x0, x1) = segmentSpanX(seg, lo, hi, measurer)
-            val contentArea = seg.page.contentArea
-            val absX0 = outer + contentArea.x + x0
-            val absX1 = outer + contentArea.x + x1
-            val absY0 = outer + pageTops[seg.pageIndex] + contentArea.y + seg.line.lineBox.y
-            val absY1 = absY0 + seg.line.lineBox.height
-            minX = min(minX, absX0)
-            maxX = max(maxX, absX1)
-            minY = min(minY, absY0)
-            maxY = max(maxY, absY1)
-        }
-        if (minX > maxX) return null
-        return BoundingBox(minX * zoom, minY * zoom - scroll, (maxX - minX) * zoom, (maxY - minY) * zoom)
+        overlays.refresh()
+        caret.publish()
     }
 
     //endregion
@@ -451,81 +405,6 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     //endregion
 
-    //region Floating overlays
-
-    private fun geometryFor(kind: FloatingOverlayTrigger): TriggerGeometry? = when (kind) {
-        FloatingOverlayTrigger.SELECTION -> {
-            val bounds = computeSelectionBounds()
-            if (bounds == null) null
-            else TriggerGeometry(bounds, selection.start, skinnable.selectedText, selection.start until selection.end)
-        }
-        FloatingOverlayTrigger.PARAGRAPH_HOVER -> hover.paragraphGeometry()
-        FloatingOverlayTrigger.PAGE_HOVER -> hover.pageGeometry()
-        // Inert until the editing implementation plan wires a caret.
-        FloatingOverlayTrigger.CARET -> null
-    }
-
-    private fun refreshOverlays() {
-        val overlays = skinnable.floatingOverlays
-        if (overlays.isEmpty() && activeOverlays.isEmpty()) return
-        for (overlay in overlays) {
-            val geometry = geometryFor(overlay.trigger)
-            val node = overlay.content
-            if (geometry == null || node == null) {
-                if (overlay in activeOverlays && overlay.autoHide) detachOverlay(overlay, fireEvent = true)
-                continue
-            }
-            if (node !in overlayPane.children) overlayPane.children.add(node)
-            node.applyCss()
-            node.autosize()
-            val placed = placeInViewport(node, geometry.bounds, overlay)
-            if (placed == null) {
-                detachOverlay(overlay, fireEvent = true)
-                continue
-            }
-            node.relocate(placed.first, placed.second)
-            overlay.updateActiveState(geometry.bounds, geometry.index, geometry.text, geometry.range)
-            if (activeOverlays.add(overlay)) overlay.fireShown(overlay.trigger)
-        }
-    }
-
-    private fun detachOverlay(overlay: FloatingOverlay, fireEvent: Boolean) {
-        overlay.content?.let { overlayPane.children.remove(it) }
-        val wasActive = activeOverlays.remove(overlay)
-        overlay.clearActiveState()
-        if (wasActive && fireEvent) overlay.fireHidden(overlay.trigger)
-    }
-
-    /**
-     * Places [node] relative to the trigger [bounds] per the overlay's [FloatingOverlay.anchor] plus
-     * its offsets, then clamps the result to the viewport. Returns `null` when [bounds] no longer
-     * intersects the viewport at all, so the overlay must be hidden.
-     */
-    private fun placeInViewport(node: Node, bounds: Bounds, overlay: FloatingOverlay): Pair<Double, Double>? {
-        val vpW = canvas.width
-        val vpH = canvas.height
-        if (bounds.maxX <= 0.0 || bounds.minX >= vpW || bounds.maxY <= 0.0 || bounds.minY >= vpH) return null
-
-        val w = node.layoutBounds.width.takeIf { it > 0.0 } ?: node.prefWidth(-1.0)
-        val h = node.layoutBounds.height.takeIf { it > 0.0 } ?: node.prefHeight(-1.0)
-        val anchor = overlay.anchor
-        var nx = when (anchor.hpos) {
-            HPos.LEFT -> bounds.minX
-            HPos.CENTER -> bounds.minX + bounds.width / 2.0 - w / 2.0
-            HPos.RIGHT -> bounds.maxX - w
-        } + overlay.offsetX
-        var ny = when (anchor.vpos) {
-            VPos.TOP -> bounds.minY - h
-            VPos.CENTER -> bounds.minY + bounds.height / 2.0 - h / 2.0
-            VPos.BASELINE, VPos.BOTTOM -> bounds.maxY
-        } + overlay.offsetY
-        nx = nx.coerceIn(0.0, (vpW - w).coerceAtLeast(0.0))
-        ny = ny.coerceIn(0.0, (vpH - h).coerceAtLeast(0.0))
-        return nx to ny
-    }
-
-    //endregion
-
     //region Input
 
     private fun onScroll(event: ScrollEvent) {
@@ -536,34 +415,56 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     private fun onMousePressed(event: MouseEvent) {
         skinnable.requestFocus()
+        caret.clearShiftAnchor()
         val i = hitIndexAt(event.x, event.y)
-        selection.anchor = i
-        selection.focus = i
+        if (mode == PaperSheetMode.EDITABLE && !selection.isEmpty && selection.contains(event.x, event.y)) {
+            draggingSelection = true
+            dragging = false
+            caret.setDropPreview(i)
+            event.consume()
+            return
+        }
+        selection.beginAt(i)
         dragging = true
-        redraw()
+        if (mode == PaperSheetMode.EDITABLE) {
+            caret.placeCaret(i)
+        } else {
+            redraw()
+        }
         event.consume()
     }
 
     private fun onMouseDragged(event: MouseEvent) {
+        if (draggingSelection) {
+            caret.setDropPreview(hitIndexAt(event.x, event.y))
+            event.consume()
+            return
+        }
         if (!dragging) return
-        selection.focus = hitIndexAt(event.x, event.y)
+        selection.dragTo(hitIndexAt(event.x, event.y))
         redraw()
         event.consume()
+    }
+
+    private fun onMouseReleased(event: MouseEvent) {
+        if (draggingSelection) {
+            val target = hitIndexAt(event.x, event.y)
+            val copy = event.isShortcutDown
+            draggingSelection = false
+            caret.setDropPreview(null)
+            editor.dropSelection(target, copy)
+            event.consume()
+            return
+        }
+        dragging = false
     }
 
     private fun onMouseClicked(event: MouseEvent) {
         if (event.clickCount != 2) return
         selection.selectWordAt(hitIndexAt(event.x, event.y))
+        if (mode == PaperSheetMode.EDITABLE) caret.placeCaret(selection.end)
         redraw()
         event.consume()
-    }
-
-    private fun onKeyPressed(event: KeyEvent) {
-        if (event.code == KeyCode.C && event.isShortcutDown) {
-            if (selection.putStyledSelectionOnClipboard()) {
-                event.consume()
-            }
-        }
     }
 
     //endregion
@@ -572,8 +473,8 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     /** Selects the text between two viewport points and repaints; for tests. */
     internal fun selectByPointsForTest(x0: Double, y0: Double, x1: Double, y1: Double) {
-        selection.anchor = hitIndexAt(x0, y0)
-        selection.focus = hitIndexAt(x1, y1)
+        selection.beginAt(hitIndexAt(x0, y0))
+        selection.dragTo(hitIndexAt(x1, y1))
         redraw()
     }
 
@@ -583,23 +484,49 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     /** Simulates the mouse hovering a viewport point and refreshes the overlays; for tests. */
     internal fun hoverAtForTest(x: Double, y: Double) {
         hover.update(x, y)
-        refreshOverlays()
+        overlays.refresh()
     }
 
     /** Simulates the mouse leaving the viewport and refreshes the overlays; for tests. */
     internal fun clearHoverForTest() {
         hover.clear()
-        refreshOverlays()
+        overlays.refresh()
     }
 
     /** Recomputes overlay visibility and position; for tests. */
-    internal fun refreshOverlaysForTest() = refreshOverlays()
+    internal fun refreshOverlaysForTest() = overlays.refresh()
 
-    /** The overlays whose node currently sits in the overlay pane; for tests. */
-    internal val activeOverlaysForTest: Set<FloatingOverlay> get() = activeOverlays.toSet()
+    /** The overlays whose node currently sits in the overlay layer; for tests. */
+    internal val activeOverlaysForTest: Set<FloatingOverlay> get() = overlays.activeForTest
 
-    /** Number of nodes currently in the overlay pane; for tests. */
-    internal val overlayNodeCountForTest: Int get() = overlayPane.children.size
+    /** Number of nodes currently in the overlay layer; for tests. */
+    internal val overlayNodeCountForTest: Int get() = overlays.nodeCountForTest
+
+    /** The current caret index; for tests. */
+    internal val caretIndexForTest: Int get() = caret.position
+
+    /** Whether the caret would currently be painted; for tests. */
+    internal val caretRenderedForTest: Boolean get() = caret.caretPaint() != null
+
+    /** The opacity the caret is painted with right now; for tests. */
+    internal fun caretOpacityForTest(): Double = caret.currentOpacity()
+
+    /** The current caret rectangle in viewport pixels, or `null`; for tests. */
+    internal fun caretBoundsForTest(): Bounds? = caret.viewportBounds()
+
+    /** Places the caret at the character nearest a viewport point; for tests. */
+    internal fun placeCaretAtForTest(x: Double, y: Double) = caret.setCaret(hitIndexAt(x, y), extend = false)
+
+    /** Types [text] at the caret (replacing any selection); for tests. */
+    internal fun typeTextForTest(text: String) = editor.typeText(text)
+
+    /** Fires a `KEY_PRESSED` through the editor's handler; for tests. */
+    internal fun pressKeyForTest(code: KeyCode, shift: Boolean = false, shortcut: Boolean = false) =
+        editor.onKeyPressed(KeyEvent(KeyEvent.KEY_PRESSED, "", "", code, shift, shortcut, false, false))
+
+    /** Drops the current selection at the character nearest a viewport point; for tests. */
+    internal fun dragSelectionToForTest(x: Double, y: Double, copy: Boolean) =
+        editor.dropSelection(hitIndexAt(x, y), copy)
 
     //endregion
 

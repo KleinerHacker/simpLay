@@ -10,17 +10,12 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.fx.control
+package org.pcsoft.framework.simplay.fx
 
 import javafx.scene.Scene
 import javafx.stage.Stage
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import kotlin.test.assertTrue
 import org.junit.jupiter.api.Test
-import org.pcsoft.framework.simplay.fx.JavaFxTestBase
+import kotlin.test.*
 
 /**
  * Headless tests for [TextSelectionModel]: the read-only selection state it reports (text, character

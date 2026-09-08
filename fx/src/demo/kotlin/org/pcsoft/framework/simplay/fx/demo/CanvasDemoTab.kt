@@ -35,7 +35,7 @@ import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.SinglePage
 import org.pcsoft.framework.simplay.engine.model.TextBlock
-import org.pcsoft.framework.simplay.fx.canvas.CanvasDocumentRenderer
+import org.pcsoft.framework.simplay.fx.CanvasDocumentRenderer
 
 /**
  * Content of the demo's `Canvas` tab: a [CanvasDocumentRenderer] output shown in a [ScrollPane],

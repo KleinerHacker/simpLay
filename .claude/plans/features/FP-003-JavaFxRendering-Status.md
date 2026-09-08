@@ -10,13 +10,13 @@ Status: IN_PROGRESS
 | IP-02 | Canvas Renderer | COMPLETED |
 | IP-03 | Paper Sheet Component | COMPLETED |
 | IP-04 | Floating Overlays | COMPLETED |
-| IP-05 | Editing And Key Commands | NOT_STARTED |
+| IP-05 | Editing And Key Commands | COMPLETED |
 | IP-06 | Paper Component Styling | NOT_STARTED |
 | IP-07 | Documentation | NOT_STARTED |
 
 ## Overall Progress
 
-57%
+71%
 
 ## Notes
 
@@ -30,7 +30,7 @@ measurer, walk, sizing and hit-test. `./gradlew :fx:build` and `:fx:run` are
 green. Everything stays in the `fx` module.
 
 IP-02 is done: the `fx` module now exposes the public `CanvasDocumentRenderer`
-(`...fx.canvas`), created for one fixed document via
+(`...fx`), created for one fixed document via
 `CanvasDocumentRenderer.`for`(document) { ... }` which measures and lays it out
 once, up front. It paints that document onto a `Canvas`, whole (`renderDocument`,
 dashed page-break lines) or per page (`renderPage`), with `documentCanvasSize` /
@@ -43,7 +43,7 @@ case - the only `engine` change in FP-003. The demo `Canvas` tab is filled with
 `CanvasDemoTab`. `./gradlew :engine:build :fx:build` is green.
 
 IP-03 is done: the `fx` module now exposes the public `PaperSheetView` (package
-`...fx.control`), a read-only `Control` that stacks a `Document`'s pages as sheets
+`...fx`), a read-only `Control` that stacks a `Document`'s pages as sheets
 (white fill, grey border, drop-shadow rectangle) in a viewport-sized `Canvas`,
 scaled by `zoom` (clamped to `[minZoom, maxZoom]`), drawing only the pages in
 view (simple virtualisation) and driving a vertical `ScrollBar`. Mouse drag
@@ -64,7 +64,7 @@ exposed through a public `TextSelectionModel` reached via
 `Select all` / `Clear` buttons and a range/run-count read-out.
 
 IP-04 is done: `PaperSheetView` gained the FXML-compatible floating-overlay API.
-`FloatingOverlay` (`...fx.control`) is a no-arg bean with `content`, `trigger`
+`FloatingOverlay` (`...fx`) is a no-arg bean with `content`, `trigger`
 (`FloatingOverlayTrigger`: `SELECTION`, `PARAGRAPH_HOVER`, `PAGE_HOVER`, `CARET`),
 `anchor` (`Pos`), `offsetX` / `offsetY`, `autoHide`, the read-only fields
 `active` / `activeBounds` / `activeIndex` / `activeText` / `activeDocumentRange`
@@ -82,6 +82,35 @@ on the selection and a badge on the hovered paragraph. Headless tests
 scroll/zoom tracking, edge clamping, the inert `CARET`, the `onShown` / `onHidden`
 context and an `FXMLLoader` round-trip. `./gradlew :fx:build` is green.
 
-IP-05 (editing) and IP-06 (JavaFX CSS styling) both depend on IP-03 and are
-parallelizable with each other; IP-05 optionally wires the `CARET` overlay trigger
-from IP-04. IP-07 comes last and writes the four `docs/docs/fx/` pages.
+IP-05 is done: `PaperSheetView` gained a `mode` property
+(`PaperSheetMode.READONLY` / `NORMAL`). In normal mode the internal
+`PaperSheetViewSkin` runs a blinking caret (a `Timeline`), character typing via
+`onKeyTyped`, the navigation / editing keys via `onKeyPressed`
+(`Home` / `End` / `Ctrl+Home` / `Ctrl+End` / arrows / `Ctrl+Left` /
+`Ctrl+Right` / `Backspace` / `Delete`, each with optional `Shift`), clipboard
+`Ctrl+V` / `Ctrl+X` / `Ctrl+D`, and drag-and-drop of the selection (mouse press
+inside the selection box starts a move; `Ctrl` on release copies). Every edit
+goes through the new internal `DocumentEditor` object, which splices
+`DocumentTextIndex.text`, cuts it back into raw blocks along the block ranges
+remapped through the splice (merging blocks a delete joined across their
+boundary), rebuilds affected blocks with `TextBlock.of` and keeps the page list
+and types; it returns the new `Document` plus the caret index, and the skin
+restores the caret after the re-measure the `document` assignment triggers. The
+caret is exposed publicly through `caretModel` (`CaretModel`, built like
+`TextSelectionModel`): read-only `position` / `bounds` / `visible` /
+`blockCount` / `wordCount` / `symbolCount` and the linear, absolute-structural
+(block / word / symbol) and relative-structural (`moveToNext*` / `moveToPrev*`)
+move commands, routed through a `PaperSheetView.CaretCommands` sink with the same
+pre-skin buffering as the selection commands. `DocumentTextIndex` gained
+`blockRanges` / `wordRanges` / `symbolRanges` and the ordinal resolution helpers.
+The `CARET` floating-overlay trigger is now live (`geometryFor` returns the caret
+box in normal mode). The demo's `Read/Write` tab is filled with
+`ReadWriteDemoTab`. Headless tests: `DocumentEditorTest`, `CaretModelTest`,
+`PaperSheetEditingTest`. `./gradlew build` is green.
+
+Known limitation: an intentionally empty raw block (a block whose text is empty)
+produces no measured glyph and no `blockRanges` entry, so the first edit drops
+it. None of the sample or fixture documents contain empty blocks.
+
+IP-06 (JavaFX CSS styling) still depends on IP-03 and shares the one skin class
+with IP-05. IP-07 comes last and writes the four `docs/docs/fx/` pages.

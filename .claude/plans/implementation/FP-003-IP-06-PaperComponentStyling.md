@@ -44,15 +44,15 @@ Status: `.claude/plans/features/FP-003-JavaFxRendering-Status.md`
 
 | Datei | Änderung |
 | ----- | -------- |
-| `fx/src/main/kotlin/org/pcsoft/framework/simplay/fx/control/PaperSheetView.kt` | `CssMetaData`-Liste, styleable Properties, `getControlCssMetaData`, Style-Klasse, Pseudo-Klassen. |
-| `fx/src/main/kotlin/org/pcsoft/framework/simplay/fx/control/PaperSheetViewSkin.kt` | Stilwerte statt interner Konstanten lesen, bei Änderung neu zeichnen. |
-| `fx/src/main/kotlin/org/pcsoft/framework/simplay/fx/control/PaperSheetStyleableProperties.kt` | Neu: `CssMetaData`-Definitionen und Hilfsfunktionen. |
-| `fx/src/main/resources/org/pcsoft/framework/simplay/fx/control/paper-sheet-view.css` | Neu: Default-User-Agent-Stylesheet. |
+| `fx/src/main/kotlin/org/pcsoft/framework/simplay/fx/PaperSheetView.kt` | `CssMetaData`-Liste, styleable Properties, `getControlCssMetaData`, Style-Klasse, Pseudo-Klassen. |
+| `fx/src/main/kotlin/org/pcsoft/framework/simplay/fx/PaperSheetViewSkin.kt` | Stilwerte statt interner Konstanten lesen, bei Änderung neu zeichnen. |
+| `fx/src/main/kotlin/org/pcsoft/framework/simplay/fx/PaperSheetStyleableProperties.kt` | Neu: `CssMetaData`-Definitionen und Hilfsfunktionen. |
+| `fx/src/main/resources/org/pcsoft/framework/simplay/fx/paper-sheet-view.css` | Neu: Default-User-Agent-Stylesheet. |
 | `fx/src/main/resources/.gitkeep` | Entfernen mit `git rm`. |
 | `fx/src/demo/resources/org/pcsoft/framework/simplay/fx/demo/demo-dark.css` | Neu: Beispiel-Stylesheet für die Demo. |
 | `fx/src/demo/kotlin/org/pcsoft/framework/simplay/fx/demo/ReadonlyDemoTab.kt` | Toolbar: Stylesheet-Umschalter. |
 | `fx/src/demo/kotlin/org/pcsoft/framework/simplay/fx/demo/ReadWriteDemoTab.kt` | Toolbar: Stylesheet-Umschalter. |
-| `fx/src/test/kotlin/org/pcsoft/framework/simplay/fx/control/PaperSheetStylingTest.kt` | Neu: CSS-Anwendungs-Tests. |
+| `fx/src/test/kotlin/org/pcsoft/framework/simplay/fx/PaperSheetStylingTest.kt` | Neu: CSS-Anwendungs-Tests. |
 | `CHANGELOG.md` | Eintrag unter „Unreleased". |
 | `docs/docs/fx/implementation.md` | Nur Verweis: Styling-Seite folgt in IP-07. |
 

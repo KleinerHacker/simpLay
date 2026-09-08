@@ -16,17 +16,14 @@ import javafx.application.Application
 import javafx.scene.Scene
 import javafx.scene.control.Tab
 import javafx.scene.control.TabPane
-import javafx.scene.control.ToolBar
-import javafx.scene.layout.BorderPane
 import javafx.stage.Stage
 
 /**
  * Demo application for the `fx` module. Hosts a [TabPane] with the tabs `Canvas`, `Readonly` and
- * `Read/Write`. The `Canvas` tab shows the [org.pcsoft.framework.simplay.fx.canvas.CanvasDocumentRenderer]
+ * `Read/Write`. The `Canvas` tab shows the [org.pcsoft.framework.simplay.fx.CanvasDocumentRenderer]
  * via [CanvasDemoTab]; the `Readonly` tab shows the
- * [org.pcsoft.framework.simplay.fx.control.PaperSheetView] via [ReadonlyDemoTab]; the `Read/Write`
- * tab stays an empty shell - a [ToolBar] placeholder on top, an empty content area - that a later
- * implementation plan fills with its component and controls.
+ * [org.pcsoft.framework.simplay.fx.PaperSheetView] in read-only mode via [ReadonlyDemoTab];
+ * the `Read/Write` tab shows the same control in normal (editing) mode via [ReadWriteDemoTab].
  */
 class DemoApp : Application() {
 
@@ -36,7 +33,7 @@ class DemoApp : Application() {
             tabs.addAll(
                 Tab("Canvas", CanvasDemoTab()),
                 Tab("Readonly", ReadonlyDemoTab()),
-                emptyTab("Read/Write"),
+                Tab("Read/Write", ReadWriteDemoTab()),
             )
         }
 
@@ -44,9 +41,6 @@ class DemoApp : Application() {
         stage.scene = Scene(tabs, 1024.0, 768.0)
         stage.show()
     }
-
-    private fun emptyTab(title: String): Tab =
-        Tab(title, BorderPane().apply { top = ToolBar() })
 }
 
 /** Entry point. The main class is this file, not [DemoApp], so JavaFX starts from the classpath. */

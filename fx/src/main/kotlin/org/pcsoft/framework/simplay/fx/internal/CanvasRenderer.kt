@@ -21,7 +21,7 @@ import org.pcsoft.framework.simplay.engine.measure.MeasuredPage
 /**
  * Module-internal drawing of a measured tree onto a JavaFX [GraphicsContext]: the surface-free
  * measured-tree walk plus the single-page and whole-document draw entry points. The public
- * `org.pcsoft.framework.simplay.fx.canvas.CanvasDocumentRenderer` is the only consumer.
+ * `org.pcsoft.framework.simplay.fx.CanvasDocumentRenderer` is the only consumer.
  */
 internal object CanvasRenderer {
 

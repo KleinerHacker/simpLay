@@ -10,7 +10,7 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.fx.control
+package org.pcsoft.framework.simplay.fx
 
 import javafx.scene.Cursor
 import javafx.scene.Scene
@@ -19,13 +19,12 @@ import javafx.scene.input.Clipboard
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 import javafx.stage.Stage
+import org.junit.jupiter.api.Test
 import kotlin.math.abs
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import org.junit.jupiter.api.Test
-import org.pcsoft.framework.simplay.fx.JavaFxTestBase
 
 /**
  * Headless tests for [PaperSheetViewSkin]: sheet chrome, page virtualisation, the vertical scroll

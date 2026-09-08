@@ -18,7 +18,7 @@ required in the consuming build.
 ## Entry points
 
 The first public entry point is `CanvasDocumentRenderer` in
-`org.pcsoft.framework.simplay.fx.canvas`. It is created for one fixed document
+`org.pcsoft.framework.simplay.fx`. It is created for one fixed document
 and measures it up front:
 
 ```kotlin
@@ -39,7 +39,7 @@ the page count through `pageCount`). The configuration lambda runs over
 `lineBreakerStrategy` / `wordBreakerStrategy`).
 
 For a ready-made, scrollable and zoomable view, `PaperSheetView` in
-`org.pcsoft.framework.simplay.fx.control` takes a `Document` and shows its pages
+`org.pcsoft.framework.simplay.fx` takes a `Document` and shows its pages
 as sheets with a border and a drop shadow:
 
 ```kotlin
@@ -59,15 +59,25 @@ mouse and copied with `Ctrl+C` as styled HTML, RTF and plain text. The read-only
 through `selectionModel` (a `TextSelectionModel` with `text`, `startIndex` /
 `endIndex` / `length`, `bounds`, the styled `runs`, and the `selectRange` /
 `selectAll` / `clearSelection` commands), with `selectedText` and
-`selectionBounds` kept as convenience delegates. There is no caret - editing is
-added by a later plan.
+`selectionBounds` kept as convenience delegates.
+
+Setting `mode = PaperSheetMode.NORMAL` turns the view into an editor: a blinking
+caret, character insertion and removal, clipboard cut / copy / paste, line and
+selection duplication, drag-and-drop of the selection and the standard caret
+keys (`Home`, `End`, `Ctrl+Home`, `Ctrl+End`, arrows, `Ctrl+Left` /
+`Ctrl+Right`, `Backspace`, `Delete`, each optionally with `Shift`). An edit
+replaces `document` with a new instance. The caret is exposed through
+`caretModel`, a `CaretModel` with the read-only `position` / `bounds` / blink
+state, the `blockCount` / `wordCount` / `symbolCount` of the document and the
+linear, absolute-structural and relative-structural move commands. Setting
+`smoothCaretBlink = true` (off by default) fades the caret instead of blinking it
+hard on and off.
 
 `PaperSheetView` also accepts floating overlays through
 `getFloatingOverlays()` (or an FXML `<floatingOverlays>` child list): a
 `FloatingOverlay` node the view shows, positions and hides on its own while its
-`trigger` holds (`SELECTION`, `PARAGRAPH_HOVER`, `PAGE_HOVER`; `CARET` is inert
-until editing is added). Overlays follow scroll and zoom and are clamped to the
-viewport edge.
+`trigger` holds (`SELECTION`, `PARAGRAPH_HOVER`, `PAGE_HOVER`, and `CARET` while
+editing). Overlays follow scroll and zoom and are clamped to the viewport edge.
 
 !!! note
 

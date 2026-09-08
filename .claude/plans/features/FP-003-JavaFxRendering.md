@@ -97,8 +97,8 @@ artifact.
   * `...fx.internal` - `FxFontMeasureCalculator` (JavaFX `Text`/`Font` metrics),
     the `MeasuredDocument` draw walk against a `GraphicsContext`, page-size and
     document-size helpers, glyph-level hit-testing helper.
-  * `...fx.canvas` - the public `Canvas` renderer entry point.
-  * `...fx.control` - the public paper-sheet `Control` (skin, viewport, zoom,
+  * `...fx` - the public `Canvas` renderer entry point.
+  * `...fx` - the public paper-sheet `Control` (skin, viewport, zoom,
     scroll, selection; editing added later on the same class).
 * Data flow: `Document` -> internal `SimpLayEngine.measure` ->
   `MeasuredDocument` (module-private) -> draw walk -> JavaFX surface. Selection
@@ -118,7 +118,7 @@ artifact.
 | IP-02 ✅ | Canvas Renderer (COMPLETED)   | Public `Document`-only renderer drawing the whole document on one `Canvas` with dashed page breaks; `Canvas` demo tab with toolbar.  | IP-01        |
 | IP-03 ✅ | Paper Sheet Component (COMPLETED) | Public scrollable, zoomable sheet `Control` with margins, page gaps and selectable/copyable text; `Readonly` demo tab with toolbar.    | IP-01        |
 | IP-04 ✅ | Floating Overlays (COMPLETED)  | FXML-compatible API for externally registered floating components shown, positioned and hidden on selection, paragraph-hover and page-hover triggers.  | IP-03        |
-| IP-05 | Editing And Key Commands       | Add caret, text editing, Ctrl+V and standard navigation commands to the paper component; `Read/Write` demo tab with toolbar.             | IP-03        |
+| IP-05 ✅ | Editing And Key Commands (COMPLETED) | Add caret, text editing, clipboard and standard navigation commands to the paper component; `Read/Write` demo tab with toolbar.             | IP-03        |
 | IP-06 | Paper Component Styling         | Make the paper `Control` styleable through the standard JavaFX CSS mechanism (`-fx-` properties, default stylesheet, pseudo-classes).    | IP-03        |
 | IP-07 | Documentation                  | `docs/docs/fx/` pages: direct canvas rendering (incl. single-page), paper-sheet usage + shortcuts, floating overlays, paper-sheet styling.                 | IP-02, IP-03, IP-04, IP-05, IP-06 |
 
@@ -300,7 +300,7 @@ the component's readonly mode: selectable text, no caret.
 **As built (deviations from plan)**
 
 * `FloatingOverlay` is a plain bean (no-arg constructor, JavaFX properties only)
-  in `...fx.control`, plus the `FloatingOverlayTrigger` enum and a dedicated
+  in `...fx`, plus the `FloatingOverlayTrigger` enum and a dedicated
   public `FloatingOverlayEvent` type (module-`internal` constructor). `onShown` /
   `onHidden` are `ObjectProperty<EventHandler<FloatingOverlayEvent>>` invoked
   directly - the overlay event is not routed through the JavaFX event bus.
@@ -323,7 +323,7 @@ the component's readonly mode: selectable text, no caret.
 * Skin test hooks added: `hoverAtForTest`, `clearHoverForTest`,
   `refreshOverlaysForTest`, `activeOverlaysForTest`, `overlayNodeCountForTest`.
   The `FXMLLoader` test loads
-  `fx/src/test/resources/org/pcsoft/framework/simplay/fx/control/paper-sheet-overlays.fxml`.
+  `../../../fx/src/test/resources/org/pcsoft/framework/simplay/fx/paper-sheet-overlays.fxml`.
 
 **Objective**
 
@@ -356,7 +356,36 @@ a sheet. A `CARET` trigger constant exists but stays inert until IP-05.
 * Provides the overlay API that IP-05 extends with the `CARET` trigger and IP-06
   makes CSS-styleable; IP-07 documents it.
 
-### IP-05: Editing And Key Commands
+### IP-05: Editing And Key Commands ✅ (COMPLETED)
+
+**As built (deviations from plan)**
+
+* The caret bookkeeping (index, wish-x, blink `Timeline`, movement) stays private
+  in `PaperSheetViewSkin`; only the public `CaretModel` (`...fx`, built
+  like `TextSelectionModel`) is added as a type. `CaretModel` carries the
+  read-only `position` / `bounds` / `visible` / `blockCount` / `wordCount` /
+  `symbolCount` and the linear, absolute-structural and relative-structural move
+  commands, routed through a `PaperSheetView.CaretCommands` sink with the same
+  pre-skin buffering as `SelectionCommands`.
+* `CaretModel.kt` is the only new `control` file besides `PaperSheetMode.kt`; the
+  planned separate skin-side `CaretModel` helper file was not created.
+* `DocumentEditor` (`...fx.internal`, an `object`) splices `DocumentTextIndex.text`
+  directly (caret indices are indices into that string), cuts it back into raw
+  blocks along `blockRanges` remapped through the splice, merges blocks a delete
+  joined across their boundary, rebuilds affected blocks with `TextBlock.of` and
+  keeps the page list and types. It returns `Result(document, caretIndex)`.
+* `DocumentTextIndex` gained `blockRanges` (one entry per raw block that produced
+  glyphs, grouped by raw-block identity so a page-split block stays one entry),
+  `wordRanges`, `symbolRanges` and the `offsetIn* / startOf* / endOf* / next* /
+  prev*` helpers.
+* Painting: `PaperSheetCanvasPainter.paint` gained `caret: CaretPaint?` +
+  `caretVisible`; it strokes one vertical line and reports `caretDrawCount`. The
+  skin's `caretDrawCount` test hook now delegates to the painter.
+* `Ctrl+X` (cut), `Ctrl+D` (duplicate selection or current line) and mouse
+  drag-and-drop of the selection (press inside the selection box; `Ctrl` on
+  release copies instead of moves) were added on top of the planned key set.
+* Known limitation: an empty raw block produces no `blockRanges` entry and is
+  dropped by the first edit; no sample or fixture document has empty blocks.
 
 **Objective**
 
@@ -453,12 +482,12 @@ IP-01 ✅
 ├── IP-02 ✅ ──────────────┐
 └── IP-03 ✅               │
     ├── IP-04 ✅ ──────────┤
-    ├── IP-05 (opt. IP-04) ┤
+    ├── IP-05 ✅ ──────────┤
     └── IP-06 ─────────────┤
                            └── IP-07
 ```
 
-Completed plans: IP-01, IP-02, IP-03, IP-04.
+Completed plans: IP-01, IP-02, IP-03, IP-04, IP-05.
 
 ## 9. Risks and Open Questions
 

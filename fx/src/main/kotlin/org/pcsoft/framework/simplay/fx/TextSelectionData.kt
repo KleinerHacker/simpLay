@@ -10,7 +10,7 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.fx.control
+package org.pcsoft.framework.simplay.fx
 
 /**
  * One contiguous stretch of a [TextSelectionModel]'s selection that shares a single font. The runs of

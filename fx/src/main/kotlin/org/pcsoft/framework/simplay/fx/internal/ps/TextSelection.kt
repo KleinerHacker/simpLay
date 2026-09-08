@@ -10,7 +10,9 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.fx.control
+package org.pcsoft.framework.simplay.fx.internal.ps
+
+import org.pcsoft.framework.simplay.fx.PaperSheetView
 
 import javafx.scene.input.Clipboard
 import javafx.scene.input.ClipboardContent

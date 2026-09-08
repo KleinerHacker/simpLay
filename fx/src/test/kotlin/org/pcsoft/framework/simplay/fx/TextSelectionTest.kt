@@ -10,26 +10,21 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.fx.control
+package org.pcsoft.framework.simplay.fx
 
 import javafx.scene.input.Clipboard
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 import org.junit.jupiter.api.Test
 import org.pcsoft.framework.simplay.engine.engine.measure
 import org.pcsoft.framework.simplay.engine.geometry.Margins
 import org.pcsoft.framework.simplay.engine.geometry.Size
-import org.pcsoft.framework.simplay.engine.model.Document
-import org.pcsoft.framework.simplay.engine.model.FlowPage
-import org.pcsoft.framework.simplay.engine.model.Font
-import org.pcsoft.framework.simplay.engine.model.PageLayout
-import org.pcsoft.framework.simplay.engine.model.TextBlock
-import org.pcsoft.framework.simplay.engine.model.TextStyle
-import org.pcsoft.framework.simplay.fx.JavaFxTestBase
+import org.pcsoft.framework.simplay.engine.model.*
 import org.pcsoft.framework.simplay.fx.internal.DocumentTextIndex
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
+import org.pcsoft.framework.simplay.fx.internal.ps.TextSelection
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 /**
  * Headless tests for the [TextSelection] model together with the [DocumentTextIndex] it works on,

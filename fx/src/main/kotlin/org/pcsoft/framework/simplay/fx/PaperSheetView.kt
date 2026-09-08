@@ -10,7 +10,7 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.fx.control
+package org.pcsoft.framework.simplay.fx
 
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.ObjectProperty
@@ -30,16 +30,23 @@ import javafx.scene.control.Skin
 import org.pcsoft.framework.simplay.engine.model.Document
 
 /**
- * A read-only, scrollable and zoomable view that renders a [Document] as physical-looking sheets -
- * each with a border and a drop shadow - stacked vertically. Text can be selected with the mouse and
- * copied to the system clipboard with `Ctrl+C` as styled HTML, RTF and plain text. There is no
- * caret; editing is added by a later implementation plan on this same class.
+ * A scrollable and zoomable view that renders a [Document] as physical-looking sheets - each with a
+ * border and a drop shadow - stacked vertically. Text can be selected with the mouse and copied to
+ * the system clipboard with `Ctrl+C` as styled HTML, RTF and plain text.
+ *
+ * The [mode] switches between [PaperSheetMode.READONLY] (no caret, exactly the read-only behaviour)
+ * and [PaperSheetMode.EDITABLE], which adds a blinking caret, character insertion / removal, clipboard
+ * cut / copy / paste (`Ctrl+X` / `Ctrl+C` / `Ctrl+V`), line duplication (`Ctrl+D`), drag-and-drop of
+ * the selection and the standard caret-navigation keys (`Home`, `End`, `Ctrl+Home`, `Ctrl+End`,
+ * arrows, `Ctrl+Left` / `Ctrl+Right`, `Backspace`, `Delete`, each optionally with `Shift`). Editing
+ * replaces [document] with a new instance; the previous document is not mutated.
  *
  * The only input is [document]. Layout is controlled by [outerMargin] (space around the sheet stack)
  * and [pageGap] (space between two sheets). [zoom] scales the whole view and is always kept within
  * `[minZoom, maxZoom]`; assigning a value outside that range, or narrowing the range, clamps it. The
- * read-only [contentSize] reports the laid-out size; the selection is exposed through [selectionModel]
- * (with [selectedText] and [selectionBounds] as convenience delegates).
+ * read-only [contentSize] reports the laid-out size; the selection is exposed through
+ * [selectionModel] (with [selectedText] and [selectionBounds] as convenience delegates) and the
+ * caret through [caretModel].
  *
  * Every property follows the JavaFX bean convention: the property object is exposed through a
  * `xxxProperty()` accessor (the Kotlin property is named `xxxProperty`, its JVM getter renamed with
@@ -58,6 +65,22 @@ class PaperSheetView : Control() {
         get() = documentProperty.get()
         set(value) {
             documentProperty.set(value)
+        }
+
+    //endregion
+
+    //region Mode
+
+    /** The [mode] property, for binding and change listeners. */
+    @get:JvmName("modeProperty")
+    val modeProperty: ObjectProperty<PaperSheetMode> =
+        SimpleObjectProperty(this, "mode", PaperSheetMode.READONLY)
+
+    /** Whether the view only shows text or also edits it; defaults to [PaperSheetMode.READONLY]. */
+    var mode: PaperSheetMode
+        get() = modeProperty.get()
+        set(value) {
+            modeProperty.set(value)
         }
 
     //endregion
@@ -219,6 +242,78 @@ class PaperSheetView : Control() {
     internal fun requestSelectAll() = runSelectionCommand { selectAll() }
 
     internal fun requestClearSelection() = runSelectionCommand { clearSelection() }
+
+    //endregion
+
+    //region Caret
+
+    private val caretModelInstance = CaretModel(this)
+
+    /** The [caretModel] property, read-only; the same instance for the whole life of the view. */
+    @get:JvmName("caretModelProperty")
+    val caretModelProperty: ReadOnlyObjectProperty<CaretModel> =
+        ReadOnlyObjectWrapper(this, "caretModel", caretModelInstance).readOnlyProperty
+
+    /**
+     * The caret model: the caret [CaretModel.position], its viewport [CaretModel.bounds], the blink
+     * state and the linear, absolute-structural and relative-structural move commands.
+     */
+    val caretModel: CaretModel get() = caretModelInstance
+
+    /** The [smoothCaretBlink] property, for binding and change listeners. */
+    @get:JvmName("smoothCaretBlinkProperty")
+    val smoothCaretBlinkProperty: javafx.beans.property.BooleanProperty =
+        javafx.beans.property.SimpleBooleanProperty(this, "smoothCaretBlink", false)
+
+    /**
+     * When `true`, the caret fades in and out instead of blinking hard on and off. Off by default.
+     * Only takes effect in [PaperSheetMode.EDITABLE].
+     */
+    var smoothCaretBlink: Boolean
+        get() = smoothCaretBlinkProperty.get()
+        set(value) = smoothCaretBlinkProperty.set(value)
+
+    /** Sink for the [caretModel] commands, implemented and registered by the skin. */
+    internal interface CaretCommands {
+        fun moveTo(index: Int)
+        fun moveToStart()
+        fun moveToEnd()
+        fun moveIntoBlock(block: Int, index: Int)
+        fun moveToStartOfBlock(block: Int)
+        fun moveToEndOfBlock(block: Int)
+        fun moveIntoWord(word: Int, index: Int)
+        fun moveToStartOfWord(word: Int)
+        fun moveToEndOfWord(word: Int)
+        fun moveToSymbol(symbol: Int)
+        fun moveToStartOfSymbol(symbol: Int)
+        fun moveToEndOfSymbol(symbol: Int)
+        fun moveToNextWord()
+        fun moveToPrevWord()
+        fun moveToNextBlock()
+        fun moveToPrevBlock()
+        fun moveToNextSymbol()
+        fun moveToPrevSymbol()
+    }
+
+    private var caretCommands: CaretCommands? = null
+    private var pendingCaretCommand: (CaretCommands.() -> Unit)? = null
+
+    internal fun registerCaretCommands(commands: CaretCommands) {
+        caretCommands = commands
+        pendingCaretCommand?.let { pending ->
+            pendingCaretCommand = null
+            commands.pending()
+        }
+    }
+
+    internal fun unregisterCaretCommands(commands: CaretCommands) {
+        if (caretCommands === commands) caretCommands = null
+    }
+
+    internal fun requestCaret(block: CaretCommands.() -> Unit) {
+        val commands = caretCommands
+        if (commands != null) commands.block() else pendingCaretCommand = block
+    }
 
     //endregion
 

@@ -10,7 +10,7 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.fx.canvas
+package org.pcsoft.framework.simplay.fx
 
 import javafx.geometry.Dimension2D
 import javafx.scene.canvas.Canvas

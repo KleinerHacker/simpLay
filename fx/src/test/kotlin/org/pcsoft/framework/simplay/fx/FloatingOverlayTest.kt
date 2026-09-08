@@ -10,7 +10,7 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.fx.control
+package org.pcsoft.framework.simplay.fx
 
 import javafx.event.EventHandler
 import javafx.fxml.FXMLLoader
@@ -18,12 +18,11 @@ import javafx.geometry.Pos
 import javafx.scene.Scene
 import javafx.scene.control.Label
 import javafx.stage.Stage
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import org.junit.jupiter.api.Test
-import org.pcsoft.framework.simplay.fx.JavaFxTestBase
 
 /**
  * Headless tests for the [FloatingOverlay] API of [PaperSheetView]: the selection, paragraph-hover
@@ -199,7 +198,7 @@ class FloatingOverlayTest : JavaFxTestBase() {
      */
     @Test
     fun fxmlDeclaredOverlaysLoadAndActivate() {
-        val resource = javaClass.getResource("/org/pcsoft/framework/simplay/fx/control/paper-sheet-overlays.fxml")
+        val resource = javaClass.getResource("/org/pcsoft/framework/simplay/fx/paper-sheet-overlays.fxml")
         assertNotNull(resource, "test FXML must be on the classpath")
 
         val view = onFxThread { FXMLLoader(resource).load<PaperSheetView>() }

@@ -10,7 +10,7 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.fx.control
+package org.pcsoft.framework.simplay.fx.internal.ps
 
 import javafx.scene.canvas.Canvas
 import javafx.scene.canvas.GraphicsContext
@@ -26,13 +26,24 @@ import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
 import org.pcsoft.framework.simplay.fx.internal.segmentSpanX
 
 /**
+ * The caret rectangle to paint on a page, in that page's content-area coordinates.
+ *
+ * @property pageIndex the page the caret sits on.
+ * @property x left edge of the caret relative to the content-area left edge.
+ * @property y top edge of the caret relative to the content-area top edge.
+ * @property height caret height (the line height).
+ */
+internal class CaretPaint(val pageIndex: Int, val x: Double, val y: Double, val height: Double)
+
+/**
  * The pure canvas painting of [PaperSheetViewSkin]: given the measured document, the pre-computed
  * page tops and the current zoom / outer margin / scroll offset, it clears [canvas] and paints only
  * the pages whose vertical band intersects the viewport (simple virtualisation) - drop shadow, white
- * fill and border per sheet, the selection highlight, then the page text through [CanvasRenderer].
+ * fill and border per sheet, the selection highlight, then the page text through [CanvasRenderer],
+ * and finally the edit caret when one is supplied and visible.
  *
- * The painter owns no state beyond the two counters it reports for the last [paint]; measuring,
- * layout, scrolling, selection tracking and input handling stay in the skin.
+ * The painter owns no state beyond the counters it reports for the last [paint]; measuring, layout,
+ * scrolling, selection tracking, caret tracking and input handling stay in the skin.
  */
 internal class PaperSheetCanvasPainter(private val canvas: Canvas) {
 
@@ -44,10 +55,16 @@ internal class PaperSheetCanvasPainter(private val canvas: Canvas) {
     var sheetChromeDrawCount: Int = 0
         private set
 
+    /** Number of caret strokes drawn in the last [paint] call (`0` or `1`). */
+    var caretDrawCount: Int = 0
+        private set
+
     /**
      * Repaints [canvas]. A `null` / empty [measured] or a zero-sized canvas clears the canvas and
      * resets the counters. The selection highlight is drawn when [index] is set and
-     * `selectionEnd > selectionStart`.
+     * `selectionEnd > selectionStart`; the [caret] is drawn when it is non-`null`, [caretOpacity] is
+     * greater than `0` and its page is in view, stroked with that opacity so a smooth blink can fade
+     * it in and out.
      */
     fun paint(
         measured: MeasuredDocument?,
@@ -59,9 +76,13 @@ internal class PaperSheetCanvasPainter(private val canvas: Canvas) {
         selectionStart: Int,
         selectionEnd: Int,
         fonts: FxFontMeasureCalculator,
+        caret: CaretPaint? = null,
+        caretOpacity: Double = 0.0,
     ) {
         val gc = canvas.graphicsContext2D
         gc.clearRect(0.0, 0.0, canvas.width, canvas.height)
+
+        caretDrawCount = 0
 
         if (measured == null || measured.pages.isEmpty() || canvas.width <= 0.0 || canvas.height <= 0.0) {
             renderedPageIndices = emptyList()
@@ -92,6 +113,10 @@ internal class PaperSheetCanvasPainter(private val canvas: Canvas) {
                     drawSelectionOnPage(gc, index, i, selectionStart, selectionEnd, originX, originY, fonts)
                 }
                 CanvasRenderer.renderPage(gc, page, originX = originX, originY = originY, fonts = fonts)
+                if (caret != null && caretOpacity > 0.0 && caret.pageIndex == i) {
+                    drawCaretOnPage(gc, page, caret, originX, originY, caretOpacity.coerceIn(0.0, 1.0))
+                    caretDrawCount = 1
+                }
             }
         }
 
@@ -157,14 +182,35 @@ internal class PaperSheetCanvasPainter(private val canvas: Canvas) {
         gc.restore()
     }
 
+    private fun drawCaretOnPage(
+        gc: GraphicsContext,
+        page: MeasuredPage,
+        caret: CaretPaint,
+        originX: Double,
+        originY: Double,
+        alpha: Double,
+    ) {
+        val contentArea = page.contentArea
+        val x = originX + contentArea.x + caret.x
+        val yTop = originY + contentArea.y + caret.y
+        gc.save()
+        gc.globalAlpha = alpha
+        gc.stroke = CARET_COLOR
+        gc.lineWidth = CARET_WIDTH
+        gc.strokeLine(x, yTop, x, yTop + caret.height)
+        gc.restore()
+    }
+
     private companion object {
 
         const val SHADOW_OFFSET = 4.0
         const val BORDER_WIDTH = 1.0
+        const val CARET_WIDTH = 1.5
 
         val SHEET_COLOR: Color = Color.WHITE
         val BORDER_COLOR: Color = Color.gray(0.55)
         val SHADOW_COLOR: Color = Color.rgb(0, 0, 0, 0.25)
         val SELECTION_COLOR: Color = Color.rgb(66, 133, 244, 0.35)
+        val CARET_COLOR: Color = Color.rgb(20, 20, 20)
     }
 }

@@ -10,16 +10,15 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.fx.control
+package org.pcsoft.framework.simplay.fx
 
 import javafx.scene.Scene
 import javafx.stage.Stage
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
-import org.junit.jupiter.api.Test
-import org.pcsoft.framework.simplay.fx.JavaFxTestBase
 
 /**
  * Headless tests for the public [PaperSheetView] control: its properties, the zoom clamping and the

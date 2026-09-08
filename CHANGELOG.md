@@ -14,7 +14,28 @@ excluded.
 
 ### Added
 
-- `fx`: `PaperSheetView` (package `org.pcsoft.framework.simplay.fx.control`), a
+- `fx`: editing for `PaperSheetView`. A new `mode` property switches between
+  `PaperSheetMode.READONLY` (the previous behaviour: selectable, copyable text,
+  no caret) and `PaperSheetMode.NORMAL`, which adds a blinking caret, character
+  insertion and removal, clipboard cut / copy / paste (`Ctrl+X` / `Ctrl+C` /
+  `Ctrl+V`), line and selection duplication (`Ctrl+D`), drag-and-drop of the
+  selection (hold `Ctrl` to copy instead of move) and the standard caret keys
+  (`Home`, `End`, `Ctrl+Home`, `Ctrl+End`, arrows, `Ctrl+Left` / `Ctrl+Right`,
+  `Backspace`, `Delete`, each optionally with `Shift` to extend the selection).
+  Editing replaces `document` with a new instance; the previous document is not
+  mutated. The caret is exposed through the new `caretModel`, a `CaretModel` with
+  the read-only `position`, viewport `bounds`, blink `visible` state and the
+  `blockCount` / `wordCount` / `symbolCount` of the document, plus linear
+  (`moveTo`, `moveToStart`, `moveToEnd`), absolute-structural (`moveIntoBlock` /
+  `moveToStartOfBlock` / `moveToEndOfBlock` and the word / symbol siblings) and
+  relative-structural (`moveToNextWord` / `moveToPrevWord` and the block / symbol
+  siblings) move commands. A `smoothCaretBlink` property (off by default) fades
+  the caret in and out instead of blinking it hard on and off. The `CARET`
+  floating-overlay trigger is now live and anchors an overlay to the caret
+  rectangle. The demo gains a `Read/Write` tab
+  hosting the control in normal mode with a mode selector, the `Readonly`
+  toolbar's settings and a live caret / document read-out.
+- `fx`: `PaperSheetView` (package `org.pcsoft.framework.simplay.fx`), a
   read-only JavaFX `Control` that renders a `Document` as physical-looking sheets
   - each with a border and a drop shadow - stacked vertically in a scrollable,
   zoomable viewport. Only the pages currently in the viewport are drawn (simple
@@ -36,7 +57,7 @@ excluded.
   toolbar for every setting plus `Select all` / `Clear` buttons and a live
   read-out of the selection range and run count.
 - `fx`: floating overlays for `PaperSheetView`. A `FloatingOverlay` (package
-  `org.pcsoft.framework.simplay.fx.control`) is a caller-supplied node the view
+  `org.pcsoft.framework.simplay.fx`) is a caller-supplied node the view
   shows, positions and hides on its own when its `trigger` holds - a non-empty
   text selection (`SELECTION`), the mouse over a paragraph (`PARAGRAPH_HOVER`) or
   over a sheet (`PAGE_HOVER`); a `CARET` trigger constant exists but stays inert
@@ -53,7 +74,7 @@ excluded.
   anchor is partly out of view and hidden once it leaves entirely. The demo's
   `Readonly` tab shows a `Copy` bar over the selection and a badge over the
   hovered paragraph.
-- `fx`: `CanvasDocumentRenderer` (package `org.pcsoft.framework.simplay.fx.canvas`)
+- `fx`: `CanvasDocumentRenderer` (package `org.pcsoft.framework.simplay.fx`)
   - the first public entry point of the module. Created for one fixed document
   through `CanvasDocumentRenderer.for(document) { /* configuration */ }`, which
   measures the document and computes the whole canvas layout once, up front. It
