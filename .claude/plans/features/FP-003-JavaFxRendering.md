@@ -119,7 +119,7 @@ artifact.
 | IP-03 ✅ | Paper Sheet Component (COMPLETED) | Public scrollable, zoomable sheet `Control` with margins, page gaps and selectable/copyable text; `Readonly` demo tab with toolbar.    | IP-01        |
 | IP-04 ✅ | Floating Overlays (COMPLETED)  | FXML-compatible API for externally registered floating components shown, positioned and hidden on selection, paragraph-hover and page-hover triggers.  | IP-03        |
 | IP-05 ✅ | Editing And Key Commands (COMPLETED) | Add caret, text editing, clipboard and standard navigation commands to the paper component; `Read/Write` demo tab with toolbar.             | IP-03        |
-| IP-06 | Paper Component Styling         | Make the paper `Control` styleable through the standard JavaFX CSS mechanism (`-fx-` properties, default stylesheet, pseudo-classes).    | IP-03        |
+| IP-06 ✅ | Paper Component Styling (COMPLETED) | Make the paper `Control` styleable through the standard JavaFX CSS mechanism (`-fx-` properties, default stylesheet, pseudo-classes).    | IP-03        |
 | IP-07 | Documentation                  | `docs/docs/fx/` pages: direct canvas rendering (incl. single-page), paper-sheet usage + shortcuts, floating overlays, paper-sheet styling.                 | IP-02, IP-03, IP-04, IP-05, IP-06 |
 
 IP-02 and IP-03 are independent of each other and parallelizable once IP-01 is
@@ -416,7 +416,30 @@ Readonly stays exactly the IP-03 behaviour.
 * Consumes IP-03 and IP-01; optionally IP-04. Provides nothing to later plans in
   this feature.
 
-### IP-06: Paper Component Styling
+### IP-06: Paper Component Styling ✅ (COMPLETED)
+
+**As built (deviations from plan)**
+
+* The `CssMetaData` live in an internal `object PaperSheetStyleableProperties`
+  under `...fx.internal.ps` (next to the painter), not directly under `...fx`.
+* Every colour value is a `Paint` (`-fx-sheet-background`, `-fx-sheet-border-color`,
+  `-fx-shadow-color`, `-fx-selection-color`) so a gradient works; only
+  `-fx-caret-color` stayed a `Color`. Sizes: `-fx-sheet-border-width`,
+  `-fx-shadow-offset`, `-fx-outer-margin`, `-fx-page-gap`.
+* `outerMarginProperty` / `pageGapProperty` changed type from `SimpleDoubleProperty`
+  to `StyleableDoubleProperty`; the new values are `SimpleStyleableObjectProperty` /
+  `SimpleStyleableDoubleProperty` with public bean accessors.
+* Only `:readonly` is wired (to `modeProperty`); `:focused` is left to the JavaFX
+  `Node` default rather than re-registered.
+* No static `getClassCssMetaData()` - Kotlin cannot hide the inherited `Control`
+  static without an "accidental override"; `getControlCssMetaData()` is the entry
+  point.
+* The painter takes a `PaperSheetStyle` value object (former constants as its
+  defaults) instead of separate parameters, and gained a `paintCount` test hook.
+* No `.gitkeep` under `fx/src/main/resources` existed; the directory was created
+  fresh with `paper-sheet-view.css`.
+* No `paper-sheet-overlay` style class for the IP-04 overlay container (dropped
+  from scope; can be added later).
 
 **Objective**
 
@@ -483,11 +506,11 @@ IP-01 ✅
 └── IP-03 ✅               │
     ├── IP-04 ✅ ──────────┤
     ├── IP-05 ✅ ──────────┤
-    └── IP-06 ─────────────┤
+    └── IP-06 ✅ ──────────┤
                            └── IP-07
 ```
 
-Completed plans: IP-01, IP-02, IP-03, IP-04, IP-05.
+Completed plans: IP-01, IP-02, IP-03, IP-04, IP-05, IP-06.
 
 ## 9. Risks and Open Questions
 

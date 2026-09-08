@@ -32,10 +32,13 @@ import org.pcsoft.framework.simplay.fx.PaperSheetView
 /**
  * Content of the demo's `Read/Write` tab: a [PaperSheetView] in [PaperSheetMode.EDITABLE], driven by a
  * [ToolBar] that exposes the mode, the smooth-caret-blink switch and every value the `Readonly` tab
- * exposes (sample document, font family, outer margin, page gap, min/max/current zoom), and reads
- * back the current zoom, the caret position from [PaperSheetView.caretModel] and the size of the
- * (edited) document (characters and pages). `Go to start` / `Go to end` drive the caret model
+ * exposes (sample document, font family, stylesheet, outer margin, page gap, min/max/current zoom),
+ * and reads back the current zoom, the caret position from [PaperSheetView.caretModel] and the size
+ * of the (edited) document (characters and pages). `Go to start` / `Go to end` drive the caret model
  * directly.
+ *
+ * The "Stylesheet" selector switches between the built-in look ("Standard") and the bundled
+ * `demo-dark.css` example ("Dark").
  */
 class ReadWriteDemoTab : BorderPane() {
 
@@ -59,6 +62,11 @@ class ReadWriteDemoTab : BorderPane() {
         selectionModel.selectFirst()
     }
 
+    private val stylesheetBox = ChoiceBox<String>().apply {
+        items.setAll(STYLE_STANDARD, STYLE_DARK)
+        value = STYLE_STANDARD
+    }
+
     private val outerMarginSpinner = Spinner<Double>(0.0, 200.0, view.outerMargin, 4.0)
     private val pageGapSpinner = Spinner<Double>(0.0, 200.0, view.pageGap, 4.0)
     private val minZoomSpinner = Spinner<Double>(0.1, 2.0, view.minZoom, 0.05)
@@ -78,6 +86,7 @@ class ReadWriteDemoTab : BorderPane() {
             Separator(),
             Label("Document:"), sampleBox,
             Label("Font:"), fontFamilyBox,
+            Label("Stylesheet:"), stylesheetBox,
             Separator(),
             Label("Outer margin:"), outerMarginSpinner,
             Label("Page gap:"), pageGapSpinner,
@@ -97,6 +106,7 @@ class ReadWriteDemoTab : BorderPane() {
         smoothCaretBox.selectedProperty().addListener { _, _, v -> view.smoothCaretBlink = v }
         sampleBox.valueProperty().addListener { _, _, _ -> applySample() }
         fontFamilyBox.valueProperty().addListener { _, _, _ -> applySample() }
+        stylesheetBox.valueProperty().addListener { _, _, v -> applyStylesheet(v) }
         outerMarginSpinner.valueProperty().addListener { _, _, v -> view.outerMargin = v }
         pageGapSpinner.valueProperty().addListener { _, _, v -> view.pageGap = v }
         minZoomSpinner.valueProperty().addListener { _, _, v -> view.minZoom = v }
@@ -120,6 +130,12 @@ class ReadWriteDemoTab : BorderPane() {
         val base = DemoDocuments.all.first { it.first == sampleBox.value }.second
         val family = fontFamilyBox.value
         view.document = if (family == null || family == FONT_DEFAULT) base else base.withFontFamily(family)
+    }
+
+    /** Adds or removes the bundled `demo-dark.css` on this tab so it cascades to [view]. */
+    private fun applyStylesheet(choice: String?) {
+        stylesheets.remove(DARK_STYLESHEET)
+        if (choice == STYLE_DARK) stylesheets.add(DARK_STYLESHEET)
     }
 
     /** Rebuilds every block of [this] document with [family] as the font family, keeping all text. */
@@ -153,5 +169,11 @@ class ReadWriteDemoTab : BorderPane() {
     private companion object {
 
         const val FONT_DEFAULT = "Default (document)"
+
+        const val STYLE_STANDARD = "Standard"
+        const val STYLE_DARK = "Dark"
+
+        val DARK_STYLESHEET: String =
+            ReadWriteDemoTab::class.java.getResource("demo-dark.css")!!.toExternalForm()
     }
 }

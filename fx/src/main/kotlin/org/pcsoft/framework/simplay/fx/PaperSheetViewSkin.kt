@@ -36,6 +36,7 @@ import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetEditor
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetHoverTracker
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetOverlays
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetSelection
+import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetStyle
 
 /**
  * Skin of [PaperSheetView]. Owns the measuring, the vertical [ScrollBar], the pointer / mouse
@@ -55,6 +56,10 @@ import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetSelection
  * * [PaperSheetHoverTracker] - the hovered paragraph / sheet;
  * * [PaperSheetOverlays] - the registered [FloatingOverlay]s and the overlay layer on top of the
  *   viewport.
+ *
+ * The sheet chrome, the selection highlight and the caret are painted with the values from the
+ * styleable [PaperSheetView] properties (`-fx-sheet-background` and friends); a change to any of them
+ * triggers a repaint.
  */
 internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheetView>(control) {
 
@@ -148,6 +153,9 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     /** Number of caret strokes drawn in the last [redraw] (`0` in read-only mode); for tests. */
     internal val caretDrawCount: Int get() = painter.caretDrawCount
 
+    /** Number of completed paint passes; for tests. */
+    internal val paintCountForTest: Int get() = painter.paintCount
+
     /** Number of measured pages of the current document; for tests. */
     internal val pageCount: Int get() = measured?.pages?.size ?: 0
 
@@ -177,6 +185,14 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         registerChangeListener(control.modeProperty) { caret.onModeChanged() }
         registerChangeListener(control.smoothCaretBlinkProperty) { caret.restartBlink() }
         registerChangeListener(control.focusedProperty()) { caret.restartBlink() }
+
+        registerChangeListener(control.sheetBackgroundProperty) { redraw() }
+        registerChangeListener(control.sheetBorderColorProperty) { redraw() }
+        registerChangeListener(control.sheetBorderWidthProperty) { redraw() }
+        registerChangeListener(control.shadowColorProperty) { redraw() }
+        registerChangeListener(control.shadowOffsetProperty) { redraw() }
+        registerChangeListener(control.selectionColorProperty) { redraw() }
+        registerChangeListener(control.caretColorProperty) { redraw() }
 
         scrollBar.valueProperty().addListener { _, _, _ -> redraw() }
 
@@ -292,6 +308,16 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     private fun scrollOffset(): Double = scrollBar.value.coerceIn(0.0, scrollBar.max)
 
+    private fun currentStyle(): PaperSheetStyle = PaperSheetStyle(
+        sheetBackground = skinnable.sheetBackground,
+        sheetBorderColor = skinnable.sheetBorderColor,
+        sheetBorderWidth = skinnable.sheetBorderWidth,
+        shadowColor = skinnable.shadowColor,
+        shadowOffset = skinnable.shadowOffset,
+        selectionColor = skinnable.selectionColor,
+        caretColor = skinnable.caretColor,
+    )
+
     private fun redraw() {
         painter.paint(
             measured = measured,
@@ -303,6 +329,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
             selectionStart = selection.start,
             selectionEnd = selection.end,
             fonts = measurer,
+            style = currentStyle(),
             caret = caret.caretPaint(),
             caretOpacity = caret.currentOpacity(),
         )

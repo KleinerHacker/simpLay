@@ -11,12 +11,12 @@ Status: IN_PROGRESS
 | IP-03 | Paper Sheet Component | COMPLETED |
 | IP-04 | Floating Overlays | COMPLETED |
 | IP-05 | Editing And Key Commands | COMPLETED |
-| IP-06 | Paper Component Styling | NOT_STARTED |
+| IP-06 | Paper Component Styling | COMPLETED |
 | IP-07 | Documentation | NOT_STARTED |
 
 ## Overall Progress
 
-71%
+86%
 
 ## Notes
 
@@ -112,5 +112,27 @@ Known limitation: an intentionally empty raw block (a block whose text is empty)
 produces no measured glyph and no `blockRanges` entry, so the first edit drops
 it. None of the sample or fixture documents contain empty blocks.
 
-IP-06 (JavaFX CSS styling) still depends on IP-03 and shares the one skin class
-with IP-05. IP-07 comes last and writes the four `docs/docs/fx/` pages.
+IP-06 is done: `PaperSheetView` is styleable through the standard JavaFX CSS
+mechanism. New `internal object PaperSheetStyleableProperties` holds the
+`CssMetaData` for `-fx-sheet-background` / `-fx-sheet-border-color` /
+`-fx-sheet-border-width` / `-fx-shadow-color` / `-fx-shadow-offset` /
+`-fx-selection-color` / `-fx-caret-color` / `-fx-outer-margin` / `-fx-page-gap`;
+every colour is a `Paint` except `-fx-caret-color` (`Color`). `outerMarginProperty`
+/ `pageGapProperty` became `StyleableDoubleProperty`, the new colour/size
+properties are `SimpleStyleableObjectProperty` / `SimpleStyleableDoubleProperty`
+with public bean accessors, and `getControlCssMetaData()` / `getUserAgentStylesheet()`
+are overridden (the latter loads the bundled
+`fx/src/main/resources/.../paper-sheet-view.css`). A `:readonly` pseudo-class is
+wired to `modeProperty`; `:focused` is left to the JavaFX `Node` default (no own
+wiring). The skin builds a `PaperSheetStyle` value from the properties and passes
+it to `PaperSheetCanvasPainter.paint`, and a change listener on every styleable
+property repaints; the painter keeps its former constants as the `PaperSheetStyle`
+defaults and gained a `paintCount` test hook. A planned separate
+`PaperSheetStyleableProperties.kt` under `fx` was placed under `fx.internal.ps`
+next to the painter. The static `getClassCssMetaData()` accessor was dropped -
+Kotlin cannot hide the inherited `Control` static - `getControlCssMetaData()` is
+the entry point. The demo `Readonly` / `Read/Write` tabs gained a `Stylesheet`
+`ChoiceBox` (Standard / Dark) toggling the bundled `demo-dark.css`. Headless
+tests: `PaperSheetStylingTest`. `./gradlew :fx:build` is green.
+
+IP-07 comes last and writes the four `docs/docs/fx/` pages.

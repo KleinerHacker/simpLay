@@ -12,6 +12,7 @@
 
 package org.pcsoft.framework.simplay.fx
 
+import javafx.beans.property.BooleanProperty
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.ObjectProperty
 import javafx.beans.property.ReadOnlyIntegerProperty
@@ -19,15 +20,26 @@ import javafx.beans.property.ReadOnlyIntegerWrapper
 import javafx.beans.property.ReadOnlyObjectProperty
 import javafx.beans.property.ReadOnlyObjectWrapper
 import javafx.beans.property.ReadOnlyStringProperty
+import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
+import javafx.css.CssMetaData
+import javafx.css.PseudoClass
+import javafx.css.SimpleStyleableDoubleProperty
+import javafx.css.SimpleStyleableObjectProperty
+import javafx.css.Styleable
+import javafx.css.StyleableDoubleProperty
+import javafx.css.StyleableObjectProperty
 import javafx.geometry.Bounds
 import javafx.geometry.Dimension2D
 import javafx.scene.control.Control
 import javafx.scene.control.Skin
+import javafx.scene.paint.Color
+import javafx.scene.paint.Paint
 import org.pcsoft.framework.simplay.engine.model.Document
+import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetStyleableProperties
 
 /**
  * A scrollable and zoomable view that renders a [Document] as physical-looking sheets - each with a
@@ -47,6 +59,16 @@ import org.pcsoft.framework.simplay.engine.model.Document
  * read-only [contentSize] reports the laid-out size; the selection is exposed through
  * [selectionModel] (with [selectedText] and [selectionBounds] as convenience delegates) and the
  * caret through [caretModel].
+ *
+ * The sheet chrome, the drop shadow, the selection highlight, the caret and the two layout values are
+ * styleable through the standard JavaFX CSS mechanism. The style class is `paper-sheet-view`, a
+ * `:readonly` pseudo-class is active while [mode] is [PaperSheetMode.READONLY] (the inherited
+ * `:focused` pseudo-class works as usual), and [getUserAgentStylesheet] ships the default look. The
+ * `-fx-` properties are `-fx-sheet-background`, `-fx-sheet-border-color`, `-fx-sheet-border-width`,
+ * `-fx-shadow-color`, `-fx-shadow-offset`, `-fx-selection-color`, `-fx-caret-color`,
+ * `-fx-outer-margin` and `-fx-page-gap`. Every colour value is a [Paint] (a gradient works too)
+ * except `-fx-caret-color`, which is a plain [Color]. A programmatic setter still wins over the
+ * user-agent stylesheet.
  *
  * Every property follows the JavaFX bean convention: the property object is exposed through a
  * `xxxProperty()` accessor (the Kotlin property is named `xxxProperty`, its JVM getter renamed with
@@ -87,9 +109,12 @@ class PaperSheetView : Control() {
 
     //region Layout
 
-    /** The [outerMargin] property, for binding and change listeners. */
+    /** The [outerMargin] property, for binding and change listeners; styleable as `-fx-outer-margin`. */
     @get:JvmName("outerMarginProperty")
-    val outerMarginProperty: DoubleProperty = SimpleDoubleProperty(this, "outerMargin", DEFAULT_OUTER_MARGIN)
+    val outerMarginProperty: StyleableDoubleProperty =
+        SimpleStyleableDoubleProperty(
+            PaperSheetStyleableProperties.OUTER_MARGIN, this, "outerMargin", DEFAULT_OUTER_MARGIN,
+        )
 
     /** Space in layout units kept around the whole sheet stack. */
     var outerMargin: Double
@@ -98,9 +123,12 @@ class PaperSheetView : Control() {
             outerMarginProperty.set(value)
         }
 
-    /** The [pageGap] property, for binding and change listeners. */
+    /** The [pageGap] property, for binding and change listeners; styleable as `-fx-page-gap`. */
     @get:JvmName("pageGapProperty")
-    val pageGapProperty: DoubleProperty = SimpleDoubleProperty(this, "pageGap", DEFAULT_PAGE_GAP)
+    val pageGapProperty: StyleableDoubleProperty =
+        SimpleStyleableDoubleProperty(
+            PaperSheetStyleableProperties.PAGE_GAP, this, "pageGap", DEFAULT_PAGE_GAP,
+        )
 
     /** Vertical space in layout units between two consecutive sheets. */
     var pageGap: Double
@@ -108,6 +136,120 @@ class PaperSheetView : Control() {
         set(value) {
             pageGapProperty.set(value)
         }
+
+    //endregion
+
+    //region Styling
+
+    /** The [sheetBackground] property; styleable as `-fx-sheet-background`. */
+    @get:JvmName("sheetBackgroundProperty")
+    val sheetBackgroundProperty: StyleableObjectProperty<Paint> =
+        SimpleStyleableObjectProperty(
+            PaperSheetStyleableProperties.SHEET_BACKGROUND, this, "sheetBackground",
+            PaperSheetStyleableProperties.DEFAULT_SHEET_BACKGROUND,
+        )
+
+    /** Fill of every sheet; a [Paint], so a gradient or image pattern works. */
+    var sheetBackground: Paint
+        get() = sheetBackgroundProperty.get()
+        set(value) {
+            sheetBackgroundProperty.set(value)
+        }
+
+    /** The [sheetBorderColor] property; styleable as `-fx-sheet-border-color`. */
+    @get:JvmName("sheetBorderColorProperty")
+    val sheetBorderColorProperty: StyleableObjectProperty<Paint> =
+        SimpleStyleableObjectProperty(
+            PaperSheetStyleableProperties.SHEET_BORDER_COLOR, this, "sheetBorderColor",
+            PaperSheetStyleableProperties.DEFAULT_SHEET_BORDER_COLOR,
+        )
+
+    /** Stroke colour of every sheet border; a [Paint]. */
+    var sheetBorderColor: Paint
+        get() = sheetBorderColorProperty.get()
+        set(value) {
+            sheetBorderColorProperty.set(value)
+        }
+
+    /** The [sheetBorderWidth] property; styleable as `-fx-sheet-border-width`. */
+    @get:JvmName("sheetBorderWidthProperty")
+    val sheetBorderWidthProperty: StyleableDoubleProperty =
+        SimpleStyleableDoubleProperty(
+            PaperSheetStyleableProperties.SHEET_BORDER_WIDTH, this, "sheetBorderWidth",
+            PaperSheetStyleableProperties.DEFAULT_SHEET_BORDER_WIDTH,
+        )
+
+    /** Stroke width of every sheet border, in layout units. */
+    var sheetBorderWidth: Double
+        get() = sheetBorderWidthProperty.get()
+        set(value) {
+            sheetBorderWidthProperty.set(value)
+        }
+
+    /** The [shadowColor] property; styleable as `-fx-shadow-color`. */
+    @get:JvmName("shadowColorProperty")
+    val shadowColorProperty: StyleableObjectProperty<Paint> =
+        SimpleStyleableObjectProperty(
+            PaperSheetStyleableProperties.SHADOW_COLOR, this, "shadowColor",
+            PaperSheetStyleableProperties.DEFAULT_SHADOW_COLOR,
+        )
+
+    /** Fill of the drop shadow behind every sheet; a [Paint]. */
+    var shadowColor: Paint
+        get() = shadowColorProperty.get()
+        set(value) {
+            shadowColorProperty.set(value)
+        }
+
+    /** The [shadowOffset] property; styleable as `-fx-shadow-offset`. */
+    @get:JvmName("shadowOffsetProperty")
+    val shadowOffsetProperty: StyleableDoubleProperty =
+        SimpleStyleableDoubleProperty(
+            PaperSheetStyleableProperties.SHADOW_OFFSET, this, "shadowOffset",
+            PaperSheetStyleableProperties.DEFAULT_SHADOW_OFFSET,
+        )
+
+    /** Offset of the drop shadow to the lower right of every sheet, in layout units. */
+    var shadowOffset: Double
+        get() = shadowOffsetProperty.get()
+        set(value) {
+            shadowOffsetProperty.set(value)
+        }
+
+    /** The [selectionColor] property; styleable as `-fx-selection-color`. */
+    @get:JvmName("selectionColorProperty")
+    val selectionColorProperty: StyleableObjectProperty<Paint> =
+        SimpleStyleableObjectProperty(
+            PaperSheetStyleableProperties.SELECTION_COLOR, this, "selectionColor",
+            PaperSheetStyleableProperties.DEFAULT_SELECTION_COLOR,
+        )
+
+    /** Fill of the text selection highlight; a [Paint], usually semi-transparent. */
+    var selectionColor: Paint
+        get() = selectionColorProperty.get()
+        set(value) {
+            selectionColorProperty.set(value)
+        }
+
+    /** The [caretColor] property; styleable as `-fx-caret-color`. */
+    @get:JvmName("caretColorProperty")
+    val caretColorProperty: StyleableObjectProperty<Color> =
+        SimpleStyleableObjectProperty(
+            PaperSheetStyleableProperties.CARET_COLOR, this, "caretColor",
+            PaperSheetStyleableProperties.DEFAULT_CARET_COLOR,
+        )
+
+    /** Stroke colour of the edit caret; a plain [Color]. */
+    var caretColor: Color
+        get() = caretColorProperty.get()
+        set(value) {
+            caretColorProperty.set(value)
+        }
+
+    override fun getControlCssMetaData(): MutableList<CssMetaData<out Styleable, *>> =
+        ArrayList(PaperSheetStyleableProperties.CLASS_CSS_META_DATA)
+
+    override fun getUserAgentStylesheet(): String = USER_AGENT_STYLESHEET
 
     //endregion
 
@@ -262,8 +404,8 @@ class PaperSheetView : Control() {
 
     /** The [smoothCaretBlink] property, for binding and change listeners. */
     @get:JvmName("smoothCaretBlinkProperty")
-    val smoothCaretBlinkProperty: javafx.beans.property.BooleanProperty =
-        javafx.beans.property.SimpleBooleanProperty(this, "smoothCaretBlink", false)
+    val smoothCaretBlinkProperty: BooleanProperty =
+        SimpleBooleanProperty(this, "smoothCaretBlink", false)
 
     /**
      * When `true`, the caret fades in and out instead of blinking hard on and off. Off by default.
@@ -383,6 +525,11 @@ class PaperSheetView : Control() {
         zoomProperty.addListener { _, _, _ -> clampZoom() }
         minZoomProperty.addListener { _, _, _ -> clampZoom() }
         maxZoomProperty.addListener { _, _, _ -> clampZoom() }
+
+        pseudoClassStateChanged(READONLY_PSEUDO_CLASS, mode == PaperSheetMode.READONLY)
+        modeProperty.addListener { _, _, value ->
+            pseudoClassStateChanged(READONLY_PSEUDO_CLASS, value == PaperSheetMode.READONLY)
+        }
     }
 
     override fun createDefaultSkin(): Skin<*> = PaperSheetViewSkin(this)
@@ -399,5 +546,11 @@ class PaperSheetView : Control() {
         const val DEFAULT_MIN_ZOOM = 0.25
         const val DEFAULT_MAX_ZOOM = 4.0
         const val DEFAULT_ZOOM = 1.0
+
+        /** Pseudo-class active while [mode] is [PaperSheetMode.READONLY]. */
+        private val READONLY_PSEUDO_CLASS: PseudoClass = PseudoClass.getPseudoClass("readonly")
+
+        private val USER_AGENT_STYLESHEET: String =
+            PaperSheetView::class.java.getResource("paper-sheet-view.css")!!.toExternalForm()
     }
 }

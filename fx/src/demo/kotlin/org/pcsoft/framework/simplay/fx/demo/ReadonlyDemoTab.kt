@@ -14,6 +14,7 @@ package org.pcsoft.framework.simplay.fx.demo
 
 import javafx.geometry.Pos
 import javafx.scene.control.Button
+import javafx.scene.control.ChoiceBox
 import javafx.scene.control.ComboBox
 import javafx.scene.control.Label
 import javafx.scene.control.Separator
@@ -38,6 +39,10 @@ import org.pcsoft.framework.simplay.fx.PaperSheetView
  * selection from [PaperSheetView.selectionModel] (range, length, run count). Two buttons drive
  * the selection model with `selectAll` and `clearSelection`.
  *
+ * A "Stylesheet" selector switches between the built-in look ("Standard") and the bundled
+ * `demo-dark.css` example ("Dark"), which overrides the `-fx-sheet-background`, `-fx-shadow-color`,
+ * `-fx-selection-color` and `-fx-caret-color` of the component.
+ *
  * Two [FloatingOverlay]s show the feature off: a `Copy` bar that follows the text selection
  * ([FloatingOverlayTrigger.SELECTION]) and a small label that tracks the paragraph under the mouse
  * ([FloatingOverlayTrigger.PARAGRAPH_HOVER]). A toolbar label reads back the last triggered
@@ -60,6 +65,11 @@ class ReadonlyDemoTab : BorderPane() {
         items.add(FONT_DEFAULT)
         items.addAll(FxFont.getFamilies())
         selectionModel.selectFirst()
+    }
+
+    private val stylesheetBox = ChoiceBox<String>().apply {
+        items.setAll(STYLE_STANDARD, STYLE_DARK)
+        value = STYLE_STANDARD
     }
 
     private val outerMarginSpinner = Spinner<Double>(0.0, 200.0, view.outerMargin, 4.0)
@@ -102,6 +112,7 @@ class ReadonlyDemoTab : BorderPane() {
         top = ToolBar(
             Label("Document:"), sampleBox,
             Label("Font:"), fontFamilyBox,
+            Label("Stylesheet:"), stylesheetBox,
             Separator(),
             Label("Outer margin:"), outerMarginSpinner,
             Label("Page gap:"), pageGapSpinner,
@@ -120,6 +131,7 @@ class ReadonlyDemoTab : BorderPane() {
 
         sampleBox.valueProperty().addListener { _, _, _ -> applySample() }
         fontFamilyBox.valueProperty().addListener { _, _, _ -> applySample() }
+        stylesheetBox.valueProperty().addListener { _, _, v -> applyStylesheet(v) }
         outerMarginSpinner.valueProperty().addListener { _, _, v -> view.outerMargin = v }
         pageGapSpinner.valueProperty().addListener { _, _, v -> view.pageGap = v }
         minZoomSpinner.valueProperty().addListener { _, _, v -> view.minZoom = v }
@@ -144,6 +156,12 @@ class ReadonlyDemoTab : BorderPane() {
         val base = DemoDocuments.all.first { it.first == sampleBox.value }.second
         val family = fontFamilyBox.value
         view.document = if (family == null || family == FONT_DEFAULT) base else base.withFontFamily(family)
+    }
+
+    /** Adds or removes the bundled `demo-dark.css` on this tab so it cascades to [view]. */
+    private fun applyStylesheet(choice: String?) {
+        stylesheets.remove(DARK_STYLESHEET)
+        if (choice == STYLE_DARK) stylesheets.add(DARK_STYLESHEET)
     }
 
     /** Rebuilds every block of [this] document with [family] as the font family, keeping all text. */
@@ -177,6 +195,12 @@ class ReadonlyDemoTab : BorderPane() {
     private companion object {
 
         const val FONT_DEFAULT = "Default (document)"
+
+        const val STYLE_STANDARD = "Standard"
+        const val STYLE_DARK = "Dark"
+
+        val DARK_STYLESHEET: String =
+            ReadonlyDemoTab::class.java.getResource("demo-dark.css")!!.toExternalForm()
 
         const val HOVER_BADGE_STYLE =
             "-fx-background-color: #1e88e5; -fx-text-fill: white; -fx-padding: 2 6 2 6; -fx-background-radius: 3;"

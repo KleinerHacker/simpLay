@@ -14,6 +14,21 @@ excluded.
 
 ### Added
 
+- `fx`: `PaperSheetView` is now styleable through the standard JavaFX CSS
+  mechanism. The control keeps the `paper-sheet-view` style class, ships a
+  default user-agent stylesheet and exposes a `:readonly` pseudo-class (active
+  while `mode` is `PaperSheetMode.READONLY`; the inherited `:focused`
+  pseudo-class works as usual). The `-fx-` properties are `-fx-sheet-background`,
+  `-fx-sheet-border-color`, `-fx-sheet-border-width`, `-fx-shadow-color`,
+  `-fx-shadow-offset`, `-fx-selection-color`, `-fx-caret-color`,
+  `-fx-outer-margin` and `-fx-page-gap`, mirrored by the Kotlin properties
+  `sheetBackground`, `sheetBorderColor`, `sheetBorderWidth`, `shadowColor`,
+  `shadowOffset`, `selectionColor`, `caretColor` (plus the existing
+  `outerMargin` / `pageGap`, now styleable). Every colour value is a `Paint`, so
+  a gradient or image pattern works too, except `-fx-caret-color`, which is a
+  plain `Color`. A programmatic setter still wins over the user-agent stylesheet.
+  The demo's `Readonly` and `Read/Write` tabs gain a `Stylesheet` selector that
+  switches between the built-in look and a bundled dark example.
 - `fx`: editing for `PaperSheetView`. A new `mode` property switches between
   `PaperSheetMode.READONLY` (the previous behaviour: selectable, copyable text,
   no caret) and `PaperSheetMode.NORMAL`, which adds a blinking caret, character

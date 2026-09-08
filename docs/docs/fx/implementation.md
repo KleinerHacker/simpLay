@@ -79,7 +79,18 @@ hard on and off.
 `trigger` holds (`SELECTION`, `PARAGRAPH_HOVER`, `PAGE_HOVER`, and `CARET` while
 editing). Overlays follow scroll and zoom and are clamped to the viewport edge.
 
+`PaperSheetView` is styleable through the standard JavaFX CSS mechanism: the
+style class is `paper-sheet-view`, a `:readonly` pseudo-class is active while
+`mode` is `PaperSheetMode.READONLY`, and a default user-agent stylesheet ships
+with the module. The `-fx-` properties cover the sheet chrome
+(`-fx-sheet-background`, `-fx-sheet-border-color`, `-fx-sheet-border-width`), the
+drop shadow (`-fx-shadow-color`, `-fx-shadow-offset`), the selection highlight
+(`-fx-selection-color`), the caret (`-fx-caret-color`) and the layout
+(`-fx-outer-margin`, `-fx-page-gap`). A programmatic setter wins over the
+user-agent stylesheet.
+
 !!! note
 
-    A full usage page for the canvas renderer, the paper-sheet component and the
-    floating-overlay API follows with the `fx` documentation plan (IP-07).
+    A full usage page for the canvas renderer, the paper-sheet component, the
+    floating-overlay API and the styling reference follows with the `fx`
+    documentation plan (IP-07).
