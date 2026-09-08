@@ -75,25 +75,18 @@ Build tasks relevant for consumers and maintainers:
 
 * [x] Multi-module project layout (`console`, `engine`, `fx`, `j-pdf`, `j-print`, `swing`)
 * [ ] Simulation engine core (`engine`)
-    * [x] Persistable raw document model with `kotlinx.serialization` wiring
-    * [x] Non-persistable measured model
-    * [x] Measure engine (`SimpLayEngine`): font-measuring callback, pluggable line
-      breaking, alignment, `FlowPage` continuation, `SinglePage` growth
+    * [x] Raw and measured document model; serializable raw model (JSON, YAML,
+      XML, JVM serialization)
+    * [x] Measure engine (`SimpLayEngine`): font-measuring callback, pluggable
+      line breaking, alignment, `FlowPage` continuation, `SinglePage` growth,
+      shared `RenderConfiguration`
     * [ ] End-to-end layout and persistence tests
     * [ ] Engine user documentation (MkDocs, KDoc alignment)
 * [ ] Console output integration (`console`)
-* [ ] JavaFX integration (`fx`)
-    * [x] Internal rendering foundation (JavaFX font measuring, measured-tree draw
-      walk, size and hit-test helpers)
-    * [x] `CanvasDocumentRenderer`: whole-document and single-page rendering onto a
-      `Canvas` with dashed page breaks and configurable unit scale / page gap
-    * [x] Scrollable, zoomable paper-sheet component (`PaperSheetView`) with sheet
-      chrome, page virtualisation, mouse text selection, styled `Ctrl+C` copy and
-      an observable `TextSelectionModel` (range, bounds, styled runs, commands)
-    * [ ] Floating overlay API for the paper-sheet component (FXML-compatible)
-    * [ ] In-place editing with standard key bindings
-    * [ ] JavaFX CSS styling for the paper-sheet component
-    * [ ] `fx` user documentation
+* [x] JavaFX integration (`fx`): `CanvasDocumentRenderer` (whole-document and
+  single-page canvas rendering) and `PaperSheetView` - a scrollable, zoomable
+  paper-sheet control with mouse text selection, in-place editing, FXML-compatible
+  floating overlays and JavaFX CSS styling - plus the `fx` user documentation
 * [ ] PDF export integration (`j-pdf`)
 * [ ] Printing integration (`j-print`)
 * [ ] Swing integration (`swing`)

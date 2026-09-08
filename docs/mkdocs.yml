@@ -67,6 +67,10 @@ nav:
       - Rendering: engine/rendering.md
   - fx:
       - Implementation: fx/implementation.md
+      - Canvas rendering: fx/canvas-rendering.md
+      - Paper sheet component: fx/paper-sheet-component.md
+      - Floating overlays: fx/floating-overlays.md
+      - Styling: fx/styling.md
   - j-pdf:
       - Implementation: j-pdf/implementation.md
   - j-print:

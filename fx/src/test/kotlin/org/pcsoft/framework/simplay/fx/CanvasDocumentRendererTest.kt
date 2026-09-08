@@ -50,7 +50,7 @@ class CanvasDocumentRendererTest : JavaFxTestBase() {
     private fun renderer(
         document: Document,
         configurator: CanvasRenderConfiguration.() -> Unit = {},
-    ): CanvasDocumentRenderer = onFxThread { CanvasDocumentRenderer.`for`(document, configurator) }
+    ): CanvasDocumentRenderer = onFxThread { CanvasDocumentRenderer.of(document, configurator) }
 
     /**
      * The document canvas height must equal the sum of the measured page heights plus one page gap
@@ -149,16 +149,16 @@ class CanvasDocumentRendererTest : JavaFxTestBase() {
     }
 
     /**
-     * An invalid configuration must be rejected by the [CanvasDocumentRenderer.for] factory.
+     * An invalid configuration must be rejected by the [CanvasDocumentRenderer.of] factory.
      */
     @Test
     fun factoryRejectsInvalidConfiguration() {
         onFxThread {
             assertFailsWith<IllegalArgumentException> {
-                CanvasDocumentRenderer.`for`(multiPageDocument()) { unitScale = 0.0 }
+                CanvasDocumentRenderer.of(multiPageDocument()) { unitScale = 0.0 }
             }
             assertFailsWith<IllegalArgumentException> {
-                CanvasDocumentRenderer.`for`(multiPageDocument()) { pageGap = -1.0 }
+                CanvasDocumentRenderer.of(multiPageDocument()) { pageGap = -1.0 }
             }
         }
     }
@@ -240,7 +240,7 @@ class CanvasDocumentRendererTest : JavaFxTestBase() {
     }
 
     /**
-     * The document must be measured exactly once, in the [CanvasDocumentRenderer.for] factory:
+     * The document must be measured exactly once, in the [CanvasDocumentRenderer.of] factory:
      * every later render or size call reuses that result and triggers no further measuring.
      */
     @Test

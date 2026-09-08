@@ -14,95 +14,80 @@ excluded.
 
 ### Added
 
-- `fx`: `PaperSheetView` is now styleable through the standard JavaFX CSS
-  mechanism. The control keeps the `paper-sheet-view` style class, ships a
-  default user-agent stylesheet and exposes a `:readonly` pseudo-class (active
-  while `mode` is `PaperSheetMode.READONLY`; the inherited `:focused`
-  pseudo-class works as usual). The `-fx-` properties are `-fx-sheet-background`,
-  `-fx-sheet-border-color`, `-fx-sheet-border-width`, `-fx-shadow-color`,
-  `-fx-shadow-offset`, `-fx-selection-color`, `-fx-caret-color`,
-  `-fx-outer-margin` and `-fx-page-gap`, mirrored by the Kotlin properties
-  `sheetBackground`, `sheetBorderColor`, `sheetBorderWidth`, `shadowColor`,
-  `shadowOffset`, `selectionColor`, `caretColor` (plus the existing
-  `outerMargin` / `pageGap`, now styleable). Every colour value is a `Paint`, so
-  a gradient or image pattern works too, except `-fx-caret-color`, which is a
-  plain `Color`. A programmatic setter still wins over the user-agent stylesheet.
-  The demo's `Readonly` and `Read/Write` tabs gain a `Stylesheet` selector that
-  switches between the built-in look and a bundled dark example.
-- `fx`: editing for `PaperSheetView`. A new `mode` property switches between
-  `PaperSheetMode.READONLY` (the previous behaviour: selectable, copyable text,
-  no caret) and `PaperSheetMode.NORMAL`, which adds a blinking caret, character
-  insertion and removal, clipboard cut / copy / paste (`Ctrl+X` / `Ctrl+C` /
-  `Ctrl+V`), line and selection duplication (`Ctrl+D`), drag-and-drop of the
-  selection (hold `Ctrl` to copy instead of move) and the standard caret keys
-  (`Home`, `End`, `Ctrl+Home`, `Ctrl+End`, arrows, `Ctrl+Left` / `Ctrl+Right`,
-  `Backspace`, `Delete`, each optionally with `Shift` to extend the selection).
-  Editing replaces `document` with a new instance; the previous document is not
-  mutated. The caret is exposed through the new `caretModel`, a `CaretModel` with
-  the read-only `position`, viewport `bounds`, blink `visible` state and the
-  `blockCount` / `wordCount` / `symbolCount` of the document, plus linear
-  (`moveTo`, `moveToStart`, `moveToEnd`), absolute-structural (`moveIntoBlock` /
-  `moveToStartOfBlock` / `moveToEndOfBlock` and the word / symbol siblings) and
-  relative-structural (`moveToNextWord` / `moveToPrevWord` and the block / symbol
-  siblings) move commands. A `smoothCaretBlink` property (off by default) fades
-  the caret in and out instead of blinking it hard on and off. The `CARET`
-  floating-overlay trigger is now live and anchors an overlay to the caret
-  rectangle. The demo gains a `Read/Write` tab
-  hosting the control in normal mode with a mode selector, the `Readonly`
-  toolbar's settings and a live caret / document read-out.
-- `fx`: `PaperSheetView` (package `org.pcsoft.framework.simplay.fx`), a
-  read-only JavaFX `Control` that renders a `Document` as physical-looking sheets
-  - each with a border and a drop shadow - stacked vertically in a scrollable,
-  zoomable viewport. Only the pages currently in the viewport are drawn (simple
-  page virtualisation), and `zoom` is always kept within `[minZoom, maxZoom]`.
-  Layout is controlled by `outerMargin` and `pageGap`. Text is selected with the
-  mouse (drag to extend, double-click for a word), the highlight also covering
-  the whitespace between selected words, and copied to the system clipboard with
-  `Ctrl+C` as plain text plus styled HTML and RTF that carry the font (family,
-  size, weight, slant) so a rich paste target keeps the text style; there is no
-  caret. The pointer shows a text (I-beam)
-  cursor while it is over a page's content area. The read-only `contentSize`
-  property reports the laid-out size; the selection is exposed through
-  `selectionModel`, a `TextSelectionModel` carrying the selected `text`, the
-  character range (`startIndex` / `endIndex` / `length`, `empty`), the viewport
-  `bounds` and the styled `runs` (one per covered text part, with font family,
-  size, bold and italic), and offering the `selectRange`, `selectAll` and
-  `clearSelection` commands. `selectedText` and `selectionBounds` remain as
-  convenience delegates. The demo's `Readonly` tab hosts the control with a
-  toolbar for every setting plus `Select all` / `Clear` buttons and a live
-  read-out of the selection range and run count.
-- `fx`: floating overlays for `PaperSheetView`. A `FloatingOverlay` (package
-  `org.pcsoft.framework.simplay.fx`) is a caller-supplied node the view
-  shows, positions and hides on its own when its `trigger` holds - a non-empty
-  text selection (`SELECTION`), the mouse over a paragraph (`PARAGRAPH_HOVER`) or
-  over a sheet (`PAGE_HOVER`); a `CARET` trigger constant exists but stays inert
-  until editing is added. Each overlay carries a `content` node, an `anchor`
-  (`Pos`) with `offsetX` / `offsetY`, an `autoHide` flag, the read-only fields
-  `active`, `activeBounds`, `activeIndex`, `activeText` and `activeDocumentRange`,
-  and `onShown` / `onHidden` handlers that receive a `FloatingOverlayEvent` with
-  the same context. Overlays are registered through
-  `PaperSheetView.getFloatingOverlays()` and can equally be declared in FXML as
-  `<floatingOverlays>` children with their fields bound via `${id.activeText}`
-  and friends. The view also exposes read-only `hoveredParagraph` /
-  `hoveredParagraphBounds` and `hoveredPage` / `hoveredPageBounds`. Active
-  overlays follow scroll and zoom, are clamped to the viewport edge while their
-  anchor is partly out of view and hidden once it leaves entirely. The demo's
-  `Readonly` tab shows a `Copy` bar over the selection and a badge over the
-  hovered paragraph.
-- `fx`: `CanvasDocumentRenderer` (package `org.pcsoft.framework.simplay.fx`)
-  - the first public entry point of the module. Created for one fixed document
-  through `CanvasDocumentRenderer.for(document) { /* configuration */ }`, which
-  measures the document and computes the whole canvas layout once, up front. It
-  paints that document onto a JavaFX `Canvas`, either the whole document with a
-  dashed page-break line between pages (`renderDocument`) or a single page
-  (`renderPage`); `documentCanvasSize`, the index-addressable
-  `pageCanvasSizes[pageIndex]` and `pageCount` report the geometry. The
-  configuration lambda runs over `CanvasRenderConfiguration`
-  (`unitScale`, `pageGap`, plus the shared `lineBreakerStrategy` /
-  `wordBreakerStrategy`). A `Canvas` can be resized through its `width` /
-  `height` at any time, but very tall documents hit the backend texture limit
-  and a resize clears the canvas, so the renderer sizes the canvas up front and
-  does no tiling.
+- `fx`: new JavaFX integration module (package `org.pcsoft.framework.simplay.fx`).
+  It exposes two `Document`-only entry points:
+    - `CanvasDocumentRenderer` paints one fixed document onto a JavaFX `Canvas`,
+      either the whole document with a dashed page-break line between pages
+      (`renderDocument`) or a single page (`renderPage`). It is created through
+      `CanvasDocumentRenderer.of(document) { ... }`, measuring and laying out
+      the document once, up front; `documentCanvasSize`,
+      `pageCanvasSizes[pageIndex]` and `pageCount` report the geometry, and the
+      configuration lambda runs over `CanvasRenderConfiguration` (`unitScale`,
+      `pageGap`, and the shared `lineBreakerStrategy` / `wordBreakerStrategy`).
+      The canvas is sized up front, without tiling, because very tall documents
+      hit the graphics backend's texture limit.
+    - `PaperSheetView` is a scrollable, zoomable `Control` that renders a
+      document as physical-looking sheets - each with a border and a drop shadow
+      - stacked vertically, drawing only the pages in view. `zoom` is kept within
+      `[minZoom, maxZoom]`; layout is controlled by `outerMargin` and `pageGap`.
+      Text is selected with the mouse (drag to extend, double-click for a word)
+      and copied with `Ctrl+C` as plain text plus styled HTML and RTF that carry
+      the font. The selection is exposed through `selectionModel`
+      (`TextSelectionModel`: `text`, `startIndex` / `endIndex` / `length`,
+      `bounds`, styled `runs`, and the `selectRange` / `selectAll` /
+      `clearSelection` commands), with `selectedText` / `selectionBounds` as
+      convenience delegates, and `contentSize` reports the laid-out size.
+  - `PaperSheetView` has a `mode` property switching between
+    `PaperSheetMode.READONLY` (selectable, copyable text, no caret) and
+    `PaperSheetMode.EDITABLE`, which adds a blinking caret, character insertion
+    and removal, clipboard cut / copy / paste (`Ctrl+X` / `Ctrl+C` / `Ctrl+V`),
+    line and selection duplication (`Ctrl+D`), drag-and-drop of the selection
+    (hold `Ctrl` to copy instead of move) and the standard caret keys (`Home`,
+    `End`, `Ctrl+Home`, `Ctrl+End`, arrows, `Ctrl+Left` / `Ctrl+Right`,
+    `Backspace`, `Delete`, each optionally with `Shift`). An edit replaces
+    `document` with a new instance; the previous one is not mutated. The caret is
+    exposed through `caretModel` (`CaretModel`: read-only `position`, `bounds`,
+    blink `visible`, `blockCount` / `wordCount` / `symbolCount`, plus linear,
+    absolute-structural and relative-structural move commands), and
+    `smoothCaretBlink` (off by default) fades the caret instead of blinking it.
+  - `PaperSheetView` accepts floating overlays through `getFloatingOverlays()`
+    (or an FXML `<floatingOverlays>` child list): a `FloatingOverlay` node the
+    view shows, positions and hides on its own while its `trigger` holds
+    (`SELECTION`, `PARAGRAPH_HOVER`, `PAGE_HOVER`, `CARET`). Each overlay carries
+    `content`, `anchor` (`Pos`) with `offsetX` / `offsetY`, `autoHide`, the
+    read-only `active` / `activeBounds` / `activeIndex` / `activeText` /
+    `activeDocumentRange` fields (bindable from FXML via `${id.activeText}`) and
+    `onShown` / `onHidden` handlers receiving a `FloatingOverlayEvent`. Overlays
+    follow scroll and zoom and are clamped to the viewport edge; the view also
+    exposes read-only `hoveredParagraph` / `hoveredPage` (+ bounds).
+  - `PaperSheetView` is styleable through the standard JavaFX CSS mechanism: the
+    `paper-sheet-view` style class, a `:readonly` pseudo-class (active while
+    `mode` is `PaperSheetMode.READONLY`), a bundled default user-agent stylesheet
+    and the `-fx-` properties `-fx-sheet-background`, `-fx-sheet-border-color`,
+    `-fx-sheet-border-width`, `-fx-shadow-color`, `-fx-shadow-offset`,
+    `-fx-selection-color`, `-fx-caret-color`, `-fx-outer-margin` and
+    `-fx-page-gap`, mirrored by Kotlin properties. Every colour is a `Paint`
+    (a gradient works too) except `-fx-caret-color` (`Color`); a programmatic
+    setter wins over the user-agent stylesheet.
+- `engine`: raw document model in `...engine.model` - `Document`, `FlowPage` /
+  `SinglePage`, `PageLayout`, `TextBlock` with `TextBlock.of(text, style)` and a
+  normalizing `toString()`, `TextPart` (`TextWord` / `TextSymbol`), `TextStyle`,
+  `Font`, `LineSpacing`, plus `wordCount()` / `symbolCount()` / `charCount()`
+  extensions - and the measured result model in `...engine.measure` -
+  `MeasuredDocument` and `MeasuredPage` / `MeasuredTextBlock` / `MeasuredLine` /
+  `MeasuredTextPart` with resolved font metrics and absolute geometry
+  (`contentArea`, `effectiveSize`, `lineBox`, `baseline`). The raw model is
+  serializable (JSON, YAML, XML) and, via the `PlatformSerializable` marker,
+  usable with JVM serialization.
+- `engine`: `SimpLayEngine`, built through `SimpLayEngine.builder(measurer)`,
+  turns a raw `Document` into a `MeasuredDocument` using a caller-supplied
+  `FontMeasureCalculator`. Word- and symbol-aware greedy line breaking with line
+  spacing and `LEFT` / `RIGHT` / `CENTER` / `JUSTIFY` alignment, automatic
+  `FlowPage` continuation and automatic `SinglePage` height growth. Line breaking
+  is pluggable through `LineBreakerStrategy` (default
+  `GreedyWordLineBreakerStrategy`, plus `CharacterLineBreakerStrategy` and
+  `NoWrapLineBreakerStrategy`) and a `WordBreakerStrategy` hyphenation seam
+  (default `NoOpWordBreakerStrategy`), both fixed on the builder.
 - `engine`: `RenderConfiguration` (package `org.pcsoft.framework.simplay.engine`),
   a mutable, renderer-agnostic base configuration carrying the
   `lineBreakerStrategy` and `wordBreakerStrategy` a measure step needs, plus the
@@ -110,28 +95,3 @@ excluded.
   `MeasuredDocument.documentSize(gap)` and `MeasuredPage.pageSize()` extensions
   so any renderer builds the engine and computes page/document boxes the same
   way.
-
-- `fx`: module-internal JavaFX rendering foundation - `FxFontMeasureCalculator`
-  (a `FontMeasureCalculator` backed by the JavaFX text stack), the measured-tree
-  draw walk onto a `GraphicsContext` and a glyph-level hit-testing helper. No
-  public entry point yet.
-
-- `engine`: raw document model in `...engine.model` - `Document`, `FlowPage` /
-  `SinglePage`, `PageLayout`, `TextBlock` with `TextBlock.of(text, style)` and a
-  normalizing `toString()`, `TextPart` (`TextWord` / `TextSymbol`), `TextStyle`,
-  `Font`, `LineSpacing`, plus `wordCount()` / `symbolCount()` / `charCount()`
-  extensions. The model is serializable (JSON, YAML, XML) and, via the
-  `PlatformSerializable` marker, usable with JVM serialization.
-- `engine`: measured result model in `...engine.measure` - `MeasuredDocument` and
-  `MeasuredPage` / `MeasuredTextBlock` / `MeasuredLine` / `MeasuredTextPart` with
-  resolved font metrics and absolute geometry (`contentArea`, `effectiveSize`,
-  `lineBox`, `baseline`).
-- `engine`: `SimpLayEngine`, built through `SimpLayEngine.builder(measurer)`,
-  turns a raw `Document` into a `MeasuredDocument` using a caller-supplied
-  `FontMeasureCalculator`. Greedy word- and symbol-aware line breaking with line
-  spacing and `LEFT` / `RIGHT` / `CENTER` / `JUSTIFY` alignment, automatic
-  `FlowPage` continuation and automatic `SinglePage` height growth.
-- `engine`: pluggable `LineBreakerStrategy` (default `GreedyWordLineBreakerStrategy`,
-  plus `CharacterLineBreakerStrategy` and `NoWrapLineBreakerStrategy`) and a
-  `WordBreakerStrategy` hyphenation seam (default `NoOpWordBreakerStrategy`),
-  both fixed on the engine builder.

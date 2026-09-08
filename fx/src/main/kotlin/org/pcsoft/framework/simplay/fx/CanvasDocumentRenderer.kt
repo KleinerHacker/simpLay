@@ -30,11 +30,11 @@ import org.pcsoft.framework.simplay.fx.internal.measureForCanvas
  * Public renderer that paints one fixed [Document] - whole, or a single page - onto a JavaFX
  * [Canvas].
  *
- * The document is bound at creation through the [for] factory, so measuring and the whole canvas
+ * The document is bound at creation through the [of] factory, so measuring and the whole canvas
  * layout (sizes, page origins, page-break positions) are computed once, up front:
  *
  * ```kotlin
- * val renderer = CanvasDocumentRenderer.`for`(document) {
+ * val renderer = CanvasDocumentRenderer.of(document) {
  *     unitScale = 1.5
  *     pageGap = 16.0
  *     lineBreakerStrategy = NoWrapLineBreakerStrategy
@@ -48,7 +48,7 @@ import org.pcsoft.framework.simplay.fx.internal.measureForCanvas
  * the resulting canvas size are multiplied by [CanvasRenderConfiguration.unitScale].
  *
  * The instance is immutable and single-document; it is not thread-safe. Because the document is
- * measured in the [for] factory, it must be called with the JavaFX toolkit already initialised
+ * measured in the [of] factory, it must be called with the JavaFX toolkit already initialised
  * (an `Application` is running, or a headless toolkit was started).
  *
  * **Canvas sizing.** A JavaFX `Canvas` can be resized through its `width` / `height` properties at
@@ -197,7 +197,7 @@ class CanvasDocumentRenderer private constructor(
          *
          * @throws IllegalArgumentException if `unitScale <= 0` or `pageGap < 0`.
          */
-        fun `for`(
+        fun of(
             document: Document,
             configurator: CanvasRenderConfiguration.() -> Unit = {},
         ): CanvasDocumentRenderer = create(document, FxFontMeasureCalculator(), configurator)

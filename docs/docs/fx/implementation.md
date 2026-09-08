@@ -22,7 +22,7 @@ The first public entry point is `CanvasDocumentRenderer` in
 and measures it up front:
 
 ```kotlin
-val renderer = CanvasDocumentRenderer.`for`(document) {
+val renderer = CanvasDocumentRenderer.of(document) {
     unitScale = 1.5
     pageGap = 16.0
     lineBreakerStrategy = NoWrapLineBreakerStrategy
@@ -36,7 +36,8 @@ page at a time (`renderPage`), and reports the required canvas size through
 `documentCanvasSize` and the index-addressable `pageCanvasSizes[pageIndex]` (and
 the page count through `pageCount`). The configuration lambda runs over
 `CanvasRenderConfiguration` (`unitScale`, `pageGap`, and the shared
-`lineBreakerStrategy` / `wordBreakerStrategy`).
+`lineBreakerStrategy` / `wordBreakerStrategy`). See
+[Canvas rendering](canvas-rendering.md) for the full reference.
 
 For a ready-made, scrollable and zoomable view, `PaperSheetView` in
 `org.pcsoft.framework.simplay.fx` takes a `Document` and shows its pages
@@ -61,7 +62,7 @@ through `selectionModel` (a `TextSelectionModel` with `text`, `startIndex` /
 `selectAll` / `clearSelection` commands), with `selectedText` and
 `selectionBounds` kept as convenience delegates.
 
-Setting `mode = PaperSheetMode.NORMAL` turns the view into an editor: a blinking
+Setting `mode = PaperSheetMode.EDITABLE` turns the view into an editor: a blinking
 caret, character insertion and removal, clipboard cut / copy / paste, line and
 selection duplication, drag-and-drop of the selection and the standard caret
 keys (`Home`, `End`, `Ctrl+Home`, `Ctrl+End`, arrows, `Ctrl+Left` /
@@ -89,8 +90,14 @@ drop shadow (`-fx-shadow-color`, `-fx-shadow-offset`), the selection highlight
 (`-fx-outer-margin`, `-fx-page-gap`). A programmatic setter wins over the
 user-agent stylesheet.
 
-!!! note
+## Usage guides
 
-    A full usage page for the canvas renderer, the paper-sheet component, the
-    floating-overlay API and the styling reference follows with the `fx`
-    documentation plan (IP-07).
+* [Canvas rendering](canvas-rendering.md) - drawing a `Document` directly onto a
+  `Canvas`, whole or per page.
+* [Paper sheet component](paper-sheet-component.md) - all `PaperSheetView`
+  properties, the read-only and editable modes, scene integration, selection and
+  clipboard, and the shortcut table.
+* [Floating overlays](floating-overlays.md) - the FXML-compatible overlay API,
+  its triggers, binding fields and events.
+* [Styling the paper sheet component](styling.md) - the style class, the `-fx-`
+  properties, the pseudo-classes, the default stylesheet and an override example.

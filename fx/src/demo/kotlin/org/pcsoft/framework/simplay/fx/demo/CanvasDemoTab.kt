@@ -122,7 +122,7 @@ class CanvasDemoTab : BorderPane() {
     }
 
     private fun redraw() {
-        val renderer = CanvasDocumentRenderer.`for`(selectedDocument()) {
+        val renderer = CanvasDocumentRenderer.of(selectedDocument()) {
             unitScale = unitScaleSpinner.value
             pageGap = pageGapSpinner.value
             lineBreakerStrategy = selectedLineBreaker()
