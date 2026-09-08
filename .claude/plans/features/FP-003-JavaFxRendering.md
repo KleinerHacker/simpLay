@@ -117,7 +117,7 @@ artifact.
 | IP-01 ✅ | FX Rendering Foundation (COMPLETED) | JavaFX `FontMeasureCalculator`, measured-tree draw walk, size computation, hit-testing helper; `src/demo` source set with an empty three-tab shell. | -            |
 | IP-02 ✅ | Canvas Renderer (COMPLETED)   | Public `Document`-only renderer drawing the whole document on one `Canvas` with dashed page breaks; `Canvas` demo tab with toolbar.  | IP-01        |
 | IP-03 ✅ | Paper Sheet Component (COMPLETED) | Public scrollable, zoomable sheet `Control` with margins, page gaps and selectable/copyable text; `Readonly` demo tab with toolbar.    | IP-01        |
-| IP-04 | Floating Overlays              | FXML-compatible API for externally registered floating components shown, positioned and hidden on selection, paragraph-hover and page-hover triggers.  | IP-03        |
+| IP-04 ✅ | Floating Overlays (COMPLETED)  | FXML-compatible API for externally registered floating components shown, positioned and hidden on selection, paragraph-hover and page-hover triggers.  | IP-03        |
 | IP-05 | Editing And Key Commands       | Add caret, text editing, Ctrl+V and standard navigation commands to the paper component; `Read/Write` demo tab with toolbar.             | IP-03        |
 | IP-06 | Paper Component Styling         | Make the paper `Control` styleable through the standard JavaFX CSS mechanism (`-fx-` properties, default stylesheet, pseudo-classes).    | IP-03        |
 | IP-07 | Documentation                  | `docs/docs/fx/` pages: direct canvas rendering (incl. single-page), paper-sheet usage + shortcuts, floating overlays, paper-sheet styling.                 | IP-02, IP-03, IP-04, IP-05, IP-06 |
@@ -295,7 +295,35 @@ the component's readonly mode: selectable text, no caret.
   `Document`-position mapping. IP-04 adds the floating-overlay API, IP-05 adds
   editing, IP-06 adds CSS-styleable properties - all on the same class.
 
-### IP-04: Floating Overlays
+### IP-04: Floating Overlays ✅ (COMPLETED)
+
+**As built (deviations from plan)**
+
+* `FloatingOverlay` is a plain bean (no-arg constructor, JavaFX properties only)
+  in `...fx.control`, plus the `FloatingOverlayTrigger` enum and a dedicated
+  public `FloatingOverlayEvent` type (module-`internal` constructor). `onShown` /
+  `onHidden` are `ObjectProperty<EventHandler<FloatingOverlayEvent>>` invoked
+  directly - the overlay event is not routed through the JavaFX event bus.
+* `activeDocumentRange` is a Kotlin `IntRange?`, filled only for the `SELECTION`
+  trigger.
+* `PaperSheetView.getFloatingOverlays()` is a read-only getter over an internal
+  `ObservableList`; FXML fills it as a `<floatingOverlays>` read-only list
+  property. No `@DefaultProperty`.
+* The overlay layer is an internal `Pane` stacked on top of the viewport `Canvas`
+  and clipped to the viewport. Positioning maps the overlay `anchor` `Pos` to a
+  reference point on the trigger box - horizontally the node's left / centre /
+  right edge, vertically the node fully above (`TOP`) / centred / fully below
+  (`BOTTOM` / `BASELINE`) - then adds `offsetX` / `offsetY` and clamps to the
+  viewport. A trigger box that no longer intersects the viewport hides the
+  overlay even when `autoHide` is `false`.
+* A "paragraph" is a measured block; `activeText` for `PARAGRAPH_HOVER` is
+  `MeasuredTextBlock.raw.toString()`.
+* Flicker handling: `onShown` / `onHidden` fire only on the active-state
+  transition; repositioning on scroll, zoom or hover does not re-fire them.
+* Skin test hooks added: `hoverAtForTest`, `clearHoverForTest`,
+  `refreshOverlaysForTest`, `activeOverlaysForTest`, `overlayNodeCountForTest`.
+  The `FXMLLoader` test loads
+  `fx/src/test/resources/org/pcsoft/framework/simplay/fx/control/paper-sheet-overlays.fxml`.
 
 **Objective**
 
@@ -424,13 +452,13 @@ to style it.
 IP-01 ✅
 ├── IP-02 ✅ ──────────────┐
 └── IP-03 ✅               │
-    ├── IP-04 ─────────────┤
+    ├── IP-04 ✅ ──────────┤
     ├── IP-05 (opt. IP-04) ┤
     └── IP-06 ─────────────┤
                            └── IP-07
 ```
 
-Completed plans: IP-01, IP-02, IP-03.
+Completed plans: IP-01, IP-02, IP-03, IP-04.
 
 ## 9. Risks and Open Questions
 

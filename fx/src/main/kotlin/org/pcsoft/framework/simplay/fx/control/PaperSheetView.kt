@@ -14,11 +14,15 @@ package org.pcsoft.framework.simplay.fx.control
 
 import javafx.beans.property.DoubleProperty
 import javafx.beans.property.ObjectProperty
+import javafx.beans.property.ReadOnlyIntegerProperty
+import javafx.beans.property.ReadOnlyIntegerWrapper
 import javafx.beans.property.ReadOnlyObjectProperty
 import javafx.beans.property.ReadOnlyObjectWrapper
 import javafx.beans.property.ReadOnlyStringProperty
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.beans.property.SimpleObjectProperty
+import javafx.collections.FXCollections
+import javafx.collections.ObservableList
 import javafx.geometry.Bounds
 import javafx.geometry.Dimension2D
 import javafx.scene.control.Control
@@ -215,6 +219,64 @@ class PaperSheetView : Control() {
     internal fun requestSelectAll() = runSelectionCommand { selectAll() }
 
     internal fun requestClearSelection() = runSelectionCommand { clearSelection() }
+
+    //endregion
+
+    //region Floating overlays
+
+    private val floatingOverlaysList: ObservableList<FloatingOverlay> = FXCollections.observableArrayList()
+
+    /**
+     * The registered floating overlays: caller-supplied nodes the view shows, positions and hides on
+     * its own when their [FloatingOverlay.trigger] holds. Mutable; also populated from FXML as a
+     * `<floatingOverlays>` child element. The same list instance for the whole life of the view.
+     */
+    val floatingOverlays: ObservableList<FloatingOverlay> get() = floatingOverlaysList
+
+    private val hoveredParagraphWrapper = ReadOnlyIntegerWrapper(this, "hoveredParagraph", -1)
+    private val hoveredParagraphBoundsWrapper = ReadOnlyObjectWrapper<Bounds?>(this, "hoveredParagraphBounds", null)
+    private val hoveredPageWrapper = ReadOnlyIntegerWrapper(this, "hoveredPage", -1)
+    private val hoveredPageBoundsWrapper = ReadOnlyObjectWrapper<Bounds?>(this, "hoveredPageBounds", null)
+
+    /** The [hoveredParagraph] property, read-only. */
+    @get:JvmName("hoveredParagraphProperty")
+    val hoveredParagraphProperty: ReadOnlyIntegerProperty get() = hoveredParagraphWrapper.readOnlyProperty
+
+    /** Zero-based ordinal of the paragraph (measured block) under the mouse, or `-1` when none. */
+    val hoveredParagraph: Int get() = hoveredParagraphWrapper.get()
+
+    /** The [hoveredParagraphBounds] property, read-only. */
+    @get:JvmName("hoveredParagraphBoundsProperty")
+    val hoveredParagraphBoundsProperty: ReadOnlyObjectProperty<Bounds?>
+        get() = hoveredParagraphBoundsWrapper.readOnlyProperty
+
+    /** Box of the hovered paragraph in viewport pixels (follows scroll and zoom), or `null`. */
+    val hoveredParagraphBounds: Bounds? get() = hoveredParagraphBoundsWrapper.get()
+
+    /** The [hoveredPage] property, read-only. */
+    @get:JvmName("hoveredPageProperty")
+    val hoveredPageProperty: ReadOnlyIntegerProperty get() = hoveredPageWrapper.readOnlyProperty
+
+    /** Zero-based index of the sheet under the mouse, or `-1` when none. */
+    val hoveredPage: Int get() = hoveredPageWrapper.get()
+
+    /** The [hoveredPageBounds] property, read-only. */
+    @get:JvmName("hoveredPageBoundsProperty")
+    val hoveredPageBoundsProperty: ReadOnlyObjectProperty<Bounds?>
+        get() = hoveredPageBoundsWrapper.readOnlyProperty
+
+    /** Box of the hovered sheet in viewport pixels (follows scroll and zoom), or `null`. */
+    val hoveredPageBounds: Bounds? get() = hoveredPageBoundsWrapper.get()
+
+    internal fun updateHoveredParagraph(index: Int, bounds: Bounds?) {
+        hoveredParagraphWrapper.set(index)
+        hoveredParagraphBoundsWrapper.set(bounds)
+    }
+
+    internal fun updateHoveredPage(index: Int, bounds: Bounds?) {
+        hoveredPageWrapper.set(index)
+        hoveredPageBoundsWrapper.set(bounds)
+    }
 
     //endregion
 

@@ -35,6 +35,24 @@ excluded.
   convenience delegates. The demo's `Readonly` tab hosts the control with a
   toolbar for every setting plus `Select all` / `Clear` buttons and a live
   read-out of the selection range and run count.
+- `fx`: floating overlays for `PaperSheetView`. A `FloatingOverlay` (package
+  `org.pcsoft.framework.simplay.fx.control`) is a caller-supplied node the view
+  shows, positions and hides on its own when its `trigger` holds - a non-empty
+  text selection (`SELECTION`), the mouse over a paragraph (`PARAGRAPH_HOVER`) or
+  over a sheet (`PAGE_HOVER`); a `CARET` trigger constant exists but stays inert
+  until editing is added. Each overlay carries a `content` node, an `anchor`
+  (`Pos`) with `offsetX` / `offsetY`, an `autoHide` flag, the read-only fields
+  `active`, `activeBounds`, `activeIndex`, `activeText` and `activeDocumentRange`,
+  and `onShown` / `onHidden` handlers that receive a `FloatingOverlayEvent` with
+  the same context. Overlays are registered through
+  `PaperSheetView.getFloatingOverlays()` and can equally be declared in FXML as
+  `<floatingOverlays>` children with their fields bound via `${id.activeText}`
+  and friends. The view also exposes read-only `hoveredParagraph` /
+  `hoveredParagraphBounds` and `hoveredPage` / `hoveredPageBounds`. Active
+  overlays follow scroll and zoom, are clamped to the viewport edge while their
+  anchor is partly out of view and hidden once it leaves entirely. The demo's
+  `Readonly` tab shows a `Copy` bar over the selection and a badge over the
+  hovered paragraph.
 - `fx`: `CanvasDocumentRenderer` (package `org.pcsoft.framework.simplay.fx.canvas`)
   - the first public entry point of the module. Created for one fixed document
   through `CanvasDocumentRenderer.for(document) { /* configuration */ }`, which

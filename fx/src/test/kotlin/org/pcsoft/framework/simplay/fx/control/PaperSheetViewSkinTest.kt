@@ -14,6 +14,7 @@ package org.pcsoft.framework.simplay.fx.control
 
 import javafx.scene.Cursor
 import javafx.scene.Scene
+import javafx.scene.control.Label
 import javafx.scene.input.Clipboard
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
@@ -205,5 +206,50 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
         assertEquals(expected, clipboard.first)
         assertTrue(clipboard.second, "HTML flavour expected on the clipboard")
         assertTrue(clipboard.third, "RTF flavour expected on the clipboard")
+    }
+
+    /**
+     * A registered [FloatingOverlay] with a selection trigger is placed into the skin's overlay pane
+     * while a selection exists and removed again when the selection is cleared.
+     */
+    @Test
+    fun floatingOverlayFollowsSelectionLifecycle() {
+        val (view, skin) = fixture(paragraphs = 6)
+        val overlay = FloatingOverlay().apply {
+            trigger = FloatingOverlayTrigger.SELECTION
+            content = Label("Copy")
+        }
+        onFxThread {
+            view.floatingOverlays.add(overlay)
+            skin.selectByPointsForTest(57.0, 57.0, 220.0, 57.0)
+        }
+
+        assertTrue(overlay.isActive)
+        assertEquals(1, skin.overlayNodeCountForTest)
+
+        onFxThread { view.selectionModel.clearSelection() }
+
+        assertFalse(overlay.isActive)
+        assertEquals(0, skin.overlayNodeCountForTest)
+    }
+
+    /**
+     * With no trigger holding, the skin's overlay pane stays empty even though an overlay is
+     * registered.
+     */
+    @Test
+    fun overlayPaneStaysEmptyWithoutTriggers() {
+        val (view, skin) = fixture(paragraphs = 6)
+        val overlay = FloatingOverlay().apply {
+            trigger = FloatingOverlayTrigger.PARAGRAPH_HOVER
+            content = Label("Paragraph")
+        }
+        onFxThread {
+            view.floatingOverlays.add(overlay)
+            skin.clearHoverForTest()
+        }
+
+        assertFalse(overlay.isActive)
+        assertEquals(0, skin.overlayNodeCountForTest)
     }
 }

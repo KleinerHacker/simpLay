@@ -12,12 +12,16 @@
 
 package org.pcsoft.framework.simplay.fx.control
 
+import javafx.collections.ListChangeListener
 import javafx.event.EventHandler
 import javafx.geometry.BoundingBox
 import javafx.geometry.Bounds
 import javafx.geometry.Dimension2D
+import javafx.geometry.HPos
 import javafx.geometry.Orientation
+import javafx.geometry.VPos
 import javafx.scene.Cursor
+import javafx.scene.Node
 import javafx.scene.canvas.Canvas
 import javafx.scene.control.ScrollBar
 import javafx.scene.control.SkinBase
@@ -25,6 +29,8 @@ import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.ScrollEvent
+import javafx.scene.layout.Pane
+import javafx.scene.shape.Rectangle
 import kotlin.math.max
 import kotlin.math.min
 import org.pcsoft.framework.simplay.engine.engine.RenderConfiguration
@@ -38,6 +44,13 @@ import org.pcsoft.framework.simplay.fx.internal.hitTest
 import org.pcsoft.framework.simplay.fx.internal.segmentSpanX
 
 /**
+ * The anchor box and context a satisfied [FloatingOverlayTrigger] hands to the skin: [bounds] in
+ * viewport pixels, a trigger-specific [index] (selection start, paragraph ordinal, page index), the
+ * trigger [text] and, for [FloatingOverlayTrigger.SELECTION], the covered [range].
+ */
+internal class TriggerGeometry(val bounds: Bounds, val index: Int, val text: String, val range: IntRange?)
+
+/**
  * Skin of [PaperSheetView]. Owns the measuring, the vertical [ScrollBar], the mouse and keyboard
  * handling and the selection model; the actual canvas painting is delegated to
  * [PaperSheetCanvasPainter], which draws only the pages currently in the viewport (simple page
@@ -46,7 +59,11 @@ import org.pcsoft.framework.simplay.fx.internal.segmentSpanX
  * the text style. The pointer turns into a text (I-beam) cursor while it is over a page's content
  * area.
  *
- * The skin is the only writer of [PaperSheetView.selectionModel] and the sink for its commands.
+ * The skin is the only writer of [PaperSheetView.selectionModel] and the sink for its commands. It
+ * also drives the registered [FloatingOverlay]s: the text selection is tracked here, the paragraph
+ * and sheet under the mouse in [PaperSheetHoverTracker], and each overlay's node is shown, positioned
+ * (following scroll and zoom, clamped to the viewport edge) and hidden in an internal overlay [Pane]
+ * on top of the viewport.
  */
 internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheetView>(control) {
 
@@ -57,6 +74,13 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         orientation = Orientation.VERTICAL
         min = 0.0
         value = 0.0
+    }
+
+    private val overlayClip = Rectangle()
+    private val overlayPane = Pane().apply {
+        isManaged = false
+        isPickOnBounds = false
+        clip = overlayClip
     }
 
     private val measurer = FxFontMeasureCalculator()
@@ -74,7 +98,24 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     private val selection = TextSelection()
     private var dragging = false
 
+    /** Tracks the paragraph and sheet under the mouse for the hover overlay triggers. */
+    private val hover = PaperSheetHoverTracker(
+        view = control,
+        measured = { measured },
+        pageTops = { pageTops },
+        scrollOffset = ::scrollOffset,
+        nearestPage = ::nearestPage,
+    )
+
     private val keyHandler = EventHandler<KeyEvent> { onKeyPressed(it) }
+
+    /** Overlays whose node currently sits in [overlayPane]. */
+    private val activeOverlays = HashSet<FloatingOverlay>()
+
+    private val overlaysListener = ListChangeListener<FloatingOverlay> { change ->
+        while (change.next()) change.removed.forEach { detachOverlay(it, fireEvent = false) }
+        refreshOverlays()
+    }
 
     /** Sink for the programmatic selection commands of [PaperSheetView.selectionModel]. */
     private val selectionCommands = object : PaperSheetView.SelectionCommands {
@@ -123,10 +164,11 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     //region Wiring
 
     init {
-        children.addAll(canvas, scrollBar)
+        children.addAll(canvas, scrollBar, overlayPane)
 
         remeasure()
         skinnable.registerSelectionCommands(selectionCommands)
+        skinnable.floatingOverlays.addListener(overlaysListener)
 
         registerChangeListener(control.documentProperty) { remeasure(); control.requestLayout() }
         registerChangeListener(control.outerMarginProperty) { relayout() }
@@ -140,8 +182,16 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         canvas.addEventHandler(MouseEvent.MOUSE_DRAGGED, ::onMouseDragged)
         canvas.addEventHandler(MouseEvent.MOUSE_RELEASED) { dragging = false }
         canvas.addEventHandler(MouseEvent.MOUSE_CLICKED, ::onMouseClicked)
-        canvas.addEventHandler(MouseEvent.MOUSE_MOVED) { canvas.cursor = cursorFor(it.x, it.y) }
-        canvas.addEventHandler(MouseEvent.MOUSE_EXITED) { canvas.cursor = Cursor.DEFAULT }
+        canvas.addEventHandler(MouseEvent.MOUSE_MOVED) {
+            canvas.cursor = cursorFor(it.x, it.y)
+            hover.update(it.x, it.y)
+            refreshOverlays()
+        }
+        canvas.addEventHandler(MouseEvent.MOUSE_EXITED) {
+            canvas.cursor = Cursor.DEFAULT
+            hover.clear()
+            refreshOverlays()
+        }
         control.addEventHandler(KeyEvent.KEY_PRESSED, keyHandler)
     }
 
@@ -155,6 +205,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         index = measured?.let { DocumentTextIndex(it) }
         selection.index = index
         selection.reset()
+        hover.clear()
         computeLayoutMetrics()
         updateSelectionOutputs()
     }
@@ -198,6 +249,10 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         canvas.relocate(x, y)
         scrollBar.resizeRelocate(x + viewportWidth, y, barWidth, h)
 
+        overlayPane.resizeRelocate(x, y, viewportWidth, h)
+        overlayClip.width = viewportWidth
+        overlayClip.height = h
+
         updateScrollBar(h)
         redraw()
     }
@@ -222,6 +277,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     override fun dispose() {
         skinnable?.removeEventHandler(KeyEvent.KEY_PRESSED, keyHandler)
         skinnable?.unregisterSelectionCommands(selectionCommands)
+        skinnable?.floatingOverlays?.removeListener(overlaysListener)
         super.dispose()
     }
 
@@ -246,6 +302,8 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         renderedPageIndices = painter.renderedPageIndices
         sheetChromeDrawCount = painter.sheetChromeDrawCount
         updateSelectionOutputs()
+        hover.publishOutputs()
+        refreshOverlays()
     }
 
     //endregion
@@ -308,7 +366,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     /**
      * The page whose vertical band is closest to [cyUnscaled] (0 distance when inside it), with the
-     * signed distance; used both for hit-testing and for the pointer shape.
+     * signed distance; used for hit-testing, the pointer shape and the hover tracker.
      */
     private fun nearestPage(cyUnscaled: Double): Pair<Int, Double> {
         val doc = measured!!
@@ -393,6 +451,81 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     //endregion
 
+    //region Floating overlays
+
+    private fun geometryFor(kind: FloatingOverlayTrigger): TriggerGeometry? = when (kind) {
+        FloatingOverlayTrigger.SELECTION -> {
+            val bounds = computeSelectionBounds()
+            if (bounds == null) null
+            else TriggerGeometry(bounds, selection.start, skinnable.selectedText, selection.start until selection.end)
+        }
+        FloatingOverlayTrigger.PARAGRAPH_HOVER -> hover.paragraphGeometry()
+        FloatingOverlayTrigger.PAGE_HOVER -> hover.pageGeometry()
+        // Inert until the editing implementation plan wires a caret.
+        FloatingOverlayTrigger.CARET -> null
+    }
+
+    private fun refreshOverlays() {
+        val overlays = skinnable.floatingOverlays
+        if (overlays.isEmpty() && activeOverlays.isEmpty()) return
+        for (overlay in overlays) {
+            val geometry = geometryFor(overlay.trigger)
+            val node = overlay.content
+            if (geometry == null || node == null) {
+                if (overlay in activeOverlays && overlay.autoHide) detachOverlay(overlay, fireEvent = true)
+                continue
+            }
+            if (node !in overlayPane.children) overlayPane.children.add(node)
+            node.applyCss()
+            node.autosize()
+            val placed = placeInViewport(node, geometry.bounds, overlay)
+            if (placed == null) {
+                detachOverlay(overlay, fireEvent = true)
+                continue
+            }
+            node.relocate(placed.first, placed.second)
+            overlay.updateActiveState(geometry.bounds, geometry.index, geometry.text, geometry.range)
+            if (activeOverlays.add(overlay)) overlay.fireShown(overlay.trigger)
+        }
+    }
+
+    private fun detachOverlay(overlay: FloatingOverlay, fireEvent: Boolean) {
+        overlay.content?.let { overlayPane.children.remove(it) }
+        val wasActive = activeOverlays.remove(overlay)
+        overlay.clearActiveState()
+        if (wasActive && fireEvent) overlay.fireHidden(overlay.trigger)
+    }
+
+    /**
+     * Places [node] relative to the trigger [bounds] per the overlay's [FloatingOverlay.anchor] plus
+     * its offsets, then clamps the result to the viewport. Returns `null` when [bounds] no longer
+     * intersects the viewport at all, so the overlay must be hidden.
+     */
+    private fun placeInViewport(node: Node, bounds: Bounds, overlay: FloatingOverlay): Pair<Double, Double>? {
+        val vpW = canvas.width
+        val vpH = canvas.height
+        if (bounds.maxX <= 0.0 || bounds.minX >= vpW || bounds.maxY <= 0.0 || bounds.minY >= vpH) return null
+
+        val w = node.layoutBounds.width.takeIf { it > 0.0 } ?: node.prefWidth(-1.0)
+        val h = node.layoutBounds.height.takeIf { it > 0.0 } ?: node.prefHeight(-1.0)
+        val anchor = overlay.anchor
+        var nx = when (anchor.hpos) {
+            HPos.LEFT -> bounds.minX
+            HPos.CENTER -> bounds.minX + bounds.width / 2.0 - w / 2.0
+            HPos.RIGHT -> bounds.maxX - w
+        } + overlay.offsetX
+        var ny = when (anchor.vpos) {
+            VPos.TOP -> bounds.minY - h
+            VPos.CENTER -> bounds.minY + bounds.height / 2.0 - h / 2.0
+            VPos.BASELINE, VPos.BOTTOM -> bounds.maxY
+        } + overlay.offsetY
+        nx = nx.coerceIn(0.0, (vpW - w).coerceAtLeast(0.0))
+        ny = ny.coerceIn(0.0, (vpH - h).coerceAtLeast(0.0))
+        return nx to ny
+    }
+
+    //endregion
+
     //region Input
 
     private fun onScroll(event: ScrollEvent) {
@@ -446,6 +579,27 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     /** The pointer shape the skin would show at a viewport point; for tests. */
     internal fun cursorAtForTest(x: Double, y: Double): Cursor = cursorFor(x, y)
+
+    /** Simulates the mouse hovering a viewport point and refreshes the overlays; for tests. */
+    internal fun hoverAtForTest(x: Double, y: Double) {
+        hover.update(x, y)
+        refreshOverlays()
+    }
+
+    /** Simulates the mouse leaving the viewport and refreshes the overlays; for tests. */
+    internal fun clearHoverForTest() {
+        hover.clear()
+        refreshOverlays()
+    }
+
+    /** Recomputes overlay visibility and position; for tests. */
+    internal fun refreshOverlaysForTest() = refreshOverlays()
+
+    /** The overlays whose node currently sits in the overlay pane; for tests. */
+    internal val activeOverlaysForTest: Set<FloatingOverlay> get() = activeOverlays.toSet()
+
+    /** Number of nodes currently in the overlay pane; for tests. */
+    internal val overlayNodeCountForTest: Int get() = overlayPane.children.size
 
     //endregion
 

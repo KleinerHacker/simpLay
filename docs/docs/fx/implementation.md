@@ -62,7 +62,14 @@ through `selectionModel` (a `TextSelectionModel` with `text`, `startIndex` /
 `selectionBounds` kept as convenience delegates. There is no caret - editing is
 added by a later plan.
 
+`PaperSheetView` also accepts floating overlays through
+`getFloatingOverlays()` (or an FXML `<floatingOverlays>` child list): a
+`FloatingOverlay` node the view shows, positions and hides on its own while its
+`trigger` holds (`SELECTION`, `PARAGRAPH_HOVER`, `PAGE_HOVER`; `CARET` is inert
+until editing is added). Overlays follow scroll and zoom and are clamped to the
+viewport edge.
+
 !!! note
 
-    A full usage page for the canvas renderer and the paper-sheet component
-    follows with the `fx` documentation plan (IP-07).
+    A full usage page for the canvas renderer, the paper-sheet component and the
+    floating-overlay API follows with the `fx` documentation plan (IP-07).

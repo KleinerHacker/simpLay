@@ -12,26 +12,36 @@
 
 package org.pcsoft.framework.simplay.fx.demo
 
+import javafx.geometry.Pos
 import javafx.scene.control.Button
 import javafx.scene.control.ComboBox
 import javafx.scene.control.Label
 import javafx.scene.control.Separator
 import javafx.scene.control.Spinner
 import javafx.scene.control.ToolBar
+import javafx.scene.input.Clipboard
+import javafx.scene.input.ClipboardContent
 import javafx.scene.layout.BorderPane
 import javafx.scene.text.Font as FxFont
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.SinglePage
 import org.pcsoft.framework.simplay.engine.model.TextBlock
+import org.pcsoft.framework.simplay.fx.control.FloatingOverlay
+import org.pcsoft.framework.simplay.fx.control.FloatingOverlayTrigger
 import org.pcsoft.framework.simplay.fx.control.PaperSheetView
 
 /**
  * Content of the demo's `Readonly` tab: a [PaperSheetView] in its read-only mode, driven by a
  * [ToolBar] that exposes every externally settable value (sample document, font family, outer
  * margin, page gap, min/max/current zoom) and reads back the current zoom and the current text
- * selection from [PaperSheetView.getSelectionModel] (range, length, run count). Two buttons drive
+ * selection from [PaperSheetView.selectionModel] (range, length, run count). Two buttons drive
  * the selection model with `selectAll` and `clearSelection`.
+ *
+ * Two [FloatingOverlay]s show the feature off: a `Copy` bar that follows the text selection
+ * ([FloatingOverlayTrigger.SELECTION]) and a small label that tracks the paragraph under the mouse
+ * ([FloatingOverlayTrigger.PARAGRAPH_HOVER]). A toolbar label reads back the last triggered
+ * paragraph and page index.
  *
  * The font selector lists every font family installed on the system ([FxFont.getFamilies]); picking
  * one rebuilds the sample document with that family. "Default (document)" keeps the family the
@@ -63,6 +73,30 @@ class ReadonlyDemoTab : BorderPane() {
 
     private val zoomLabel = Label()
     private val selectionLabel = Label()
+    private val overlayLabel = Label()
+
+    private val copyBar = Button("Copy").apply {
+        setOnAction {
+            Clipboard.getSystemClipboard().setContent(ClipboardContent().apply { putString(view.selectedText) })
+        }
+    }
+    private val hoverBadge = Label().apply { style = HOVER_BADGE_STYLE }
+
+    private val copyOverlay = FloatingOverlay().apply {
+        trigger = FloatingOverlayTrigger.SELECTION
+        anchor = Pos.TOP_LEFT
+        offsetY = -4.0
+        content = copyBar
+    }
+    private val hoverOverlay = FloatingOverlay().apply {
+        trigger = FloatingOverlayTrigger.PARAGRAPH_HOVER
+        anchor = Pos.TOP_LEFT
+        offsetY = -2.0
+        content = hoverBadge
+        // `onShown` fires only on the show transition; the badge text has to track every move
+        // between paragraphs, so it is bound to the read-only `activeIndex` field instead.
+        hoverBadge.textProperty().bind(activeIndexProperty.asString("Paragraph %d"))
+    }
 
     init {
         top = ToolBar(
@@ -77,9 +111,12 @@ class ReadonlyDemoTab : BorderPane() {
             Label("Zoom:"), zoomSpinner,
             Separator(),
             zoomLabel, Separator(),
-            selectAllButton, clearButton, selectionLabel,
+            selectAllButton, clearButton, selectionLabel, Separator(),
+            overlayLabel,
         )
         center = view
+
+        view.floatingOverlays.addAll(copyOverlay, hoverOverlay)
 
         sampleBox.valueProperty().addListener { _, _, _ -> applySample() }
         fontFamilyBox.valueProperty().addListener { _, _, _ -> applySample() }
@@ -94,10 +131,13 @@ class ReadonlyDemoTab : BorderPane() {
             if (zoomSpinner.value != v.toDouble()) zoomSpinner.valueFactory.value = v.toDouble()
         }
         view.selectionModel.textProperty.addListener { _, _, _ -> updateSelectionLabel() }
+        view.hoveredParagraphProperty.addListener { _, _, _ -> updateOverlayLabel() }
+        view.hoveredPageProperty.addListener { _, _, _ -> updateOverlayLabel() }
 
         applySample()
         zoomLabel.text = "Zoom: ${format(view.zoom)}"
         updateSelectionLabel()
+        updateOverlayLabel()
     }
 
     private fun applySample() {
@@ -128,10 +168,17 @@ class ReadonlyDemoTab : BorderPane() {
         }
     }
 
+    private fun updateOverlayLabel() {
+        overlayLabel.text = "Hover: paragraph ${view.hoveredParagraph}, page ${view.hoveredPage}"
+    }
+
     private fun format(value: Double): String = ((value * 100.0).toInt() / 100.0).toString()
 
     private companion object {
 
         const val FONT_DEFAULT = "Default (document)"
+
+        const val HOVER_BADGE_STYLE =
+            "-fx-background-color: #1e88e5; -fx-text-fill: white; -fx-padding: 2 6 2 6; -fx-background-radius: 3;"
     }
 }
