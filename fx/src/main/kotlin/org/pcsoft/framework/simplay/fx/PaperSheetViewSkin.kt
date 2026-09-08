@@ -548,8 +548,12 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     internal fun typeTextForTest(text: String) = editor.typeText(text)
 
     /** Fires a `KEY_PRESSED` through the editor's handler; for tests. */
-    internal fun pressKeyForTest(code: KeyCode, shift: Boolean = false, shortcut: Boolean = false) =
-        editor.onKeyPressed(KeyEvent(KeyEvent.KEY_PRESSED, "", "", code, shift, shortcut, false, false))
+    internal fun pressKeyForTest(code: KeyCode, shift: Boolean = false, shortcut: Boolean = false) {
+        val mac = System.getProperty("os.name", "").lowercase().contains("mac")
+        val control = shortcut && !mac
+        val meta = shortcut && mac
+        editor.onKeyPressed(KeyEvent(KeyEvent.KEY_PRESSED, "", "", code, shift, control, false, meta))
+    }
 
     /** Drops the current selection at the character nearest a viewport point; for tests. */
     internal fun dragSelectionToForTest(x: Double, y: Double, copy: Boolean) =
