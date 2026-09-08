@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright (c) KleinerHacker alias Pfeiffer C Soft 2026.
+  ~ This work is licensed under the Apache License, Version 2.0.
+  -->
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import org.pcsoft.framework.simplay.fx.FloatingOverlay?>
+<?import org.pcsoft.framework.simplay.fx.PaperSheetView?>
+
+<PaperSheetView xmlns:fx="http://javafx.com/fxml/1" fx:id="view">
+    <floatingOverlays>
+        <FloatingOverlay fx:id="selectionOverlay" trigger="SELECTION" anchor="TOP_LEFT" offsetY="-4.0">
+            <content>
+                <Button text="Copy"/>
+            </content>
+        </FloatingOverlay>
+        <FloatingOverlay fx:id="paragraphOverlay" trigger="PARAGRAPH_HOVER" anchor="TOP_LEFT" offsetY="-2.0">
+            <content>
+                <Label text="Paragraph"/>
+            </content>
+        </FloatingOverlay>
+    </floatingOverlays>
+</PaperSheetView>

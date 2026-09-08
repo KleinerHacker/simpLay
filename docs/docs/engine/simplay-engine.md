@@ -1,6 +1,6 @@
 # engine - SimpLayEngine
 
-`SimpLayEngine` (package `org.pcsoft.framework.simplay.engine.engine`) converts a
+`SimpLayEngine` (package `org.pcsoft.framework.simplay.engine`) converts a
 raw [`Document`](raw-model.md) into a [`MeasuredDocument`](measured-model.md) in
 one explicit call. It never touches a platform text stack: all text measuring is
 delegated to a caller-supplied callback. `measure` is deterministic - the same
@@ -9,8 +9,8 @@ document and callback always produce the same result.
 ## Building the engine
 
 ```kotlin
-import org.pcsoft.framework.simplay.engine.engine.FontMeasureCalculator
-import org.pcsoft.framework.simplay.engine.engine.SimpLayEngine
+import org.pcsoft.framework.simplay.engine.FontMeasureCalculator
+import org.pcsoft.framework.simplay.engine.SimpLayEngine
 import org.pcsoft.framework.simplay.engine.geometry.TextMetrics
 
 val engine = SimpLayEngine.builder(
@@ -25,6 +25,11 @@ val measured = engine.measure(document)
 
 `SimpLayEngine.builder(measurer)` takes the mandatory `FontMeasureCalculator` and
 returns a `Builder`. The strategies are fixed once `build()` is called.
+
+A renderer that keeps its measure settings in a `RenderConfiguration` can skip
+the builder and use `config.createEngine(measurer)` or the one-shot
+`document.measure(measurer, config)` instead; see
+[Implementation](implementation.md#measuring-from-a-renderconfiguration).
 
 ## The FontMeasureCalculator contract
 
@@ -111,8 +116,8 @@ lineSpacing.extraLeading`. Each line's `baseline` is set to its `ascent`.
 ## Worked example
 
 ```kotlin
-import org.pcsoft.framework.simplay.engine.engine.FontMeasureCalculator
-import org.pcsoft.framework.simplay.engine.engine.SimpLayEngine
+import org.pcsoft.framework.simplay.engine.FontMeasureCalculator
+import org.pcsoft.framework.simplay.engine.SimpLayEngine
 import org.pcsoft.framework.simplay.engine.geometry.Margins
 import org.pcsoft.framework.simplay.engine.geometry.Size
 import org.pcsoft.framework.simplay.engine.geometry.TextMetrics

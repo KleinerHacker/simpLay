@@ -35,8 +35,8 @@ to a `FontMeasureCalculator` that the caller supplies, so the engine stays free 
 any platform text stack:
 
 ```kotlin
-import org.pcsoft.framework.simplay.engine.engine.FontMeasureCalculator
-import org.pcsoft.framework.simplay.engine.engine.SimpLayEngine
+import org.pcsoft.framework.simplay.engine.FontMeasureCalculator
+import org.pcsoft.framework.simplay.engine.SimpLayEngine
 import org.pcsoft.framework.simplay.engine.geometry.TextMetrics
 
 val engine = SimpLayEngine.builder(
@@ -51,6 +51,40 @@ val measured = engine.measure(document)
 
 The result is deterministic: the same document and callback always produce the
 same `MeasuredDocument`.
+
+#### Measuring from a RenderConfiguration
+
+A renderer usually keeps its measure settings in a `RenderConfiguration` (an
+`open` class in `...engine` holding the `lineBreakerStrategy` and the
+`wordBreakerStrategy`, both defaulting to the engine defaults). Two extensions
+turn such a configuration and a platform `FontMeasureCalculator` into a result
+without touching the builder by hand:
+
+```kotlin
+import org.pcsoft.framework.simplay.engine.RenderConfiguration
+import org.pcsoft.framework.simplay.engine.createEngine
+import org.pcsoft.framework.simplay.engine.measure
+
+val config = RenderConfiguration().apply {
+    lineBreakerStrategy = NoWrapLineBreakerStrategy
+}
+
+val measured = document.measure(measurer, config)          // one-shot
+val engine = config.createEngine(measurer)                 // reusable engine
+```
+
+`RenderConfiguration` is meant to be subclassed by a concrete renderer that adds
+its own values (unit scale, page gaps, colours) while keeping the shared measure
+settings in one place.
+
+#### Document and page size
+
+`MeasuredDocument.documentSize(gap)` and `MeasuredPage.pageSize()` (both in
+`...engine`) compute the box a renderer needs: `pageSize()` is the page's
+`effectiveSize`; `documentSize(gap)` stacks the pages vertically, taking the
+widest page as the width and the summed page heights plus one `gap` per page
+boundary as the height (never before the first or after the last page). An empty
+document is `0 x 0`.
 
 ### Choosing strategies
 

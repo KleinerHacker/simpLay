@@ -12,8 +12,6 @@
 
 package org.pcsoft.framework.simplay.engine.model
 
-import kotlin.collections.plusAssign
-import kotlin.text.iterator
 import kotlinx.serialization.Serializable
 import org.pcsoft.framework.simplay.engine.PlatformSerializable
 

@@ -1,167 +1,153 @@
 # FP-002 / IP-02: Break-Opportunity Line Breaking
 
 Feature Plan: `.claude/plans/features/FP-002-AdvancedLineBreaking.md`
-Status file: `.claude/plans/features/FP-002-AdvancedLineBreaking-Status.md`
+Status: `.claude/plans/features/FP-002-AdvancedLineBreaking-Status.md`
 
-## 1. Objective
+## Ziel
 
-Add `BreakOpportunityLineBreakerStrategy`, a greedy `LineBreakerStrategy` that fills lines like
-the default but only breaks at positions allowed by a small, self-contained subset of the
-UAX #14 line-break classes. It is opt-in via `SimpLayEngine.Builder`; the default is unchanged.
+* `BreakOpportunityLineBreakerStrategy` als Greedy-Strategie, die nur an erlaubten UAX-#14-Positionen umbricht.
+* Opt-in über `SimpLayEngine.Builder`; Default unverändert.
 
-## 2. Scope
+## Umfang
 
-### In scope
+### Enthalten
 
-* New `BreakOpportunityLineBreakerStrategy` object in
-  `org.pcsoft.framework.simplay.engine.engine`.
-* Internal mapping from a character to a small `BreakClass` enum.
-* Internal derivation of break opportunities between and inside `TextPart`s from those classes.
-* Greedy line fill restricted to allowed break points; overflow when no opportunity exists.
-* Tests with punctuation, non-breaking runs, and CJK-like input.
+* Neues `BreakOpportunityLineBreakerStrategy`-Objekt in `org.pcsoft.framework.simplay.engine.engine`.
+* Interne Abbildung von Zeichen auf ein kleines `BreakClass`-Enum.
+* Interne Herleitung von Umbruchgelegenheiten zwischen und innerhalb von `TextPart`s aus diesen Klassen.
+* Greedy-Zeilenfüllung, auf erlaubte Umbruchpunkte beschränkt; Überlauf, wenn keine Gelegenheit besteht.
+* Tests mit Interpunktion, nicht umbrechbaren Läufen und CJK-artiger Eingabe.
 
-### Out of scope
+### Nicht enthalten
 
-* Full Unicode line-break property tables and pair-table; only a curated subset.
-* Locale tailoring, dictionary-based breaking (Thai, Khmer, ...).
-* Hyphenation; `WordBreakerStrategy` is accepted in the signature but not consulted.
-* Raw-model changes; balanced/optimal breaking (IP-01).
+* Vollständige Unicode-Line-Break-Tabellen und Paartabelle; nur eine kuratierte Teilmenge.
+* Locale-Anpassung, wörterbuchbasiertes Umbrechen (Thai, Khmer, ...).
+* Silbentrennung; `WordBreakerStrategy` ist in der Signatur, wird aber nicht konsultiert.
+* Rohmodell-Änderungen; balanciertes/optimales Umbrechen (IP-01).
 
-## 3. Dependencies
+## Abhängigkeiten
 
-* Independent within FP-002 (parallel to IP-01 and IP-03).
-* External precondition: FP-001/IP-03 seam (`LineBreakerStrategy`, `UnplacedLine`,
-  `UnplacedPart`, `FontMeasureCalculator`) and the deterministic test `FontMeasureCalculator`.
+* Unabhängig innerhalb FP-002, parallel zu IP-01 und IP-03.
+* Externe Voraussetzung: FP-001/IP-03-Naht (`LineBreakerStrategy`, `UnplacedLine`, `UnplacedPart`,
+  `FontMeasureCalculator`) und der deterministische Test-`FontMeasureCalculator`.
 
-## 4. Interfaces to Other Plans
+## Schnittstellen zu anderen Plänen
 
-* Consumes the FP-001 seam types unchanged.
-* Provides no new shared type. `BreakClass` is `internal` (see open question in the feature
-  plan); if a later plan needs it public that is a separate change.
+* Verbraucht die FP-001-Nahttypen unverändert.
+* Liefert keinen neuen geteilten Typ; `BreakClass` ist `internal`.
+* Braucht ein späterer Plan `BreakClass` öffentlich, ist das eine separate Änderung.
 
-## 5. Design
+## Betroffene Dateien
 
-### 5.1 Break classes (internal subset)
+| Datei | Änderung |
+| ----- | -------- |
+| `engine/src/commonMain/kotlin/org/pcsoft/framework/simplay/engine/engine/BreakOpportunityLineBreakerStrategy.kt` | Neu: Strategieobjekt, `BreakClass`-Enum, Klassifizierer, Gelegenheitsherleitung, Greedy-Füllung, KDoc. |
+| `engine/src/commonMain/kotlin/org/pcsoft/framework/simplay/engine/engine/LineBreakerStrategy.kt` | Nur KDoc: zur Strategieliste ergänzen. |
+| `engine/src/commonTest/kotlin/org/pcsoft/framework/simplay/engine/engine/BreakOpportunityLineBreakerStrategyTest.kt` | Neu: Verhaltenstests. |
+| `docs/` (Engine-Strategieseite) | Strategie ergänzen; zuvor `project-docs`-Skill laden. |
+| `CHANGELOG.md` | Neuer Eintrag unter „Unreleased". |
 
-Internal enum `BreakClass` with the minimal set needed for Latin + basic CJK behaviour:
+## Entwurf
 
-| Class | Meaning | Example characters |
-| ----- | ------- | ------------------ |
-| `MANDATORY` | forced break | (only via explicit tokens — not produced here; reserved) |
-| `SPACE` | breakable glue | U+0020, tab already stripped by tokenizer |
-| `BEFORE` | break allowed before, not after | opening brackets `([{`, `¡`, `¿` |
-| `AFTER` | break allowed after, not before | `)]}`, `!`, `?`, `,`, `;`, `:`, `.`, `%`, `/`, `-`, `—`, `…` |
-| `BOTH` | break allowed before and after | ideographic range, `–` where treated as separator |
-| `NONBREAK` | never break adjacent | default for letters/digits, `&`, non-breaking punctuation, digits around `.` and `,` (numeric guard) |
+### Break-Klassen (interne Teilmenge)
 
-* Classification is a `when` over code point ranges/sets, no external table. Documented as an
-  approximation of UAX #14, not a conformant implementation.
-* CJK detection: code points in CJK Unified Ideographs, Hiragana, Katakana ranges → `BOTH`.
+* Internes `enum class BreakClass` mit der Minimalmenge für Latein plus einfaches CJK-Verhalten.
 
-### 5.2 From parts to opportunities
+| Klasse | Bedeutung | Beispielzeichen |
+| ------ | --------- | --------------- |
+| `MANDATORY` | erzwungener Umbruch | nur über explizite Tokens — hier nicht erzeugt; reserviert |
+| `SPACE` | umbrechbare Glue | U+0020, Tab bereits vom Tokenizer entfernt |
+| `BEFORE` | Umbruch davor erlaubt, danach nicht | öffnende Klammern `([{`, `¡`, `¿` |
+| `AFTER` | Umbruch danach erlaubt, davor nicht | `)]}`, `!`, `?`, `,`, `;`, `:`, `.`, `%`, `/`, `-`, `—`, `…` |
+| `BOTH` | Umbruch davor und danach erlaubt | ideografischer Bereich, `–` als Trenner |
+| `NONBREAK` | nie benachbart umbrechen | Default für Buchstaben/Ziffern, `&`, nicht umbrechende Interpunktion, Ziffern um `.` und `,` |
 
-* The tokenizer already removed whitespace and split symbols into single-char `TextSymbol`s and
-  runs into `TextWord`s. So opportunities are:
-  * before every `TextWord` after the first — the implicit inter-token space (class `SPACE`),
-    unless the preceding `TextSymbol` is class `BEFORE` (then the break goes before the symbol)
-    or the following/preceding context is `NONBREAK` (e.g. numeric `1,000` — but tokenizer
-    keeps `,` as its own symbol, so apply a numeric guard: digit `TextWord` + `,`/`.` +
-    digit `TextWord` ⇒ no opportunity around that symbol).
-  * around a `TextSymbol` according to its class (`BEFORE` / `AFTER` / `BOTH` / `NONBREAK`).
-  * inside a `TextWord` only when it contains CJK code points: an opportunity after every CJK
-    code point (class `BOTH`), none between two Latin letters.
-* Each opportunity is a cut index over a flattened `(part, charOffset)` stream; a cut may fall
-  at a part boundary or inside a CJK `TextWord`.
+* Klassifizierung als `when` über Codepunkt-Bereiche/-Mengen, ohne externe Tabelle.
+* Als Näherung an UAX #14 dokumentiert, keine konforme Implementierung.
+* CJK-Erkennung: Codepunkte in CJK Unified Ideographs, Hiragana, Katakana → `BOTH`.
 
-### 5.3 Greedy fill
+### Von Parts zu Gelegenheiten
 
-* Walk parts left to right accumulating width like `GreedyWordLineBreakerStrategy`
-  (`spaceWidth` measured once; `spaceBefore` = space width before a `TextWord` that is not
-  first on the line, `0` for `TextSymbol`).
-* When the next unit would exceed `maxWidth`, retreat to the last break opportunity at or
-  before the overflow point and flush there.
-* If there is no opportunity on the current line, place the offending unit anyway and flush
-  (line overflows) — never break inside a `NONBREAK` run.
-* A CJK `TextWord` longer than `maxWidth` is split at CJK opportunities into synthetic
-  `TextWord` pieces (like greedy's hyphenation path, but driven by break class, not
-  `WordBreakerStrategy`).
+* Tokenizer hat Whitespace entfernt und Symbole in Einzelzeichen-`TextSymbol`s, Läufe in `TextWord`s zerlegt.
+* Gelegenheit vor jedem `TextWord` nach dem ersten — der implizite Inter-Token-Space (Klasse `SPACE`) —
+  außer das vorangehende `TextSymbol` ist `BEFORE` (Umbruch vor das Symbol) oder Kontext ist `NONBREAK`.
+* Numerische Absicherung: Ziffern-`TextWord` + `,`/`.` + Ziffern-`TextWord` ⇒ keine Gelegenheit um das Symbol.
+* Gelegenheit um ein `TextSymbol` gemäß seiner Klasse (`BEFORE` / `AFTER` / `BOTH` / `NONBREAK`).
+* Innerhalb eines `TextWord` nur bei CJK-Codepunkten: Gelegenheit nach jedem CJK-Codepunkt (`BOTH`),
+  keine zwischen zwei lateinischen Buchstaben.
+* Jede Gelegenheit ist ein Schnittindex über einen abgeflachten `(part, charOffset)`-Strom;
+  ein Schnitt kann an einer Part-Grenze oder in einem CJK-`TextWord` liegen.
 
-### 5.4 Determinism
+### Greedy-Füllung
 
-* Pure function of input; classification and greedy retreat are deterministic. No platform API.
+* Parts links nach rechts durchlaufen und Breite akkumulieren wie `GreedyWordLineBreakerStrategy`
+  (`spaceWidth` einmal gemessen; `spaceBefore` = Leerzeichenbreite vor nicht erstem `TextWord`, `0` für `TextSymbol`).
+* Würde die nächste Einheit `maxWidth` überschreiten, zur letzten Gelegenheit an/vor dem Überlaufpunkt
+  zurückgehen und dort umbrechen.
+* Gibt es auf der aktuellen Zeile keine Gelegenheit, die Einheit trotzdem setzen und umbrechen
+  (Zeile läuft über) — nie in einem `NONBREAK`-Lauf schneiden.
+* Ein CJK-`TextWord` länger als `maxWidth` an CJK-Gelegenheiten in synthetische `TextWord`-Stücke
+  aufteilen (wie Greedys Silbentrennungspfad, aber von der Break-Klasse getrieben).
 
-## 6. Affected Files
+### Determinismus
 
-| File | Change |
-| ---- | ------ |
-| `engine/src/commonMain/kotlin/org/pcsoft/framework/simplay/engine/engine/BreakOpportunityLineBreakerStrategy.kt` | New: strategy object, `BreakClass` enum, classifier, opportunity derivation, greedy fill, KDoc. |
-| `engine/src/commonMain/kotlin/org/pcsoft/framework/simplay/engine/engine/LineBreakerStrategy.kt` | KDoc only: add to strategy list. |
-| `engine/src/commonTest/kotlin/org/pcsoft/framework/simplay/engine/engine/BreakOpportunityLineBreakerStrategyTest.kt` | New: behaviour tests. |
-| `docs/` (engine strategy page) | Add strategy; load `project-docs` skill first. |
-| `CHANGELOG.md` | New unreleased entry. |
+* Reine Funktion der Eingabe; Klassifizierung und Greedy-Rückzug sind deterministisch; keine Plattform-API.
 
-## 7. Test Design
+## Testentwurf
 
-Load the `testing` skill first. Developer test, package-mirrored, deterministic
-`FontMeasureCalculator` double.
-
+* `testing`-Skill zuerst laden; Entwicklertest, paketgespiegelt, deterministischer `FontMeasureCalculator`-Double.
 * `emptyPartsProduceNoLines`.
-* `breaksAtSpaceLikeGreedyForPlainText` — for Latin words + spaces, output equals
-  `GreedyWordLineBreakerStrategy` on the same input/width.
-* `neverBreaksInsideNonBreakingRun` — a long run classified `NONBREAK` stays whole and
-  overflows, no cut inside it.
-* `breaksAfterTrailingPunctuation` — `word,` allows a break after `,`, not before it.
-* `breaksBeforeOpeningBracket` — `word(` allows a break before `(`.
-* `numericGuardKeepsThousandsSeparatorTogether` — `1 , 000` token stream yields no break at the
-  separator.
-* `cjkTextBreaksBetweenIdeographs` — a CJK-only `TextWord` wider than `maxWidth` is split at
-  ideograph boundaries into multiple lines.
-* `cjkAndLatinMixedRespectsBothRules` — no break between Latin letters, break between ideographs.
+* `breaksAtSpaceLikeGreedyForPlainText` — für lateinische Wörter plus Leerzeichen gleich `GreedyWordLineBreakerStrategy`.
+* `neverBreaksInsideNonBreakingRun` — langer `NONBREAK`-Lauf bleibt ganz und läuft über, kein Schnitt darin.
+* `breaksAfterTrailingPunctuation` — `word,` erlaubt Umbruch nach `,`, nicht davor.
+* `breaksBeforeOpeningBracket` — `word(` erlaubt Umbruch vor `(`.
+* `numericGuardKeepsThousandsSeparatorTogether` — `1 , 000`-Token-Strom ergibt keinen Umbruch am Trenner.
+* `cjkTextBreaksBetweenIdeographs` — CJK-only-`TextWord` breiter als `maxWidth` wird an Ideograph-Grenzen umbrochen.
+* `cjkAndLatinMixedRespectsBothRules` — kein Umbruch zwischen lateinischen Buchstaben, Umbruch zwischen Ideographen.
 * `deterministicAcrossRuns`.
-* `swapViaBuilderRoutesToStrategy` — analogous to `LineBreakerStrategySwapTest`.
+* `swapViaBuilderRoutesToStrategy` — analog zu `LineBreakerStrategySwapTest`.
 
-## 8. Task Breakdown
+## Aufgaben
 
-### Task 1 — Break-class model
+### Aufgabe 1 — Break-Klassen-Modell
 
-* Add `BreakOpportunityLineBreakerStrategy.kt` skeleton with KDoc.
-* Add `internal enum class BreakClass` and the code-point classifier (`when` over ranges/sets).
-* Document the subset as a non-conformant UAX #14 approximation.
+* `BreakOpportunityLineBreakerStrategy.kt`-Gerüst mit KDoc anlegen.
+* `internal enum class BreakClass` und den Codepunkt-Klassifizierer (`when` über Bereiche/Mengen) ergänzen.
+* Die Teilmenge als nicht konforme UAX-#14-Näherung dokumentieren.
 
-### Task 2 — Opportunity derivation
+### Aufgabe 2 — Gelegenheitsherleitung
 
-* Flatten `parts` into a `(part, charOffset)` stream.
-* Emit opportunities from inter-token spaces and per-symbol classes.
-* Apply the numeric guard for digit + separator + digit.
-* Emit intra-word opportunities for CJK code points only.
+* `parts` in einen `(part, charOffset)`-Strom abflachen.
+* Gelegenheiten aus Inter-Token-Spaces und den Symbolklassen erzeugen.
+* Numerische Absicherung für Ziffer + Trenner + Ziffer anwenden.
+* Wortinterne Gelegenheiten nur für CJK-Codepunkte erzeugen.
 
-### Task 3 — Greedy fill restricted to opportunities
+### Aufgabe 3 — Greedy-Füllung, auf Gelegenheiten beschränkt
 
-* Accumulate width with greedy's space rules.
-* Retreat to the last opportunity at/left of the overflow; flush there.
-* Overflow when no opportunity on the line; never cut a `NONBREAK` run.
-* Split over-long CJK `TextWord`s at ideograph opportunities into synthetic `TextWord` pieces.
-* Build `UnplacedLine`s with the shared `spaceBefore` / ascent / descent rules.
+* Breite mit Greedys Leerzeichenregeln akkumulieren.
+* Zur letzten Gelegenheit an/links vom Überlauf zurückgehen und dort umbrechen.
+* Überlauf, wenn keine Gelegenheit auf der Zeile; nie einen `NONBREAK`-Lauf schneiden.
+* Überlange CJK-`TextWord`s an Ideograph-Gelegenheiten in synthetische `TextWord`-Stücke teilen.
+* `UnplacedLine`s mit den geteilten `spaceBefore`-/Ascent-/Descent-Regeln bauen.
 
-### Task 4 — Tests
+### Aufgabe 4 — Tests
 
-* Load `testing` skill.
-* Add `BreakOpportunityLineBreakerStrategyTest` covering section 7.
+* `testing`-Skill laden.
+* `BreakOpportunityLineBreakerStrategyTest` gemäß Abschnitt „Testentwurf" anlegen.
 
-### Task 5 — Docs, changelog, build, close-out
+### Aufgabe 5 — Doku, Changelog, Build, Abschluss
 
-* Load `project-docs` skill; update the engine strategy page and KDoc list.
-* Add `CHANGELOG.md` entry.
-* Run `./gradlew :engine:build`; fix findings.
-* Same change set: status file IP-02 `COMPLETED`, tick IP-02 across
-  `FP-002-AdvancedLineBreaking.md`, update `FP-002-Overview.md`, `git rm` this plan file.
+* `project-docs`-Skill laden; Engine-Strategieseite und KDoc-Liste aktualisieren.
+* `CHANGELOG.md`-Eintrag ergänzen.
+* `./gradlew :engine:build` ausführen; Befunde beheben.
+* Im selben Change-Set: Status IP-02 `COMPLETED`, IP-02 in `FP-002-AdvancedLineBreaking.md` abhaken,
+  `FP-002-Overview.md` aktualisieren, diese Plandatei mit `git rm` entfernen.
 
-## 9. Risks and Open Questions
+## Risiken und offene Punkte
 
-* The curated break-class set will not match ICU on edge cases; documented as approximate.
-* Whether `BreakClass` should be public — kept `internal` per the feature plan open question.
-* Interaction of the numeric guard with the tokenizer (which already splits `,`/`.` into
-  symbols) needs care; covered by an explicit test.
-* CJK range list must be pinned to specific Unicode blocks to stay deterministic across
-  Kotlin/JDK versions; ranges are hard-coded, not derived from `Character` APIs where those
-  differ per platform.
+* Die kuratierte Break-Klassen-Menge trifft ICU in Randfällen nicht; als Näherung dokumentiert.
+* Ob `BreakClass` öffentlich sein soll — laut Feature-Plan-Frage `internal` gehalten.
+* Zusammenspiel der numerischen Absicherung mit dem Tokenizer (der `,`/`.` bereits in Symbole teilt);
+  per expliziten Test abgedeckt.
+* CJK-Bereichsliste an feste Unicode-Blöcke binden, um über Kotlin-/JDK-Versionen deterministisch zu bleiben;
+  Bereiche hart kodiert, nicht aus plattformabhängigen `Character`-APIs abgeleitet.

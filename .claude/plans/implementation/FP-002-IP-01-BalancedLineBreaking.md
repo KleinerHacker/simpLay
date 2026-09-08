@@ -1,162 +1,144 @@
 # FP-002 / IP-01: Balanced Line Breaking
 
 Feature Plan: `.claude/plans/features/FP-002-AdvancedLineBreaking.md`
-Status file: `.claude/plans/features/FP-002-AdvancedLineBreaking-Status.md`
+Status: `.claude/plans/features/FP-002-AdvancedLineBreaking-Status.md`
 
-## 1. Objective
+## Ziel
 
-Add `BalancedLineBreakerStrategy`, a whole-block `LineBreakerStrategy` that minimises the total
-raggedness of a block instead of filling each line greedily. It is opt-in via
-`SimpLayEngine.Builder.lineBreakerStrategy(...)`; the default stays `GreedyWordLineBreakerStrategy`.
+* `BalancedLineBreakerStrategy` als blockweiter `LineBreakerStrategy` mit minimaler Gesamt-Raggedness.
+* Opt-in über `SimpLayEngine.Builder.lineBreakerStrategy(...)`; Default bleibt `GreedyWordLineBreakerStrategy`.
 
-## 2. Scope
+## Umfang
 
-### In scope
+### Enthalten
 
-* New `BalancedLineBreakerStrategy` object in `org.pcsoft.framework.simplay.engine.engine`.
-* Internal badness/cost function over candidate `UnplacedLine`s.
-* Internal dynamic-programming optimum over all legal break points (Knuth-Plass-style, word
-  granularity only).
-* Reuse of `WordBreakerStrategy` for words wider than `maxWidth` (same contract as greedy).
-* Internal cost constants (line-fill penalty exponent, last-line handling, overflow penalty).
-* Tests comparing raggedness against `GreedyWordLineBreakerStrategy` on a fixed document.
+* Neues `BalancedLineBreakerStrategy`-Objekt in `org.pcsoft.framework.simplay.engine.engine`.
+* Interne Badness-/Kostenfunktion über Kandidaten-`UnplacedLine`s.
+* Interne dynamische Programmierung über alle legalen Umbruchpunkte, nur Wortgranularität.
+* Wiederverwendung von `WordBreakerStrategy` für Wörter breiter als `maxWidth`, gleicher Vertrag wie Greedy.
+* Interne Kostenkonstanten (Füll-Strafe-Exponent, Behandlung der letzten Zeile, Überlauf-Strafe).
+* Tests, die Raggedness gegen `GreedyWordLineBreakerStrategy` auf einem festen Dokument vergleichen.
 
-### Out of scope
+### Nicht enthalten
 
-* Hyphenation logic itself (only the existing `WordBreakerStrategy` seam is consulted).
-* Any change to `GreedyWordLineBreakerStrategy` or the builder defaults.
-* Pagination / `SimpLayPageEngine` changes; output stays a flat `List<UnplacedLine>`.
-* Public configuration of cost parameters (kept as internal constants for now).
-* Raw-model changes.
+* Silbentrennungslogik selbst; nur die vorhandene `WordBreakerStrategy`-Naht wird konsultiert.
+* Jede Änderung an `GreedyWordLineBreakerStrategy` oder den Builder-Defaults.
+* Änderungen an Pagination / `SimpLayPageEngine`; Ausgabe bleibt flache `List<UnplacedLine>`.
+* Öffentliche Konfiguration der Kostenparameter; vorerst interne Konstanten.
+* Änderungen am Rohmodell.
 
-## 3. Dependencies
+## Abhängigkeiten
 
-* Independent within FP-002 (parallel to IP-02 and IP-03).
-* External precondition: the `LineBreakerStrategy` seam from FP-001/IP-03
-  (`LineBreakerStrategy`, `UnplacedLine`, `UnplacedPart`, `WordBreakerStrategy`,
-  `FontMeasureCalculator`).
+* Unabhängig innerhalb FP-002, parallel zu IP-02 und IP-03.
+* Externe Voraussetzung: `LineBreakerStrategy`-Naht aus FP-001/IP-03 (`LineBreakerStrategy`,
+  `UnplacedLine`, `UnplacedPart`, `WordBreakerStrategy`, `FontMeasureCalculator`).
 
-## 4. Interfaces to Other Plans
+## Schnittstellen zu anderen Plänen
 
-* Consumes `LineBreakerStrategy`, `UnplacedLine`, `UnplacedPart`, `WordBreakerStrategy`,
-  `FontMeasureCalculator`, `MeasuredFont` unchanged.
-* Provides no new shared type; `SimpLayEngine.Builder` already accepts any `LineBreakerStrategy`.
+* Verbraucht `LineBreakerStrategy`, `UnplacedLine`, `UnplacedPart`, `WordBreakerStrategy`,
+  `FontMeasureCalculator`, `MeasuredFont` unverändert.
+* Liefert keinen neuen geteilten Typ; `SimpLayEngine.Builder` akzeptiert bereits jede `LineBreakerStrategy`.
 
-## 5. Design
+## Betroffene Dateien
 
-### 5.1 Algorithm
+| Datei | Änderung |
+| ----- | -------- |
+| `engine/src/commonMain/kotlin/org/pcsoft/framework/simplay/engine/engine/BalancedLineBreakerStrategy.kt` | Neu: Objekt, DP, Kostenfunktion, Konstanten, KDoc. |
+| `engine/src/commonMain/kotlin/org/pcsoft/framework/simplay/engine/engine/LineBreakerStrategy.kt` | Nur KDoc: `BalancedLineBreakerStrategy` in der Strategieliste nennen. |
+| `engine/src/commonTest/kotlin/org/pcsoft/framework/simplay/engine/engine/BalancedLineBreakerStrategyTest.kt` | Neu: Verhaltens- und Raggedness-Tests. |
+| `docs/` (Engine-Strategieseite) | `BalancedLineBreakerStrategy` zur Strategieliste; zuvor `project-docs`-Skill laden. |
+| `CHANGELOG.md` | Neuer Eintrag unter „Unreleased". |
 
-* Treat the block as an ordered list of breakable items: each `TextPart` plus the mandatory
-  glue (space) that precedes every `TextWord` after the first; `TextSymbol` carries no leading
-  space (mirrors greedy).
-* Legal break points are the gaps before a `TextWord`. A run `symbol* word` cannot be split
-  before its symbols; symbols stay attached to the following word's line segment start, matching
-  greedy attachment.
-* `cost[i]` = minimum total badness for breaking items `0 until i` into lines.
-  `cost[0] = 0`; `cost[n]` is the answer. Back-pointers reconstruct the chosen breaks.
-* For a candidate line covering items `j until i`, compute its natural width from
-  `measurer.measure(font.raw, part.text)` advances plus one space width per internal gap
-  (space width measured once per call, like greedy).
-* Line badness:
-  * `slack = maxWidth - naturalWidth`
-  * if `slack >= 0` and the line is not the last line of the block:
-    `badness = (slack / maxWidth).pow(FILL_PENALTY_EXP) * FILL_PENALTY_SCALE`
-  * if `slack < 0` (overflow): `badness = (-slack) * OVERFLOW_PENALTY` (kept finite so an
-    unbreakable over-long word still yields a result).
-  * the last line of the block contributes `0` badness for positive slack (ragged-right bottom
-    line is free), matching typographic convention.
-* Words wider than `maxWidth` on their own: offer to `wordBreaker.breakOffsets(...)`; if it
-  returns offsets, expand that word into synthetic `TextWord` pieces (as greedy's
-  `placeHyphenated` does) before running the DP; if empty, keep the word whole and let the
-  overflow penalty apply.
-* Determinism: no floating-point-order ambiguity beyond left-to-right accumulation; ties in the
-  DP are resolved by preferring the smaller number of lines, then the earliest break.
+## Entwurf
 
-### 5.2 Complexity
+### Algorithmus
 
-* Naive DP is `O(n^2)` line-cost evaluations with `n` = item count of one block. Acceptable for
-  document blocks; no windowing needed in this plan. Measurement results for a
-  `(font, text)` pair are cached in a local `HashMap<String, Metrics>` inside the call to avoid
-  repeated `measurer` hits.
+* Block als geordnete Liste umbrechbarer Items: jeder `TextPart` plus die Pflicht-Glue (Leerzeichen)
+  vor jedem `TextWord` außer dem ersten; `TextSymbol` trägt kein führendes Leerzeichen (wie Greedy).
+* Legale Umbruchpunkte sind die Lücken vor einem `TextWord`.
+* Ein Lauf `symbol* word` wird nicht vor seinen Symbolen getrennt; Symbole bleiben am Zeilenstart
+  des folgenden Wortes, wie die Greedy-Anlagerung.
+* `cost[i]` = minimale Gesamt-Badness für den Umbruch der Items `0 until i` in Zeilen.
+* `cost[0] = 0`; `cost[n]` ist die Antwort; Back-Pointer rekonstruieren die gewählten Umbrüche.
+* Natürliche Breite einer Kandidatenzeile `j until i` aus den `measurer.measure(font.raw, part.text)`-Advances
+  plus einer Leerzeichenbreite je interner Lücke (Leerzeichenbreite einmal pro Aufruf gemessen).
+* Zeilen-Badness: `slack = maxWidth - naturalWidth`.
+* Für `slack >= 0` und nicht letzte Zeile des Blocks:
+  `badness = (slack / maxWidth).pow(FILL_PENALTY_EXP) * FILL_PENALTY_SCALE`.
+* Für `slack < 0` (Überlauf): `badness = (-slack) * OVERFLOW_PENALTY`, endlich gehalten.
+* Letzte Zeile des Blocks trägt bei positivem Slack `0` Badness (rechts-ausgefranste Schlusszeile frei).
+* Wörter breiter als `maxWidth`: an `wordBreaker.breakOffsets(...)` anbieten; bei Offsets in
+  synthetische `TextWord`-Stücke expandieren (wie Greedys `placeHyphenated`), sonst ganz lassen.
+* Determinismus: Akkumulation strikt links nach rechts; DP-Gleichstände zugunsten weniger Zeilen,
+  dann frühester Umbruch.
 
-### 5.3 Cost constants (internal)
+### Komplexität
 
-* `FILL_PENALTY_EXP = 2.0`
-* `FILL_PENALTY_SCALE = 100.0`
-* `OVERFLOW_PENALTY = 1000.0`
-* Declared `private const val` in the strategy file; documented as tuning-only, not API.
+* Naive DP: `O(n^2)` Zeilenkosten-Auswertungen mit `n` = Item-Anzahl eines Blocks; ohne Fensterung.
+* Messresultate je `(font, text)` in lokaler `HashMap<String, Metrics>` im Aufruf cachen.
 
-### 5.4 Line assembly
+### Kostenkonstanten (intern)
 
-* Reuse the existing private `LineAccumulator` pattern, or a small local builder, to turn the
-  chosen item ranges into `UnplacedLine`s with correct `spaceBefore`, `ascent`, `descent`
-  (max over parts, font-metric fallback when zero) — identical rules to greedy.
+* `FILL_PENALTY_EXP = 2.0`.
+* `FILL_PENALTY_SCALE = 100.0`.
+* `OVERFLOW_PENALTY = 1000.0`.
+* Als `private const val` in der Strategiedatei; als reine Tuning-Werte dokumentiert, nicht API.
 
-## 6. Affected Files
+### Zeilenaufbau
 
-| File | Change |
-| ---- | ------ |
-| `engine/src/commonMain/kotlin/org/pcsoft/framework/simplay/engine/engine/BalancedLineBreakerStrategy.kt` | New: `BalancedLineBreakerStrategy` object, DP, cost function, constants, KDoc. |
-| `engine/src/commonMain/kotlin/org/pcsoft/framework/simplay/engine/engine/LineBreakerStrategy.kt` | KDoc only: mention `BalancedLineBreakerStrategy` in the strategy list. |
-| `engine/src/commonTest/kotlin/org/pcsoft/framework/simplay/engine/engine/BalancedLineBreakerStrategyTest.kt` | New: behaviour and raggedness tests. |
-| `docs/` (engine strategy page) | Add `BalancedLineBreakerStrategy` to the strategy list; load `project-docs` skill first. |
-| `CHANGELOG.md` | New entry under the unreleased section. |
+* Vorhandenes privates `LineAccumulator`-Muster oder einen kleinen lokalen Builder wiederverwenden.
+* Gewählte Item-Bereiche zu `UnplacedLine`s mit korrektem `spaceBefore`, `ascent`, `descent`
+  (Maximum über Parts, Font-Metrik-Fallback bei Null) — identische Regeln wie Greedy.
 
-## 7. Test Design
+## Testentwurf
 
-Load the `testing` skill before writing the test class. Package mirrors the production package;
-developer test (no `IT` suffix). Uses the deterministic `FontMeasureCalculator` /
-`FontMeasureCalculator` test double from FP-001 (`EngineTestData` / `MeasureTestData`).
+* `testing`-Skill vor der Testklasse laden; Paketspiegelung; Entwicklertest ohne `IT`-Suffix.
+* Deterministische `FontMeasureCalculator`-Doubles aus FP-001 (`EngineTestData` / `MeasureTestData`).
+* `emptyPartsProduceNoLines` — leere Eingabe liefert `emptyList()`.
+* `singleShortLineStaysOneLine` — passende Parts bleiben eine Zeile, gleich wie Greedy.
+* `balancedReducesRaggednessVersusGreedy` — Summe der quadrierten positiven Slacks über Nicht-Schlusszeilen
+  ist strikt kleiner als bei `GreedyWordLineBreakerStrategy`.
+* `lastLineRaggednessIsFree` — kurze Schlusszeile zwingt frühere Zeilen nicht zur Stauchung.
+* `overlongWordWithoutWordBreakerOverflowsSingleLine` — keine Ausnahme; Wort ganz gehalten.
+* `overlongWordWithWordBreakerIsSplit` — Offsets eines Stub-`WordBreakerStrategy` werden beachtet.
+* `deterministicAcrossRuns` — zwei Aufrufe mit gleicher Eingabe liefern gleiche Strukturen.
+* `symbolsStayAttachedToFollowingWord` — `symbol* word` nie vor den Symbolen getrennt.
+* `swapViaBuilderProducesBalancedOutput` — Builder routet zur neuen Strategie (wie `LineBreakerStrategySwapTest`).
 
-* `emptyPartsProduceNoLines` — empty input returns `emptyList()`.
-* `singleShortLineStaysOneLine` — parts that fit stay on one line, equal to greedy.
-* `balancedReducesRaggednessVersusGreedy` — on a fixed paragraph and width, the sum of squared
-  positive slack over non-last lines is strictly smaller than for `GreedyWordLineBreakerStrategy`.
-* `lastLineRaggednessIsFree` — a short final line does not force earlier lines to compress.
-* `overlongWordWithoutWordBreakerOverflowsSingleLine` — no exception; word kept whole.
-* `overlongWordWithWordBreakerIsSplit` — offsets from a stub `WordBreakerStrategy` are honoured.
-* `deterministicAcrossRuns` — two calls with identical input return equal structures.
-* `symbolsStayAttachedToFollowingWord` — `symbol* word` never split before the symbols.
-* `swapViaBuilderProducesBalancedOutput` — `SimpLayEngine.Builder.lineBreakerStrategy(...)`
-  routes through to the new strategy (mirror `LineBreakerStrategySwapTest`).
+## Aufgaben
 
-## 8. Task Breakdown
+### Aufgabe 1 — Kostenfunktion und DP-Kern
 
-### Task 1 — Cost function and DP core
+* `BalancedLineBreakerStrategy.kt` mit Objekt-Gerüst und KDoc anlegen.
+* Messungs-Cache pro Aufruf und Leerzeichenbreiten-Ermittlung implementieren.
+* Item-Liste aus `parts` mit Glue-/Symbol-Regeln konstruieren.
+* Natürliche Zeilenbreite und Badness-Funktion mit den internen Konstanten implementieren.
+* `O(n^2)`-DP mit Back-Pointern und dokumentierter Gleichstandsauflösung implementieren.
+* Gewählte Bereiche über die geteilten Accumulator-Regeln zu `UnplacedLine`s rekonstruieren.
 
-* Add `BalancedLineBreakerStrategy.kt` with the object skeleton and KDoc.
-* Implement per-call measurement cache and space-width lookup.
-* Implement item list construction from `parts` with glue/symbol rules.
-* Implement line natural-width and badness function with the internal constants.
-* Implement `O(n^2)` DP with back-pointers and documented tie-breaking.
-* Reconstruct chosen ranges into `UnplacedLine`s via the shared accumulator rules.
+### Aufgabe 2 — Wortbrecher-Integration
 
-### Task 2 — Word-breaker integration
+* Wörter breiter als `maxWidth` erkennen; `wordBreaker.breakOffsets(...)` aufrufen.
+* Akzeptierte Offsets vor der DP in synthetische `TextWord`-Stücke expandieren.
+* Ohne Offsets Wort ganz behalten und die Überlauf-Strafe anwenden.
 
-* Detect words wider than `maxWidth`; call `wordBreaker.breakOffsets(...)`.
-* Expand accepted offsets into synthetic `TextWord` pieces before the DP.
-* Keep whole word with overflow penalty when no offsets are returned.
+### Aufgabe 3 — Tests
 
-### Task 3 — Tests
+* `testing`-Skill laden.
+* `BalancedLineBreakerStrategyTest` gemäß Abschnitt „Testentwurf" anlegen.
+* Builder-Swap-Fall analog zu `LineBreakerStrategySwapTest` ergänzen.
 
-* Load `testing` skill.
-* Add `BalancedLineBreakerStrategyTest` covering section 7.
-* Add a builder-swap case analogous to `LineBreakerStrategySwapTest`.
+### Aufgabe 4 — Doku, Changelog, Build, Abschluss
 
-### Task 4 — Docs, changelog, build
+* `project-docs`-Skill laden; Strategie auf der Engine-Strategieseite und in der KDoc-Liste ergänzen.
+* `CHANGELOG.md`-Eintrag ergänzen.
+* `./gradlew :engine:build` ausführen und Befunde beheben.
+* Im selben Change-Set: IP-01 im Status `COMPLETED`, IP-01 überall in `FP-002-AdvancedLineBreaking.md`
+  abhaken, `FP-002-Overview.md` aktualisieren, diese Plandatei mit `git rm` entfernen.
 
-* Load `project-docs` skill; add the strategy to the engine strategy page and KDoc list.
-* Add a `CHANGELOG.md` entry.
-* Run `./gradlew :engine:build` and fix findings.
-* In the same change set: mark IP-01 `COMPLETED` in the status file, tick IP-01 everywhere in
-  `FP-002-AdvancedLineBreaking.md`, update `FP-002-Overview.md`, and `git rm` this plan file.
+## Risiken und offene Punkte
 
-## 9. Risks and Open Questions
-
-* Final cost constants may need tuning against real documents; defaults are a starting point.
-* Whether balanced breaking should reuse the engine's `SimpLayFontEngine` measurement cache
-  instead of a local map — deferred; local map is sufficient and side-effect free.
-* Very large single blocks make `O(n^2)` noticeable; windowing is out of scope and can be a
-  follow-up plan if a real document shows a problem.
-* Interaction with `JUSTIFY` alignment: balancing changes line fill, which changes justification
-  spread; acceptable and covered by an assertion on a justified sample.
+* Endgültige Kostenkonstanten brauchen ggf. Abgleich an echten Dokumenten; Defaults sind Startwerte.
+* Ob Balanced-Breaking den `SimpLayFontEngine`-Messcache nutzen soll; vertagt, lokale Map genügt.
+* Sehr große Einzelblöcke machen `O(n^2)` spürbar; Fensterung außerhalb des Umfangs, Folgeplan möglich.
+* Zusammenspiel mit `JUSTIFY`-Alignment: geänderte Zeilenfüllung ändert Sperrung; per Assertion auf Sample abgedeckt.
