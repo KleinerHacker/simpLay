@@ -17,7 +17,6 @@ import javafx.scene.Scene
 import javafx.scene.control.Label
 import javafx.scene.input.Clipboard
 import javafx.scene.input.KeyCode
-import javafx.scene.input.KeyEvent
 import javafx.stage.Stage
 import org.junit.jupiter.api.Test
 import kotlin.math.abs
@@ -193,9 +192,7 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
         val expected = view.selectedText
 
         val clipboard = onFxThread {
-            view.fireEvent(
-                KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.C, false, true, false, false),
-            )
+            skin.pressKeyForTest(KeyCode.C, shortcut = true)
             Clipboard.getSystemClipboard().let {
                 Triple(it.string, it.hasHtml(), it.hasRtf())
             }
