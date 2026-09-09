@@ -26,10 +26,10 @@ import javafx.geometry.BoundingBox
 import javafx.geometry.Bounds
 import javafx.util.Duration
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
-import org.pcsoft.framework.simplay.fx.internal.DocumentTextIndex
+import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
-import org.pcsoft.framework.simplay.fx.internal.hitTest
-import org.pcsoft.framework.simplay.fx.internal.segmentSpanX
+import org.pcsoft.framework.simplay.uicommon.hitTest
+import org.pcsoft.framework.simplay.uicommon.segmentSpanX
 
 /**
  * Everything the edit caret of a [PaperSheetView] needs: its [position] on the linear document text,

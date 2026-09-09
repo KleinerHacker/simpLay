@@ -16,9 +16,13 @@ plugins {
     id("buildsrc.convention.kotlin-jvm")
 }
 
+// Toolkit-agnostic building blocks shared by every interactive GUI binding (`fx`, `swing`, and
+// future toolkit modules): the linear text index, the glyph hit-test, the selection span geometry,
+// the document text editor and the styled-text clipboard serialisation. Nothing here depends on a
+// concrete UI toolkit; text measuring is taken through the `engine` `FontMeasureCalculator`.
 dependencies {
     implementation(project(":engine"))
-    implementation(project(":ui-common"))
+
     testImplementation(kotlin("test"))
 }
 

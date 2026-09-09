@@ -18,7 +18,7 @@ import org.pcsoft.framework.simplay.engine.measure
 import org.pcsoft.framework.simplay.engine.geometry.Margins
 import org.pcsoft.framework.simplay.engine.geometry.Size
 import org.pcsoft.framework.simplay.engine.model.*
-import org.pcsoft.framework.simplay.fx.internal.DocumentTextIndex
+import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
 import org.pcsoft.framework.simplay.fx.internal.ps.TextSelection
 import kotlin.test.assertEquals

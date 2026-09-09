@@ -37,5 +37,6 @@ include(":fx")
 include(":j-pdf")
 include(":j-print")
 include(":swing")
+include(":ui-common")
 
 rootProject.name = "simplay"

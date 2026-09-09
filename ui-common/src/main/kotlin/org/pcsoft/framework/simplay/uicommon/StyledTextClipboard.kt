@@ -10,7 +10,7 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.fx.internal
+package org.pcsoft.framework.simplay.uicommon
 
 import kotlin.math.roundToInt
 import org.pcsoft.framework.simplay.engine.model.FontStyle
@@ -27,7 +27,7 @@ import org.pcsoft.framework.simplay.engine.model.FontWeight
  * translated to a concrete font name plus a CSS generic ([resolveFamily]); any other family is a
  * real installed face and is passed through unchanged.
  */
-internal object StyledTextClipboard {
+object StyledTextClipboard {
 
     /** A JavaFX family name mapped to what HTML and RTF need to actually resolve it on paste. */
     private data class ResolvedFamily(val cssStack: String, val rtfName: String, val rtfCategory: String)

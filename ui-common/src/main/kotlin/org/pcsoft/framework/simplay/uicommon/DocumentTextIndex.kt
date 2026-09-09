@@ -10,7 +10,7 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.fx.internal
+package org.pcsoft.framework.simplay.uicommon
 
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.engine.measure.MeasuredLine
@@ -42,7 +42,7 @@ import org.pcsoft.framework.simplay.engine.model.TextWord
  * ordinal plus an in-element offset onto a linear text index, and the `next*` / `prev*` helpers step
  * from a linear index to the next / previous element start.
  */
-internal class DocumentTextIndex(measured: MeasuredDocument) {
+class DocumentTextIndex(measured: MeasuredDocument) {
 
     /**
      * One measured text part placed on the linear [text] axis.

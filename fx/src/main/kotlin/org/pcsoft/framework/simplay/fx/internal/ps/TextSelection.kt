@@ -17,8 +17,8 @@ import org.pcsoft.framework.simplay.fx.PaperSheetView
 import javafx.scene.input.Clipboard
 import javafx.scene.input.ClipboardContent
 import javafx.scene.input.DataFormat
-import org.pcsoft.framework.simplay.fx.internal.DocumentTextIndex
-import org.pcsoft.framework.simplay.fx.internal.StyledTextClipboard
+import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
+import org.pcsoft.framework.simplay.uicommon.StyledTextClipboard
 
 /**
  * The text selection of a [PaperSheetView]: an [anchor] (where the drag started) and a [focus] (the

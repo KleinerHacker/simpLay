@@ -10,9 +10,10 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.fx.internal
+package org.pcsoft.framework.simplay.uicommon
 
 import kotlin.math.abs
+import org.pcsoft.framework.simplay.engine.FontMeasureCalculator
 import org.pcsoft.framework.simplay.engine.model.Font
 import org.pcsoft.framework.simplay.engine.measure.MeasuredTextPart
 
@@ -25,11 +26,11 @@ import org.pcsoft.framework.simplay.engine.measure.MeasuredTextPart
  * `text.length` at or right of the part end, otherwise the offset whose prefix width is closest to
  * the position.
  */
-internal fun hitTest(
+fun hitTest(
     part: MeasuredTextPart,
     font: Font,
     xInContentArea: Double,
-    measurer: FxFontMeasureCalculator = FxFontMeasureCalculator(),
+    measurer: FontMeasureCalculator,
 ): Int {
     val text = part.text
     val localX = xInContentArea - part.bounds.x

@@ -13,6 +13,8 @@
 package org.pcsoft.framework.simplay.fx.internal
 
 import org.pcsoft.framework.simplay.engine.RenderConfiguration
+import org.pcsoft.framework.simplay.uicommon.DocumentEditor
+import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 import org.pcsoft.framework.simplay.engine.measure
 import org.pcsoft.framework.simplay.engine.geometry.Margins
 import org.pcsoft.framework.simplay.engine.geometry.Size

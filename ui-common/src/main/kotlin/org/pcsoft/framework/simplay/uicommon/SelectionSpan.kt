@@ -10,9 +10,10 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.fx.internal
+package org.pcsoft.framework.simplay.uicommon
 
 import kotlin.math.max
+import org.pcsoft.framework.simplay.engine.FontMeasureCalculator
 import kotlin.math.min
 
 /**
@@ -21,11 +22,11 @@ import kotlin.math.min
  * right edge of the last, both clamped to the segment's own part bounds. [measurer] measures the
  * prefix widths. Shared by the selection highlight and the selection bounding box.
  */
-internal fun segmentSpanX(
+fun segmentSpanX(
     segment: DocumentTextIndex.Segment,
     lo: Int,
     hi: Int,
-    measurer: FxFontMeasureCalculator = FxFontMeasureCalculator(),
+    measurer: FontMeasureCalculator,
 ): Pair<Double, Double> {
     val text = segment.part.text
     val startOff = (max(lo, segment.start) - segment.start).coerceIn(0, text.length)

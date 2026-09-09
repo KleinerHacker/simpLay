@@ -27,9 +27,9 @@ import javafx.scene.input.ScrollEvent
 import org.pcsoft.framework.simplay.engine.RenderConfiguration
 import org.pcsoft.framework.simplay.engine.measure
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
-import org.pcsoft.framework.simplay.fx.internal.DocumentTextIndex
+import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
-import org.pcsoft.framework.simplay.fx.internal.hitTest
+import org.pcsoft.framework.simplay.uicommon.hitTest
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetCanvasPainter
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetCaret
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetEditor
@@ -51,7 +51,7 @@ import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetStyle
  * * [PaperSheetCaret] - the caret position, blink, geometry and navigation moves (in
  *   [PaperSheetMode.EDITABLE]);
  * * [PaperSheetEditor] - the keyboard shortcuts (typing, `Backspace` / `Delete`, `Ctrl+C` / `V` /
- *   `X` / `D`, caret navigation) and the [org.pcsoft.framework.simplay.fx.internal.DocumentEditor]
+ *   `X` / `D`, caret navigation) and the [org.pcsoft.framework.simplay.uicommon.DocumentEditor]
  *   mutations they trigger, plus drag-and-drop of the selection;
  * * [PaperSheetHoverTracker] - the hovered paragraph / sheet;
  * * [PaperSheetOverlays] - the registered [FloatingOverlay]s and the overlay layer on top of the

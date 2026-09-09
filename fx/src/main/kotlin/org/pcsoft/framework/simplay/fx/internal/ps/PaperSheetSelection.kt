@@ -22,9 +22,9 @@ import kotlin.math.max
 import kotlin.math.min
 import org.pcsoft.framework.simplay.engine.model.FontStyle
 import org.pcsoft.framework.simplay.engine.model.FontWeight
-import org.pcsoft.framework.simplay.fx.internal.DocumentTextIndex
+import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
-import org.pcsoft.framework.simplay.fx.internal.segmentSpanX
+import org.pcsoft.framework.simplay.uicommon.segmentSpanX
 
 /**
  * Everything the text selection of a [PaperSheetView] needs: the mutable anchor/focus holder, the

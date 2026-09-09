@@ -30,7 +30,7 @@
 
 - Per `git mv` verschieben: `internal/DocumentEditor.kt`, `internal/DocumentTextIndex.kt`, `internal/GlyphHitTester.kt`, `internal/SelectionSpan.kt`, `internal/StyledTextClipboard.kt`.
 - Zielpaket in den 5 Dateien auf `org.pcsoft.framework.simplay.uicommon` setzen, `internal`-Sichtbarkeit auf `public` anheben.
-- Zugehoerige Tests `git mv`: `fx/src/test/.../internal/DocumentEditorTest.kt`, `GlyphHitTesterTest.kt` (und evtl. Index-/Span-Tests) nach `ui-common/src/test/...`.
+- `DocumentEditorTest.kt` und `GlyphHitTesterTest.kt` vorerst in `fx` belassen (nur Importe auf `...uicommon` angepasst); Verschiebung nach `:ui-common` mit Stub-`FontMeasureCalculator` erfolgt in Task 10 (benoetigt `testing`-Skill).
 - `fx/build.gradle.kts`: `implementation(project(":ui-common"))` ergaenzen.
 - In `fx`: Importe der 5 Typen von `...fx.internal` auf `...uicommon` umstellen (`PaperSheetViewSkin`, `ps/PaperSheetCanvasPainter`, `ps/PaperSheetSelection`, `ps/PaperSheetCaret`, `ps/PaperSheetEditor`, `internal/MeasuredCanvasData`, betroffene Tests).
 - Gradle-Target `build` fuer `:ui-common` und `:fx` ausfuehren.

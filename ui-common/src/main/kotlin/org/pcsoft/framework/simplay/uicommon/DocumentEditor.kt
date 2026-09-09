@@ -10,7 +10,7 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.fx.internal
+package org.pcsoft.framework.simplay.uicommon
 
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
@@ -34,7 +34,7 @@ import org.pcsoft.framework.simplay.engine.model.TextStyle
  * Every operation returns the new [Document] together with the caret index it should sit at in the
  * re-measured document.
  */
-internal object DocumentEditor {
+object DocumentEditor {
 
     /** Outcome of an edit: the rebuilt [document] and the [caretIndex] for the re-measured text. */
     data class Result(val document: Document, val caretIndex: Int)

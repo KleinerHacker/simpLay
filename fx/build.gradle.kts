@@ -38,6 +38,7 @@ configurations.named("demoRuntimeOnly") { extendsFrom(configurations.named("runt
 
 dependencies {
     implementation(project(":engine"))
+    implementation(project(":ui-common"))
 
     testImplementation(kotlin("test"))
     testImplementation(libs.testfxCore)

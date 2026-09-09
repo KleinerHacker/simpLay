@@ -19,8 +19,8 @@ import javafx.scene.input.Clipboard
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 import org.pcsoft.framework.simplay.engine.model.Document
-import org.pcsoft.framework.simplay.fx.internal.DocumentEditor
-import org.pcsoft.framework.simplay.fx.internal.DocumentTextIndex
+import org.pcsoft.framework.simplay.uicommon.DocumentEditor
+import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 
 /**
  * The editable-mode input controller of a [PaperSheetView]: the keyboard shortcuts (character
