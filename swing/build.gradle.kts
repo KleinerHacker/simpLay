@@ -16,10 +16,37 @@ plugins {
     id("buildsrc.convention.kotlin-jvm")
 }
 
+// A dedicated source set for the runnable demo application. It depends on `main` and its
+// dependencies, is never published and is kept out of the licensee scan (only `main`'s runtime
+// classpath is scanned) and out of the `java` component. Swing is part of the JDK, so no toolkit
+// dependency is added.
+val demo: SourceSet = sourceSets.create("demo") {
+    compileClasspath += sourceSets.main.get().output
+    runtimeClasspath += sourceSets.main.get().output
+}
+
+configurations.named("demoImplementation") { extendsFrom(configurations.named("implementation").get()) }
+configurations.named("demoRuntimeOnly") { extendsFrom(configurations.named("runtimeOnly").get()) }
+
 dependencies {
     implementation(project(":engine"))
     implementation(project(":ui-common"))
     testImplementation(kotlin("test"))
+}
+
+// The UI tests build Swing components and paint them into off-screen images; they never open a
+// window, so they run under the headless AWT toolkit.
+tasks.withType<Test>().configureEach {
+    systemProperty("java.awt.headless", "true")
+}
+
+// Run the demo application. The main entry point is a top-level `main` function (main class
+// `DemoAppKt`).
+tasks.register<JavaExec>("run") {
+    group = "application"
+    description = "Runs the Swing demo application."
+    mainClass.set("org.pcsoft.framework.simplay.swing.demo.DemoAppKt")
+    classpath = demo.runtimeClasspath
 }
 
 // Third-party licences accepted by this module.

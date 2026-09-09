@@ -91,7 +91,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     private lateinit var focusListener: FocusAdapter
     private lateinit var componentListener: ComponentAdapter
 
-    private val shortcutMask: Int = Toolkit.getDefaultToolkit().menuShortcutKeyMaskEx
+    private val shortcutMask: Int = runCatching { Toolkit.getDefaultToolkit().menuShortcutKeyMaskEx }
+        .getOrDefault(java.awt.event.InputEvent.CTRL_DOWN_MASK)
 
     private val editable: Boolean get() = view.mode == PaperSheetMode.EDITABLE
 
@@ -310,7 +311,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             view.mode == PaperSheetMode.READONLY &&
             PaperSheetView.PROP_SELECTION_COLOR !in view.styleSetByUser
         ) {
-            PaperSheetStyle.DEFAULT_SELECTION_COLOR_READONLY
+            PaperSheetLookAndFeel.readonlySelectionColor()
         } else {
             view.selectionColor
         }

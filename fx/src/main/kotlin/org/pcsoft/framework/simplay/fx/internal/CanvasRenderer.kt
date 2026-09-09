@@ -14,6 +14,7 @@ package org.pcsoft.framework.simplay.fx.internal
 
 import javafx.geometry.VPos
 import javafx.scene.canvas.GraphicsContext
+import javafx.scene.paint.Color
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.engine.measure.MeasuredFont
 import org.pcsoft.framework.simplay.engine.measure.MeasuredPage
@@ -85,6 +86,10 @@ internal object CanvasRenderer {
     ) {
         pageFrame?.decorate(gc, page, originX, originY)
         gc.textBaseline = VPos.BASELINE
+        val savedFill = gc.fill
+        // The engine model carries no per-run text colour yet, so the document text is always
+        // painted black regardless of the caller's current fill.
+        gc.fill = Color.BLACK
         walkPage(
             page = page,
             originX = originX,
@@ -92,6 +97,7 @@ internal object CanvasRenderer {
             onBlockFont = { gc.font = fonts.toFxFont(it.raw) },
             onPart = { text, x, baselineY -> gc.fillText(text, x, baselineY) },
         )
+        gc.fill = savedFill
     }
 
     /**

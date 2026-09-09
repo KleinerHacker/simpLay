@@ -65,6 +65,8 @@ nav:
       - Measured model: engine/measured-model.md
       - SimpLayEngine: engine/simplay-engine.md
       - Rendering: engine/rendering.md
+  - ui-common:
+      - Implementation: ui-common/implementation.md
   - fx:
       - Implementation: fx/implementation.md
       - Canvas rendering: fx/canvas-rendering.md
@@ -77,5 +79,9 @@ nav:
       - Implementation: j-print/implementation.md
   - swing:
       - Implementation: swing/implementation.md
+      - Image rendering: swing/image-rendering.md
+      - Paper sheet component: swing/paper-sheet-component.md
+      - Floating overlays: swing/floating-overlays.md
+      - Styling: swing/styling.md
   - API Docs: dokka/html/index.html
   - Licences: licences/index.html

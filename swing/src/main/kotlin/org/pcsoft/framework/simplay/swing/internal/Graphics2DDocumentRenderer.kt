@@ -12,6 +12,7 @@
 
 package org.pcsoft.framework.simplay.swing.internal
 
+import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
@@ -75,6 +76,10 @@ internal object Graphics2DDocumentRenderer {
         g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
         g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON)
         pageFrame?.decorate(g, page, originX, originY)
+        val savedPaint = g.paint
+        // The engine model carries no per-run text colour yet, so the document text is always
+        // painted black - matching the JavaFX renderer, whose default fill is black.
+        g.paint = Color.BLACK
         walkPage(
             page = page,
             originX = originX,
@@ -82,6 +87,7 @@ internal object Graphics2DDocumentRenderer {
             onBlockFont = { g.font = fonts.toAwtFont(it.raw) },
             onPart = { text, x, baselineY -> if (text.isNotEmpty()) g.drawString(text, x.toFloat(), baselineY.toFloat()) },
         )
+        g.paint = savedPaint
     }
 
     /**

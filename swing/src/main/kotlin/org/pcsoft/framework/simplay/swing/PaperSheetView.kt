@@ -39,11 +39,31 @@ import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetStyle
  * caret through [caretModel].
  *
  * Every mutable property fires a `java.beans.PropertyChangeEvent` under the matching `PROP_*` name.
- * The visual values (sheet chrome, drop shadow, selection highlight, caret) are also read from the
- * `PaperSheetView.*` keys of the active Look-and-Feel unless set programmatically; the pluggable
- * delegate type is [PaperSheetUI], the default [BasicPaperSheetUI].
+ * The visual and layout values (sheet chrome, drop shadow, selection highlight, caret, outer margin,
+ * page gap) are also read from the `PaperSheetView.*` keys of the active Look-and-Feel via
+ * [PaperSheetLookAndFeel] unless set programmatically; the pluggable delegate type is [PaperSheetUI],
+ * the default [BasicPaperSheetUI].
  */
 open class PaperSheetView : JComponent() {
+
+    /** Names of the style / layout properties a caller assigned explicitly; the L&F leaves those alone. */
+    internal val styleSetByUser: MutableSet<String> = HashSet()
+
+    private var applyingLaf = false
+
+    private fun markSet(name: String) {
+        if (!applyingLaf) styleSetByUser.add(name)
+    }
+
+    /** Runs [block] while property assignments count as Look-and-Feel defaults, not explicit sets. */
+    internal fun applyLafDefaults(block: () -> Unit) {
+        applyingLaf = true
+        try {
+            block()
+        } finally {
+            applyingLaf = false
+        }
+    }
 
     //region Document
 
@@ -73,6 +93,7 @@ open class PaperSheetView : JComponent() {
         set(value) {
             val old = field
             field = value
+            markSet(PROP_OUTER_MARGIN)
             firePropertyChange(PROP_OUTER_MARGIN, old, value)
         }
 
@@ -80,6 +101,7 @@ open class PaperSheetView : JComponent() {
         set(value) {
             val old = field
             field = value
+            markSet(PROP_PAGE_GAP)
             firePropertyChange(PROP_PAGE_GAP, old, value)
         }
 
@@ -133,7 +155,7 @@ open class PaperSheetView : JComponent() {
         set(value) {
             val old = field
             field = value
-            styleSetByUser.add(PROP_SHEET_BACKGROUND)
+            markSet(PROP_SHEET_BACKGROUND)
             firePropertyChange(PROP_SHEET_BACKGROUND, old, value)
         }
 
@@ -141,7 +163,7 @@ open class PaperSheetView : JComponent() {
         set(value) {
             val old = field
             field = value
-            styleSetByUser.add(PROP_SHEET_BORDER_COLOR)
+            markSet(PROP_SHEET_BORDER_COLOR)
             firePropertyChange(PROP_SHEET_BORDER_COLOR, old, value)
         }
 
@@ -149,7 +171,7 @@ open class PaperSheetView : JComponent() {
         set(value) {
             val old = field
             field = value
-            styleSetByUser.add(PROP_SHEET_BORDER_WIDTH)
+            markSet(PROP_SHEET_BORDER_WIDTH)
             firePropertyChange(PROP_SHEET_BORDER_WIDTH, old, value)
         }
 
@@ -157,7 +179,7 @@ open class PaperSheetView : JComponent() {
         set(value) {
             val old = field
             field = value
-            styleSetByUser.add(PROP_SHADOW_COLOR)
+            markSet(PROP_SHADOW_COLOR)
             firePropertyChange(PROP_SHADOW_COLOR, old, value)
         }
 
@@ -165,7 +187,7 @@ open class PaperSheetView : JComponent() {
         set(value) {
             val old = field
             field = value
-            styleSetByUser.add(PROP_SHADOW_OFFSET)
+            markSet(PROP_SHADOW_OFFSET)
             firePropertyChange(PROP_SHADOW_OFFSET, old, value)
         }
 
@@ -173,7 +195,7 @@ open class PaperSheetView : JComponent() {
         set(value) {
             val old = field
             field = value
-            styleSetByUser.add(PROP_SELECTION_COLOR)
+            markSet(PROP_SELECTION_COLOR)
             firePropertyChange(PROP_SELECTION_COLOR, old, value)
         }
 
@@ -181,12 +203,9 @@ open class PaperSheetView : JComponent() {
         set(value) {
             val old = field
             field = value
-            styleSetByUser.add(PROP_CARET_COLOR)
+            markSet(PROP_CARET_COLOR)
             firePropertyChange(PROP_CARET_COLOR, old, value)
         }
-
-    /** Names of the style properties a caller assigned explicitly; the delegate leaves those alone. */
-    internal val styleSetByUser: MutableSet<String> = HashSet()
 
     //endregion
 
@@ -320,6 +339,7 @@ open class PaperSheetView : JComponent() {
     init {
         isFocusable = true
         isOpaque = true
+        PaperSheetLookAndFeel.applyTo(this)
         updateUI()
     }
 

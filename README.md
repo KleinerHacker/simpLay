@@ -7,22 +7,23 @@ printing.
 
 ## Modules
 
-| Module    | Type                   | Artifact           | Purpose                                  |
-|-----------|------------------------|--------------------|------------------------------------------|
-| `console` | Kotlin Multiplatform   | `simplay-console`  | Console output integration for the engine |
-| `engine`  | Kotlin Multiplatform   | `simplay-engine`   | Platform-independent simulation core     |
-| `fx`      | Kotlin JVM             | `simplay-fx`       | JavaFX integration for the engine        |
-| `j-pdf`   | Kotlin JVM             | `simplay-j-pdf`    | PDF export integration for the engine    |
-| `j-print` | Kotlin JVM             | `simplay-j-print`  | Printing integration for the engine      |
-| `swing`   | Kotlin JVM             | `simplay-swing`    | Swing integration for the engine         |
+| Module      | Type                   | Artifact             | Purpose                                       |
+|-------------|------------------------|----------------------|-----------------------------------------------|
+| `console`   | Kotlin Multiplatform   | `simplay-console`    | Console output integration for the engine     |
+| `engine`    | Kotlin Multiplatform   | `simplay-engine`     | Platform-independent simulation core          |
+| `ui-common` | Kotlin JVM             | `simplay-ui-common`  | Toolkit-agnostic building blocks for GUI bindings |
+| `fx`        | Kotlin JVM             | `simplay-fx`         | JavaFX integration for the engine             |
+| `j-pdf`     | Kotlin JVM             | `simplay-j-pdf`      | PDF export integration for the engine         |
+| `j-print`   | Kotlin JVM             | `simplay-j-print`    | Printing integration for the engine           |
+| `swing`     | Kotlin JVM             | `simplay-swing`      | Swing integration for the engine              |
 
 The shared build logic is provided by convention plugins in `buildSrc`
 (`kotlin-jvm`, `kotlin-multiplatform`). Every module lives in its own top-level
 directory; the repository root contains no source code.
 
 The base package is `org.pcsoft.framework.simplay`; each module appends its own
-name (`...simplay.console`, `...simplay.engine`, `...simplay.fx`,
-`...simplay.jpdf`, `...simplay.jprint`, `...simplay.swing`).
+name (`...simplay.console`, `...simplay.engine`, `...simplay.uicommon`,
+`...simplay.fx`, `...simplay.jpdf`, `...simplay.jprint`, `...simplay.swing`).
 
 ## Checkout and build
 
@@ -73,7 +74,7 @@ Build tasks relevant for consumers and maintainers:
 
 ## Implementation state
 
-* [x] Multi-module project layout (`console`, `engine`, `fx`, `j-pdf`, `j-print`, `swing`)
+* [x] Multi-module project layout (`console`, `engine`, `ui-common`, `fx`, `j-pdf`, `j-print`, `swing`)
 * [ ] Simulation engine core (`engine`)
     * [x] Raw and measured document model; serializable raw model (JSON, YAML,
       XML, JVM serialization)
@@ -83,10 +84,17 @@ Build tasks relevant for consumers and maintainers:
     * [ ] End-to-end layout and persistence tests
     * [ ] Engine user documentation (MkDocs, KDoc alignment)
 * [ ] Console output integration (`console`)
+* [x] Toolkit-agnostic GUI building blocks (`ui-common`): linear document text
+  index, glyph hit test, selection span, document text editor and styled-text
+  clipboard serialisation, shared by `fx` and `swing`
 * [x] JavaFX integration (`fx`): `CanvasDocumentRenderer` (whole-document and
   single-page canvas rendering) and `PaperSheetView` - a scrollable, zoomable
   paper-sheet control with mouse text selection, in-place editing, FXML-compatible
   floating overlays and JavaFX CSS styling - plus the `fx` user documentation
 * [ ] PDF export integration (`j-pdf`)
 * [ ] Printing integration (`j-print`)
-* [ ] Swing integration (`swing`)
+* [x] Swing integration (`swing`): `DocumentImageRenderer` (whole-document and
+  single-page `BufferedImage` rendering) and `PaperSheetView` - a scrollable,
+  zoomable paper-sheet `JComponent` with mouse text selection, in-place editing,
+  floating overlays and Look-and-Feel styling - plus the `swing` user
+  documentation

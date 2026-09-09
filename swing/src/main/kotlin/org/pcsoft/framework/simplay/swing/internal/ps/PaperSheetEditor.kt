@@ -43,7 +43,8 @@ internal class PaperSheetEditor(
 
     private val editable: Boolean get() = view.mode == PaperSheetMode.EDITABLE
 
-    private val shortcutMask: Int = Toolkit.getDefaultToolkit().menuShortcutKeyMaskEx
+    private val shortcutMask: Int = runCatching { Toolkit.getDefaultToolkit().menuShortcutKeyMaskEx }
+        .getOrDefault(java.awt.event.InputEvent.CTRL_DOWN_MASK)
 
     private fun KeyEvent.isShortcutDown(): Boolean = (modifiersEx and shortcutMask) == shortcutMask
 
