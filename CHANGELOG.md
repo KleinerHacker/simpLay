@@ -12,6 +12,8 @@ excluded.
 
 ## [UNRELEASED]
 
+## [0.1.0]
+
 ### Added
 
 - `fx`: new JavaFX integration module (package `org.pcsoft.framework.simplay.fx`).
