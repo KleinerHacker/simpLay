@@ -70,7 +70,7 @@ Build tasks relevant for consumers and maintainers:
 
 ## Documentation
 
-* User guide (MkDocs, gh-pages): <https://kleinerhacker.github.io/simPlay/>
+* User guide (MkDocs, gh-pages): <https://kleinerhacker.github.io/simpLay/latest/>
 * API documentation (KDoc): published within the user guide under _API Docs_
 * Licence report: published within the user guide under _Licences_
 
