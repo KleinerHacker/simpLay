@@ -31,12 +31,12 @@ plugins {
 // Include the framework subprojects in the build.
 // If there are changes in only one of the projects, Gradle will rebuild only the one that has changed.
 // Learn more about structuring projects with Gradle - https://docs.gradle.org/8.7/userguide/multi_project_builds.html
-include(":console")
 include(":engine")
-include(":fx")
-include(":j-pdf")
-include(":j-print")
-include(":swing")
-include(":ui-common")
+include(":ui:common")
+include(":ui:fx")
+include(":ui:swing")
+include(":ui:console")
+include(":export:jvm-pdf")
+include(":export:jvm-print")
 
 rootProject.name = "simplay"

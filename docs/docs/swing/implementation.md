@@ -15,7 +15,7 @@ dependencies {
 ```
 
 Swing is part of the JDK, so no toolkit dependency is added. The
-`ui-common` module (the toolkit-agnostic text index, editor and clipboard
+`ui/common` module (the toolkit-agnostic text index, editor and clipboard
 helpers) is pulled in transitively.
 
 ## Entry points

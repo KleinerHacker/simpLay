@@ -14,12 +14,20 @@ plugins {
     // Apply the shared build logic from a convention plugin.
     // The shared code is located in `buildSrc/src/main/kotlin/kotlin-jvm.gradle.kts`.
     id("buildsrc.convention.kotlin-jvm")
+    // JavaFX is only needed in this module (the JavaFX integration), not project-wide.
+    alias(libs.plugins.javafx)
+}
+
+javafx {
+    version = "25"
+    modules("javafx.controls", "javafx.fxml")
+    // Expose JavaFX transitively: the public API of this module uses JavaFX types.
+    configuration = "api"
 }
 
 // A dedicated source set for the runnable demo application. It depends on `main` and its
 // dependencies, is never published and is kept out of the licensee scan (only `main`'s runtime
-// classpath is scanned) and out of the `java` component. Swing is part of the JDK, so no toolkit
-// dependency is added.
+// classpath is scanned) and out of the `java` component.
 val demo: SourceSet = sourceSets.create("demo") {
     compileClasspath += sourceSets.main.get().output
     runtimeClasspath += sourceSets.main.get().output
@@ -30,27 +38,45 @@ configurations.named("demoRuntimeOnly") { extendsFrom(configurations.named("runt
 
 dependencies {
     implementation(project(":engine"))
-    implementation(project(":ui-common"))
-    testImplementation(kotlin("test"))
-}
+    implementation(project(":ui:common"))
 
-// The UI tests build Swing components and paint them into off-screen images; they never open a
-// window, so they run under the headless AWT toolkit.
-tasks.withType<Test>().configureEach {
-    systemProperty("java.awt.headless", "true")
+    testImplementation(kotlin("test"))
+    testImplementation(libs.testfxCore)
+    testImplementation(libs.testfxJunit5)
+    testImplementation(libs.testfxMonocle)
 }
 
 // Run the demo application. The main entry point is a top-level `main` function (main class
-// `DemoAppKt`).
+// `DemoAppKt`), not an `Application` subclass, so JavaFX starts fine from the plain classpath
+// without an explicit module path.
 tasks.register<JavaExec>("run") {
     group = "application"
-    description = "Runs the Swing demo application."
-    mainClass.set("org.pcsoft.framework.simplay.swing.demo.DemoAppKt")
+    description = "Runs the JavaFX demo application."
+    mainClass.set("org.pcsoft.framework.simplay.fx.demo.DemoAppKt")
     classpath = demo.runtimeClasspath
+}
+
+// Headless JavaFX for the UI tests via TestFX + Monocle.
+tasks.withType<Test>().configureEach {
+    systemProperty("java.awt.headless", "true")
+    systemProperty("testfx.robot", "glass")
+    systemProperty("testfx.headless", "true")
+    systemProperty("glass.platform", "Monocle")
+    systemProperty("monocle.platform", "Headless")
+    systemProperty("prism.order", "sw")
+    systemProperty("prism.text", "t2k")
 }
 
 // Third-party licences accepted by this module.
 licensee {
     allow("Apache-2.0")
     allow("MIT")
+    allow("BSD-2-Clause")
+    allow("BSD-3-Clause")
+
+    // JavaFX publishes GPL-2.0 with Classpath Exception, but only as a URL - it carries no SPDX id
+    // in its POM, so it has to be allowed by that URL.
+    allowUrl("https://openjdk.java.net/legal/gplv2+ce.html") {
+        because("GPL-2.0 with Classpath Exception")
+    }
 }

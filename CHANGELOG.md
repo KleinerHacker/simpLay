@@ -14,9 +14,9 @@ excluded.
 
 ### Added
 
-- `swing`: new Java Swing integration module (package
-  `org.pcsoft.framework.simplay.swing`), mirroring the `fx` module within what
-  Swing allows. It exposes two `Document`-only entry points:
+- `ui/swing`: new Java Swing integration module (artifact `simplay-swing`,
+  package `org.pcsoft.framework.simplay.swing`), mirroring the `ui/fx` module
+  within what Swing allows. It exposes two `Document`-only entry points:
     - `DocumentImageRenderer` paints one fixed document onto an AWT
       `BufferedImage` (or a caller-supplied `Graphics2D`), either the whole
       document with a dashed page-break line between pages (`renderDocument`) or
@@ -56,10 +56,11 @@ excluded.
       `selectionColorReadonly`, `caretColor`, `outerMargin`, `pageGap`) seeded
       by `PaperSheetLookAndFeel`, with a programmatic setter always winning.
       Every mutable property fires a `java.beans.PropertyChangeEvent`.
-- `ui-common`: new published module (`simplay-ui-common`, package
+- `ui/common`: new published module (`simplay-common`, package
   `org.pcsoft.framework.simplay.uicommon`) with the toolkit-agnostic building
-  blocks shared by `fx` and `swing`: `DocumentTextIndex` (linear document text
-  axis), `hitTest`, `segmentSpanX`, `DocumentEditor` and `StyledTextClipboard`.
+  blocks shared by `ui/fx` and `ui/swing`: `DocumentTextIndex` (linear document
+  text axis), `hitTest`, `segmentSpanX`, `DocumentEditor` and
+  `StyledTextClipboard`.
 
 ## [0.1.0]
 

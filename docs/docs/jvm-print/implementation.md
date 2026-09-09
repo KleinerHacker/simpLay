@@ -1,0 +1,21 @@
+# jvm-print - Implementation
+
+The `export/jvm-print` module sends the output of a running simulation from the `engine`
+core to a printer.
+
+## Add the dependency
+
+```kotlin
+dependencies {
+    implementation("org.pcsoft.framework:simplay-engine:<version>")
+    implementation("org.pcsoft.framework:simplay-jvm-print:<version>")
+}
+```
+
+## Entry points
+
+!!! note
+
+    The public API of the printing integration is not available yet. This page
+    will document the entry points and configuration as soon as the `jvm-print`
+    API is released.

@@ -1,6 +1,6 @@
-# ui-common - Implementation
+# common - Implementation
 
-The `ui-common` module holds the toolkit-agnostic building blocks that every
+The `ui/common` module holds the toolkit-agnostic building blocks that every
 interactive GUI binding of the engine needs. It has no dependency on a concrete
 UI toolkit; text measuring is taken through the `engine` `FontMeasureCalculator`.
 
@@ -9,12 +9,12 @@ UI toolkit; text measuring is taken through the `engine` `FontMeasureCalculator`
 ```kotlin
 dependencies {
     implementation("org.pcsoft.framework:simplay-engine:<version>")
-    implementation("org.pcsoft.framework:simplay-ui-common:<version>")
+    implementation("org.pcsoft.framework:simplay-common:<version>")
 }
 ```
 
-The `fx` and `swing` modules depend on it transitively; a consumer of one of
-those integrations does not add `ui-common` explicitly.
+The `ui/fx` and `ui/swing` modules depend on it transitively; a consumer of one
+of those integrations does not add `common` explicitly.
 
 ## What it provides
 
