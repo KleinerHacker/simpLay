@@ -1,0 +1,1756 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A Kotlin Multiplatform framework for building simulations, with JVM integrations for JavaFX, Swing, PDF export and printing">
+      
+      
+      
+        <link rel="canonical" href="https://kleinerhacker.github.io/simPlay/latest/0.1.0/fx/paper-sheet-component/">
+      
+      
+        <link rel="prev" href="../canvas-rendering/">
+      
+      
+        <link rel="next" href="../floating-overlays/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Paper sheet component - simPLay</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#fx-paper-sheet-component" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="simPLay" class="md-header__button md-logo" aria-label="simPLay" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            simPLay
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Paper sheet component
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/KleinerHacker/simPlay" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    simPlay
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="simPLay" class="md-nav__button md-logo" aria-label="simPLay" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    simPLay
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/KleinerHacker/simPlay" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    simPlay
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    console
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    console
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../console/implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    engine
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    engine
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/raw-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Raw model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/measured-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Measured model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/simplay-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SimpLayEngine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../engine/rendering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rendering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    fx
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    fx
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../canvas-rendering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Canvas rendering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper sheet component
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper sheet component
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#adding-it-to-a-scene" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding it to a scene
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Properties
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#selection-and-clipboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selection and clipboard
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-caret-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The caret model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shortcuts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shortcuts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loading-and-saving-a-document" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loading and saving a document
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../floating-overlays/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Floating overlays
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../styling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Styling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    j-pdf
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    j-pdf
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../j-pdf/implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    j-print
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    j-print
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../j-print/implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    swing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    swing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../swing/implementation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Implementation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../dokka/html/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Docs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../licences/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Licences
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#adding-it-to-a-scene" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding it to a scene
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Properties
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#selection-and-clipboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Selection and clipboard
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-caret-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The caret model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shortcuts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shortcuts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#loading-and-saving-a-document" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Loading and saving a document
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="fx-paper-sheet-component">fx - Paper sheet component<a class="headerlink" href="#fx-paper-sheet-component" title="Permanent link">&para;</a></h1>
+<p><code>PaperSheetView</code> (package <code>org.pcsoft.framework.simplay.fx</code>) is a JavaFX
+<code>Control</code> that renders a <a href="../../engine/raw-model/"><code>Document</code></a> as physical-looking
+sheets - each with a border and a drop shadow - stacked vertically in a
+scrollable, zoomable viewport. Only the pages currently in view are drawn (simple
+page virtualisation).</p>
+<p>Its <a href="#modes"><code>mode</code></a> switches between read-only viewing and full in-place
+editing. Text is always selectable with the mouse and copyable with <code>Ctrl+C</code>.</p>
+<h2 id="adding-it-to-a-scene">Adding it to a scene<a class="headerlink" href="#adding-it-to-a-scene" title="Permanent link">&para;</a></h2>
+<p><code>PaperSheetView</code> is a normal control - put it anywhere a <code>Node</code> goes:</p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nn">org.pcsoft.framework.simplay.fx.PaperSheetView</span>
+
+<span class="kd">val</span><span class="w"> </span><span class="nv">view</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PaperSheetView</span><span class="p">().</span><span class="na">apply</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">document</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">myDocument</span>
+<span class="w">    </span><span class="n">outerMargin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">24.0</span>
+<span class="w">    </span><span class="n">pageGap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">16.0</span>
+<span class="w">    </span><span class="n">minZoom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0.5</span>
+<span class="w">    </span><span class="n">maxZoom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">3.0</span>
+<span class="w">    </span><span class="n">zoom</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">1.0</span>
+<span class="p">}</span>
+
+<span class="kd">val</span><span class="w"> </span><span class="nv">scene</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Scene</span><span class="p">(</span><span class="n">BorderPane</span><span class="p">(</span><span class="n">view</span><span class="p">),</span><span class="w"> </span><span class="m">900.0</span><span class="p">,</span><span class="w"> </span><span class="m">700.0</span><span class="p">)</span>
+</code></pre></div>
+<p>In FXML:</p>
+<div class="highlight"><pre><span></span><code><span class="cp">&lt;?import org.pcsoft.framework.simplay.fx.PaperSheetView?&gt;</span>
+
+<span class="nt">&lt;BorderPane</span><span class="w"> </span><span class="na">xmlns:fx=</span><span class="s">"http://javafx.com/fxml/1"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;center&gt;</span>
+<span class="w">        </span><span class="nt">&lt;PaperSheetView</span><span class="w"> </span><span class="na">fx:id=</span><span class="s">"view"</span><span class="w"> </span><span class="na">outerMargin=</span><span class="s">"24.0"</span><span class="w"> </span><span class="na">pageGap=</span><span class="s">"16.0"</span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/center&gt;</span>
+<span class="nt">&lt;/BorderPane&gt;</span>
+</code></pre></div>
+<p>The default user-agent stylesheet is applied automatically; see
+<a href="../styling/">Styling the paper sheet component</a>.</p>
+<h2 id="properties">Properties<a class="headerlink" href="#properties" title="Permanent link">&para;</a></h2>
+<p>Every property follows the JavaFX bean convention: a <code>xxxProperty()</code> accessor for
+the property object and <code>getXxx()</code> / <code>setXxx()</code> (or <code>isXxx()</code>) for the value.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Access</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>document</code></td>
+<td><code>Document?</code></td>
+<td>read/write</td>
+<td>The document to render; <code>null</code> shows an empty view. An edit replaces it with a new instance.</td>
+</tr>
+<tr>
+<td><code>mode</code></td>
+<td><code>PaperSheetMode</code></td>
+<td>read/write</td>
+<td><code>READONLY</code> (default) or <code>EDITABLE</code>; see <a href="#modes">Modes</a>.</td>
+</tr>
+<tr>
+<td><code>outerMargin</code></td>
+<td><code>Double</code></td>
+<td>read/write, styleable</td>
+<td>Space in layout units around the whole sheet stack. Default <code>24.0</code>.</td>
+</tr>
+<tr>
+<td><code>pageGap</code></td>
+<td><code>Double</code></td>
+<td>read/write, styleable</td>
+<td>Vertical space in layout units between two sheets. Default <code>16.0</code>.</td>
+</tr>
+<tr>
+<td><code>minZoom</code></td>
+<td><code>Double</code></td>
+<td>read/write</td>
+<td>Lower bound for <code>zoom</code>. Default <code>0.25</code>.</td>
+</tr>
+<tr>
+<td><code>maxZoom</code></td>
+<td><code>Double</code></td>
+<td>read/write</td>
+<td>Upper bound for <code>zoom</code>. Default <code>4.0</code>.</td>
+</tr>
+<tr>
+<td><code>zoom</code></td>
+<td><code>Double</code></td>
+<td>read/write</td>
+<td>Current scale factor for the whole view, always kept within <code>[minZoom, maxZoom]</code>; assigning outside the range, or narrowing the range, re-clamps it. Default <code>1.0</code>.</td>
+</tr>
+<tr>
+<td><code>smoothCaretBlink</code></td>
+<td><code>Boolean</code></td>
+<td>read/write</td>
+<td>When <code>true</code>, the caret fades in and out instead of blinking hard. Off by default; only effective in <code>EDITABLE</code>.</td>
+</tr>
+<tr>
+<td><code>contentSize</code></td>
+<td><code>Dimension2D</code></td>
+<td>read-only</td>
+<td>Unscaled size of the whole sheet stack including <code>outerMargin</code> on every side; <code>0 x 0</code> for a <code>null</code> document.</td>
+</tr>
+<tr>
+<td><code>selectionModel</code></td>
+<td><code>TextSelectionModel</code></td>
+<td>read-only</td>
+<td>The selection state and commands; see <a href="#selection-and-clipboard">Selection and clipboard</a>.</td>
+</tr>
+<tr>
+<td><code>caretModel</code></td>
+<td><code>CaretModel</code></td>
+<td>read-only</td>
+<td>The caret state and move commands; see <a href="#the-caret-model">The caret model</a>.</td>
+</tr>
+<tr>
+<td><code>selectedText</code></td>
+<td><code>String</code></td>
+<td>read-only</td>
+<td>Convenience delegate for <code>selectionModel.text</code>.</td>
+</tr>
+<tr>
+<td><code>selectionBounds</code></td>
+<td><code>Bounds?</code></td>
+<td>read-only</td>
+<td>Convenience delegate for <code>selectionModel.bounds</code>.</td>
+</tr>
+<tr>
+<td><code>floatingOverlays</code></td>
+<td><code>ObservableList&lt;FloatingOverlay&gt;</code></td>
+<td>read-only list</td>
+<td>Registered overlays; see <a href="../floating-overlays/">Floating overlays</a>.</td>
+</tr>
+<tr>
+<td><code>hoveredParagraph</code> / <code>hoveredParagraphBounds</code></td>
+<td><code>Int</code> / <code>Bounds?</code></td>
+<td>read-only</td>
+<td>Zero-based ordinal and viewport box of the paragraph under the mouse, or <code>-1</code> / <code>null</code>.</td>
+</tr>
+<tr>
+<td><code>hoveredPage</code> / <code>hoveredPageBounds</code></td>
+<td><code>Int</code> / <code>Bounds?</code></td>
+<td>read-only</td>
+<td>Zero-based index and viewport box of the sheet under the mouse, or <code>-1</code> / <code>null</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>The styling-only colour and shadow properties are listed on the
+<a href="../styling/#properties">styling page</a>.</p>
+<h2 id="modes">Modes<a class="headerlink" href="#modes" title="Permanent link">&para;</a></h2>
+<p><code>PaperSheetMode</code> selects what the view does with the document:</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>READONLY</code> (default)</td>
+<td>Selectable, copyable text, no caret. <code>document</code> is never mutated.</td>
+</tr>
+<tr>
+<td><code>EDITABLE</code></td>
+<td>Everything <code>READONLY</code> offers plus a blinking caret, character insertion and removal, clipboard cut / copy / paste, line and selection duplication, drag-and-drop of the selection and the caret-navigation keys. An edit replaces <code>document</code> with a new instance; the previous instance is untouched.</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="n">view</span><span class="p">.</span><span class="na">mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PaperSheetMode</span><span class="p">.</span><span class="na">EDITABLE</span>
+</code></pre></div>
+<p>Switching to <code>READONLY</code> returns the component to exactly its read-only behaviour.</p>
+<h2 id="selection-and-clipboard">Selection and clipboard<a class="headerlink" href="#selection-and-clipboard" title="Permanent link">&para;</a></h2>
+<p>The mouse always selects: drag to extend, double-click to take a word. The
+highlight also covers the whitespace between selected words. <code>Ctrl+C</code> copies the
+selection to the system clipboard as plain text plus styled HTML and RTF that
+carry the font (family, size, weight, slant), so a rich paste target keeps the
+text style.</p>
+<p><code>selectionModel</code> (<code>TextSelectionModel</code>) exposes the state and the commands:</p>
+<table>
+<thead>
+<tr>
+<th>Member</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>text</code></td>
+<td>Selected text as plain text; <code>""</code> when empty.</td>
+</tr>
+<tr>
+<td><code>startIndex</code> / <code>endIndex</code> / <code>length</code></td>
+<td>Character range in the document's linear text.</td>
+</tr>
+<tr>
+<td><code>isEmpty</code></td>
+<td><code>true</code> when nothing is selected.</td>
+</tr>
+<tr>
+<td><code>bounds</code></td>
+<td>Bounding box in viewport pixels, or <code>null</code>.</td>
+</tr>
+<tr>
+<td><code>runs</code></td>
+<td><code>List&lt;TextSelectionData&gt;</code>, one styled run per covered text part (<code>text</code>, <code>fontFamily</code>, <code>fontSize</code>, <code>bold</code>, <code>italic</code>).</td>
+</tr>
+<tr>
+<td><code>selectRange(start, end)</code></td>
+<td>Selects <code>[start, end)</code>; index order does not matter, both are clamped.</td>
+</tr>
+<tr>
+<td><code>selectAll()</code></td>
+<td>Selects the whole document text.</td>
+</tr>
+<tr>
+<td><code>clearSelection()</code></td>
+<td>Clears the selection.</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="n">view</span><span class="p">.</span><span class="na">selectionModel</span><span class="p">.</span><span class="na">selectRange</span><span class="p">(</span><span class="m">0</span><span class="p">,</span><span class="w"> </span><span class="m">25</span><span class="p">)</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">families</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">view</span><span class="p">.</span><span class="na">selectionModel</span><span class="p">.</span><span class="na">runs</span><span class="p">.</span><span class="na">map</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nb">it</span><span class="p">.</span><span class="na">fontFamily</span><span class="w"> </span><span class="p">}.</span><span class="na">distinct</span><span class="p">()</span>
+</code></pre></div>
+<h2 id="the-caret-model">The caret model<a class="headerlink" href="#the-caret-model" title="Permanent link">&para;</a></h2>
+<p>In <code>EDITABLE</code> mode <code>caretModel</code> (<code>CaretModel</code>) reports the caret and moves it:</p>
+<ul>
+<li><strong>State</strong> (read-only): <code>position</code> (offset in the linear text), <code>bounds</code>
+  (viewport rectangle, <code>null</code> in read-only mode), <code>isVisible</code> (blink phase),
+  and <code>blockCount</code> / <code>wordCount</code> / <code>symbolCount</code> of the current document.</li>
+<li><strong>Linear commands</strong>: <code>moveTo(index)</code>, <code>moveToStart()</code>, <code>moveToEnd()</code>.</li>
+<li><strong>Absolute structural commands</strong>, addressing a zero-based ordinal:
+  <code>moveIntoBlock(block, index)</code>, <code>moveToStartOfBlock(block)</code>,
+  <code>moveToEndOfBlock(block)</code> and the <code>...Word</code> / <code>...Symbol</code> siblings. Every
+  ordinal and offset is clamped into range.</li>
+<li><strong>Relative structural commands</strong> from the current position:
+  <code>moveToNextWord()</code> / <code>moveToPrevWord()</code> and the block / symbol siblings; they
+  stop at the document bounds.</li>
+</ul>
+<p>A command issued before the view has rendered once is applied as soon as its skin
+is attached.</p>
+<h2 id="shortcuts">Shortcuts<a class="headerlink" href="#shortcuts" title="Permanent link">&para;</a></h2>
+<p><code>Ctrl</code> is the shortcut key on Windows and Linux, <code>Cmd</code> on macOS. Hold <code>Shift</code>
+with any caret-navigation key to extend the selection instead of moving.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Action</th>
+<th>Mode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Ctrl+C</code></td>
+<td>Copy selection (plain text + styled HTML + RTF)</td>
+<td>both</td>
+</tr>
+<tr>
+<td><code>Ctrl+X</code></td>
+<td>Cut selection</td>
+<td><code>EDITABLE</code></td>
+</tr>
+<tr>
+<td><code>Ctrl+V</code></td>
+<td>Paste clipboard text at the caret</td>
+<td><code>EDITABLE</code></td>
+</tr>
+<tr>
+<td><code>Ctrl+D</code></td>
+<td>Duplicate the selection, or the current line when nothing is selected</td>
+<td><code>EDITABLE</code></td>
+</tr>
+<tr>
+<td><code>Left</code> / <code>Right</code></td>
+<td>Move caret one character</td>
+<td><code>EDITABLE</code></td>
+</tr>
+<tr>
+<td><code>Ctrl+Left</code> / <code>Ctrl+Right</code></td>
+<td>Move caret one word</td>
+<td><code>EDITABLE</code></td>
+</tr>
+<tr>
+<td><code>Up</code> / <code>Down</code></td>
+<td>Move caret one line</td>
+<td><code>EDITABLE</code></td>
+</tr>
+<tr>
+<td><code>Home</code> / <code>End</code></td>
+<td>Move caret to line start / end</td>
+<td><code>EDITABLE</code></td>
+</tr>
+<tr>
+<td><code>Ctrl+Home</code> / <code>Ctrl+End</code></td>
+<td>Move caret to document start / end</td>
+<td><code>EDITABLE</code></td>
+</tr>
+<tr>
+<td><code>Backspace</code></td>
+<td>Delete the character before the caret, or the selection</td>
+<td><code>EDITABLE</code></td>
+</tr>
+<tr>
+<td><code>Delete</code></td>
+<td>Delete the character after the caret, or the selection</td>
+<td><code>EDITABLE</code></td>
+</tr>
+<tr>
+<td>Printable key</td>
+<td>Insert the character at the caret</td>
+<td><code>EDITABLE</code></td>
+</tr>
+</tbody>
+</table>
+<p>Dragging with the mouse inside an existing selection box moves the selected text;
+holding <code>Ctrl</code> while releasing copies it instead of moving it.</p>
+<h2 id="loading-and-saving-a-document">Loading and saving a document<a class="headerlink" href="#loading-and-saving-a-document" title="Permanent link">&para;</a></h2>
+<p><code>PaperSheetView</code> only ever consumes and produces an <code>engine</code>
+<a href="../../engine/raw-model/"><code>Document</code></a>. The raw model is serializable, so
+persistence is a plain <code>engine</code> concern:</p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nn">kotlinx.serialization.encodeToString</span>
+<span class="k">import</span><span class="w"> </span><span class="nn">kotlinx.serialization.json.Json</span>
+<span class="k">import</span><span class="w"> </span><span class="nn">org.pcsoft.framework.simplay.engine.model.Document</span>
+
+<span class="c1">// load</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">document</span><span class="p">:</span><span class="w"> </span><span class="n">Document</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Json</span><span class="p">.</span><span class="na">decodeFromString</span><span class="p">(</span><span class="n">jsonText</span><span class="p">)</span>
+<span class="n">view</span><span class="p">.</span><span class="na">document</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">document</span>
+
+<span class="c1">// save the current (possibly edited) state</span>
+<span class="kd">val</span><span class="w"> </span><span class="nv">currentJson</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Json</span><span class="p">.</span><span class="na">encodeToString</span><span class="p">(</span><span class="n">view</span><span class="p">.</span><span class="na">document</span><span class="p">)</span>
+</code></pre></div>
+<p>YAML (<code>kaml</code>) and JVM serialization work the same way; see
+<a href="../../engine/raw-model/#persistence">Raw document model</a>. After an edit,
+<code>view.document</code> is a new <code>Document</code> instance that reflects every change.</p>
+<h2 id="next">Next<a class="headerlink" href="#next" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../floating-overlays/">Floating overlays</a> - attaching your own nodes to
+  selection, hover and caret.</li>
+<li><a href="../styling/">Styling the paper sheet component</a> - the JavaFX CSS reference.</li>
+<li><a href="../canvas-rendering/">Canvas rendering</a> - drawing without a control.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "content.code.copy", "content.code.annotate", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

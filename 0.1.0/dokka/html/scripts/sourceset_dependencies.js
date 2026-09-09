@@ -1,0 +1,1 @@
+sourceset_dependencies = '{":fx/main":[],":engine/commonMain":[],":engine/jsMain":[":engine/webMain"],":engine/jvmMain":[":engine/commonMain"],":engine/linuxMain":[":engine/nativeMain"],":engine/linuxX64Main":[":engine/linuxMain"],":engine/nativeMain":[":engine/commonMain"],":engine/webMain":[":engine/commonMain"]}'
