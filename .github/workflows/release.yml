@@ -260,6 +260,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # `**` only expands recursively once "globstar" is enabled; without it, the pattern
+          # below silently matches nothing because the jars live in nested build/libs folders.
+          shopt -s globstar
           TAG="${{ github.ref_name }}"
           if [[ "$TAG" =~ ^(0|[a-zA-Z]) ]]; then
             gh release create "$TAG" \

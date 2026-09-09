@@ -14,6 +14,8 @@
 // `buildSrc` is a Gradle-recognized directory and every plugin there will be easily available in the rest of the build.
 package buildsrc.convention
 
+import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
+import org.gradle.api.publish.tasks.GenerateModuleMetadata
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.internal.os.OperatingSystem
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -92,6 +94,23 @@ publishing {
                 password = System.getenv("GITHUB_TOKEN") ?: ""
             }
         }
+    }
+}
+
+// A module with no production Kotlin source yet (only placeholder files, e.g. ".gitkeep") is
+// skipped for publishing entirely. Kotlin/Native targets produce no output file at all for such
+// a module - the compile task is NO-SOURCE - which would otherwise break
+// `generateMetadataFileFor<Target>Publication` with a FileNotFoundException.
+val hasProductionKotlinSources = fileTree("src") {
+    include("*Main/kotlin/**/*.kt")
+}.files.isNotEmpty()
+
+if (!hasProductionKotlinSources) {
+    tasks.withType<GenerateModuleMetadata>().configureEach {
+        enabled = false
+    }
+    tasks.withType<PublishToMavenRepository>().configureEach {
+        enabled = false
     }
 }
 
