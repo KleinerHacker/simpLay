@@ -74,11 +74,30 @@ The rule normalises whitespace runs; it does not preserve the original spacing.
 | Type | Fields |
 |------|--------|
 | `TextStyle` | `font: Font`, `lineSpacing: LineSpacing = LineSpacing()`, `alignment: TextAlignment = LEFT` |
-| `Font` | `family: String`, `size: Double`, `weight: FontWeight = NORMAL`, `style: FontStyle = NORMAL` |
+| `Font` | `family: String`, `size: Double`, `weight: FontWeight = NORMAL`, `style: FontStyle = NORMAL`, `fingerprint: FontFingerprint? = null` |
 | `LineSpacing` | `factor: Double = 1.0` (multiplicative), `extraLeading: Double = 0.0` (additive) |
 
 Enums: `TextAlignment` (`LEFT`, `RIGHT`, `CENTER`, `JUSTIFY`), `FontWeight`
 (`NORMAL`, `BOLD`), `FontStyle` (`NORMAL`, `ITALIC`).
+
+### Font fingerprint
+
+`Font.fingerprint` is an optional, size-independent signature of the font face the
+family resolved to when the document was authored. It is a pure passenger of the
+model: only the measure pass reads it, to report via `MeasuredFont.fingerprintStatus`
+that a font is missing or was silently replaced when the document is reopened on
+another machine. A `null` fingerprint means "not verified".
+
+A fingerprint is taken through a `FontMeasureCalculator`, so it is filled in from a
+context that has a platform text stack - either `FontFingerprint.of(measurer, font)`
+for a single font, `Document.withFontFingerprints(measurer)` for a whole document,
+or a `*FontProbe` in a UI module. See
+[Font fingerprint & availability](implementation.md#font-fingerprint-and-availability).
+
+`FontFingerprint` (`normalizedSize`, `ascent`, `descent`, `advances: List<Double>`)
+is `@Serializable` and `PlatformSerializable`, so it round-trips with the rest of
+the model; `encode()` / `FontFingerprint.decode(text)` give a one-line text form for
+storing it outside the model.
 
 ## Counting extensions
 

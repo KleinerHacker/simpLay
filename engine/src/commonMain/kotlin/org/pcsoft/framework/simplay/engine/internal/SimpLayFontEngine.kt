@@ -14,9 +14,11 @@ package org.pcsoft.framework.simplay.engine.internal
 
 import org.pcsoft.framework.simplay.engine.FontMeasureCalculator
 import org.pcsoft.framework.simplay.engine.geometry.FontMetrics
+import org.pcsoft.framework.simplay.engine.measure.FontFingerprintStatus
 import org.pcsoft.framework.simplay.engine.measure.MeasuredFont
 import org.pcsoft.framework.simplay.engine.measure.MeasuredTextStyle
 import org.pcsoft.framework.simplay.engine.model.Font
+import org.pcsoft.framework.simplay.engine.model.FontFingerprint
 import org.pcsoft.framework.simplay.engine.model.TextStyle
 
 /**
@@ -44,7 +46,21 @@ internal class SimpLayFontEngine private constructor(
                 descent = metrics.descent,
                 leading = 0.0,
             ),
+            fingerprintStatus = verifyFingerprint(font),
         )
+    }
+
+    /**
+     * Matches [font]'s stored fingerprint against a fresh measurement; [FontFingerprintStatus.NOT_CHECKED]
+     * when it carries none.
+     */
+    private fun verifyFingerprint(font: Font): FontFingerprintStatus {
+        val expected = font.fingerprint ?: return FontFingerprintStatus.NOT_CHECKED
+        return if (FontFingerprint.of(measurer, font).matches(expected)) {
+            FontFingerprintStatus.MATCH
+        } else {
+            FontFingerprintStatus.DEVIATION
+        }
     }
 
     fun resolveStyle(style: TextStyle): MeasuredTextStyle =

@@ -35,6 +35,15 @@ data class TextBlock private constructor(
         }
     }
 
+    /**
+     * Returns a copy of this block with [style] replaced and the [parts] kept as they are.
+     *
+     * Used by the authoring side to re-stamp a block's font (e.g. with a
+     * [FontFingerprint][org.pcsoft.framework.simplay.engine.model.FontFingerprint]) without
+     * re-tokenizing the text.
+     */
+    fun withStyle(style: TextStyle): TextBlock = TextBlock(parts, style)
+
     companion object {
         /**
          * Builds a [TextBlock] by tokenizing [text] with the given [style].

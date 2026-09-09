@@ -17,10 +17,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import org.pcsoft.framework.simplay.engine.internal.SimpLayFontEngine
+import org.pcsoft.framework.simplay.engine.measure.FontFingerprintStatus
+import org.pcsoft.framework.simplay.engine.model.FontFingerprint
 
 /**
  * Verifies that [SimpLayFontEngine] derives vertical font metrics from the reference glyphs, sets
- * the leading to zero and caches resolved fonts per instance.
+ * the leading to zero, caches resolved fonts per instance and reports the fingerprint status.
  */
 class SimpLayFontEngineTest {
 
@@ -83,5 +85,43 @@ class SimpLayFontEngineTest {
 
         assertEquals(EngineTestData.LINE_HEIGHT, style.resolvedLineHeight)
         assertSame(engine.resolveFont(EngineTestData.font), style.font)
+    }
+
+    /**
+     * Use case: a font without a stored fingerprint is resolved with status
+     * [FontFingerprintStatus.NOT_CHECKED].
+     */
+    @Test
+    fun reportsNotCheckedWhenFontCarriesNoFingerprint() {
+        val measured = fontEngine().resolveFont(EngineTestData.font)
+
+        assertEquals(FontFingerprintStatus.NOT_CHECKED, measured.fingerprintStatus)
+    }
+
+    /**
+     * Use case: a font whose stored fingerprint still matches the current measurement is resolved
+     * with status [FontFingerprintStatus.MATCH].
+     */
+    @Test
+    fun reportsMatchWhenStoredFingerprintStillFits() {
+        val stored = FontFingerprint.of(EngineTestData.measurer, EngineTestData.font)
+
+        val measured = fontEngine().resolveFont(EngineTestData.font.copy(fingerprint = stored))
+
+        assertEquals(FontFingerprintStatus.MATCH, measured.fingerprintStatus)
+    }
+
+    /**
+     * Use case: a font whose stored fingerprint no longer matches the current measurement is
+     * resolved with status [FontFingerprintStatus.DEVIATION].
+     */
+    @Test
+    fun reportsDeviationWhenStoredFingerprintDiffers() {
+        val stale = FontFingerprint.of(EngineTestData.measurer, EngineTestData.font)
+            .let { it.copy(advances = it.advances.map { a -> a + 10.0 }) }
+
+        val measured = fontEngine().resolveFont(EngineTestData.font.copy(fingerprint = stale))
+
+        assertEquals(FontFingerprintStatus.DEVIATION, measured.fingerprintStatus)
     }
 }

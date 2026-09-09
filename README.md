@@ -83,6 +83,9 @@ Build tasks relevant for consumers and maintainers:
     * [x] Measure engine (`SimpLayEngine`): font-measuring callback, pluggable
       line breaking, alignment, `FlowPage` continuation, `SinglePage` growth,
       shared `RenderConfiguration`
+    * [x] Font fingerprinting: `Document.withFontFingerprints`, per-font
+      `MeasuredFont.fingerprintStatus` and `MeasuredDocument.fingerprintDeviations`
+      to detect a missing or silently replaced font on reopen
     * [ ] End-to-end layout and persistence tests
     * [ ] Engine user documentation (MkDocs, KDoc alignment)
 * [ ] Console output integration (`ui/console`)
@@ -92,11 +95,14 @@ Build tasks relevant for consumers and maintainers:
 * [x] JavaFX integration (`ui/fx`): `CanvasDocumentRenderer` (whole-document and
   single-page canvas rendering) and `PaperSheetView` - a scrollable, zoomable
   paper-sheet control with mouse text selection, in-place editing, FXML-compatible
-  floating overlays and JavaFX CSS styling - plus the `ui/fx` user documentation
+  floating overlays and JavaFX CSS styling, plus `FxFontProbe` (font availability
+  and fingerprint checks against the JavaFX text stack) - plus the `ui/fx` user
+  documentation
 * [ ] PDF export integration (`export/jvm-pdf`)
 * [ ] Printing integration (`export/jvm-print`)
 * [x] Swing integration (`ui/swing`): `DocumentImageRenderer` (whole-document and
   single-page `BufferedImage` rendering) and `PaperSheetView` - a scrollable,
   zoomable paper-sheet `JComponent` with mouse text selection, in-place editing,
-  floating overlays and Look-and-Feel styling - plus the `ui/swing` user
-  documentation
+  floating overlays and Look-and-Feel styling, plus `SwingFontProbe` (font
+  availability and fingerprint checks against the AWT text stack) - plus the
+  `ui/swing` user documentation

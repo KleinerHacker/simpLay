@@ -236,3 +236,52 @@ val engine = SimpLayEngine.builder(measurer)
   frame and page indices run continuously across the document.
 * A `SinglePage` never continues onto another page. When its content is taller
   than the page, `MeasuredSinglePage.effectiveSize` reports the grown height.
+
+## Font fingerprint and availability
+
+A persisted `Document` only stores font *families* by name. When it is reopened on
+a machine where a family is not installed, the platform text stack silently
+substitutes another font and the layout drifts without any signal. Two mechanisms
+detect this.
+
+### Fingerprint (font changed or missing)
+
+`FontFingerprint` is a size-independent signature of a resolved font face: the
+per-glyph advance widths of a fixed reference string plus the ascent and descent,
+all measured at a normalization size. It is taken through a `FontMeasureCalculator`:
+
+```kotlin
+import org.pcsoft.framework.simplay.engine.model.FontFingerprint
+import org.pcsoft.framework.simplay.engine.withFontFingerprints
+
+// authoring: stamp every block font before persisting
+val toPersist = document.withFontFingerprints(measurer)   // Document -> Document
+val json = Json.encodeToString(toPersist)
+
+// reopening, elsewhere: the measure pass reports deviations
+val measured = restored.measure(measurer)
+if (measured.fingerprintDeviations.isNotEmpty()) {
+    // at least one font is missing or was silently replaced
+}
+```
+
+`withFontFingerprints(measurer, overwrite = true)` returns a copy of the document
+whose every block font carries a fresh `Font.fingerprint`; identical fonts are
+measured once. During `measure`, each fingerprinted font is re-checked and the
+result is exposed as `MeasuredFont.fingerprintStatus` (`NOT_CHECKED` / `MATCH` /
+`DEVIATION`), aggregated as `MeasuredDocument.fingerprintDeviations`.
+
+A single fingerprint can also be taken and compared by hand with
+`FontFingerprint.of(measurer, font)` and `FontFingerprint.matches(other, tolerance)`;
+`encode()` / `FontFingerprint.decode(text)` store it as one line of text. A
+fingerprint is only meaningful against the same text stack it was taken with - AWT
+and JavaFX measure the same font differently.
+
+### Availability (family not installed)
+
+The `engine` module has no font registry of its own. The UI modules add a probe
+that classifies a family against the concrete text stack -
+`org.pcsoft.framework.simplay.swing.SwingFontProbe` and
+`org.pcsoft.framework.simplay.fx.FxFontProbe`, each with `isFamilyAvailable`,
+`checkAvailability`, `fingerprint`, `verify` and `stamp`. See the
+[Swing](../swing/font-probe.md) and [JavaFX](../fx/font-probe.md) font-probe pages.

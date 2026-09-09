@@ -17,6 +17,11 @@ import org.pcsoft.framework.simplay.engine.PlatformSerializable
 
 /**
  * A font face. A plain data holder; the size is a unit-less double.
+ *
+ * [fingerprint] is an optional, size-independent signature of the face this font resolved to when
+ * the document was authored. It is set by the authoring side ([FontFingerprint.of], or a `*FontProbe`
+ * in a UI module) and is a pure passenger of the model: only the measure pass reads it, to flag via
+ * `MeasuredFont.fingerprintStatus` that the font is missing or was silently replaced on reopen.
  */
 @Serializable
 data class Font(
@@ -24,4 +29,5 @@ data class Font(
     val size: Double,
     val weight: FontWeight = FontWeight.NORMAL,
     val style: FontStyle = FontStyle.NORMAL,
+    val fingerprint: FontFingerprint? = null,
 ) : PlatformSerializable

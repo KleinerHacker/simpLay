@@ -78,4 +78,18 @@ class TextBlockTest {
         val block = TextBlock.of("text", style)
         assertTrue(block.style.font.family == "Serif" && block.style.font.size == 12.0)
     }
+
+    /**
+     * Verifies that [TextBlock.withStyle] swaps the style while keeping the tokenized parts of the
+     * original block untouched.
+     */
+    @Test
+    fun withStyleReplacesStyleAndKeepsParts() {
+        val block = TextBlock.of("one two.", style)
+        val restyled = block.withStyle(style.copy(alignment = TextAlignment.CENTER))
+
+        assertEquals(block.parts, restyled.parts)
+        assertEquals(TextAlignment.CENTER, restyled.style.alignment)
+        assertEquals(TextAlignment.LEFT, block.style.alignment)
+    }
 }

@@ -12,6 +12,30 @@ excluded.
 
 ## [UNRELEASED]
 
+### Added
+
+- `engine`: font fingerprinting to detect that a document is being reopened with a
+  missing or silently replaced font.
+    - `Font` gains an optional `fingerprint: FontFingerprint?`. `FontFingerprint`
+      (`org.pcsoft.framework.simplay.engine.model`) is a size-independent signature
+      of a resolved font face; it is `@Serializable`, round-trips with the model,
+      and has `encode()` / `FontFingerprint.decode(text)` for a one-line text form.
+    - `Document.withFontFingerprints(measurer, overwrite = true)` returns a copy of
+      the document with a fresh fingerprint stamped into every block font; run it
+      before persisting.
+    - The measure pass re-checks every fingerprinted font and reports the outcome
+      as `MeasuredFont.fingerprintStatus` (`NOT_CHECKED` / `MATCH` / `DEVIATION`),
+      aggregated as `MeasuredDocument.fingerprintDeviations`.
+    - `FontFingerprint.of(measurer, font)` and `FontFingerprint.matches(other,
+      tolerance)` take and compare a single fingerprint by hand.
+    - `TextBlock.withStyle(style)` returns a copy of a block with its style
+      replaced and its parts kept.
+- `ui/swing` and `ui/fx`: new `SwingFontProbe` / `FxFontProbe` classes that
+  classify a font family against the concrete text stack - `isFamilyAvailable`,
+  `checkAvailability` (returning `FontAvailability` `AVAILABLE` / `SUBSTITUTED` /
+  `MISSING`, in `org.pcsoft.framework.simplay.uicommon`), plus `fingerprint`,
+  `verify` and `stamp` wrappers around the `engine` fingerprint API.
+
 ## [0.2.0]
 
 ### Added

@@ -70,12 +70,14 @@ nav:
         - Canvas rendering: fx/canvas-rendering.md
         - Paper sheet component: fx/paper-sheet-component.md
         - Floating overlays: fx/floating-overlays.md
+        - Font probe: fx/font-probe.md
         - Styling: fx/styling.md
       - Java Swing:
         - Implementation: swing/implementation.md
         - Image rendering: swing/image-rendering.md
         - Paper sheet component: swing/paper-sheet-component.md
         - Floating overlays: swing/floating-overlays.md
+        - Font probe: swing/font-probe.md
         - Styling: swing/styling.md
       - Console:
         - Implementation: console/implementation.md
