@@ -302,6 +302,19 @@ open class PaperSheetView : JComponent() {
 
     //endregion
 
+    //region Floating overlays
+
+    private val floatingOverlaysList = ArrayList<FloatingOverlay>()
+
+    /**
+     * The registered floating overlays: caller-supplied components the view shows, positions and
+     * hides on its own when their [FloatingOverlay.trigger] holds. Mutable; the same list instance
+     * for the whole life of the view. A newly added overlay is picked up on the next repaint.
+     */
+    val floatingOverlays: MutableList<FloatingOverlay> get() = floatingOverlaysList
+
+    //endregion
+
     //region UI wiring
 
     init {

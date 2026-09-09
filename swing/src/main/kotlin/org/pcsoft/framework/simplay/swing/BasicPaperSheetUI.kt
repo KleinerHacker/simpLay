@@ -37,6 +37,8 @@ import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.swing.internal.SwingFontMeasureCalculator
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetCaret
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetEditor
+import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetHoverTracker
+import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetOverlays
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetSelection
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetStyle
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetSwingPainter
@@ -52,9 +54,11 @@ import org.pcsoft.framework.simplay.uicommon.hitTest
  * The per-view text concerns live in their own helpers this delegate creates and forwards events to:
  * [PaperSheetSelection] (anchor/focus selection, geometry, the [TextSelectionModel.Commands] sink),
  * [PaperSheetCaret] (caret position, blink, geometry, navigation moves - in
- * [PaperSheetMode.EDITABLE]) and [PaperSheetEditor] (the keyboard shortcuts and the
+ * [PaperSheetMode.EDITABLE]), [PaperSheetEditor] (the keyboard shortcuts and the
  * [org.pcsoft.framework.simplay.uicommon.DocumentEditor] mutations they trigger, plus drag-and-drop
- * of the selection). The hover tracker and the floating overlays are wired by the later steps.
+ * of the selection), [PaperSheetHoverTracker] (the hovered paragraph / sheet) and
+ * [PaperSheetOverlays] (the registered [FloatingOverlay]s and the overlay layer on top of the
+ * viewport).
  */
 open class BasicPaperSheetUI : PaperSheetUI() {
 
@@ -65,6 +69,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     private lateinit var selection: PaperSheetSelection
     private lateinit var caret: PaperSheetCaret
     private lateinit var editor: PaperSheetEditor
+    private lateinit var hover: PaperSheetHoverTracker
+    private lateinit var overlays: PaperSheetOverlays
     private lateinit var scrollBar: JScrollBar
 
     private var measured: MeasuredDocument? = null
@@ -125,11 +131,21 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             textIndex = { index },
             requestRedraw = ::redraw,
         )
+        hover = PaperSheetHoverTracker(
+            view = view,
+            measured = { measured },
+            pageTops = { pageTops },
+            scrollOffset = ::scrollOffset,
+            nearestPage = ::nearestPage,
+        )
+        overlays = PaperSheetOverlays(view, selection, caret, hover)
 
         scrollBar = JScrollBar(JScrollBar.VERTICAL, 0, 0, 0, 0).apply {
             addAdjustmentListener { redraw() }
         }
         c.add(scrollBar)
+        c.add(overlays.layer)
+        c.setComponentZOrder(overlays.layer, 0)
 
         view.registerSelectionCommands(selection)
         view.registerCaretCommands(caret)
@@ -148,7 +164,9 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         view.unregisterSelectionCommands(selection)
         view.unregisterCaretCommands(caret)
         caret.dispose()
+        overlays.dispose()
         c.remove(scrollBar)
+        c.remove(overlays.layer)
         measured = null
         index = null
     }
@@ -180,8 +198,16 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             override fun mouseDragged(e: MouseEvent) = onMouseDragged(e)
             override fun mouseReleased(e: MouseEvent) = onMouseReleased(e)
             override fun mouseClicked(e: MouseEvent) = onMouseClicked(e)
-            override fun mouseMoved(e: MouseEvent) { view.cursor = cursorFor(e.x.toDouble(), e.y.toDouble()) }
-            override fun mouseExited(e: MouseEvent) { view.cursor = Cursor.getDefaultCursor() }
+            override fun mouseMoved(e: MouseEvent) {
+                view.cursor = cursorFor(e.x.toDouble(), e.y.toDouble())
+                hover.update(e.x.toDouble(), e.y.toDouble())
+                overlays.refresh()
+            }
+            override fun mouseExited(e: MouseEvent) {
+                view.cursor = Cursor.getDefaultCursor()
+                hover.clear()
+                overlays.refresh()
+            }
             override fun mouseWheelMoved(e: MouseWheelEvent) = onScroll(e)
         }
         keyListener = object : KeyAdapter() {
@@ -212,6 +238,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         measured = view.document?.measure(measurer, renderConfig)
         index = measured?.let { DocumentTextIndex(it) }
         selection.onDocumentChanged(index)
+        hover.clear()
         computeLayoutMetrics()
         selection.publish()
         caret.onDocumentRemeasured()
@@ -261,6 +288,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     private fun relayoutViewport() {
         val bw = barWidth()
         scrollBar.setBounds(view.width - bw, 0, bw, view.height)
+        overlays.layout(0, 0, viewportWidth().toInt(), view.height)
         updateScrollBar(viewportHeight())
         redraw()
     }
@@ -300,6 +328,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     private fun redraw() {
         selection.publish()
         caret.publish()
+        hover.publishOutputs()
+        overlays.refresh()
         view.repaint()
     }
 
@@ -510,12 +540,28 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         var mods = 0
         if (shift) mods = mods or KeyEvent.SHIFT_DOWN_MASK
         if (shortcut) mods = mods or shortcutMask
-        editor.onKeyPressed(KeyEvent(view, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), mods, keyCode, KeyEvent.CHAR_UNDEFINED))
+        editor.onKeyPressed(
+            KeyEvent(view, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), mods, keyCode, KeyEvent.CHAR_UNDEFINED),
+        )
     }
 
     internal fun dragSelectionToForTest(x: Double, y: Double, copy: Boolean) =
         editor.dropSelection(hitIndexAt(x, y), copy)
 
+    internal fun hoverAtForTest(x: Double, y: Double) {
+        hover.update(x, y)
+        overlays.refresh()
+    }
+
+    internal fun clearHoverForTest() {
+        hover.clear()
+        overlays.refresh()
+    }
+
+    internal fun refreshOverlaysForTest() = overlays.refresh()
+
+    internal val activeOverlaysForTest: Set<FloatingOverlay> get() = overlays.activeForTest
+    internal val overlayNodeCountForTest: Int get() = overlays.nodeCountForTest
     internal val renderedPageIndicesForTest: List<Int> get() = painter.renderedPageIndices
     internal val sheetChromeDrawCountForTest: Int get() = painter.sheetChromeDrawCount
     internal val caretDrawCountForTest: Int get() = painter.caretDrawCount
