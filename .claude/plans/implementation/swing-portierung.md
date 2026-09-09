@@ -15,7 +15,7 @@
 - Geometrie: `Bounds`->`java.awt.Rectangle`, `Dimension2D`->`java.awt.Dimension`, `Pos`->neues Enum `OverlayAnchor`, `Paint`/`Color`->`java.awt`-Pendants (Verlaeufe weiter moeglich), `Cursor`->`java.awt.Cursor`.
 - `Timeline` (Smooth-Blink): ersetzt durch `javax.swing.Timer`.
 - `CanvasDocumentRenderer` (liefert `Canvas`): wird `DocumentImageRenderer` und liefert `BufferedImage`, zusaetzlich `Graphics2D`-Overload.
-- Scrollbar: interne vertikale `JScrollBar` im UI-Delegate (verhaltensgleich zur `fx`-Skin) plus `Scrollable`.
+- Scrollbar: interne vertikale `JScrollBar` im UI-Delegate (verhaltensgleich zur `fx`-Skin). `Scrollable`-Interface vorerst nicht implementiert (kann spaeter ergaenzt werden).
 - Schriftmetrik AWT vs. JavaFX: Ausgabe optisch nahezu gleich, nicht pixelgleich - akzeptiert.
 
 ## Task 1 - Modul `:ui-common` anlegen
@@ -61,7 +61,7 @@
 - `PaperSheetView : JComponent` mit allen `fx`-Properties (document, mode, outerMargin, pageGap, minZoom/maxZoom/zoom, contentSize, Stilwerte, smoothCaretBlink, hovered*), Aenderungen via `firePropertyChange`.
 - Zoom-Clamping-Logik und `getUIClassID()` = `"PaperSheetViewUI"`; `updateUI()` registriert Default-UI und `UIManager`-Defaults.
 - `PaperSheetUI : ComponentUI` (abstrakt) und `BasicPaperSheetUI` (Default) mit `installUI`/`uninstallUI`, Listener-An/Abmeldung.
-- Interne vertikale `JScrollBar` plus Mausrad; `PaperSheetView implements Scrollable`.
+- Interne vertikale `JScrollBar` plus Mausrad (im UI-Delegate verwaltet).
 - `PaperSheetSwingPainter` - Spiegel von `PaperSheetCanvasPainter`: Viewport-Virtualisierung, Schatten/Fuellung/Rahmen je Blatt, Auswahl-Highlight, Text via `Graphics2DDocumentRenderer`.
 - `PaperSheetStyle`-Wertobjekt und `PaperSheetSelection` (Anchor/Focus, Geometrie, styled runs, Command-Sink) portieren.
 - Maus: Klick/Drag/Doppelklick -> Auswahl, Hit-Test via `DocumentTextIndex` + `GlyphHitTester`; Textcursor ueber Inhaltsflaeche.
