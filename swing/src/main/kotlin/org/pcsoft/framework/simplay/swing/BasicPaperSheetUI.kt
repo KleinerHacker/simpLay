@@ -17,8 +17,12 @@ import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
+import java.awt.Rectangle
+import java.awt.Toolkit
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
@@ -31,8 +35,10 @@ import org.pcsoft.framework.simplay.engine.RenderConfiguration
 import org.pcsoft.framework.simplay.engine.measure
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.swing.internal.SwingFontMeasureCalculator
-import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetStyle
+import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetCaret
+import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetEditor
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetSelection
+import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetStyle
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetSwingPainter
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 import org.pcsoft.framework.simplay.uicommon.hitTest
@@ -43,10 +49,12 @@ import org.pcsoft.framework.simplay.uicommon.hitTest
  * pages currently in the viewport - simple page virtualisation - scaled by [PaperSheetView.zoom]).
  * The Swing counterpart of the `fx` module's `PaperSheetViewSkin`.
  *
- * This first cut covers the read-only behaviour: sheet chrome, mouse text selection, double-click
- * word selection, wheel scrolling, the text pointer and `Ctrl+C` / `Cmd+C` styled copy. The caret,
- * the editor shortcuts, the hover tracker and the floating overlays are wired by the later
- * implementation steps.
+ * The per-view text concerns live in their own helpers this delegate creates and forwards events to:
+ * [PaperSheetSelection] (anchor/focus selection, geometry, the [TextSelectionModel.Commands] sink),
+ * [PaperSheetCaret] (caret position, blink, geometry, navigation moves - in
+ * [PaperSheetMode.EDITABLE]) and [PaperSheetEditor] (the keyboard shortcuts and the
+ * [org.pcsoft.framework.simplay.uicommon.DocumentEditor] mutations they trigger, plus drag-and-drop
+ * of the selection). The hover tracker and the floating overlays are wired by the later steps.
  */
 open class BasicPaperSheetUI : PaperSheetUI() {
 
@@ -55,6 +63,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     private lateinit var renderConfig: RenderConfiguration
     private lateinit var painter: PaperSheetSwingPainter
     private lateinit var selection: PaperSheetSelection
+    private lateinit var caret: PaperSheetCaret
+    private lateinit var editor: PaperSheetEditor
     private lateinit var scrollBar: JScrollBar
 
     private var measured: MeasuredDocument? = null
@@ -63,12 +73,21 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     private var contentWidthUnscaled = 0.0
     private var contentHeightUnscaled = 0.0
 
+    /** `true` while the mouse extends a selection by dragging. */
     private var dragging = false
+
+    /** `true` while the mouse drags an existing selection to a new drop position. */
+    private var draggingSelection = false
 
     private lateinit var propertyListener: PropertyChangeListener
     private lateinit var mouseListener: MouseAdapter
     private lateinit var keyListener: KeyAdapter
+    private lateinit var focusListener: FocusAdapter
     private lateinit var componentListener: ComponentAdapter
+
+    private val shortcutMask: Int = Toolkit.getDefaultToolkit().menuShortcutKeyMaskEx
+
+    private val editable: Boolean get() = view.mode == PaperSheetMode.EDITABLE
 
     //region install / uninstall
 
@@ -89,6 +108,23 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             requestRedraw = ::redraw,
             onProgrammaticChange = { dragging = false },
         )
+        caret = PaperSheetCaret(
+            view = view,
+            selection = selection,
+            measurer = measurer,
+            textIndex = { index },
+            measuredDocument = { measured },
+            pageTops = { pageTops },
+            scrollOffset = ::scrollOffset,
+            requestRedraw = ::redraw,
+        )
+        editor = PaperSheetEditor(
+            view = view,
+            selection = selection,
+            caret = caret,
+            textIndex = { index },
+            requestRedraw = ::redraw,
+        )
 
         scrollBar = JScrollBar(JScrollBar.VERTICAL, 0, 0, 0, 0).apply {
             addAdjustmentListener { redraw() }
@@ -96,6 +132,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         c.add(scrollBar)
 
         view.registerSelectionCommands(selection)
+        view.registerCaretCommands(caret)
         installListeners()
         remeasure()
     }
@@ -106,8 +143,11 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         view.removeMouseMotionListener(mouseListener)
         view.removeMouseWheelListener(mouseListener)
         view.removeKeyListener(keyListener)
+        view.removeFocusListener(focusListener)
         view.removeComponentListener(componentListener)
         view.unregisterSelectionCommands(selection)
+        view.unregisterCaretCommands(caret)
+        caret.dispose()
         c.remove(scrollBar)
         measured = null
         index = null
@@ -123,7 +163,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
                 PaperSheetView.PROP_MIN_ZOOM,
                 PaperSheetView.PROP_MAX_ZOOM,
                 -> relayout()
-                PaperSheetView.PROP_MODE,
+                PaperSheetView.PROP_MODE -> { caret.onModeChanged(); redraw() }
+                PaperSheetView.PROP_SMOOTH_CARET_BLINK -> caret.restartBlink()
                 PaperSheetView.PROP_SHEET_BACKGROUND,
                 PaperSheetView.PROP_SHEET_BORDER_COLOR,
                 PaperSheetView.PROP_SHEET_BORDER_WIDTH,
@@ -137,20 +178,19 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         mouseListener = object : MouseAdapter() {
             override fun mousePressed(e: MouseEvent) = onMousePressed(e)
             override fun mouseDragged(e: MouseEvent) = onMouseDragged(e)
-            override fun mouseReleased(e: MouseEvent) { dragging = false }
+            override fun mouseReleased(e: MouseEvent) = onMouseReleased(e)
             override fun mouseClicked(e: MouseEvent) = onMouseClicked(e)
             override fun mouseMoved(e: MouseEvent) { view.cursor = cursorFor(e.x.toDouble(), e.y.toDouble()) }
             override fun mouseExited(e: MouseEvent) { view.cursor = Cursor.getDefaultCursor() }
             override fun mouseWheelMoved(e: MouseWheelEvent) = onScroll(e)
         }
         keyListener = object : KeyAdapter() {
-            override fun keyPressed(e: KeyEvent) {
-                val shortcut = e.isControlDown || e.isMetaDown
-                if (shortcut && e.keyCode == KeyEvent.VK_C) {
-                    selection.putStyledSelectionOnClipboard()
-                    e.consume()
-                }
-            }
+            override fun keyPressed(e: KeyEvent) = editor.onKeyPressed(e)
+            override fun keyTyped(e: KeyEvent) = editor.onKeyTyped(e)
+        }
+        focusListener = object : FocusAdapter() {
+            override fun focusGained(e: FocusEvent) = caret.restartBlink()
+            override fun focusLost(e: FocusEvent) = caret.restartBlink()
         }
         componentListener = object : ComponentAdapter() {
             override fun componentResized(e: ComponentEvent) = relayoutViewport()
@@ -160,6 +200,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         view.addMouseMotionListener(mouseListener)
         view.addMouseWheelListener(mouseListener)
         view.addKeyListener(keyListener)
+        view.addFocusListener(focusListener)
         view.addComponentListener(componentListener)
     }
 
@@ -172,9 +213,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         index = measured?.let { DocumentTextIndex(it) }
         selection.onDocumentChanged(index)
         computeLayoutMetrics()
-        val idx = index
-        view.caretModel.updateCounts(idx?.blockCount ?: 0, idx?.wordCount ?: 0, idx?.symbolCount ?: 0)
         selection.publish()
+        caret.onDocumentRemeasured()
         redraw()
     }
 
@@ -259,6 +299,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
 
     private fun redraw() {
         selection.publish()
+        caret.publish()
         view.repaint()
     }
 
@@ -286,6 +327,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
                 selectionEnd = selection.end,
                 fonts = measurer,
                 style = currentStyle(),
+                caret = caret.caretPaint(),
+                caretOpacity = caret.currentOpacity(),
             )
         } finally {
             g2.dispose()
@@ -399,21 +442,45 @@ open class BasicPaperSheetUI : PaperSheetUI() {
 
     private fun onMousePressed(event: MouseEvent) {
         view.requestFocusInWindow()
+        caret.clearShiftAnchor()
         val i = hitIndexAt(event.x.toDouble(), event.y.toDouble())
+        if (editable && !selection.isEmpty && selection.contains(event.x.toDouble(), event.y.toDouble())) {
+            draggingSelection = true
+            dragging = false
+            caret.setDropPreview(i)
+            return
+        }
         selection.beginAt(i)
         dragging = true
-        redraw()
+        if (editable) caret.placeCaret(i) else redraw()
     }
 
     private fun onMouseDragged(event: MouseEvent) {
+        if (draggingSelection) {
+            caret.setDropPreview(hitIndexAt(event.x.toDouble(), event.y.toDouble()))
+            return
+        }
         if (!dragging) return
         selection.dragTo(hitIndexAt(event.x.toDouble(), event.y.toDouble()))
         redraw()
     }
 
+    private fun onMouseReleased(event: MouseEvent) {
+        if (draggingSelection) {
+            val target = hitIndexAt(event.x.toDouble(), event.y.toDouble())
+            val copy = (event.modifiersEx and shortcutMask) == shortcutMask
+            draggingSelection = false
+            caret.setDropPreview(null)
+            editor.dropSelection(target, copy)
+            return
+        }
+        dragging = false
+    }
+
     private fun onMouseClicked(event: MouseEvent) {
         if (event.clickCount != 2) return
         selection.selectWordAt(hitIndexAt(event.x.toDouble(), event.y.toDouble()))
+        if (editable) caret.placeCaret(selection.end)
         redraw()
     }
 
@@ -435,10 +502,27 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         paint(g, view)
     }
 
+    internal fun typeTextForTest(text: String) = editor.typeText(text)
+
+    internal fun placeCaretAtForTest(x: Double, y: Double) = caret.placeCaret(hitIndexAt(x, y))
+
+    internal fun pressKeyForTest(keyCode: Int, shift: Boolean = false, shortcut: Boolean = false) {
+        var mods = 0
+        if (shift) mods = mods or KeyEvent.SHIFT_DOWN_MASK
+        if (shortcut) mods = mods or shortcutMask
+        editor.onKeyPressed(KeyEvent(view, KeyEvent.KEY_PRESSED, System.currentTimeMillis(), mods, keyCode, KeyEvent.CHAR_UNDEFINED))
+    }
+
+    internal fun dragSelectionToForTest(x: Double, y: Double, copy: Boolean) =
+        editor.dropSelection(hitIndexAt(x, y), copy)
+
     internal val renderedPageIndicesForTest: List<Int> get() = painter.renderedPageIndices
     internal val sheetChromeDrawCountForTest: Int get() = painter.sheetChromeDrawCount
+    internal val caretDrawCountForTest: Int get() = painter.caretDrawCount
     internal val paintCountForTest: Int get() = painter.paintCount
     internal val pageCountForTest: Int get() = measured?.pages?.size ?: 0
+    internal val caretIndexForTest: Int get() = caret.position
+    internal fun caretBoundsForTest(): Rectangle? = caret.viewportBounds()
     internal val verticalScrollBarForTest: JScrollBar get() = scrollBar
 
     //endregion

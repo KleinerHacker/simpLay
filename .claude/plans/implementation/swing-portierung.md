@@ -74,7 +74,7 @@
 - `PaperSheetEditor` portieren: Tastenbelegung ueber `InputMap`/`ActionMap` (Tippen, Backspace, Delete, Home/End, Pfeile, `Ctrl+Home/End`, `Ctrl+Left/Right`, je optional Shift).
 - `Ctrl+D` Zeilen-/Auswahl-Duplizierung, `Ctrl+X`/`Ctrl+V` ueber `DocumentEditor` und Clipboard.
 - Editieren ersetzt `document` durch neue Instanz; altes Dokument unveraendert.
-- Drag-and-Drop der Auswahl via `TransferHandler` (Move bzw. Copy mit Modifier), Drop-Preview am Caret.
+- Drag-and-Drop der Auswahl per Maus-Logik im Delegate (verhaltensgleich zur `fx`-Skin: Press auf Auswahl -> Drop-Preview am Caret, Release -> `editor.dropSelection`; Move bzw. Copy mit Shortcut-Modifier). Kein `TransferHandler`.
 - `caretModel` an die UI anbinden; Umschalten `mode` startet/stoppt Caret und Blink.
 - Gradle-Target `build` ausfuehren.
 
