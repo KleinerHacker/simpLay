@@ -12,6 +12,8 @@ excluded.
 
 ## [UNRELEASED]
 
+## [0.2.1]
+
 ### Added
 
 - `engine`: font fingerprinting to detect that a document is being reopened with a
