@@ -57,25 +57,27 @@ plugins:
 
 nav:
   - Home: index.md
-  - console:
-      - Implementation: console/implementation.md
   - engine:
       - Implementation: engine/implementation.md
       - Raw model: engine/raw-model.md
       - Measured model: engine/measured-model.md
       - SimpLayEngine: engine/simplay-engine.md
       - Rendering: engine/rendering.md
-  - fx:
-      - Implementation: fx/implementation.md
-      - Canvas rendering: fx/canvas-rendering.md
-      - Paper sheet component: fx/paper-sheet-component.md
-      - Floating overlays: fx/floating-overlays.md
-      - Styling: fx/styling.md
-  - j-pdf:
-      - Implementation: j-pdf/implementation.md
-  - j-print:
-      - Implementation: j-print/implementation.md
-  - swing:
-      - Implementation: swing/implementation.md
+  - ui:
+      - common - Implementation: common/implementation.md
+      - fx - Implementation: fx/implementation.md
+      - fx - Canvas rendering: fx/canvas-rendering.md
+      - fx - Paper sheet component: fx/paper-sheet-component.md
+      - fx - Floating overlays: fx/floating-overlays.md
+      - fx - Styling: fx/styling.md
+      - swing - Implementation: swing/implementation.md
+      - swing - Image rendering: swing/image-rendering.md
+      - swing - Paper sheet component: swing/paper-sheet-component.md
+      - swing - Floating overlays: swing/floating-overlays.md
+      - swing - Styling: swing/styling.md
+      - console - Implementation: console/implementation.md
+  - export:
+      - jvm-pdf - Implementation: jvm-pdf/implementation.md
+      - jvm-print - Implementation: jvm-print/implementation.md
   - API Docs: dokka/html/index.html
   - Licences: licences/index.html

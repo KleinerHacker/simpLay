@@ -163,7 +163,7 @@ a PDF - only the per-part draw call changes.
 
 ## Where platform modules plug in
 
-A platform module (`fx`, `swing`, `j-pdf`, `j-print`) supplies two things:
+A platform module (`ui/fx`, `ui/swing`, `export/jvm-pdf`, `export/jvm-print`) supplies two things:
 
 * a `FontMeasureCalculator` backed by that platform's text stack, passed to
   `SimpLayEngine.builder(...)`;

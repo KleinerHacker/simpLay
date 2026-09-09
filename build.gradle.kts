@@ -27,7 +27,14 @@ group = "org.pcsoft.framework"
 version = (project.findProperty("releaseVersion") as String?)?.takeIf { it.isNotBlank() } ?: "1.0-SNAPSHOT"
 
 // The modules whose API docs, coverage and licences are aggregated at the root.
-val aggregatedModules = listOf(":engine", ":fx", ":j-pdf", ":j-print", ":swing")
+val aggregatedModules = listOf(
+    ":engine",
+    ":ui:common",
+    ":ui:fx",
+    ":ui:swing",
+    ":export:jvm-pdf",
+    ":export:jvm-print",
+)
 
 dependencies {
     aggregatedModules.forEach { path ->

@@ -12,6 +12,56 @@ excluded.
 
 ## [UNRELEASED]
 
+### Added
+
+- `ui/swing`: new Java Swing integration module (artifact `simplay-swing`,
+  package `org.pcsoft.framework.simplay.swing`), mirroring the `ui/fx` module
+  within what Swing allows. It exposes two `Document`-only entry points:
+    - `DocumentImageRenderer` paints one fixed document onto an AWT
+      `BufferedImage` (or a caller-supplied `Graphics2D`), either the whole
+      document with a dashed page-break line between pages (`renderDocument`) or
+      a single page (`renderPage`). It is created through
+      `DocumentImageRenderer.of(document) { ... }`, measuring and laying out the
+      document once, up front; `documentImageSize`, `pageImageSizes[pageIndex]`
+      and `pageCount` report the geometry, and the configuration lambda runs
+      over `ImageRenderConfiguration` (`unitScale`, `pageGap`, and the shared
+      `lineBreakerStrategy` / `wordBreakerStrategy`).
+    - `PaperSheetView` is a scrollable, zoomable `JComponent` that renders a
+      document as physical-looking sheets - each with a border and a drop shadow
+      - stacked vertically, drawing only the pages in view. `zoom` is kept
+      within `[minZoom, maxZoom]`; layout is controlled by `outerMargin` and
+      `pageGap`. Text is selected with the mouse (drag to extend, double-click
+      for a word) and copied with `Ctrl+C` / `Cmd+C` as plain text plus styled
+      HTML and RTF that carry the font. The selection is exposed through
+      `selectionModel` (`TextSelectionModel`: `text`, `startIndex` / `endIndex`
+      / `length`, `bounds`, styled `runs`, and the `selectRange` / `selectAll` /
+      `clearSelection` commands), with `selectedText` / `selectionBounds` as
+      convenience delegates.
+    - Setting `mode = PaperSheetMode.EDITABLE` adds a blinking caret (hard or,
+      with `smoothCaretBlink`, fading), character insertion and removal,
+      clipboard cut / copy / paste, line and selection duplication,
+      drag-and-drop of the selection and the standard caret-navigation keys. An
+      edit replaces `document` with a new instance. The caret is exposed through
+      `caretModel` (`CaretModel`: `position`, `bounds`, blink state, the
+      `blockCount` / `wordCount` / `symbolCount` of the document and the linear,
+      absolute-structural and relative-structural move commands).
+    - `PaperSheetView` accepts floating overlays through `floatingOverlays`: a
+      `FloatingOverlay` component the view shows, positions and hides on its own
+      while its `trigger` holds (`SELECTION`, `PARAGRAPH_HOVER`, `PAGE_HOVER`,
+      and `CARET` while editing), following scroll and zoom and clamped to the
+      viewport edge.
+    - `PaperSheetView` is styled through the active Look-and-Feel: the
+      `PaperSheetView.*` keys (`sheetBackground`, `sheetBorderColor`,
+      `sheetBorderWidth`, `shadowColor`, `shadowOffset`, `selectionColor`,
+      `selectionColorReadonly`, `caretColor`, `outerMargin`, `pageGap`) seeded
+      by `PaperSheetLookAndFeel`, with a programmatic setter always winning.
+      Every mutable property fires a `java.beans.PropertyChangeEvent`.
+- `ui/common`: new published module (`simplay-common`, package
+  `org.pcsoft.framework.simplay.uicommon`) with the toolkit-agnostic building
+  blocks shared by `ui/fx` and `ui/swing`: `DocumentTextIndex` (linear document
+  text axis), `hitTest`, `segmentSpanX`, `DocumentEditor` and
+  `StyledTextClipboard`.
+
 ## [0.1.0]
 
 ### Added

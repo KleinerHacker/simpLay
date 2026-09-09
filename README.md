@@ -1,28 +1,30 @@
 # simPLay
 
 simPLay is a Kotlin framework for building simulations. The core is a Kotlin
-Multiplatform engine; a Kotlin Multiplatform module adds console output and
-dedicated JVM modules add integrations for JavaFX, Swing, PDF export and
-printing.
+Multiplatform engine; the integration modules are grouped into user-interface
+bindings under `ui/` and output-format bindings under `export/`.
 
 ## Modules
 
-| Module    | Type                   | Artifact           | Purpose                                  |
-|-----------|------------------------|--------------------|------------------------------------------|
-| `console` | Kotlin Multiplatform   | `simplay-console`  | Console output integration for the engine |
-| `engine`  | Kotlin Multiplatform   | `simplay-engine`   | Platform-independent simulation core     |
-| `fx`      | Kotlin JVM             | `simplay-fx`       | JavaFX integration for the engine        |
-| `j-pdf`   | Kotlin JVM             | `simplay-j-pdf`    | PDF export integration for the engine    |
-| `j-print` | Kotlin JVM             | `simplay-j-print`  | Printing integration for the engine      |
-| `swing`   | Kotlin JVM             | `simplay-swing`    | Swing integration for the engine         |
+| Module             | Type                 | Artifact            | Purpose                                       |
+|--------------------|----------------------|---------------------|-----------------------------------------------|
+| `engine`           | Kotlin Multiplatform | `simplay-engine`    | Platform-independent simulation core          |
+| `ui/common`        | Kotlin JVM           | `simplay-common`    | Toolkit-agnostic building blocks for GUI bindings |
+| `ui/fx`            | Kotlin JVM           | `simplay-fx`        | JavaFX integration for the engine             |
+| `ui/swing`         | Kotlin JVM           | `simplay-swing`     | Swing integration for the engine             |
+| `ui/console`       | Kotlin Multiplatform | `simplay-console`   | Console output integration for the engine     |
+| `export/jvm-pdf`   | Kotlin JVM           | `simplay-jvm-pdf`   | PDF export integration for the engine (JVM)   |
+| `export/jvm-print` | Kotlin JVM           | `simplay-jvm-print` | Printing integration for the engine (JVM)     |
 
 The shared build logic is provided by convention plugins in `buildSrc`
-(`kotlin-jvm`, `kotlin-multiplatform`). Every module lives in its own top-level
-directory; the repository root contains no source code.
+(`kotlin-jvm`, `kotlin-multiplatform`). The Gradle project paths mirror the
+directory layout (`:ui:fx`, `:export:jvm-pdf`, ...); the repository root contains
+no source code.
 
 The base package is `org.pcsoft.framework.simplay`; each module appends its own
-name (`...simplay.console`, `...simplay.engine`, `...simplay.fx`,
-`...simplay.jpdf`, `...simplay.jprint`, `...simplay.swing`).
+name, independent of its directory group (`...simplay.engine`,
+`...simplay.uicommon`, `...simplay.fx`, `...simplay.swing`, `...simplay.console`,
+`...simplay.jpdf`, `...simplay.jprint`).
 
 ## Checkout and build
 
@@ -40,6 +42,7 @@ This project uses the Gradle Wrapper (`./gradlew`), a version catalog
 * `./gradlew check` - run all checks, including tests.
 * `./gradlew clean` - remove all build outputs.
 * `./gradlew projects` - list the modules.
+* `./gradlew :ui:fx:build` / `:ui:swing:run` - address a single nested module.
 
 ## Consuming the artifacts
 
@@ -73,7 +76,7 @@ Build tasks relevant for consumers and maintainers:
 
 ## Implementation state
 
-* [x] Multi-module project layout (`console`, `engine`, `fx`, `j-pdf`, `j-print`, `swing`)
+* [x] Multi-module project layout: `engine`, `ui/` (`common`, `fx`, `swing`, `console`), `export/` (`jvm-pdf`, `jvm-print`)
 * [ ] Simulation engine core (`engine`)
     * [x] Raw and measured document model; serializable raw model (JSON, YAML,
       XML, JVM serialization)
@@ -82,11 +85,18 @@ Build tasks relevant for consumers and maintainers:
       shared `RenderConfiguration`
     * [ ] End-to-end layout and persistence tests
     * [ ] Engine user documentation (MkDocs, KDoc alignment)
-* [ ] Console output integration (`console`)
-* [x] JavaFX integration (`fx`): `CanvasDocumentRenderer` (whole-document and
+* [ ] Console output integration (`ui/console`)
+* [x] Toolkit-agnostic GUI building blocks (`ui/common`): linear document text
+  index, glyph hit test, selection span, document text editor and styled-text
+  clipboard serialisation, shared by `ui/fx` and `ui/swing`
+* [x] JavaFX integration (`ui/fx`): `CanvasDocumentRenderer` (whole-document and
   single-page canvas rendering) and `PaperSheetView` - a scrollable, zoomable
   paper-sheet control with mouse text selection, in-place editing, FXML-compatible
-  floating overlays and JavaFX CSS styling - plus the `fx` user documentation
-* [ ] PDF export integration (`j-pdf`)
-* [ ] Printing integration (`j-print`)
-* [ ] Swing integration (`swing`)
+  floating overlays and JavaFX CSS styling - plus the `ui/fx` user documentation
+* [ ] PDF export integration (`export/jvm-pdf`)
+* [ ] Printing integration (`export/jvm-print`)
+* [x] Swing integration (`ui/swing`): `DocumentImageRenderer` (whole-document and
+  single-page `BufferedImage` rendering) and `PaperSheetView` - a scrollable,
+  zoomable paper-sheet `JComponent` with mouse text selection, in-place editing,
+  floating overlays and Look-and-Feel styling - plus the `ui/swing` user
+  documentation
