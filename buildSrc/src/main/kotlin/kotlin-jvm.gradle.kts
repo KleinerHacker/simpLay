@@ -14,6 +14,8 @@
 // `buildSrc` is a Gradle-recognized directory and every plugin there will be easily available in the rest of the build.
 package buildsrc.convention
 
+import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
+import org.gradle.api.publish.tasks.GenerateModuleMetadata
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
@@ -86,6 +88,21 @@ publishing {
                 password = System.getenv("GITHUB_TOKEN") ?: ""
             }
         }
+    }
+}
+
+// A module with no production Kotlin source yet (only placeholder files, e.g. ".gitkeep") is
+// skipped for publishing entirely - there is nothing meaningful to publish.
+val hasProductionKotlinSources = fileTree("src/main/kotlin") {
+    include("**/*.kt")
+}.files.isNotEmpty()
+
+if (!hasProductionKotlinSources) {
+    tasks.withType<GenerateModuleMetadata>().configureEach {
+        enabled = false
+    }
+    tasks.withType<PublishToMavenRepository>().configureEach {
+        enabled = false
     }
 }
 
