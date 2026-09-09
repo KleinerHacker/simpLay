@@ -64,20 +64,25 @@ nav:
       - SimpLayEngine: engine/simplay-engine.md
       - Rendering: engine/rendering.md
   - ui:
-      - common - Implementation: common/implementation.md
-      - fx - Implementation: fx/implementation.md
-      - fx - Canvas rendering: fx/canvas-rendering.md
-      - fx - Paper sheet component: fx/paper-sheet-component.md
-      - fx - Floating overlays: fx/floating-overlays.md
-      - fx - Styling: fx/styling.md
-      - swing - Implementation: swing/implementation.md
-      - swing - Image rendering: swing/image-rendering.md
-      - swing - Paper sheet component: swing/paper-sheet-component.md
-      - swing - Floating overlays: swing/floating-overlays.md
-      - swing - Styling: swing/styling.md
-      - console - Implementation: console/implementation.md
+      - Common: common/implementation.md
+      - Java FX:
+        - Implementation: fx/implementation.md
+        - Canvas rendering: fx/canvas-rendering.md
+        - Paper sheet component: fx/paper-sheet-component.md
+        - Floating overlays: fx/floating-overlays.md
+        - Styling: fx/styling.md
+      - Java Swing:
+        - Implementation: swing/implementation.md
+        - Image rendering: swing/image-rendering.md
+        - Paper sheet component: swing/paper-sheet-component.md
+        - Floating overlays: swing/floating-overlays.md
+        - Styling: swing/styling.md
+      - Console:
+        - Implementation: console/implementation.md
   - export:
-      - jvm-pdf - Implementation: jvm-pdf/implementation.md
-      - jvm-print - Implementation: jvm-print/implementation.md
+      - PDF:
+          - Java: jvm-pdf/implementation.md
+      - Printing:
+          - Java: jvm-print/implementation.md
   - API Docs: dokka/html/index.html
   - Licences: licences/index.html
