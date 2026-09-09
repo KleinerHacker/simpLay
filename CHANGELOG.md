@@ -12,6 +12,8 @@ excluded.
 
 ## [UNRELEASED]
 
+## [0.2.0]
+
 ### Added
 
 - `ui/swing`: new Java Swing integration module (artifact `simplay-swing`,
