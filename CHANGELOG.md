@@ -12,6 +12,8 @@ excluded.
 
 ## [UNRELEASED]
 
+## [0.2.2]
+
 ### Added
 
 - `engine`: `FontMeasureCalculator.measureAdvances(font, text)` returns the advance
