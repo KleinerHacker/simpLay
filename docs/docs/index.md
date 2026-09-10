@@ -1,6 +1,6 @@
-# simPLay
+# simpLay
 
-simPLay is a Kotlin framework for building simulations. The core is a Kotlin
+simpLay is a Kotlin framework for building simulations. The core is a Kotlin
 Multiplatform engine; a Kotlin Multiplatform module adds console output and
 dedicated JVM modules add integrations for JavaFX, Swing, PDF export and
 printing.
@@ -11,7 +11,7 @@ framework. For checkout, build and contribution instructions see the project
 
 ## What it is
 
-`simPLay` provides a platform-independent simulation core (`engine`) and two
+`simpLay` provides a platform-independent simulation core (`engine`) and two
 groups of integration modules: user-interface bindings under `ui/`
 (`ui/common`, `ui/fx`, `ui/swing`, `ui/console`) and output-format bindings under
 `export/` (`export/jvm-pdf`, `export/jvm-print`). Every module is published as a

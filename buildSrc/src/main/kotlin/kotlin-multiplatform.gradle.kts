@@ -14,7 +14,7 @@
 // `buildSrc` is a Gradle-recognized directory and every plugin there will be easily available in the rest of the build.
 package buildsrc.convention
 
-import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
+import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
 import org.gradle.api.publish.tasks.GenerateModuleMetadata
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.internal.os.OperatingSystem
@@ -67,6 +67,15 @@ base {
     archivesName.set("simplay-${project.name}")
 }
 
+// Set the JPMS Automatic-Module-Name on the JVM jar so consumers on the module path get a stable
+// module name. Derived from the Gradle module name; hyphens are stripped because they are illegal
+// in module names.
+tasks.named<Jar>("jvmJar") {
+    manifest {
+        attributes("Automatic-Module-Name" to "org.pcsoft.framework.simplay.${project.name.replace("-", "")}")
+    }
+}
+
 tasks.withType<Test>().configureEach {
     // Configure all test Gradle tasks to use JUnitPlatform.
     useJUnitPlatform()
@@ -85,6 +94,25 @@ tasks.withType<Test>().configureEach {
 // repository has to be added. Credentials come from the environment - GITHUB_TOKEN is provided by
 // GitHub Actions automatically; locally they fall back to empty strings.
 publishing {
+    publications.withType<MavenPublication>().configureEach {
+        // The Kotlin Multiplatform plugin names its publications after the bare project name
+        // (`engine`, `engine-jvm`, `engine-mingwx64`, ...). Prefix them so every published module
+        // shares the `simplay-` namespace, matching the JVM convention plugin.
+        if (!artifactId.startsWith("simplay-")) {
+            artifactId = "simplay-$artifactId"
+        }
+
+        pom {
+            licenses {
+                license {
+                    name.set("Apache License, Version 2.0")
+                    url.set("http://www.apache.org/licenses/LICENSE-2.0")
+                    distribution.set("repo")
+                }
+            }
+        }
+    }
+
     repositories {
         maven {
             name = "GitHubPackages"
@@ -98,9 +126,15 @@ publishing {
 }
 
 // A module with no production Kotlin source yet (only placeholder files, e.g. ".gitkeep") is
-// skipped for publishing entirely. Kotlin/Native targets produce no output file at all for such
-// a module - the compile task is NO-SOURCE - which would otherwise break
-// `generateMetadataFileFor<Target>Publication` with a FileNotFoundException.
+// excluded from everything publishing-related - module metadata generation and every publish
+// task, both to a remote repository and to Maven Local. Kotlin/Native targets produce no output
+// file at all for such a module (the compile task is NO-SOURCE), which would otherwise break the
+// publication with a FileNotFoundException / missing-artifact error.
+//
+// TODO(simplay): REMOVE this whole `hasProductionKotlinSources` guard once every module carries
+// real production sources. It is a temporary crutch for the currently empty placeholder modules
+// (export/jvm-pdf, export/jvm-print, ui/console). Delete the block in this file AND in
+// kotlin-jvm.gradle.kts.
 val hasProductionKotlinSources = fileTree("src") {
     include("*Main/kotlin/**/*.kt")
 }.files.isNotEmpty()
@@ -109,7 +143,7 @@ if (!hasProductionKotlinSources) {
     tasks.withType<GenerateModuleMetadata>().configureEach {
         enabled = false
     }
-    tasks.withType<PublishToMavenRepository>().configureEach {
+    tasks.withType<AbstractPublishToMaven>().configureEach {
         enabled = false
     }
 }

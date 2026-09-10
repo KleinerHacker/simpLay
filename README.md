@@ -1,6 +1,6 @@
-# simPLay
+# simpLay
 
-simPLay is a Kotlin framework for building simulations. The core is a Kotlin
+simpLay is a Kotlin framework for building simulations. The core is a Kotlin
 Multiplatform engine; the integration modules are grouped into user-interface
 bindings under `ui/` and output-format bindings under `export/`.
 
@@ -24,7 +24,7 @@ no source code.
 The base package is `org.pcsoft.framework.simplay`; each module appends its own
 name, independent of its directory group (`...simplay.engine`,
 `...simplay.uicommon`, `...simplay.fx`, `...simplay.swing`, `...simplay.console`,
-`...simplay.jpdf`, `...simplay.jprint`).
+`...simplay.jvmpdf`, `...simplay.jvmprint`).
 
 ## Checkout and build
 
