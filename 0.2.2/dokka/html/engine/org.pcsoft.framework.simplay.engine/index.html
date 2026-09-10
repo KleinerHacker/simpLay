@@ -1,0 +1,410 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>org.pcsoft.framework.simplay.engine</title>
+<link href="../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../";</script>
+    <script>document.documentElement.classList.replace("no-js", "js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+      if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      } else {
+        const savedDarkMode = JSON.parse(storage)
+        if (savedDarkMode === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      }
+    </script>
+<script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../styles/style.css" rel="Stylesheet">
+<link href="../../styles/main.css" rel="Stylesheet">
+<link href="../../styles/prism.css" rel="Stylesheet">
+<link href="../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../scripts/safe-local-storage_blocking.js"></script>
+<script type="text/javascript" src="../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../ui-kit/ui-kit.min.js" defer></script></head>
+<body>
+<div class="root">
+    <header class="navigation theme-dark" id="navigation-wrapper" role="banner">
+<a class="library-name--link" href="../../index.html" tabindex="1">
+                    simplay
+            </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">1.0-SNAPSHOT
+        </div>
+        <div class="navigation-controls">
+        <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
+                <button class="platform-tag platform-selector common-like" data-active="" aria-pressed="true" data-filter=":engine/commonMain">common</button>
+                <button class="platform-tag platform-selector js-like" data-active="" aria-pressed="true" data-filter=":engine/jsMain">js</button>
+                <button class="platform-tag platform-selector jvm-like" data-active="" aria-pressed="true" data-filter=":engine/jvmMain">jvm</button>
+                <button class="platform-tag platform-selector native-like" data-active="" aria-pressed="true" data-filter=":engine/nativeMain">native</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox" aria-label="Target filter">
+                    <div class="dropdown--header"><span>Target filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close target filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option common-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":engine/commonMain" data-filter=":engine/commonMain">
+                                <span class="checkbox--icon"></span>
+                                common
+                            </label>
+                        </li>
+                        <li role="option" class="dropdown--option platform-selector-option js-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":engine/jsMain" data-filter=":engine/jsMain">
+                                <span class="checkbox--icon"></span>
+                                js
+                            </label>
+                        </li>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":engine/jvmMain" data-filter=":engine/jvmMain">
+                                <span class="checkbox--icon"></span>
+                                jvm
+                            </label>
+                        </li>
+                        <li role="option" class="dropdown--option platform-selector-option native-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":engine/nativeMain" data-filter=":engine/nativeMain">
+                                <span class="checkbox--icon"></span>
+                                native
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </ul>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button" type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </header>
+    <div id="container">
+        <nav id="leftColumn" class="sidebar" data-item-type="SECTION" data-item-config="{&quot;defaultSize&quot;: 280, &quot;minSize&quot;: 200, &quot;maxSize&quot;: 400}">
+            <a class="toc--skip-link" href="#main">Skip to content</a>
+            <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list" data-role="dropdown-listbox" aria-label="Table of contents">
+                    <div class="dropdown--header">
+                            <span>
+                                    simplay
+                            </span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                    <div class="sidebar--inner" id="sideMenu"></div>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </nav>
+        <div id="resizer" class="resizer" data-item-type="BAR"></div>
+        <div id="main" data-item-type="SECTION" role="main">
+<div class="main-content" data-page-type="package" id="content" pageids="engine::org.pcsoft.framework.simplay.engine////PointingToDeclaration//2106671098">
+  <div class="breadcrumbs"><a href="../index.html">engine</a><span class="delimiter">/</span><span class="current">org.pcsoft.framework.simplay.engine</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Package-level</span></span> <span><span>declarations</span></span></h1>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="TYPE">Types</button><button class="section-tab" data-togglable="FUNCTION,EXTENSION_FUNCTION">Functions</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="TYPE">
+        <h2 class="tableheader">Types</h2>
+        <div class="table"><a data-name="185670044%2FClasslikes%2F1015982541" anchor-label="CharacterLineBreakerStrategy" id="185670044%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-character-line-breaker-strategy/index.html"><span>Character</span><wbr><span>Line</span><wbr><span>Breaker</span><wbr><span><span>Strategy</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="185670044%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">object </span><a href="-character-line-breaker-strategy/index.html">CharacterLineBreakerStrategy</a> : <a href="-line-breaker-strategy/index.html">LineBreakerStrategy</a></div><div class="brief "><p class="paragraph">A <a href="-line-breaker-strategy/index.html">LineBreakerStrategy</a> that fills lines character by character and breaks at any position, even inside a word. It never consults the <a href="-word-breaker-strategy/index.html">WordBreakerStrategy</a>. Word gaps follow the same rule as the greedy strategy.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-453589165%2FClasslikes%2F1015982541" anchor-label="FontMeasureCalculator" id="-453589165%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-font-measure-calculator/index.html"><span>Font</span><wbr><span>Measure</span><wbr><span><span>Calculator</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-453589165%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><span class="token keyword">interface </span><a href="-font-measure-calculator/index.html">FontMeasureCalculator</a></div><div class="brief "><p class="paragraph">Callback that measures a piece of text in a given <a href="../org.pcsoft.framework.simplay.engine.model/-font/index.html">Font</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="226833923%2FClasslikes%2F1015982541" anchor-label="GreedyWordLineBreakerStrategy" id="226833923%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-greedy-word-line-breaker-strategy/index.html"><span>Greedy</span><wbr><span>Word</span><wbr><span>Line</span><wbr><span>Breaker</span><wbr><span><span>Strategy</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="226833923%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">object </span><a href="-greedy-word-line-breaker-strategy/index.html">GreedyWordLineBreakerStrategy</a> : <a href="-line-breaker-strategy/index.html">LineBreakerStrategy</a></div><div class="brief "><p class="paragraph">The default <a href="-line-breaker-strategy/index.html">LineBreakerStrategy</a>: greedy, word- and symbol-aware.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="99520729%2FClasslikes%2F1015982541" anchor-label="LineBreakerStrategy" id="99520729%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-line-breaker-strategy/index.html"><span>Line</span><wbr><span>Breaker</span><wbr><span><span>Strategy</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="99520729%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><span class="token keyword">interface </span><a href="-line-breaker-strategy/index.html">LineBreakerStrategy</a></div><div class="brief "><p class="paragraph">Strategy that turns the <a href="../org.pcsoft.framework.simplay.engine.model/-text-part/index.html">TextPart</a>s of a block into <a href="-unplaced-line/index.html">UnplacedLine</a>s for a given content width.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1158001391%2FClasslikes%2F1015982541" anchor-label="NoOpWordBreakerStrategy" id="-1158001391%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-no-op-word-breaker-strategy/index.html"><span>No</span><wbr><span>Op</span><wbr><span>Word</span><wbr><span>Breaker</span><wbr><span><span>Strategy</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1158001391%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">object </span><a href="-no-op-word-breaker-strategy/index.html">NoOpWordBreakerStrategy</a> : <a href="-word-breaker-strategy/index.html">WordBreakerStrategy</a></div><div class="brief "><p class="paragraph">The default <a href="-word-breaker-strategy/index.html">WordBreakerStrategy</a>: never offers a break, so no hyphenation happens and an over-long word simply overflows its line.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1284368356%2FClasslikes%2F1015982541" anchor-label="NoWrapLineBreakerStrategy" id="1284368356%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-no-wrap-line-breaker-strategy/index.html"><span>No</span><wbr><span>Wrap</span><wbr><span>Line</span><wbr><span>Breaker</span><wbr><span><span>Strategy</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1284368356%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">object </span><a href="-no-wrap-line-breaker-strategy/index.html">NoWrapLineBreakerStrategy</a> : <a href="-line-breaker-strategy/index.html">LineBreakerStrategy</a></div><div class="brief "><p class="paragraph">A <a href="-line-breaker-strategy/index.html">LineBreakerStrategy</a> that never breaks: all parts land in a single <a href="-unplaced-line/index.html">UnplacedLine</a> that may be wider than maxWidth. The <a href="-word-breaker-strategy/index.html">WordBreakerStrategy</a> is ignored.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-421435252%2FClasslikes%2F2106671098" anchor-label="PlatformSerializable" id="-421435252%2FClasslikes%2F2106671098" data-filterable-set=":engine/commonMain,:engine/jsMain,:engine/nativeMain,:engine/jvmMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain,:engine/jsMain,:engine/nativeMain,:engine/jvmMain" data-filterable-set=":engine/commonMain,:engine/jsMain,:engine/nativeMain,:engine/jvmMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-platform-serializable/index.html"><span>Platform</span><wbr><span><span>Serializable</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-421435252%2FClasslikes%2F2106671098"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain" data-active="" data-toggle=":engine/commonMain">common</button><button class="platform-bookmark" data-filterable-current=":engine/jsMain" data-filterable-set=":engine/jsMain" data-toggle=":engine/jsMain">js</button><button class="platform-bookmark" data-filterable-current=":engine/jvmMain" data-filterable-set=":engine/jvmMain" data-toggle=":engine/jvmMain">jvm</button><button class="platform-bookmark" data-filterable-current=":engine/nativeMain" data-filterable-set=":engine/nativeMain" data-toggle=":engine/nativeMain">native</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">expect </span><span class="token keyword">interface </span><a href="-platform-serializable/index.html">PlatformSerializable</a></div><div class="brief "><p class="paragraph">Marker supertype of the raw model. It maps to <code class="lang-kotlin">java.io.Serializable</code> on the JVM and to an empty interface on every other platform, so the raw model can be persisted with JVM serialization without the common code depending on a platform type.</p></div></div><div class="content sourceset-dependent-content" data-togglable=":engine/jsMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword">interface </span><a href="-platform-serializable/index.html">PlatformSerializable</a></div><div class="brief "><p class="paragraph">Outside the JVM the marker carries no behaviour; it only keeps the common supertype resolvable.</p></div></div><div class="content sourceset-dependent-content" data-togglable=":engine/jvmMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword">typealias </span><a href="-platform-serializable/index.html">PlatformSerializable</a><span class="token operator"> = </span><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Serializable.html">Serializable</a></div><div class="symbol monospace"><span class="token keyword">typealias </span><a href="-platform-serializable/index.html">PlatformSerializable</a><span class="token operator"> = </span><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Serializable.html">Serializable</a></div><div class="brief "><p class="paragraph">On the JVM the marker is <code class="lang-kotlin">java.io.Serializable</code>, so every raw model type is directly usable with <code class="lang-kotlin">ObjectOutputStream</code> / <code class="lang-kotlin">ObjectInputStream</code>.</p></div></div><div class="content sourceset-dependent-content" data-togglable=":engine/nativeMain"><div class="symbol monospace"><span class="token keyword">actual </span><span class="token keyword">interface </span><a href="-platform-serializable/index.html">PlatformSerializable</a></div><div class="brief "><p class="paragraph">Outside the JVM the marker carries no behaviour; it only keeps the common supertype resolvable.</p></div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-115778972%2FClasslikes%2F1015982541" anchor-label="RenderConfiguration" id="-115778972%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-render-configuration/index.html"><span>Render</span><wbr><span><span>Configuration</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-115778972%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">class </span><a href="-render-configuration/index.html">RenderConfiguration</a></div><div class="brief "><p class="paragraph">Mutable, renderer-agnostic configuration that every concrete renderer needs before it can measure a <a href="../org.pcsoft.framework.simplay.engine.model/-document/index.html">org.pcsoft.framework.simplay.engine.model.Document</a>: the <a href="-render-configuration/line-breaker-strategy.html">lineBreakerStrategy</a> and the <a href="-render-configuration/word-breaker-strategy.html">wordBreakerStrategy</a> the measure step must use.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1190849097%2FClasslikes%2F1015982541" anchor-label="SimpLayEngine" id="-1190849097%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-simp-lay-engine/index.html"><span>Simp</span><wbr><span>Lay</span><wbr><span><span>Engine</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1190849097%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-simp-lay-engine/index.html">SimpLayEngine</a></div><div class="brief "><p class="paragraph">Converts a raw <a href="../org.pcsoft.framework.simplay.engine.model/-document/index.html">Document</a> into a <a href="../org.pcsoft.framework.simplay.engine.measure/-measured-document/index.html">MeasuredDocument</a> using a font-measuring callback.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1185040500%2FClasslikes%2F1015982541" anchor-label="UnplacedLine" id="1185040500%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-unplaced-line/index.html"><span>Unplaced</span><wbr><span><span>Line</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1185040500%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-unplaced-line/index.html">UnplacedLine</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>parts<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="-unplaced-part/index.html">UnplacedPart</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>ascent<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-double/index.html">Double</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>descent<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-double/index.html">Double</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">A line as produced by a <a href="-line-breaker-strategy/index.html">LineBreakerStrategy</a>: the parts that belong on one line, already measured but not yet positioned. SimpLayBlockEngine assigns the positions and turns each <code class="lang-kotlin">UnplacedLine</code> into a <a href="../org.pcsoft.framework.simplay.engine.measure/-measured-line/index.html">org.pcsoft.framework.simplay.engine.measure.MeasuredLine</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1717158229%2FClasslikes%2F1015982541" anchor-label="UnplacedPart" id="1717158229%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-unplaced-part/index.html"><span>Unplaced</span><wbr><span><span>Part</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1717158229%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-unplaced-part/index.html">UnplacedPart</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>part<span class="token operator">: </span><a href="../org.pcsoft.framework.simplay.engine.model/-text-part/index.html">TextPart</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>width<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-double/index.html">Double</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>spaceBefore<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-double/index.html">Double</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">One part of an <a href="-unplaced-line/index.html">UnplacedLine</a>: a raw <a href="../../engine/org.pcsoft.framework.simplay.engine/-unplaced-part/--root--.html">part</a> with its advance <a href="../../engine/org.pcsoft.framework.simplay.engine/-unplaced-part/--root--.html">width</a> and the <a href="../../engine/org.pcsoft.framework.simplay.engine/-unplaced-part/--root--.html">spaceBefore</a> gap that separates it from the previous part. It carries no position; SimpLayBlockEngine adds that and produces a <a href="../org.pcsoft.framework.simplay.engine.measure/-measured-text-part/index.html">org.pcsoft.framework.simplay.engine.measure.MeasuredTextPart</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1452562927%2FClasslikes%2F1015982541" anchor-label="WordBreakerStrategy" id="1452562927%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-word-breaker-strategy/index.html"><span>Word</span><wbr><span>Breaker</span><wbr><span><span>Strategy</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1452562927%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><span class="token keyword">interface </span><a href="-word-breaker-strategy/index.html">WordBreakerStrategy</a></div><div class="brief "><p class="paragraph">Seam for intra-word breaking (hyphenation). A <a href="-line-breaker-strategy/index.html">LineBreakerStrategy</a> asks a <a href="-word-breaker-strategy/index.html">WordBreakerStrategy</a> where a single word that is wider than the available width may be split.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="EXTENSION_FUNCTION">
+        <h2 class="tableheader">Functions</h2>
+        <div class="table"><a data-name="682235932%2FFunctions%2F1015982541" anchor-label="createEngine" id="682235932%2FFunctions%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="create-engine.html"><span>create</span><wbr><span><span>Engine</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="682235932%2FFunctions%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="-render-configuration/index.html">RenderConfiguration</a><span class="token punctuation">.</span><a href="create-engine.html"><span class="token function">createEngine</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">measurer<span class="token operator">: </span><a href="-font-measure-calculator/index.html">FontMeasureCalculator</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="-simp-lay-engine/index.html">SimpLayEngine</a></div><div class="brief "><p class="paragraph">Builds a <a href="-simp-lay-engine/index.html">SimpLayEngine</a> from this <a href="-render-configuration/index.html">RenderConfiguration</a> and the given <a href="create-engine.html">measurer</a>, applying the configured lineBreakerStrategy and wordBreakerStrategy.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1866785924%2FFunctions%2F1015982541" anchor-label="documentSize" id="-1866785924%2FFunctions%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="document-size.html"><span>document</span><wbr><span><span>Size</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1866785924%2FFunctions%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="../org.pcsoft.framework.simplay.engine.measure/-measured-document/index.html">MeasuredDocument</a><span class="token punctuation">.</span><a href="document-size.html"><span class="token function">documentSize</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">gap<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-double/index.html">Double</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../org.pcsoft.framework.simplay.engine.geometry/-size/index.html">Size</a></div><div class="brief "><p class="paragraph">The size of a whole <a href="../org.pcsoft.framework.simplay.engine.measure/-measured-document/index.html">MeasuredDocument</a> when its pages are stacked vertically with <a href="document-size.html">gap</a> layout units between neighbouring pages.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1315907957%2FFunctions%2F1015982541" anchor-label="measure" id="-1315907957%2FFunctions%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="measure.html"><span><span>measure</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1315907957%2FFunctions%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="../org.pcsoft.framework.simplay.engine.model/-document/index.html">Document</a><span class="token punctuation">.</span><a href="measure.html"><span class="token function">measure</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">measurer<span class="token operator">: </span><a href="-font-measure-calculator/index.html">FontMeasureCalculator</a><span class="token punctuation">, </span></span><span class="parameter ">config<span class="token operator">: </span><a href="-render-configuration/index.html">RenderConfiguration</a><span class="token operator"> = </span>RenderConfiguration()</span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../org.pcsoft.framework.simplay.engine.measure/-measured-document/index.html">MeasuredDocument</a></div><div class="brief "><p class="paragraph">Measures this <a href="../org.pcsoft.framework.simplay.engine.model/-document/index.html">Document</a> with the given <a href="measure.html">measurer</a> and <a href="measure.html">config</a> in one call.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1955896120%2FFunctions%2F1015982541" anchor-label="pageSize" id="-1955896120%2FFunctions%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="page-size.html"><span>page</span><wbr><span><span>Size</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1955896120%2FFunctions%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="../org.pcsoft.framework.simplay.engine.measure/-measured-page/index.html">MeasuredPage</a><span class="token punctuation">.</span><a href="page-size.html"><span class="token function">pageSize</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../org.pcsoft.framework.simplay.engine.geometry/-size/index.html">Size</a></div><div class="brief "><p class="paragraph">The size a single measured <a href="../org.pcsoft.framework.simplay.engine.measure/-measured-page/index.html">MeasuredPage</a> occupies; identical to effectiveSize.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-933598576%2FFunctions%2F1015982541" anchor-label="withFontFingerprints" id="-933598576%2FFunctions%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="with-font-fingerprints.html"><span>with</span><wbr><span>Font</span><wbr><span><span>Fingerprints</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-933598576%2FFunctions%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="../org.pcsoft.framework.simplay.engine.model/-document/index.html">Document</a><span class="token punctuation">.</span><a href="with-font-fingerprints.html"><span class="token function">withFontFingerprints</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">measurer<span class="token operator">: </span><a href="-font-measure-calculator/index.html">FontMeasureCalculator</a><span class="token punctuation">, </span></span><span class="parameter ">overwrite<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator"> = </span><span class="token boolean">true</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="../org.pcsoft.framework.simplay.engine.model/-document/index.html">Document</a></div><div class="brief "><p class="paragraph">Returns a copy of this <a href="../org.pcsoft.framework.simplay.engine.model/-document/index.html">Document</a> in which every block font carries a <a href="../org.pcsoft.framework.simplay.engine.model/-font-fingerprint/index.html">FontFingerprint</a> taken through <a href="with-font-fingerprints.html">measurer</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <div class="footer--container">
+            <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+            <div class="footer--content">
+                <div>
+                    <span>Generated by </span>
+                    <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                        Dokka
+                    </a>
+                    <div>© 2026 Copyright</div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

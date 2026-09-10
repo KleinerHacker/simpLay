@@ -1,0 +1,539 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>CaretModel</title>
+<link href="../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../../";</script>
+    <script>document.documentElement.classList.replace("no-js", "js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+      if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      } else {
+        const savedDarkMode = JSON.parse(storage)
+        if (savedDarkMode === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      }
+    </script>
+<script type="text/javascript" src="../../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../../styles/style.css" rel="Stylesheet">
+<link href="../../../../styles/main.css" rel="Stylesheet">
+<link href="../../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../../scripts/safe-local-storage_blocking.js"></script>
+<script type="text/javascript" src="../../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../../ui-kit/ui-kit.min.js" defer></script></head>
+<body>
+<div class="root">
+    <header class="navigation theme-dark" id="navigation-wrapper" role="banner">
+<a class="library-name--link" href="../../../../index.html" tabindex="1">
+                    simplay
+            </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">1.0-SNAPSHOT
+        </div>
+        <div class="navigation-controls">
+        <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
+                <button class="platform-tag platform-selector jvm-like" data-active="" aria-pressed="true" data-filter=":ui:swing/main">jvm</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox" aria-label="Target filter">
+                    <div class="dropdown--header"><span>Target filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close target filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":ui:swing/main" data-filter=":ui:swing/main">
+                                <span class="checkbox--icon"></span>
+                                jvm
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </ul>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button" type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </header>
+    <div id="container">
+        <nav id="leftColumn" class="sidebar" data-item-type="SECTION" data-item-config="{&quot;defaultSize&quot;: 280, &quot;minSize&quot;: 200, &quot;maxSize&quot;: 400}">
+            <a class="toc--skip-link" href="#main">Skip to content</a>
+            <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list" data-role="dropdown-listbox" aria-label="Table of contents">
+                    <div class="dropdown--header">
+                            <span>
+                                    simplay
+                            </span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                    <div class="sidebar--inner" id="sideMenu"></div>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </nav>
+        <div id="resizer" class="resizer" data-item-type="BAR"></div>
+        <div id="main" data-item-type="SECTION" role="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="swing::org.pcsoft.framework.simplay.swing/CaretModel///PointingToDeclaration//1661789208">
+  <div class="breadcrumbs"><a href="../../index.html">swing</a><span class="delimiter">/</span><a href="../index.html">org.pcsoft.framework.simplay.swing</a><span class="delimiter">/</span><span class="current">CaretModel</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Caret</span><wbr><span><span>Model</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">CaretModel</a></div><p class="paragraph">The observable caret state of a <a href="../-paper-sheet-view/index.html">PaperSheetView</a> plus the commands to move it. One instance lives for the whole life of its view and is reached through <a href="../-paper-sheet-view/caret-model.html">PaperSheetView.caretModel</a>. The Swing counterpart of the <code class="lang-kotlin">fx</code> module's <code class="lang-kotlin">CaretModel</code>.</p><p class="paragraph">All state is read-only; the view's UI is the only writer. The <a href="position.html">position</a> is the caret offset in the document's linear text (the same axis <a href="../-text-selection-model/index.html">TextSelectionModel</a> uses), <a href="bounds.html">bounds</a> is the caret rectangle in viewport pixels while the view is in <a href="../-paper-sheet-mode/-e-d-i-t-a-b-l-e/index.html">PaperSheetMode.EDITABLE</a> (else <code class="lang-kotlin">null</code>) and <a href="is-visible.html">isVisible</a> follows the blink phase. <a href="block-count.html">blockCount</a>, <a href="word-count.html">wordCount</a> and <a href="symbol-count.html">symbolCount</a> report how many of each structural element the current document has.</p><p class="paragraph">The commands come in three groups: linear (<a href="move-to.html">moveTo</a>, <a href="move-to-start.html">moveToStart</a>, <a href="move-to-end.html">moveToEnd</a>); absolute structural, addressing a zero-based ordinal; and relative structural from the current position. A command issued before the view has a UI is applied once the UI is attached.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="TYPE">
+        <h2 class="tableheader">Types</h2>
+        <div class="table"><a data-name="-226034366%2FClasslikes%2F1661789208" anchor-label="Companion" id="-226034366%2FClasslikes%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-companion/index.html"><span><span>Companion</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-226034366%2FClasslikes%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-companion/index.html">Companion</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="tableheader">Properties</h2>
+        <div class="table"><a data-name="511798525%2FProperties%2F1661789208" anchor-label="blockCount" id="511798525%2FProperties%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="block-count.html"><span>block</span><wbr><span><span>Count</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="511798525%2FProperties%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="block-count.html">blockCount</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-634338518%2FProperties%2F1661789208" anchor-label="bounds" id="-634338518%2FProperties%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bounds.html"><span><span>bounds</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-634338518%2FProperties%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="bounds.html">bounds</a><span class="token operator">: </span><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/Rectangle.html">Rectangle</a><span class="token operator">?</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1342822125%2FProperties%2F1661789208" anchor-label="isVisible" id="-1342822125%2FProperties%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="is-visible.html"><span>is</span><wbr><span><span>Visible</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1342822125%2FProperties%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="is-visible.html">isVisible</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1352797514%2FProperties%2F1661789208" anchor-label="position" id="-1352797514%2FProperties%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="position.html"><span><span>position</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1352797514%2FProperties%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="position.html">position</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1404376572%2FProperties%2F1661789208" anchor-label="symbolCount" id="-1404376572%2FProperties%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="symbol-count.html"><span>symbol</span><wbr><span><span>Count</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1404376572%2FProperties%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="symbol-count.html">symbolCount</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-764428426%2FProperties%2F1661789208" anchor-label="wordCount" id="-764428426%2FProperties%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="word-count.html"><span>word</span><wbr><span><span>Count</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-764428426%2FProperties%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="word-count.html">wordCount</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="tableheader">Functions</h2>
+        <div class="table"><a data-name="-2134050991%2FFunctions%2F1661789208" anchor-label="addPropertyChangeListener" id="-2134050991%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="add-property-change-listener.html"><span>add</span><wbr><span>Property</span><wbr><span>Change</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2134050991%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="add-property-change-listener.html"><span class="token function">addPropertyChangeListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/beans/PropertyChangeListener.html">PropertyChangeListener</a></span></span><span class="token punctuation">)</span></div><div class="symbol monospace"><span class="token keyword">fun </span><a href="add-property-change-listener.html"><span class="token function">addPropertyChangeListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">propertyName<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">listener<span class="token operator">: </span><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/beans/PropertyChangeListener.html">PropertyChangeListener</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1006046432%2FFunctions%2F1661789208" anchor-label="moveIntoBlock" id="-1006046432%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="move-into-block.html"><span>move</span><wbr><span>Into</span><wbr><span><span>Block</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1006046432%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="move-into-block.html"><span class="token function">moveIntoBlock</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">block<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">index<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Moves the caret <a href="move-into-block.html">index</a> characters into block <a href="move-into-block.html">block</a> (both clamped into range).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-864593701%2FFunctions%2F1661789208" anchor-label="moveIntoWord" id="-864593701%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="move-into-word.html"><span>move</span><wbr><span>Into</span><wbr><span><span>Word</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-864593701%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="move-into-word.html"><span class="token function">moveIntoWord</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">word<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">index<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Moves the caret <a href="move-into-word.html">index</a> characters into word <a href="move-into-word.html">word</a> (both clamped into range).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1685748367%2FFunctions%2F1661789208" anchor-label="moveTo" id="-1685748367%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="move-to.html"><span>move</span><wbr><span><span>To</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1685748367%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="move-to.html"><span class="token function">moveTo</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">index<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Moves the caret to <a href="move-to.html">index</a> in the linear document text; the index is clamped into range.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1804382156%2FFunctions%2F1661789208" anchor-label="moveToEnd" id="1804382156%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="move-to-end.html"><span>move</span><wbr><span>To</span><wbr><span><span>End</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1804382156%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="move-to-end.html"><span class="token function">moveToEnd</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Moves the caret to the end of the document.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-766985130%2FFunctions%2F1661789208" anchor-label="moveToEndOfBlock" id="-766985130%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="move-to-end-of-block.html"><span>move</span><wbr><span>To</span><wbr><span>End</span><wbr><span>Of</span><wbr><span><span>Block</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-766985130%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="move-to-end-of-block.html"><span class="token function">moveToEndOfBlock</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">block<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Moves the caret past the last character of block <a href="move-to-end-of-block.html">block</a> (clamped into range).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1493071515%2FFunctions%2F1661789208" anchor-label="moveToEndOfSymbol" id="1493071515%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="move-to-end-of-symbol.html"><span>move</span><wbr><span>To</span><wbr><span>End</span><wbr><span>Of</span><wbr><span><span>Symbol</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1493071515%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="move-to-end-of-symbol.html"><span class="token function">moveToEndOfSymbol</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">symbol<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Moves the caret past symbol <a href="move-to-end-of-symbol.html">symbol</a> (clamped into range).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="31868393%2FFunctions%2F1661789208" anchor-label="moveToEndOfWord" id="31868393%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="move-to-end-of-word.html"><span>move</span><wbr><span>To</span><wbr><span>End</span><wbr><span>Of</span><wbr><span><span>Word</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="31868393%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="move-to-end-of-word.html"><span class="token function">moveToEndOfWord</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">word<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Moves the caret past the last character of word <a href="move-to-end-of-word.html">word</a> (clamped into range).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1071856813%2FFunctions%2F1661789208" anchor-label="moveToNextBlock" id="1071856813%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="move-to-next-block.html"><span>move</span><wbr><span>To</span><wbr><span>Next</span><wbr><span><span>Block</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1071856813%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="move-to-next-block.html"><span class="token function">moveToNextBlock</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Moves the caret to the start of the next block; stays put at the document end.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="452702184%2FFunctions%2F1661789208" anchor-label="moveToNextSymbol" id="452702184%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="move-to-next-symbol.html"><span>move</span><wbr><span>To</span><wbr><span>Next</span><wbr><span><span>Symbol</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="452702184%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="move-to-next-symbol.html"><span class="token function">moveToNextSymbol</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Moves the caret to the next symbol; stays put at the document end.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-65382538%2FFunctions%2F1661789208" anchor-label="moveToNextWord" id="-65382538%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="move-to-next-word.html"><span>move</span><wbr><span>To</span><wbr><span>Next</span><wbr><span><span>Word</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-65382538%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="move-to-next-word.html"><span class="token function">moveToNextWord</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Moves the caret to the start of the next word; stays put at the document end.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="743711725%2FFunctions%2F1661789208" anchor-label="moveToPrevBlock" id="743711725%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="move-to-prev-block.html"><span>move</span><wbr><span>To</span><wbr><span>Prev</span><wbr><span><span>Block</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="743711725%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="move-to-prev-block.html"><span class="token function">moveToPrevBlock</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Moves the caret to the start of the previous block; stays put at the document start.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1129860952%2FFunctions%2F1661789208" anchor-label="moveToPrevSymbol" id="-1129860952%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="move-to-prev-symbol.html"><span>move</span><wbr><span>To</span><wbr><span>Prev</span><wbr><span><span>Symbol</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1129860952%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="move-to-prev-symbol.html"><span class="token function">moveToPrevSymbol</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Moves the caret to the previous symbol; stays put at the document start.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1448052790%2FFunctions%2F1661789208" anchor-label="moveToPrevWord" id="1448052790%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="move-to-prev-word.html"><span>move</span><wbr><span>To</span><wbr><span>Prev</span><wbr><span><span>Word</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1448052790%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="move-to-prev-word.html"><span class="token function">moveToPrevWord</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Moves the caret to the start of the previous word; stays put at the document start.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1575661477%2FFunctions%2F1661789208" anchor-label="moveToStart" id="1575661477%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="move-to-start.html"><span>move</span><wbr><span>To</span><wbr><span><span>Start</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1575661477%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="move-to-start.html"><span class="token function">moveToStart</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Moves the caret to the start of the document.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="896616861%2FFunctions%2F1661789208" anchor-label="moveToStartOfBlock" id="896616861%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="move-to-start-of-block.html"><span>move</span><wbr><span>To</span><wbr><span>Start</span><wbr><span>Of</span><wbr><span><span>Block</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="896616861%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="move-to-start-of-block.html"><span class="token function">moveToStartOfBlock</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">block<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Moves the caret to the first character of block <a href="move-to-start-of-block.html">block</a> (clamped into range).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1525125684%2FFunctions%2F1661789208" anchor-label="moveToStartOfSymbol" id="1525125684%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="move-to-start-of-symbol.html"><span>move</span><wbr><span>To</span><wbr><span>Start</span><wbr><span>Of</span><wbr><span><span>Symbol</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1525125684%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="move-to-start-of-symbol.html"><span class="token function">moveToStartOfSymbol</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">symbol<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Moves the caret in front of symbol <a href="move-to-start-of-symbol.html">symbol</a> (clamped into range).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="778269634%2FFunctions%2F1661789208" anchor-label="moveToStartOfWord" id="778269634%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="move-to-start-of-word.html"><span>move</span><wbr><span>To</span><wbr><span>Start</span><wbr><span>Of</span><wbr><span><span>Word</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="778269634%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="move-to-start-of-word.html"><span class="token function">moveToStartOfWord</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">word<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Moves the caret to the first character of word <a href="move-to-start-of-word.html">word</a> (clamped into range).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1561857991%2FFunctions%2F1661789208" anchor-label="moveToSymbol" id="-1561857991%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="move-to-symbol.html"><span>move</span><wbr><span>To</span><wbr><span><span>Symbol</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1561857991%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="move-to-symbol.html"><span class="token function">moveToSymbol</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">symbol<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Moves the caret in front of symbol <a href="move-to-symbol.html">symbol</a> (clamped into range).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-823750023%2FFunctions%2F1661789208" anchor-label="removePropertyChangeListener" id="-823750023%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="remove-property-change-listener.html"><span>remove</span><wbr><span>Property</span><wbr><span>Change</span><wbr><span><span>Listener</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-823750023%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="remove-property-change-listener.html"><span class="token function">removePropertyChangeListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">listener<span class="token operator">: </span><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/beans/PropertyChangeListener.html">PropertyChangeListener</a></span></span><span class="token punctuation">)</span></div><div class="symbol monospace"><span class="token keyword">fun </span><a href="remove-property-change-listener.html"><span class="token function">removePropertyChangeListener</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">propertyName<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">listener<span class="token operator">: </span><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/beans/PropertyChangeListener.html">PropertyChangeListener</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <div class="footer--container">
+            <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+            <div class="footer--content">
+                <div>
+                    <span>Generated by </span>
+                    <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                        Dokka
+                    </a>
+                    <div>© 2026 Copyright</div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
