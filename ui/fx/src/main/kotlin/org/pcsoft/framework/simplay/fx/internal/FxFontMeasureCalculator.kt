@@ -52,6 +52,21 @@ internal open class FxFontMeasureCalculator : FontMeasureCalculator {
             TextMetrics(width = bounds.width, ascent = ascent, descent = descent)
         }
 
+    /**
+     * Measures the per-glyph advances by reusing a single [Text] node - font applied once, then only
+     * the string swapped - instead of one full [measure] round-trip (and cache entry) per glyph.
+     */
+    override fun measureAdvances(font: Font, text: String): List<Double> {
+        val node = Text().apply {
+            this.font = toFxFont(font)
+            boundsType = TextBoundsType.LOGICAL
+        }
+        return text.map { ch ->
+            node.text = ch.toString()
+            node.layoutBounds.width
+        }
+    }
+
     /** Maps an engine [Font] onto the matching cached JavaFX [FxFont]. */
     internal fun toFxFont(font: Font): FxFont = fontCache.getOrPut(font) {
         FxFont.font(

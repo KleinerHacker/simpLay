@@ -2,7 +2,7 @@
 
 simpLay is a Kotlin framework for building simulations. The core is a Kotlin
 Multiplatform engine; the integration modules are grouped into user-interface
-bindings under `ui/` and output-format bindings under `export/`.
+bindings under `ui/`.
 
 ## Modules
 
@@ -12,19 +12,18 @@ bindings under `ui/` and output-format bindings under `export/`.
 | `ui/common`        | Kotlin JVM           | `simplay-common`    | Toolkit-agnostic building blocks for GUI bindings |
 | `ui/fx`            | Kotlin JVM           | `simplay-fx`        | JavaFX integration for the engine             |
 | `ui/swing`         | Kotlin JVM           | `simplay-swing`     | Swing integration for the engine             |
-| `ui/console`       | Kotlin Multiplatform | `simplay-console`   | Console output integration for the engine     |
-| `export/jvm-pdf`   | Kotlin JVM           | `simplay-jvm-pdf`   | PDF export integration for the engine (JVM)   |
-| `export/jvm-print` | Kotlin JVM           | `simplay-jvm-print` | Printing integration for the engine (JVM)     |
+
+Console output (`ui/console`), PDF export (`export/jvm-pdf`) and printing
+(`export/jvm-print`) are planned; see _Implementation state_ below.
 
 The shared build logic is provided by convention plugins in `buildSrc`
 (`kotlin-jvm`, `kotlin-multiplatform`). The Gradle project paths mirror the
-directory layout (`:ui:fx`, `:export:jvm-pdf`, ...); the repository root contains
+directory layout (`:ui:fx`, `:ui:swing`, ...); the repository root contains
 no source code.
 
 The base package is `org.pcsoft.framework.simplay`; each module appends its own
 name, independent of its directory group (`...simplay.engine`,
-`...simplay.uicommon`, `...simplay.fx`, `...simplay.swing`, `...simplay.console`,
-`...simplay.jvmpdf`, `...simplay.jvmprint`).
+`...simplay.uicommon`, `...simplay.fx`, `...simplay.swing`).
 
 ## Checkout and build
 
@@ -76,7 +75,7 @@ Build tasks relevant for consumers and maintainers:
 
 ## Implementation state
 
-* [x] Multi-module project layout: `engine`, `ui/` (`common`, `fx`, `swing`, `console`), `export/` (`jvm-pdf`, `jvm-print`)
+* [x] Multi-module project layout: `engine`, `ui/` (`common`, `fx`, `swing`)
 * [ ] Simulation engine core (`engine`)
     * [x] Raw and measured document model; serializable raw model (JSON, YAML,
       XML, JVM serialization)

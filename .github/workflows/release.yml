@@ -33,7 +33,7 @@ jobs:
       - name: Verify changelog entry exists
         run: |
           TAG="${{ github.ref_name }}"
-          NOTES=$(awk "/^## \[$TAG\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
+          NOTES=$(awk -v tag="$TAG" '$0 == "## [" tag "]" {found=1; next} found && /^## \[/ {exit} found {print}' CHANGELOG.md)
           NOTES=$(echo "$NOTES" | sed '/./,$!d' | sed -e :a -e '/^\n*$/{$d;N;ba}')
           if [ -z "$NOTES" ]; then
             echo "ERROR: No changelog entry found for tag $TAG"
@@ -246,7 +246,7 @@ jobs:
       - name: Extract changelog
         run: |
           TAG="${{ github.ref_name }}"
-          NOTES=$(awk "/^## \[$TAG\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
+          NOTES=$(awk -v tag="$TAG" '$0 == "## [" tag "]" {found=1; next} found && /^## \[/ {exit} found {print}' CHANGELOG.md)
           NOTES=$(echo "$NOTES" | sed '/./,$!d' | sed -e :a -e '/^\n*$/{$d;N;ba}')
           if [ -z "$NOTES" ]; then
             echo "ERROR: No changelog entry found for tag $TAG"

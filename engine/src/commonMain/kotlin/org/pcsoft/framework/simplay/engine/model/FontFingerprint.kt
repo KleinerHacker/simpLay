@@ -107,13 +107,14 @@ data class FontFingerprint(
          * Takes a [FontFingerprint] of [font] by measuring [REFERENCE_GLYPHS] at [NORMALIZED_SIZE]
          * through [measurer].
          *
-         * Every reference glyph is measured on its own so a single changed glyph is visible; every
-         * value is quantized to three decimals to drop noise below the fingerprint's resolution.
+         * Every reference glyph is measured on its own (via [FontMeasureCalculator.measureAdvances])
+         * so a single changed glyph is visible; every value is quantized to three decimals to drop
+         * noise below the fingerprint's resolution.
          */
         fun of(measurer: FontMeasureCalculator, font: Font): FontFingerprint {
             val probe = font.copy(size = NORMALIZED_SIZE, fingerprint = null)
             val whole = measurer.measure(probe, REFERENCE_GLYPHS)
-            val advances = REFERENCE_GLYPHS.map { ch -> quantize(measurer.measure(probe, ch.toString()).width) }
+            val advances = measurer.measureAdvances(probe, REFERENCE_GLYPHS).map { quantize(it) }
             return FontFingerprint(
                 normalizedSize = NORMALIZED_SIZE,
                 ascent = quantize(whole.ascent),
@@ -130,7 +131,8 @@ data class FontFingerprint(
         fun decode(text: String): FontFingerprint {
             val parts = text.trim().split(SEP)
             require(parts.size == 5 && parts[0] == FORMAT_TAG) { "not a v1 font fingerprint: '$text'" }
-            val advances = parts[4].split(LIST_SEP).filter { it.isNotEmpty() }.map { token ->
+            require(parts[4].isNotEmpty()) { "font fingerprint has no advances: '$text'" }
+            val advances = parts[4].split(LIST_SEP).map { token ->
                 token.toDoubleOrNull() ?: throw IllegalArgumentException("invalid advance '$token' in '$text'")
             }
             return FontFingerprint(

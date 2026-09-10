@@ -12,6 +12,20 @@ excluded.
 
 ## [UNRELEASED]
 
+### Added
+
+- `engine`: `FontMeasureCalculator.measureAdvances(font, text)` returns the advance
+  width of every character of a string in one call. It has a default implementation
+  that measures each glyph through `measure`, so existing calculators keep working
+  unchanged; the `fx` and `swing` calculators override it to reuse a single platform
+  metrics object. `FontFingerprint.of` now takes its per-glyph advances through it.
+
+### Changed
+
+- `engine`: `FontFingerprint.decode(text)` now rejects a line whose advance section
+  is empty or contains a gap between two separators instead of silently returning a
+  fingerprint with a truncated advance list.
+
 ## [0.2.1]
 
 ### Added

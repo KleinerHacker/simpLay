@@ -49,6 +49,15 @@ internal open class SwingFontMeasureCalculator : FontMeasureCalculator {
             )
         }
 
+    /**
+     * Measures the per-glyph advances from one resolved [AwtFont] and the shared [frc], skipping the
+     * line-metrics lookup and the per-glyph cache entry that a full [measure] call per glyph incurs.
+     */
+    override fun measureAdvances(font: Font, text: String): List<Double> {
+        val awt = toAwtFont(font)
+        return text.map { ch -> awt.getStringBounds(ch.toString(), frc).width }
+    }
+
     /** Maps an engine [Font] onto the matching cached AWT [AwtFont]. */
     internal fun toAwtFont(font: Font): AwtFont = fontCache.getOrPut(font) {
         var style = AwtFont.PLAIN

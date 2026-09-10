@@ -52,6 +52,23 @@ class FxFontMeasureCalculatorTest : JavaFxTestBase() {
     }
 
     /**
+     * The reused-[javafx.scene.text.Text]-node advance path of
+     * [FxFontMeasureCalculator.measureAdvances] must yield exactly the per-glyph widths that calling
+     * [FxFontMeasureCalculator.measure] on each single character produces, so a font fingerprint
+     * stays comparable regardless of which path filled it.
+     */
+    @Test
+    fun measureAdvancesMatchesPerGlyphMeasure() {
+        val calculator = FxFontMeasureCalculator()
+        val text = "Ag.7"
+
+        val batch = onFxThread { calculator.measureAdvances(font, text) }
+        val perGlyph = onFxThread { text.map { calculator.measure(font, it.toString()).width } }
+
+        assertEquals(perGlyph, batch)
+    }
+
+    /**
      * A larger font size must produce a larger advance width and a larger line height for the same
      * text.
      */

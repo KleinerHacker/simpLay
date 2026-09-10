@@ -34,4 +34,23 @@ fun interface FontMeasureCalculator {
      *   doubles.
      */
     fun measure(font: Font, text: String): TextMetrics
+
+    /**
+     * Returns the advance width of every `Char` of [text] in [font], one entry per character, in
+     * order.
+     *
+     * The default implementation measures each glyph on its own through [measure]. A backend that
+     * can build a platform metrics object once and then read per-glyph advances from it should
+     * override this to avoid a full [measure] round-trip per glyph.
+     *
+     * Used by [org.pcsoft.framework.simplay.engine.model.FontFingerprint.of], which measures a long
+     * reference string glyph by glyph. An override must yield the same widths as the default, so a
+     * fingerprint stays comparable regardless of which path produced it.
+     *
+     * @param font the font the text would be rendered in.
+     * @param text the string whose per-character advances are wanted.
+     * @return the advance widths, as unit-less doubles, `text.length` entries long.
+     */
+    fun measureAdvances(font: Font, text: String): List<Double> =
+        text.map { measure(font, it.toString()).width }
 }

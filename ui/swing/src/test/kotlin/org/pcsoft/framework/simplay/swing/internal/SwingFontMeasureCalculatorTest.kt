@@ -63,6 +63,23 @@ class SwingFontMeasureCalculatorTest {
     }
 
     /**
+     * Verifies that [SwingFontMeasureCalculator.measureAdvances] - which reads all advances from one
+     * resolved AWT font - returns exactly the per-glyph widths that calling
+     * [SwingFontMeasureCalculator.measure] on each single character yields, so a font fingerprint
+     * stays comparable regardless of which path filled it.
+     */
+    @Test
+    fun measureAdvancesMatchesPerGlyphMeasure() {
+        val font = Font(family = "SansSerif", size = 14.0)
+        val text = "Ag.7"
+
+        val batch = calc.measureAdvances(font, text)
+        val perGlyph = text.map { calc.measure(font, it.toString()).width }
+
+        assertEquals(perGlyph, batch)
+    }
+
+    /**
      * Verifies that the engine font weight and style are mapped onto the matching AWT font style
      * bits.
      */

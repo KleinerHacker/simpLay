@@ -32,8 +32,6 @@ val aggregatedModules = listOf(
     ":ui:common",
     ":ui:fx",
     ":ui:swing",
-    ":export:jvm-pdf",
-    ":export:jvm-print",
 )
 
 dependencies {

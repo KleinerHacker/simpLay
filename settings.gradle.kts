@@ -35,8 +35,5 @@ include(":engine")
 include(":ui:common")
 include(":ui:fx")
 include(":ui:swing")
-include(":ui:console")
-include(":export:jvm-pdf")
-include(":export:jvm-print")
 
 rootProject.name = "simplay"

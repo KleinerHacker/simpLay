@@ -52,6 +52,13 @@ val measured = engine.measure(document)
 The result is deterministic: the same document and callback always produce the
 same `MeasuredDocument`.
 
+`FontMeasureCalculator` has one more method, `measureAdvances(font, text)`, which
+returns the advance width of every character of a string. It ships with a default
+that calls `measure` once per glyph, so a lambda callback needs nothing extra; a
+backend that can build a platform metrics object once should override it (the `fx`
+and `swing` calculators do). `FontFingerprint.of` uses it for its per-glyph
+advances.
+
 #### Measuring from a RenderConfiguration
 
 A renderer usually keeps its measure settings in a `RenderConfiguration` (an

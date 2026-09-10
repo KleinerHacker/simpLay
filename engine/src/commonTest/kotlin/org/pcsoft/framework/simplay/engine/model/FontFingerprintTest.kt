@@ -49,6 +49,26 @@ class FontFingerprintTest {
     }
 
     /**
+     * Use case: [FontFingerprint.of] reads the per-glyph advances through
+     * [FontMeasureCalculator.measureAdvances], so a backend that overrides that method to reuse one
+     * platform metrics object controls the advances that land in the fingerprint.
+     */
+    @Test
+    fun ofUsesMeasureAdvancesForThePerGlyphWidths() {
+        val calculator = object : FontMeasureCalculator {
+            override fun measure(font: Font, text: String): TextMetrics =
+                TextMetrics(width = text.length * font.size * 0.6, ascent = font.size * 0.8, descent = font.size * 0.2)
+
+            override fun measureAdvances(font: Font, text: String): List<Double> =
+                text.map { 42.0 }
+        }
+
+        val print = FontFingerprint.of(calculator, font)
+
+        assertTrue(print.advances.all { it == 42.0 }, "advances come from measureAdvances, not per-glyph measure")
+    }
+
+    /**
      * Use case: the concrete font size does not influence the fingerprint, so the same face at two
      * sizes yields an equal fingerprint.
      */
@@ -129,6 +149,17 @@ class FontFingerprintTest {
         assertFailsWith<IllegalArgumentException> { FontFingerprint.decode("not-a-fingerprint") }
         assertFailsWith<IllegalArgumentException> { FontFingerprint.decode("v1|100.0|80.0|20.0") }
         assertFailsWith<IllegalArgumentException> { FontFingerprint.decode("v1|100.0|x|20.0|60.0") }
+    }
+
+    /**
+     * Use case: [FontFingerprint.decode] does not silently produce a fingerprint with a truncated or
+     * empty advance list - an empty advances field and a gap between two separators are both
+     * rejected instead of being dropped.
+     */
+    @Test
+    fun decodeRejectsEmptyOrGappedAdvances() {
+        assertFailsWith<IllegalArgumentException> { FontFingerprint.decode("v1|100.0|80.0|20.0|") }
+        assertFailsWith<IllegalArgumentException> { FontFingerprint.decode("v1|100.0|80.0|20.0|60.0,,61.0") }
     }
 
     /**

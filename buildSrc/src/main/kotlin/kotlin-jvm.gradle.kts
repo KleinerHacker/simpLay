@@ -14,8 +14,6 @@
 // `buildSrc` is a Gradle-recognized directory and every plugin there will be easily available in the rest of the build.
 package buildsrc.convention
 
-import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
-import org.gradle.api.publish.tasks.GenerateModuleMetadata
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
@@ -106,28 +104,6 @@ publishing {
                 password = System.getenv("GITHUB_TOKEN") ?: ""
             }
         }
-    }
-}
-
-// A module with no production Kotlin source yet (only placeholder files, e.g. ".gitkeep") is
-// excluded from everything publishing-related - module metadata generation and every publish
-// task, both to a remote repository and to Maven Local. There is nothing meaningful to publish
-// and an empty module would otherwise fail the publish with a missing-artifact error.
-//
-// TODO(simplay): REMOVE this whole `hasProductionKotlinSources` guard once every module carries
-// real production sources. It is a temporary crutch for the currently empty placeholder modules
-// (export/jvm-pdf, export/jvm-print, ui/console). Delete the block in this file AND in
-// kotlin-multiplatform.gradle.kts.
-val hasProductionKotlinSources = fileTree("src/main/kotlin") {
-    include("**/*.kt")
-}.files.isNotEmpty()
-
-if (!hasProductionKotlinSources) {
-    tasks.withType<GenerateModuleMetadata>().configureEach {
-        enabled = false
-    }
-    tasks.withType<AbstractPublishToMaven>().configureEach {
-        enabled = false
     }
 }
 
