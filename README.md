@@ -94,8 +94,9 @@ Build tasks relevant for consumers and maintainers:
     * [ ] Engine user documentation (MkDocs, KDoc alignment)
 * [ ] Console output integration (`ui/console`)
 * [x] Toolkit-agnostic GUI building blocks (`ui/common`): linear document text
-  index, glyph hit test, selection span, document text editor and styled-text
-  clipboard serialisation, shared by `ui/fx` and `ui/swing`
+  index, glyph hit test, selection span, document text editor, styled-text
+  clipboard serialisation and per-page deactivation (`PageDeactivationMode`),
+  shared by `ui/fx` and `ui/swing`
 * [x] JavaFX integration (`ui/fx`): `CanvasDocumentRenderer` (whole-document and
   single-page canvas rendering) and `PaperSheetView` - a scrollable, zoomable
   paper-sheet control with mouse text selection, in-place editing, FXML-compatible

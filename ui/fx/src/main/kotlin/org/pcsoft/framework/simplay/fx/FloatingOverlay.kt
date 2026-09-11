@@ -50,10 +50,10 @@ import javafx.scene.Node
  * </PaperSheetView>
  * ```
  *
- * While the trigger holds, the read-only [active], [activeBounds], [activeIndex], [activeText] and
- * [activeDocumentRange] fields carry the current context and can be bound from FXML with
- * `${copyBar.activeText}` and friends. [onShown] and [onHidden] fire on the show / hide transitions
- * with the same context in a [FloatingOverlayEvent].
+ * While the trigger holds, the read-only [active], [activeBounds], [activeIndex], [activeText],
+ * [activeDocumentRange] and [activePageDeactivated] fields carry the current context and can be bound
+ * from FXML with `${copyBar.activeText}` and friends. [onShown] and [onHidden] fire on the show / hide
+ * transitions with the same context in a [FloatingOverlayEvent].
  *
  * Every property follows the JavaFX bean convention: the property object through `xxxProperty()`, the
  * value through `getXxx()` / `setXxx()` (or `isXxx()` for booleans).
@@ -139,6 +139,7 @@ class FloatingOverlay {
     private val activeIndexWrapper = ReadOnlyIntegerWrapper(this, "activeIndex", -1)
     private val activeTextWrapper = ReadOnlyStringWrapper(this, "activeText", "")
     private val activeDocumentRangeWrapper = ReadOnlyObjectWrapper<IntRange?>(this, "activeDocumentRange", null)
+    private val activePageDeactivatedWrapper = ReadOnlyBooleanWrapper(this, "activePageDeactivated", false)
 
     /** The [active] property, read-only. */
     @get:JvmName("activeProperty")
@@ -179,6 +180,13 @@ class FloatingOverlay {
     /** The covered character range for [FloatingOverlayTrigger.SELECTION] while [isActive], else `null`. */
     val activeDocumentRange: IntRange? get() = activeDocumentRangeWrapper.get()
 
+    /** The [activePageDeactivated] property, read-only. */
+    @get:JvmName("activePageDeactivatedProperty")
+    val activePageDeactivatedProperty: ReadOnlyBooleanProperty get() = activePageDeactivatedWrapper.readOnlyProperty
+
+    /** Whether the page the trigger sits on is currently deactivated while [isActive]. */
+    val isActivePageDeactivated: Boolean get() = activePageDeactivatedWrapper.get()
+
     //endregion
 
     //region Events
@@ -208,12 +216,19 @@ class FloatingOverlay {
     //region View-side updates
 
     /** Replaces the active-state fields; called by the skin on every refresh while the trigger holds. */
-    internal fun updateActiveState(bounds: Bounds?, index: Int, text: String, documentRange: IntRange?) {
+    internal fun updateActiveState(
+        bounds: Bounds?,
+        index: Int,
+        text: String,
+        documentRange: IntRange?,
+        pageDeactivated: Boolean,
+    ) {
         activeWrapper.set(true)
         activeBoundsWrapper.set(bounds)
         activeIndexWrapper.set(index)
         activeTextWrapper.set(text)
         activeDocumentRangeWrapper.set(documentRange)
+        activePageDeactivatedWrapper.set(pageDeactivated)
     }
 
     /** Clears the active-state fields; called by the skin when the overlay is hidden. */
@@ -223,19 +238,21 @@ class FloatingOverlay {
         activeIndexWrapper.set(-1)
         activeTextWrapper.set("")
         activeDocumentRangeWrapper.set(null)
+        activePageDeactivatedWrapper.set(false)
     }
 
     internal fun fireShown(kind: FloatingOverlayTrigger) {
         onShown?.handle(
             FloatingOverlayEvent(
-                this, kind, activeBounds, activeIndex, activeText, activeDocumentRange, FloatingOverlayEvent.SHOWN,
+                this, kind, activeBounds, activeIndex, activeText, activeDocumentRange,
+                isActivePageDeactivated, FloatingOverlayEvent.SHOWN,
             ),
         )
     }
 
     internal fun fireHidden(kind: FloatingOverlayTrigger) {
         onHidden?.handle(
-            FloatingOverlayEvent(this, kind, null, -1, "", null, FloatingOverlayEvent.HIDDEN),
+            FloatingOverlayEvent(this, kind, null, -1, "", null, false, FloatingOverlayEvent.HIDDEN),
         )
     }
 

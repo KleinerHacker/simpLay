@@ -21,6 +21,8 @@ import org.pcsoft.framework.simplay.swing.PaperSheetView
 import org.pcsoft.framework.simplay.swing.CaretModel
 import org.pcsoft.framework.simplay.swing.internal.SwingFontMeasureCalculator
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
+import org.pcsoft.framework.simplay.uicommon.EditableRegions
+import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 import org.pcsoft.framework.simplay.uicommon.hitTest
 import org.pcsoft.framework.simplay.uicommon.segmentSpanX
 
@@ -34,6 +36,10 @@ import org.pcsoft.framework.simplay.uicommon.segmentSpanX
  * events to. The caret reads the measured document, the text index, the page tops, the scroll offset
  * and the [PaperSheetView] settings through the supplied accessors, shares the delegate's selection
  * (so `Shift` + navigation can extend it) and asks the delegate to repaint through [requestRedraw].
+ *
+ * In [PageDeactivationMode.DISABLED] every plain (non-`Shift`) [setCaret] move snaps out of a
+ * deactivated page's block in the direction of travel, per [EditableRegions.snapOutOfBlocked]; a
+ * `Shift` selection may still span it.
  */
 internal class PaperSheetCaret(
     private val view: PaperSheetView,
@@ -223,12 +229,14 @@ internal class PaperSheetCaret(
 
     /**
      * Moves the caret to [index]. With [extend] the selection grows from the kept `Shift` anchor to
-     * the new position; without it the selection collapses. [keepDesiredX] preserves the wish-x for
-     * consecutive vertical moves.
+     * the new position (and may span a `DISABLED` page); without it the selection collapses and the
+     * new position is snapped out of a `DISABLED` page's block in the direction of travel.
+     * [keepDesiredX] preserves the wish-x for consecutive vertical moves.
      */
     fun setCaret(index: Int, extend: Boolean, keepDesiredX: Boolean = false) {
         val idx = textIndex() ?: return
-        val clamped = idx.clamp(index)
+        val rawClamped = idx.clamp(index)
+        val clamped = if (extend) rawClamped else snapOutOfDisabled(rawClamped, position)
         if (extend) {
             if (shiftAnchor == null) shiftAnchor = position
             selection.setAnchorFocus(idx.clamp(shiftAnchor ?: position), clamped)
@@ -239,6 +247,21 @@ internal class PaperSheetCaret(
         position = clamped
         if (!keepDesiredX) desiredX = null
         restartBlink()
+    }
+
+    /**
+     * `target` when [PaperSheetView.deactivatedPageHandling] is not [PageDeactivationMode.DISABLED] or
+     * there is nothing deactivated; otherwise `target` snapped out of a blocked range in the direction
+     * of travel from `from`.
+     */
+    private fun snapOutOfDisabled(target: Int, from: Int): Int {
+        if (view.deactivatedPageHandling != PageDeactivationMode.DISABLED) return target
+        val ids = view.deactivatedPageIds
+        if (ids.isEmpty()) return target
+        val idx = textIndex() ?: return target
+        val doc = view.document ?: return target
+        val direction = if (target >= from) 1 else -1
+        return EditableRegions.of(idx, ids, PageDeactivationMode.DISABLED, doc).snapOutOfBlocked(target, direction)
     }
 
     private fun currentSeg(): DocumentTextIndex.Segment? {

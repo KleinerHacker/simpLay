@@ -14,7 +14,7 @@ package org.pcsoft.framework.simplay.engine
 
 import org.pcsoft.framework.simplay.engine.measure.MeasuredFont
 import org.pcsoft.framework.simplay.engine.model.TextPart
-import org.pcsoft.framework.simplay.engine.model.TextSymbol
+import org.pcsoft.framework.simplay.engine.model.TextWhitespace
 import org.pcsoft.framework.simplay.engine.model.TextWord
 
 /**
@@ -25,7 +25,7 @@ import org.pcsoft.framework.simplay.engine.model.TextWord
  * @property part the raw text part, or a synthetic [TextWord] when a word was split.
  * @property width the advance width of [part], as a unit-less double.
  * @property spaceBefore the width of the gap in front of this part (`0.0` for the first part of a
- *   line and for every [TextSymbol]).
+ *   line and whenever no [TextWhitespace] preceded it in the raw parts).
  */
 class UnplacedPart(
     val part: TextPart,
@@ -66,7 +66,9 @@ fun interface LineBreakerStrategy {
     /**
      * Breaks [parts] into lines that each fit into [maxWidth] where the strategy allows it.
      *
-     * @param parts the raw parts of one block, in reading order, without whitespace parts.
+     * @param parts the raw parts of one block, in reading order; may contain [TextWhitespace]
+     *   parts, which never produce a glyph of their own but determine the [UnplacedPart.spaceBefore]
+     *   gap in front of the next non-whitespace part.
      * @param font the resolved font of the block.
      * @param maxWidth the content width available for a line, as a unit-less double.
      * @param measurer the callback used to measure parts.
@@ -87,9 +89,12 @@ fun interface LineBreakerStrategy {
  * The default [LineBreakerStrategy]: greedy, word- and symbol-aware.
  *
  * Parts are added to the current line until the next part no longer fits, then a new line starts.
- * A single space precedes every [TextWord] except the first of a line; a [TextSymbol] is attached
- * without a leading space. A word wider than [maxWidth] on its own is offered to the
- * [WordBreakerStrategy]; if that returns no offsets the word stays whole and overflows its line.
+ * A [TextWhitespace] part produces no glyph of its own; instead it marks the very next part to
+ * receive a single [FontMeasureCalculator]-measured space width in front of it (unless that part
+ * starts a new line). A part with no preceding [TextWhitespace] - e.g. a [TextWord] directly after a
+ * symbol - is attached without a leading space. A word wider than [maxWidth] on its own is offered
+ * to the [WordBreakerStrategy]; if that returns no offsets the word stays whole and overflows its
+ * line.
  */
 object GreedyWordLineBreakerStrategy : LineBreakerStrategy {
 
@@ -104,10 +109,17 @@ object GreedyWordLineBreakerStrategy : LineBreakerStrategy {
 
         val spaceWidth = measurer.measure(font.raw, " ").width
         val acc = LineAccumulator(font)
+        var pendingSpace = false
 
         for (part in parts) {
+            if (part is TextWhitespace) {
+                pendingSpace = true
+                continue
+            }
+
             val metrics = measurer.measure(font.raw, part.text)
-            val space = if (acc.isEmpty || part is TextSymbol) 0.0 else spaceWidth
+            val space = if (acc.isEmpty || !pendingSpace) 0.0 else spaceWidth
+            pendingSpace = false
 
             if (!acc.isEmpty && acc.currentWidth + space + metrics.width > maxWidth) {
                 acc.flush()
@@ -166,7 +178,9 @@ object GreedyWordLineBreakerStrategy : LineBreakerStrategy {
 
 /**
  * A [LineBreakerStrategy] that fills lines character by character and breaks at any position, even
- * inside a word. It never consults the [WordBreakerStrategy]. Word gaps follow the same rule as the
+ * inside a word. It never consults the [WordBreakerStrategy]. A [TextWhitespace] part is skipped
+ * entirely (no glyph, no character offered to the character-fitting loop) and only marks the next
+ * non-whitespace part's first chunk to receive a leading space, following the same rule as the
  * greedy strategy.
  */
 object CharacterLineBreakerStrategy : LineBreakerStrategy {
@@ -182,12 +196,18 @@ object CharacterLineBreakerStrategy : LineBreakerStrategy {
 
         val spaceWidth = measurer.measure(font.raw, " ").width
         val acc = LineAccumulator(font)
+        var pendingSpace = false
 
         for (part in parts) {
+            if (part is TextWhitespace) {
+                pendingSpace = true
+                continue
+            }
+
             var text = part.text
             var firstChunk = true
             while (text.isNotEmpty()) {
-                val space = if (acc.isEmpty || part is TextSymbol || !firstChunk) 0.0 else spaceWidth
+                val space = if (acc.isEmpty || !pendingSpace || !firstChunk) 0.0 else spaceWidth
                 val remaining = maxWidth - acc.currentWidth - space
                 val whole = measurer.measure(font.raw, text)
 
@@ -216,6 +236,7 @@ object CharacterLineBreakerStrategy : LineBreakerStrategy {
                 firstChunk = false
                 if (text.isNotEmpty()) acc.flush()
             }
+            pendingSpace = false
         }
 
         return acc.result()
@@ -224,7 +245,9 @@ object CharacterLineBreakerStrategy : LineBreakerStrategy {
 
 /**
  * A [LineBreakerStrategy] that never breaks: all parts land in a single [UnplacedLine] that may be
- * wider than [maxWidth]. The [WordBreakerStrategy] is ignored.
+ * wider than [maxWidth]. The [WordBreakerStrategy] is ignored. A [TextWhitespace] part produces no
+ * glyph and only marks the next part to receive a leading space, following the same rule as the
+ * greedy strategy.
  */
 object NoWrapLineBreakerStrategy : LineBreakerStrategy {
 
@@ -239,10 +262,17 @@ object NoWrapLineBreakerStrategy : LineBreakerStrategy {
 
         val spaceWidth = measurer.measure(font.raw, " ").width
         val acc = LineAccumulator(font)
+        var pendingSpace = false
 
         for (part in parts) {
+            if (part is TextWhitespace) {
+                pendingSpace = true
+                continue
+            }
+
             val metrics = measurer.measure(font.raw, part.text)
-            val space = if (acc.isEmpty || part is TextSymbol) 0.0 else spaceWidth
+            val space = if (acc.isEmpty || !pendingSpace) 0.0 else spaceWidth
+            pendingSpace = false
             acc.add(part, metrics.width, space, metrics.ascent, metrics.descent)
         }
 

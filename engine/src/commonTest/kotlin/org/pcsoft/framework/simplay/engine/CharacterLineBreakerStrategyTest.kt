@@ -77,4 +77,44 @@ class CharacterLineBreakerStrategyTest {
 
         assertEquals(0, lines.size)
     }
+
+    /**
+     * Use case: a word directly following a symbol without an original whitespace part between them
+     * gets no leading space.
+     */
+    @Test
+    fun noSpaceBeforeWordDirectlyAfterSymbol() {
+        val lines = CharacterLineBreakerStrategy.breakIntoLines(
+            parts = EngineTestData.parts("paragraph.X"),
+            font = font,
+            maxWidth = 1_000.0,
+            measurer = EngineTestData.measurer,
+            wordBreaker = NoOpWordBreakerStrategy,
+        )
+
+        assertEquals(1, lines.size)
+        assertEquals(3, lines[0].parts.size)
+        assertEquals(0.0, lines[0].parts[1].spaceBefore)
+        assertEquals(0.0, lines[0].parts[2].spaceBefore)
+    }
+
+    /**
+     * Use case: a word following an explicit whitespace part after a symbol does get a leading
+     * space.
+     */
+    @Test
+    fun spaceBeforeWordAfterExplicitWhitespace() {
+        val lines = CharacterLineBreakerStrategy.breakIntoLines(
+            parts = EngineTestData.parts("paragraph. X"),
+            font = font,
+            maxWidth = 1_000.0,
+            measurer = EngineTestData.measurer,
+            wordBreaker = NoOpWordBreakerStrategy,
+        )
+
+        assertEquals(1, lines.size)
+        assertEquals(3, lines[0].parts.size)
+        assertEquals(0.0, lines[0].parts[1].spaceBefore)
+        assertEquals(EngineTestData.SPACE_WIDTH, lines[0].parts[2].spaceBefore)
+    }
 }

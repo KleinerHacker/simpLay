@@ -106,4 +106,38 @@ class DocumentEditorTest {
         assertEquals(1, idx.blockCount)
         assertEquals("one two tail", idx.text)
     }
+
+    /**
+     * Regression test for the reported caret-drift bug: typing `X`, `Y`, `Z` one at a time with the
+     * caret placed at the very end of a block that ends in a symbol (`"The first paragraph."`) must
+     * append the characters in order and land the caret one past each newly inserted character - not
+     * reorder them into `"...paragraph.YZX"` the way the pre-fix lossy whitespace tokenization did.
+     */
+    @Test
+    fun typingThreeCharsAfterSymbolAtBlockEndKeepsOrderAndCaretPosition() {
+        var document = document("The first paragraph.")
+        var idx = index(document)
+        var caret = idx.length
+
+        val afterX = DocumentEditor.insert(idx, document, at = caret, text = "X")
+        document = afterX.document
+        idx = index(document)
+        caret = afterX.caretIndex
+        assertEquals("The first paragraph.X", idx.text)
+        assertEquals("The first paragraph.X".length, caret)
+
+        val afterY = DocumentEditor.insert(idx, document, at = caret, text = "Y")
+        document = afterY.document
+        idx = index(document)
+        caret = afterY.caretIndex
+        assertEquals("The first paragraph.XY", idx.text)
+        assertEquals("The first paragraph.XY".length, caret)
+
+        val afterZ = DocumentEditor.insert(idx, document, at = caret, text = "Z")
+        document = afterZ.document
+        idx = index(document)
+        caret = afterZ.caretIndex
+        assertEquals("The first paragraph.XYZ", idx.text)
+        assertEquals("The first paragraph.XYZ".length, caret)
+    }
 }

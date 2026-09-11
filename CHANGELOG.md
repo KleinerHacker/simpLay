@@ -24,6 +24,24 @@ excluded.
 - `ui/fx` and `ui/swing`: `CanvasDocumentRenderer`, `DocumentImageRenderer` and
   both `PaperSheetView` controls now draw the configured page number on every
   page automatically, using `PageNumbering.textStyle` for its font.
+- `ui/common`, `ui/fx` and `ui/swing`: individual pages of a `PaperSheetView`
+  can be marked deactivated by their stable `Page.id`. The new
+  `deactivatedPageIds` and `deactivatedPageHandling` (`PageDeactivationMode`:
+  `IGNORE`, `DISABLED`, `READONLY` (default), `HIDDEN`) properties, plus the
+  index-based `setPageDeactivated(index, Boolean)` convenience setter, control
+  whether a deactivated page is ignored, shown greyed out and locked with the
+  caret skipping over it, kept navigable but not editable, or removed from the
+  layout entirely. `FloatingOverlayEvent` now reports `pageDeactivated` so a
+  registered overlay can react to it.
+
+### Fixed
+
+- `engine`: `TextBlock` no longer invents a space when reconstructing text
+  where a symbol (e.g. `.`, `-`, `(`) was directly followed by a word with no
+  whitespace in between. Original spaces and tabs are now preserved as
+  explicit `TextWhitespace` parts instead of being discarded during
+  tokenizing, which also fixes a caret/character-order drift that could occur
+  while typing right after such a symbol.
 
 ## [0.2.2]
 

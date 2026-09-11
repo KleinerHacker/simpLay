@@ -27,8 +27,10 @@ import javafx.scene.input.ScrollEvent
 import org.pcsoft.framework.simplay.engine.RenderConfiguration
 import org.pcsoft.framework.simplay.engine.measure
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
+import org.pcsoft.framework.simplay.engine.measure.MeasuredPage
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
+import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 import org.pcsoft.framework.simplay.uicommon.hitTest
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetCanvasPainter
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetCaret
@@ -59,7 +61,10 @@ import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetStyle
  *
  * The sheet chrome, the selection highlight and the caret are painted with the values from the
  * styleable [PaperSheetView] properties (`-fx-sheet-background` and friends); a change to any of them
- * triggers a repaint.
+ * triggers a repaint. A page whose id is in [PaperSheetView.deactivatedPageIds] is excluded from
+ * layout entirely ([PageDeactivationMode.HIDDEN]) or drawn specially ([PageDeactivationMode.DISABLED])
+ * as decided by [PaperSheetView.deactivatedPageHandling]; both are re-evaluated on every relayout /
+ * redraw, so a change to either property takes effect immediately.
  */
 internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheetView>(control) {
 
@@ -137,6 +142,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         selection = selection,
         caret = caret,
         hover = hover,
+        textIndex = { index },
     )
 
     private val keyHandler = EventHandler<KeyEvent> { editor.onKeyPressed(it) }
@@ -170,6 +176,16 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     private val mode: PaperSheetMode get() = skinnable.mode
 
+    /** Whether [page] is excluded from layout entirely by [PageDeactivationMode.HIDDEN]. */
+    private fun isPageHidden(page: MeasuredPage): Boolean =
+        skinnable.deactivatedPageHandling == PageDeactivationMode.HIDDEN &&
+            page.raw.id in skinnable.deactivatedPageIds
+
+    /** Whether [page] is drawn specially by [PageDeactivationMode.DISABLED]. */
+    private fun isPageDisabled(page: MeasuredPage): Boolean =
+        skinnable.deactivatedPageHandling == PageDeactivationMode.DISABLED &&
+            page.raw.id in skinnable.deactivatedPageIds
+
     //endregion
 
     //region Wiring
@@ -189,6 +205,9 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         registerChangeListener(control.smoothCaretBlinkProperty) { caret.restartBlink() }
         registerChangeListener(control.focusedProperty()) { caret.restartBlink() }
 
+        registerChangeListener(control.deactivatedPageIdsProperty) { relayout() }
+        registerChangeListener(control.deactivatedPageHandlingProperty) { relayout() }
+
         registerChangeListener(control.sheetBackgroundProperty) { redraw() }
         registerChangeListener(control.sheetBorderColorProperty) { redraw() }
         registerChangeListener(control.sheetBorderWidthProperty) { redraw() }
@@ -196,6 +215,8 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         registerChangeListener(control.shadowOffsetProperty) { redraw() }
         registerChangeListener(control.selectionColorProperty) { redraw() }
         registerChangeListener(control.caretColorProperty) { redraw() }
+        registerChangeListener(control.deactivatedSheetBackgroundProperty) { redraw() }
+        registerChangeListener(control.deactivatedOverlayColorProperty) { redraw() }
 
         scrollBar.valueProperty().addListener { _, _, _ -> redraw() }
 
@@ -253,11 +274,13 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         var y = 0.0
         doc.pages.forEachIndexed { i, page ->
             pageTops[i] = y
-            y += page.effectiveSize.height
-            if (i != doc.pages.lastIndex) y += gap
+            if (!isPageHidden(page)) {
+                y += page.effectiveSize.height
+                if (i != doc.pages.lastIndex) y += gap
+            }
         }
         contentHeightUnscaled = y
-        contentWidthUnscaled = doc.pages.maxOf { it.effectiveSize.width }
+        contentWidthUnscaled = doc.pages.filterNot(::isPageHidden).maxOfOrNull { it.effectiveSize.width } ?: 0.0
         skinnable.updateContentSize(
             Dimension2D(contentWidthUnscaled + 2.0 * outer, contentHeightUnscaled + 2.0 * outer),
         )
@@ -319,6 +342,8 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         shadowOffset = skinnable.shadowOffset,
         selectionColor = skinnable.selectionColor,
         caretColor = skinnable.caretColor,
+        deactivatedSheetBackground = skinnable.deactivatedSheetBackground,
+        deactivatedOverlayColor = skinnable.deactivatedOverlayColor,
     )
 
     private fun redraw() {
@@ -335,6 +360,8 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
             style = currentStyle(),
             caret = caret.caretPaint(),
             caretOpacity = caret.currentOpacity(),
+            isHidden = ::isPageHidden,
+            isDisabled = ::isPageDisabled,
         )
         renderedPageIndices = painter.renderedPageIndices
         sheetChromeDrawCount = painter.sheetChromeDrawCount
@@ -350,7 +377,8 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     /**
      * The page whose vertical band is closest to [cyUnscaled] (0 distance when inside it), with the
-     * signed distance; used for hit-testing, the pointer shape and the hover tracker.
+     * signed distance; used for hit-testing, the pointer shape and the hover tracker. Pages excluded
+     * from layout by [PageDeactivationMode.HIDDEN] are skipped.
      */
     private fun nearestPage(cyUnscaled: Double): Pair<Int, Double> {
         val doc = measured!!
@@ -358,6 +386,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         var pageIndex = 0
         var bestDist = Double.MAX_VALUE
         doc.pages.forEachIndexed { i, page ->
+            if (isPageHidden(page)) return@forEachIndexed
             val top = outer + pageTops[i]
             val bottom = top + page.effectiveSize.height
             val dist = when {

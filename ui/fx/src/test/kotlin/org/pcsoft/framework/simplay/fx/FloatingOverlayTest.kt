@@ -19,6 +19,7 @@ import javafx.scene.Scene
 import javafx.scene.control.Label
 import javafx.stage.Stage
 import org.junit.jupiter.api.Test
+import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -274,5 +275,71 @@ class FloatingOverlayTest : JavaFxTestBase() {
         onFxThread { view.selectionModel.clearSelection() }
         assertEquals(1, hidden.size)
         assertEquals(FloatingOverlayTrigger.SELECTION, hidden.first().triggerKind)
+    }
+
+    /**
+     * A `PAGE_HOVER` overlay's `onShown` event reports `pageDeactivated = true` while hovering a page
+     * that is marked deactivated under a non-`IGNORE` mode.
+     */
+    @Test
+    fun floatingOverlayEventReportsPageDeactivatedTrue() {
+        val shown = ArrayList<FloatingOverlayEvent>()
+        val overlay = FloatingOverlay().apply {
+            trigger = FloatingOverlayTrigger.PAGE_HOVER
+            content = Label("Page")
+            onShown = EventHandler { shown.add(it) }
+        }
+        val skin = onFxThread {
+            val view = PaperSheetView()
+            view.floatingOverlays.add(overlay)
+            val stage = Stage()
+            stage.scene = Scene(view, 400.0, 700.0)
+            stage.show()
+            view.document = PaperSheetTestFixtures.twoPageDocument()
+            view.deactivatedPageHandling = PageDeactivationMode.READONLY
+            view.setPageDeactivated(1, true)
+            view.applyCss()
+            view.layout()
+            view.skin as PaperSheetViewSkin
+        }
+
+        onFxThread { skin.hoverAtForTest(60.0, 336.0) }
+
+        assertTrue(overlay.isActive)
+        assertEquals(1, shown.size)
+        assertTrue(shown.first().pageDeactivated)
+    }
+
+    /**
+     * The same `PAGE_HOVER` overlay reports `pageDeactivated = false` while hovering the still-active
+     * first page, even though the second page is deactivated.
+     */
+    @Test
+    fun floatingOverlayEventReportsPageDeactivatedFalse() {
+        val shown = ArrayList<FloatingOverlayEvent>()
+        val overlay = FloatingOverlay().apply {
+            trigger = FloatingOverlayTrigger.PAGE_HOVER
+            content = Label("Page")
+            onShown = EventHandler { shown.add(it) }
+        }
+        val skin = onFxThread {
+            val view = PaperSheetView()
+            view.floatingOverlays.add(overlay)
+            val stage = Stage()
+            stage.scene = Scene(view, 400.0, 700.0)
+            stage.show()
+            view.document = PaperSheetTestFixtures.twoPageDocument()
+            view.deactivatedPageHandling = PageDeactivationMode.READONLY
+            view.setPageDeactivated(1, true)
+            view.applyCss()
+            view.layout()
+            view.skin as PaperSheetViewSkin
+        }
+
+        onFxThread { skin.hoverAtForTest(60.0, 60.0) }
+
+        assertTrue(overlay.isActive)
+        assertEquals(1, shown.size)
+        assertFalse(shown.first().pageDeactivated)
     }
 }

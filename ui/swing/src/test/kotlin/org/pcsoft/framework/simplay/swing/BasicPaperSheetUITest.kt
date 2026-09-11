@@ -14,8 +14,10 @@ package org.pcsoft.framework.simplay.swing
 
 import java.awt.Cursor
 import java.awt.image.BufferedImage
+import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -112,4 +114,78 @@ class BasicPaperSheetUITest {
         paint(ui)
         assertEquals(0, ui.sheetChromeDrawCountForTest)
     }
+
+    //region Page deactivation
+
+    /**
+     * A `DISABLED` second page is still drawn (part of [BasicPaperSheetUI.renderedPageIndicesForTest])
+     * but with the deactivated fill instead of the normal sheet background, and the caret does not
+     * render even while it sits inside that page.
+     */
+    @Test
+    fun disabledPageIsPaintedWithOverlayAndNoCaret() {
+        val view = PaperSheetView().apply {
+            mode = PaperSheetMode.EDITABLE
+            document = TestDocuments.twoPage
+        }
+        val ui = ui(view)
+        paint(ui, height = 800)
+        view.caretModel.moveToStartOfBlock(1)
+        view.deactivatedPageHandling = PageDeactivationMode.DISABLED
+        view.setPageDeactivated(1, true)
+        paint(ui, height = 800)
+
+        assertTrue(ui.renderedPageIndicesForTest.contains(1), "the DISABLED page is still drawn")
+        assertEquals(0, ui.caretDrawCountForTest, "no caret should be drawn on a DISABLED page")
+    }
+
+    /**
+     * A `HIDDEN` second page is excluded from layout entirely: it is missing from
+     * [BasicPaperSheetUI.renderedPageIndicesForTest] and no longer contributes to
+     * [PaperSheetView.contentSize].
+     */
+    @Test
+    fun hiddenPageIsExcludedFromLayoutAndNotPainted() {
+        val viewBoth = PaperSheetView().apply { document = TestDocuments.twoPage }
+        paint(ui(viewBoth), height = 800)
+        val heightWithBothPages = viewBoth.contentSize.height
+
+        val view = PaperSheetView().apply { document = TestDocuments.twoPage }
+        val ui = ui(view)
+        paint(ui, height = 800)
+        view.deactivatedPageHandling = PageDeactivationMode.HIDDEN
+        view.setPageDeactivated(1, true)
+        paint(ui, height = 800)
+
+        assertFalse(ui.renderedPageIndicesForTest.contains(1), "the HIDDEN page must not be painted")
+        assertTrue(
+            view.contentSize.height < heightWithBothPages,
+            "hiding a page should shrink the content height (${view.contentSize.height} vs $heightWithBothPages)",
+        )
+    }
+
+    /**
+     * A `READONLY` second page is painted exactly like a normal one, and it still counts in the
+     * rendered pages even though every mutation on it is rejected.
+     */
+    @Test
+    fun readonlyPageIsPaintedNormallyButNotEditable() {
+        val view = PaperSheetView().apply {
+            mode = PaperSheetMode.EDITABLE
+            document = TestDocuments.twoPage
+        }
+        val ui = ui(view)
+        paint(ui, height = 800)
+        view.caretModel.moveToStartOfBlock(1)
+        view.deactivatedPageHandling = PageDeactivationMode.READONLY
+        view.setPageDeactivated(1, true)
+        paint(ui, height = 800)
+
+        assertTrue(ui.renderedPageIndicesForTest.contains(1))
+        val before = view.document
+        ui.typeTextForTest("Z")
+        assertEquals(before, view.document, "READONLY must reject the mutation")
+    }
+
+    //endregion
 }

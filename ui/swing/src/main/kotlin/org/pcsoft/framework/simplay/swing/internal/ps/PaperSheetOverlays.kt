@@ -20,6 +20,8 @@ import org.pcsoft.framework.simplay.swing.FloatingOverlayTrigger
 import org.pcsoft.framework.simplay.swing.OverlayAnchor
 import org.pcsoft.framework.simplay.swing.PaperSheetMode
 import org.pcsoft.framework.simplay.swing.PaperSheetView
+import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
+import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 
 /**
  * The anchor box and context a satisfied [FloatingOverlayTrigger] hands to [PaperSheetOverlays]:
@@ -49,13 +51,15 @@ internal class OverlayLayer : JComponent() {
  * top of the viewport, and on every [refresh] shows, positions (anchor + offsets, clamped to the
  * viewport edge) and hides each overlay's component according to its [FloatingOverlay.trigger]. The
  * Swing counterpart of the `fx` module's `PaperSheetOverlays`; instead of a list-change listener the
- * [refresh] reconciles against [PaperSheetView.floatingOverlays] on every pass.
+ * [refresh] reconciles against [PaperSheetView.floatingOverlays] on every pass. Also carries whether
+ * the page the trigger sits on is currently deactivated.
  */
 internal class PaperSheetOverlays(
     private val view: PaperSheetView,
     private val selection: PaperSheetSelection,
     private val caret: PaperSheetCaret,
     private val hover: PaperSheetHoverTracker,
+    private val textIndex: () -> DocumentTextIndex?,
 ) {
 
     /** The overlay layer, to be added on top of the viewport by the delegate. */
@@ -97,7 +101,8 @@ internal class PaperSheetOverlays(
                 continue
             }
             node.setBounds(placed.first, placed.second, node.width.coerceAtLeast(1), node.height.coerceAtLeast(1))
-            overlay.updateActiveState(geometry.bounds, geometry.index, geometry.text, geometry.range)
+            val deactivated = isPageDeactivated(pageIndexForTrigger(overlay.trigger, geometry))
+            overlay.updateActiveState(geometry.bounds, geometry.index, geometry.text, geometry.range, deactivated)
             if (active.add(overlay)) overlay.fireShown(overlay.trigger)
         }
         layer.revalidate()
@@ -125,6 +130,20 @@ internal class PaperSheetOverlays(
                 else TriggerGeometry(bounds, caret.position, "", caret.position until caret.position)
             }
         }
+    }
+
+    /** The measured-page index the trigger [kind] sits on, or `-1` when it cannot be determined. */
+    private fun pageIndexForTrigger(kind: FloatingOverlayTrigger, geometry: TriggerGeometry): Int = when (kind) {
+        FloatingOverlayTrigger.SELECTION, FloatingOverlayTrigger.CARET -> textIndex()?.pageIndexAt(geometry.index) ?: -1
+        FloatingOverlayTrigger.PARAGRAPH_HOVER, FloatingOverlayTrigger.PAGE_HOVER -> view.hoveredPage
+    }
+
+    /** Whether the raw page at [pageIndex] is currently deactivated per the view's state. */
+    private fun isPageDeactivated(pageIndex: Int): Boolean {
+        if (pageIndex < 0) return false
+        if (view.deactivatedPageHandling == PageDeactivationMode.IGNORE) return false
+        val id = view.document?.pages?.getOrNull(pageIndex)?.id ?: return false
+        return id in view.deactivatedPageIds
     }
 
     private fun detach(overlay: FloatingOverlay, fireEvent: Boolean) {

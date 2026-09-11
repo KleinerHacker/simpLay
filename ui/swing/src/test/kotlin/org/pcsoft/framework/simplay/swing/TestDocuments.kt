@@ -63,4 +63,16 @@ internal object TestDocuments {
     /** [short] with page numbering turned on at [position] (top-center by default). */
     fun numberedShort(position: PageNumberPosition = PageNumberPosition.TOP_CENTER): Document =
         short.copy(numbering = PageNumbering(position = position))
+
+    /**
+     * A two-raw-page document, each page a single [FlowPage] with distinct text and a distinct stable
+     * id, for the page-deactivation tests. Each page's content is short and fits on one sheet, so page
+     * two starts right at the first block boundary.
+     */
+    val twoPage: Document = Document(
+        pages = listOf(
+            FlowPage(layout = layout, blocks = listOf(TextBlock.of("Page one content here.", body))),
+            FlowPage(layout = layout, blocks = listOf(TextBlock.of("Page two content here.", body))),
+        ),
+    )
 }

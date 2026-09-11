@@ -40,6 +40,7 @@ import javafx.scene.paint.Color
 import javafx.scene.paint.Paint
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetStyleableProperties
+import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 
 /**
  * A scrollable and zoomable view that renders a [Document] as physical-looking sheets - each with a
@@ -52,6 +53,13 @@ import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetStyleableProperties
  * the selection and the standard caret-navigation keys (`Home`, `End`, `Ctrl+Home`, `Ctrl+End`,
  * arrows, `Ctrl+Left` / `Ctrl+Right`, `Backspace`, `Delete`, each optionally with `Shift`). Editing
  * replaces [document] with a new instance; the previous document is not mutated.
+ *
+ * [deactivatedPageIds] (stable [org.pcsoft.framework.simplay.engine.model.Page.id] values) together
+ * with [deactivatedPageHandling] mark individual pages as deactivated. Both are transient view state,
+ * never persisted in [document]; see [PageDeactivationMode] for what each mode does. Use
+ * [setPageDeactivated] to toggle a page by its current index - it resolves the index against
+ * [document] into an id immediately, so the marker stays attached to that page even as later edits
+ * shift indices.
  *
  * The only input is [document]. Layout is controlled by [outerMargin] (space around the sheet stack)
  * and [pageGap] (space between two sheets). [zoom] scales the whole view and is always kept within
@@ -66,9 +74,9 @@ import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetStyleableProperties
  * `:focused` pseudo-class works as usual), and [getUserAgentStylesheet] ships the default look. The
  * `-fx-` properties are `-fx-sheet-background`, `-fx-sheet-border-color`, `-fx-sheet-border-width`,
  * `-fx-shadow-color`, `-fx-shadow-offset`, `-fx-selection-color`, `-fx-caret-color`,
- * `-fx-outer-margin` and `-fx-page-gap`. Every colour value is a [Paint] (a gradient works too)
- * except `-fx-caret-color`, which is a plain [Color]. A programmatic setter still wins over the
- * user-agent stylesheet.
+ * `-fx-deactivated-sheet-background`, `-fx-deactivated-overlay-color`, `-fx-outer-margin` and
+ * `-fx-page-gap`. Every colour value is a [Paint] (a gradient works too) except `-fx-caret-color`,
+ * which is a plain [Color]. A programmatic setter still wins over the user-agent stylesheet.
  *
  * Every property follows the JavaFX bean convention: the property object is exposed through a
  * `xxxProperty()` accessor (the Kotlin property is named `xxxProperty`, its JVM getter renamed with
@@ -104,6 +112,49 @@ class PaperSheetView : Control() {
         set(value) {
             modeProperty.set(value)
         }
+
+    //endregion
+
+    //region Page deactivation
+
+    /** The [deactivatedPageIds] property, for binding and change listeners. */
+    @get:JvmName("deactivatedPageIdsProperty")
+    val deactivatedPageIdsProperty: ObjectProperty<Set<String>> =
+        SimpleObjectProperty(this, "deactivatedPageIds", emptySet())
+
+    /**
+     * Stable [org.pcsoft.framework.simplay.engine.model.Page.id] values of the pages currently marked
+     * deactivated. Purely transient view state, never persisted in [document]; how it is honoured is
+     * governed by [deactivatedPageHandling]. Ids no longer present in [document] are simply ignored.
+     */
+    var deactivatedPageIds: Set<String>
+        get() = deactivatedPageIdsProperty.get()
+        set(value) {
+            deactivatedPageIdsProperty.set(value)
+        }
+
+    /** The [deactivatedPageHandling] property, for binding and change listeners. */
+    @get:JvmName("deactivatedPageHandlingProperty")
+    val deactivatedPageHandlingProperty: ObjectProperty<PageDeactivationMode> =
+        SimpleObjectProperty(this, "deactivatedPageHandling", PageDeactivationMode.READONLY)
+
+    /** How [deactivatedPageIds] is honoured; defaults to [PageDeactivationMode.READONLY]. */
+    var deactivatedPageHandling: PageDeactivationMode
+        get() = deactivatedPageHandlingProperty.get()
+        set(value) {
+            deactivatedPageHandlingProperty.set(value)
+        }
+
+    /**
+     * Marks (or unmarks) the page currently at [index] of [document] as deactivated. Resolves [index]
+     * against the current [document] into that page's stable id immediately, so the marker stays
+     * attached to the same page even as later edits shift page indices. A no-op without a [document]
+     * or for an out-of-range [index].
+     */
+    fun setPageDeactivated(index: Int, deactivated: Boolean) {
+        val id = document?.pages?.getOrNull(index)?.id ?: return
+        deactivatedPageIds = if (deactivated) deactivatedPageIds + id else deactivatedPageIds - id
+    }
 
     //endregion
 
@@ -244,6 +295,36 @@ class PaperSheetView : Control() {
         get() = caretColorProperty.get()
         set(value) {
             caretColorProperty.set(value)
+        }
+
+    /** The [deactivatedSheetBackground] property; styleable as `-fx-deactivated-sheet-background`. */
+    @get:JvmName("deactivatedSheetBackgroundProperty")
+    val deactivatedSheetBackgroundProperty: StyleableObjectProperty<Paint> =
+        SimpleStyleableObjectProperty(
+            PaperSheetStyleableProperties.DEACTIVATED_SHEET_BACKGROUND, this, "deactivatedSheetBackground",
+            PaperSheetStyleableProperties.DEFAULT_DEACTIVATED_SHEET_BACKGROUND,
+        )
+
+    /** Fill of a [PageDeactivationMode.DISABLED] sheet, instead of [sheetBackground]. */
+    var deactivatedSheetBackground: Paint
+        get() = deactivatedSheetBackgroundProperty.get()
+        set(value) {
+            deactivatedSheetBackgroundProperty.set(value)
+        }
+
+    /** The [deactivatedOverlayColor] property; styleable as `-fx-deactivated-overlay-color`. */
+    @get:JvmName("deactivatedOverlayColorProperty")
+    val deactivatedOverlayColorProperty: StyleableObjectProperty<Paint> =
+        SimpleStyleableObjectProperty(
+            PaperSheetStyleableProperties.DEACTIVATED_OVERLAY_COLOR, this, "deactivatedOverlayColor",
+            PaperSheetStyleableProperties.DEFAULT_DEACTIVATED_OVERLAY_COLOR,
+        )
+
+    /** Colour of the diagonal hatch drawn over a [PageDeactivationMode.DISABLED] sheet. */
+    var deactivatedOverlayColor: Paint
+        get() = deactivatedOverlayColorProperty.get()
+        set(value) {
+            deactivatedOverlayColorProperty.set(value)
         }
 
     override fun getControlCssMetaData(): MutableList<CssMetaData<out Styleable, *>> =

@@ -28,6 +28,9 @@ import javafx.geometry.Bounds
  *   index; `-1` when not applicable.
  * @property text the trigger text: the selected text or the hovered paragraph text; `""` otherwise.
  * @property documentRange the covered character range for [FloatingOverlayTrigger.SELECTION], else `null`.
+ * @property pageDeactivated whether the page the trigger sits on is currently deactivated (per
+ *   [PaperSheetView.deactivatedPageIds] / [PaperSheetView.deactivatedPageHandling]); always `false` at
+ *   [org.pcsoft.framework.simplay.uicommon.PageDeactivationMode.IGNORE] and on hide.
  */
 class FloatingOverlayEvent internal constructor(
     val overlay: FloatingOverlay,
@@ -36,6 +39,7 @@ class FloatingOverlayEvent internal constructor(
     val index: Int,
     val text: String,
     val documentRange: IntRange?,
+    val pageDeactivated: Boolean,
     eventType: EventType<FloatingOverlayEvent>,
 ) : Event(eventType) {
 

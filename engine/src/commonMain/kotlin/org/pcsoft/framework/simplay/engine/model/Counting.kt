@@ -22,8 +22,9 @@ fun TextBlock.wordCount(): Int = parts.count { it is TextWord }
 /** Number of [TextSymbol] parts in this block. */
 fun TextBlock.symbolCount(): Int = parts.count { it is TextSymbol }
 
-/** Total number of characters across all parts of this block. */
-fun TextBlock.charCount(): Int = parts.sumOf { it.text.length }
+/** Total number of characters across all non-whitespace parts of this block; [TextWhitespace] runs
+ * are not counted (as before whitespace was preserved as its own part). */
+fun TextBlock.charCount(): Int = parts.filterNot { it is TextWhitespace }.sumOf { it.text.length }
 
 /** Sum of [wordCount] over all blocks of this page. */
 fun Page.wordCount(): Int = blocks.sumOf { it.wordCount() }

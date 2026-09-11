@@ -28,15 +28,17 @@ class TokenizerTest {
     private fun parts(text: String): List<TextPart> = TextBlock.of(text, style).parts
 
     /**
-     * Verifies that a plain sentence is split into one [TextWord] per space-separated token and
-     * that no whitespace is kept.
+     * Verifies that a plain sentence is split into one [TextWord] per space-separated token, with a
+     * [TextWhitespace] of kind [WhitespaceKind.SPACE] preserved between the words.
      */
     @Test
     fun splitsPlainWords() {
         assertEquals(
             listOf(
                 TextWord("The"),
+                TextWhitespace(WhitespaceKind.SPACE, " "),
                 TextWord("quick"),
+                TextWhitespace(WhitespaceKind.SPACE, " "),
                 TextWord("fox")
             ),
             parts("The quick fox"),
@@ -45,7 +47,7 @@ class TokenizerTest {
 
     /**
      * Verifies that a trailing punctuation mark becomes its own [TextSymbol] separate from the
-     * preceding word.
+     * preceding word, and that the space after it is preserved as its own part.
      */
     @Test
     fun splitsTrailingPunctuation() {
@@ -53,6 +55,7 @@ class TokenizerTest {
             listOf(
                 TextWord("Hello"),
                 TextSymbol(','),
+                TextWhitespace(WhitespaceKind.SPACE, " "),
                 TextWord("world"),
                 TextSymbol('!')
             ),
@@ -101,25 +104,37 @@ class TokenizerTest {
     }
 
     /**
-     * Verifies that a line break acts as a separator just like a space and is not stored.
+     * Verifies that a line break acts as a word separator like a space, and is itself preserved as a
+     * [TextWhitespace] of kind [WhitespaceKind.SPACE] so the round trip stays lossless.
      */
     @Test
     fun treatsLineBreakAsSeparator() {
-        assertEquals(listOf(
-            TextWord("first"),
-            TextWord("second")
-        ), parts("first\nsecond"))
+        assertEquals(
+            listOf(
+                TextWord("first"),
+                TextWhitespace(WhitespaceKind.SPACE, "\n"),
+                TextWord("second")
+            ),
+            parts("first\nsecond"),
+        )
     }
 
     /**
-     * Verifies that runs of multiple whitespace characters collapse to a single separation.
+     * Verifies that a run of whitespace mixing spaces and a tab splits into one [TextWhitespace] per
+     * kind change, each run keeping its exact original characters.
      */
     @Test
-    fun collapsesMultipleWhitespace() {
-        assertEquals(listOf(
-            TextWord("a"),
-            TextWord("b")
-        ), parts("a    \t  b"))
+    fun mixedWhitespaceSplitsAtKindChange() {
+        assertEquals(
+            listOf(
+                TextWord("a"),
+                TextWhitespace(WhitespaceKind.SPACE, "    "),
+                TextWhitespace(WhitespaceKind.TAB, "\t"),
+                TextWhitespace(WhitespaceKind.SPACE, "  "),
+                TextWord("b")
+            ),
+            parts("a    \t  b"),
+        )
     }
 
     /**
@@ -128,5 +143,69 @@ class TokenizerTest {
     @Test
     fun emptyInputYieldsNoParts() {
         assertEquals(emptyList(), parts(""))
+    }
+
+    /**
+     * Verifies that a single space between two words becomes one [TextWhitespace] run of kind
+     * [WhitespaceKind.SPACE].
+     */
+    @Test
+    fun tokenizePreservesSingleSpaceBetweenWords() {
+        assertEquals(
+            listOf(
+                TextWord("one"),
+                TextWhitespace(WhitespaceKind.SPACE, " "),
+                TextWord("two")
+            ),
+            parts("one two"),
+        )
+    }
+
+    /**
+     * Verifies that several consecutive spaces collapse into a single [TextWhitespace] run that
+     * keeps every original space character.
+     */
+    @Test
+    fun tokenizePreservesMultipleSpacesAsOneRun() {
+        assertEquals(
+            listOf(
+                TextWord("one"),
+                TextWhitespace(WhitespaceKind.SPACE, "   "),
+                TextWord("two")
+            ),
+            parts("one   two"),
+        )
+    }
+
+    /**
+     * Verifies that a run of tab characters is tokenized as [WhitespaceKind.TAB], distinct from a
+     * run of spaces.
+     */
+    @Test
+    fun tokenizeDistinguishesTabFromSpace() {
+        assertEquals(
+            listOf(
+                TextWord("one"),
+                TextWhitespace(WhitespaceKind.TAB, "\t\t"),
+                TextWord("two")
+            ),
+            parts("one\t\ttwo"),
+        )
+    }
+
+    /**
+     * Verifies that a word directly following a symbol without any whitespace between them produces
+     * no [TextWhitespace] part - the root cause of the caret-drift bug this model change fixes.
+     */
+    @Test
+    fun tokenizeSymbolDirectlyFollowedByWordHasNoWhitespacePart() {
+        assertEquals(
+            listOf(
+                TextWord("paragraph"),
+                TextSymbol('.'),
+                TextWord("X")
+            ),
+            parts("paragraph.X"),
+        )
     }
 }

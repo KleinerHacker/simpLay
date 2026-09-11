@@ -42,6 +42,11 @@ internal class CaretPaint(val pageIndex: Int, val x: Double, val y: Double, val 
  * sheet, the selection highlight, then the page text through [Graphics2DDocumentRenderer], and
  * finally the edit caret when one is supplied and visible. The Swing counterpart of the `fx` module's
  * `PaperSheetCanvasPainter`.
+ *
+ * [isHidden] marks pages the `HIDDEN` page-deactivation mode removes from layout entirely - they are
+ * skipped and never counted as rendered. [isDisabled] marks pages the `DISABLED` mode still lays out
+ * but draws with [PaperSheetStyle.deactivatedSheetBackground] plus a diagonal hatch, and on which the
+ * selection highlight and the caret are suppressed.
  */
 internal class PaperSheetSwingPainter {
 
@@ -77,6 +82,8 @@ internal class PaperSheetSwingPainter {
         style: PaperSheetStyle = PaperSheetStyle(),
         caret: CaretPaint? = null,
         caretOpacity: Double = 0.0,
+        isHidden: (MeasuredPage) -> Boolean = { false },
+        isDisabled: (MeasuredPage) -> Boolean = { false },
     ) {
         caretDrawCount = 0
 
@@ -99,15 +106,17 @@ internal class PaperSheetSwingPainter {
         val visible = ArrayList<Int>()
         var chrome = 0
         measured.pages.forEachIndexed { i, page ->
+            if (isHidden(page)) return@forEachIndexed
             val sheetTop = outerMargin + pageTops[i]
             val sheetBottom = sheetTop + page.effectiveSize.height
             if (sheetBottom >= viewTop && sheetTop <= viewBottom) {
                 visible += i
                 val originX = outerMargin
                 val originY = sheetTop - scrollUnscaled
-                drawSheet(g, page, originX, originY, style)
+                val disabled = isDisabled(page)
+                drawSheet(g, page, originX, originY, style, disabled)
                 chrome++
-                if (hasSelection) {
+                if (hasSelection && !disabled) {
                     drawSelectionOnPage(
                         g, index, i, selectionStart, selectionEnd, originX, originY, fonts, style.selectionColor,
                     )
@@ -117,7 +126,7 @@ internal class PaperSheetSwingPainter {
                     pageNumberLabel = numberLabels.getOrNull(i),
                     numberingStyle = measured.raw.numbering.textStyle,
                 )
-                if (caret != null && caretOpacity > 0.0 && caret.pageIndex == i) {
+                if (caret != null && caretOpacity > 0.0 && caret.pageIndex == i && !disabled) {
                     drawCaretOnPage(g, page, caret, originX, originY, caretOpacity.coerceIn(0.0, 1.0), style.caretColor)
                     caretDrawCount = 1
                 }
@@ -130,18 +139,44 @@ internal class PaperSheetSwingPainter {
         paintCount++
     }
 
-    private fun drawSheet(g: Graphics2D, page: MeasuredPage, originX: Double, originY: Double, style: PaperSheetStyle) {
+    private fun drawSheet(
+        g: Graphics2D,
+        page: MeasuredPage,
+        originX: Double,
+        originY: Double,
+        style: PaperSheetStyle,
+        disabled: Boolean,
+    ) {
         val w = page.effectiveSize.width
         val h = page.effectiveSize.height
         val savedPaint = g.paint
         val savedStroke = g.stroke
         g.paint = style.shadowColor
         g.fill(Rectangle2D.Double(originX + style.shadowOffset, originY + style.shadowOffset, w, h))
-        g.paint = style.sheetBackground
+        g.paint = if (disabled) style.deactivatedSheetBackground else style.sheetBackground
         g.fill(Rectangle2D.Double(originX, originY, w, h))
+        if (disabled) drawDeactivatedHatch(g, originX, originY, w, h, style.deactivatedOverlayColor)
         g.paint = style.sheetBorderColor
         g.stroke = BasicStroke(style.sheetBorderWidth.toFloat())
         g.draw(Rectangle2D.Double(originX + 0.5, originY + 0.5, w - 1.0, h - 1.0))
+        g.paint = savedPaint
+        g.stroke = savedStroke
+    }
+
+    /** Diagonal hatch lines spaced [HATCH_SPACING] apart, clipped to the sheet rectangle. */
+    private fun drawDeactivatedHatch(g: Graphics2D, x: Double, y: Double, w: Double, h: Double, color: Paint) {
+        val savedPaint = g.paint
+        val savedStroke = g.stroke
+        val savedClip = g.clip
+        g.clip(Rectangle2D.Double(x, y, w, h))
+        g.paint = color
+        g.stroke = BasicStroke(1.0f)
+        var offset = -h
+        while (offset < w) {
+            g.draw(Line2D.Double(x + offset, y + h, x + offset + h, y))
+            offset += HATCH_SPACING
+        }
+        g.clip = savedClip
         g.paint = savedPaint
         g.stroke = savedStroke
     }
@@ -213,5 +248,9 @@ internal class PaperSheetSwingPainter {
         g.composite = savedComposite
         g.paint = savedPaint
         g.stroke = savedStroke
+    }
+
+    private companion object {
+        const val HATCH_SPACING = 10.0
     }
 }

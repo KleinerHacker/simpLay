@@ -25,14 +25,11 @@ data class TextBlock private constructor(
     val style: TextStyle,
 ) : PlatformSerializable {
     /**
-     * Rejoins the parts, putting a single space before every [TextWord] except the first and no
-     * space before a [TextSymbol].
+     * Rejoins the parts by concatenating [TextPart.text] in order. Lossless: whitespace runs are
+     * stored as explicit [TextWhitespace] parts, so no character is invented or dropped.
      */
     override fun toString(): String = buildString {
-        parts.forEachIndexed { index, part ->
-            if (part is TextWord && index > 0) append(' ')
-            append(part.text)
-        }
+        parts.forEach { part -> append(part.text) }
     }
 
     /**
@@ -59,11 +56,15 @@ data class TextBlock private constructor(
  * Splits [text] into [TextPart]s.
  *
  * Maximal runs of [Char.isLetterOrDigit] become a [TextWord], every other non-whitespace
- * character becomes its own [TextSymbol], and whitespace separates parts without being stored.
+ * character becomes its own [TextSymbol], and a maximal run of whitespace of a single
+ * [WhitespaceKind] (space or tab) becomes a [TextWhitespace]; a run splits at a change of kind
+ * (e.g. a space directly followed by a tab yields two [TextWhitespace] parts).
  */
 private fun tokenize(text: String): List<TextPart> {
     val parts = mutableListOf<TextPart>()
     val word = StringBuilder()
+    val whitespace = StringBuilder()
+    var whitespaceKind: WhitespaceKind? = null
 
     fun flushWord() {
         if (word.isNotEmpty()) {
@@ -72,16 +73,36 @@ private fun tokenize(text: String): List<TextPart> {
         }
     }
 
+    fun flushWhitespace() {
+        val kind = whitespaceKind
+        if (kind != null && whitespace.isNotEmpty()) {
+            parts += TextWhitespace(kind, whitespace.toString())
+        }
+        whitespace.clear()
+        whitespaceKind = null
+    }
+
     for (ch in text) {
         when {
-            ch.isWhitespace() -> flushWord()
-            ch.isLetterOrDigit() -> word.append(ch)
+            ch.isWhitespace() -> {
+                flushWord()
+                val kind = if (ch == '\t') WhitespaceKind.TAB else WhitespaceKind.SPACE
+                if (whitespaceKind != null && whitespaceKind != kind) flushWhitespace()
+                whitespaceKind = kind
+                whitespace.append(ch)
+            }
+            ch.isLetterOrDigit() -> {
+                flushWhitespace()
+                word.append(ch)
+            }
             else -> {
                 flushWord()
+                flushWhitespace()
                 parts += TextSymbol(ch)
             }
         }
     }
     flushWord()
+    flushWhitespace()
     return parts
 }

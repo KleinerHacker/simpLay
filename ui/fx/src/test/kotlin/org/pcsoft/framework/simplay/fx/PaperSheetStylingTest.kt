@@ -17,7 +17,9 @@ import javafx.scene.Scene
 import javafx.scene.paint.Color
 import javafx.stage.Stage
 import org.junit.jupiter.api.Test
+import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -166,4 +168,87 @@ class PaperSheetStylingTest : JavaFxTestBase() {
 
         assertEquals(1, delta)
     }
+
+    //region Page deactivation
+
+    /**
+     * Builds a shown, editable [PaperSheetView] over [PaperSheetTestFixtures.twoPageDocument], for the
+     * page-deactivation styling tests (the plain [fixture] always overwrites `document`).
+     */
+    private fun deactivationFixture(): Fixture = onFxThread {
+        val view = PaperSheetView()
+        view.mode = PaperSheetMode.EDITABLE
+        val stage = Stage()
+        stage.scene = Scene(view, 320.0, 500.0)
+        stage.show()
+        view.document = PaperSheetTestFixtures.twoPageDocument()
+        view.applyCss()
+        view.layout()
+        Fixture(view, view.skin as PaperSheetViewSkin)
+    }
+
+    /**
+     * A `DISABLED` second page is still drawn (part of [PaperSheetViewSkin.renderedPageIndices]) but
+     * with the deactivated fill instead of the normal sheet background, and the caret does not render
+     * even while it sits inside that page.
+     */
+    @Test
+    fun disabledPageIsPaintedWithOverlayAndNoCaret() {
+        val (view, skin) = deactivationFixture()
+
+        onFxThread {
+            view.caretModel.moveToStartOfBlock(1)
+            view.deactivatedPageHandling = PageDeactivationMode.DISABLED
+            view.setPageDeactivated(1, true)
+            view.layout()
+        }
+
+        assertTrue(skin.renderedPageIndices.contains(1), "the DISABLED page is still drawn")
+        assertEquals(0, skin.caretDrawCount, "no caret should be drawn on a DISABLED page")
+    }
+
+    /**
+     * A `HIDDEN` second page is excluded from layout entirely: it is missing from
+     * [PaperSheetViewSkin.renderedPageIndices] and no longer contributes to [PaperSheetView.contentSize].
+     */
+    @Test
+    fun hiddenPageIsExcludedFromLayoutAndNotPainted() {
+        val heightWithBothPages = deactivationFixture().view.contentSize.height
+
+        val (view, skin) = deactivationFixture()
+        onFxThread {
+            view.deactivatedPageHandling = PageDeactivationMode.HIDDEN
+            view.setPageDeactivated(1, true)
+            view.layout()
+        }
+
+        assertFalse(skin.renderedPageIndices.contains(1), "the HIDDEN page must not be painted")
+        assertTrue(
+            view.contentSize.height < heightWithBothPages,
+            "hiding a page should shrink the content height (${view.contentSize.height} vs $heightWithBothPages)",
+        )
+    }
+
+    /**
+     * A `READONLY` second page is painted exactly like a normal one: no deactivated fill, and it still
+     * counts in the rendered pages even though every mutation on it is rejected.
+     */
+    @Test
+    fun readonlyPageIsPaintedNormallyButNotEditable() {
+        val (view, skin) = deactivationFixture()
+
+        onFxThread {
+            view.caretModel.moveIntoBlock(1, 2)
+            view.deactivatedPageHandling = PageDeactivationMode.READONLY
+            view.setPageDeactivated(1, true)
+            view.layout()
+        }
+
+        assertTrue(skin.renderedPageIndices.contains(1))
+        val before = view.document
+        onFxThread { skin.typeTextForTest("Z") }
+        assertEquals(before, view.document, "READONLY must reject the mutation")
+    }
+
+    //endregion
 }

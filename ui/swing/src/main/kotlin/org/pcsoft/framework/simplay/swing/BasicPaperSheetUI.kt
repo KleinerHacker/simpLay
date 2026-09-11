@@ -34,6 +34,7 @@ import javax.swing.JScrollBar
 import org.pcsoft.framework.simplay.engine.RenderConfiguration
 import org.pcsoft.framework.simplay.engine.measure
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
+import org.pcsoft.framework.simplay.engine.measure.MeasuredPage
 import org.pcsoft.framework.simplay.swing.internal.SwingFontMeasureCalculator
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetCaret
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetEditor
@@ -43,6 +44,7 @@ import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetSelection
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetStyle
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetSwingPainter
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
+import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 import org.pcsoft.framework.simplay.uicommon.hitTest
 
 /**
@@ -59,6 +61,10 @@ import org.pcsoft.framework.simplay.uicommon.hitTest
  * of the selection), [PaperSheetHoverTracker] (the hovered paragraph / sheet) and
  * [PaperSheetOverlays] (the registered [FloatingOverlay]s and the overlay layer on top of the
  * viewport).
+ *
+ * A page whose id is in [PaperSheetView.deactivatedPageIds] is excluded from layout entirely
+ * ([PageDeactivationMode.HIDDEN]) or drawn specially ([PageDeactivationMode.DISABLED]) as decided by
+ * [PaperSheetView.deactivatedPageHandling]; both are re-evaluated on every relayout / redraw.
  */
 open class BasicPaperSheetUI : PaperSheetUI() {
 
@@ -95,6 +101,14 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         .getOrDefault(java.awt.event.InputEvent.CTRL_DOWN_MASK)
 
     private val editable: Boolean get() = view.mode == PaperSheetMode.EDITABLE
+
+    /** Whether [page] is excluded from layout entirely by [PageDeactivationMode.HIDDEN]. */
+    private fun isPageHidden(page: MeasuredPage): Boolean =
+        view.deactivatedPageHandling == PageDeactivationMode.HIDDEN && page.raw.id in view.deactivatedPageIds
+
+    /** Whether [page] is drawn specially by [PageDeactivationMode.DISABLED]. */
+    private fun isPageDisabled(page: MeasuredPage): Boolean =
+        view.deactivatedPageHandling == PageDeactivationMode.DISABLED && page.raw.id in view.deactivatedPageIds
 
     //region install / uninstall
 
@@ -139,7 +153,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             scrollOffset = ::scrollOffset,
             nearestPage = ::nearestPage,
         )
-        overlays = PaperSheetOverlays(view, selection, caret, hover)
+        overlays = PaperSheetOverlays(view, selection, caret, hover, textIndex = { index })
 
         scrollBar = JScrollBar(JScrollBar.VERTICAL, 0, 0, 0, 0).apply {
             addAdjustmentListener { redraw() }
@@ -181,6 +195,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
                 PaperSheetView.PROP_ZOOM,
                 PaperSheetView.PROP_MIN_ZOOM,
                 PaperSheetView.PROP_MAX_ZOOM,
+                PaperSheetView.PROP_DEACTIVATED_PAGE_IDS,
+                PaperSheetView.PROP_DEACTIVATED_PAGE_HANDLING,
                 -> relayout()
                 PaperSheetView.PROP_MODE -> { caret.onModeChanged(); redraw() }
                 PaperSheetView.PROP_SMOOTH_CARET_BLINK -> caret.restartBlink()
@@ -191,6 +207,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
                 PaperSheetView.PROP_SHADOW_OFFSET,
                 PaperSheetView.PROP_SELECTION_COLOR,
                 PaperSheetView.PROP_CARET_COLOR,
+                PaperSheetView.PROP_DEACTIVATED_SHEET_BACKGROUND,
+                PaperSheetView.PROP_DEACTIVATED_OVERLAY_COLOR,
                 -> redraw()
             }
         }
@@ -268,11 +286,13 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         var y = 0.0
         doc.pages.forEachIndexed { i, page ->
             pageTops[i] = y
-            y += page.effectiveSize.height
-            if (i != doc.pages.lastIndex) y += gap
+            if (!isPageHidden(page)) {
+                y += page.effectiveSize.height
+                if (i != doc.pages.lastIndex) y += gap
+            }
         }
         contentHeightUnscaled = y
-        contentWidthUnscaled = doc.pages.maxOf { it.effectiveSize.width }
+        contentWidthUnscaled = doc.pages.filterNot(::isPageHidden).maxOfOrNull { it.effectiveSize.width } ?: 0.0
         view.updateContentSize(
             Dimension((contentWidthUnscaled + 2.0 * outer).toInt(), (contentHeightUnscaled + 2.0 * outer).toInt()),
         )
@@ -323,6 +343,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             shadowOffset = view.shadowOffset,
             selectionColor = selectionColor,
             caretColor = view.caretColor,
+            deactivatedSheetBackground = view.deactivatedSheetBackground,
+            deactivatedOverlayColor = view.deactivatedOverlayColor,
         )
     }
 
@@ -360,6 +382,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
                 style = currentStyle(),
                 caret = caret.caretPaint(),
                 caretOpacity = caret.currentOpacity(),
+                isHidden = ::isPageHidden,
+                isDisabled = ::isPageDisabled,
             )
         } finally {
             g2.dispose()
@@ -382,6 +406,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         var pageIndex = 0
         var bestDist = Double.MAX_VALUE
         doc.pages.forEachIndexed { i, page ->
+            if (isPageHidden(page)) return@forEachIndexed
             val top = outer + pageTops[i]
             val bottom = top + page.effectiveSize.height
             val dist = when {

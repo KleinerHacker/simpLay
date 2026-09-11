@@ -111,4 +111,16 @@ class DocumentTextIndexTest {
         assertEquals("gamma delta", index.substring(secondStart, index.endOfBlock(1)))
         assertTrue(index.nextWordStart(0) > 0)
     }
+
+    /**
+     * Verifies the exact reported bug scenario: a block whose text has a word directly following a
+     * symbol without any original whitespace (`"paragraph.X"`) keeps that boundary in the linear
+     * [DocumentTextIndex.text] instead of an invented space being inserted between the symbol and the
+     * following word.
+     */
+    @Test
+    fun documentTextIndexSegmentTextMatchesOriginalAtSymbolWordBoundary() {
+        val index = DocumentTextIndex(measure("The first paragraph.X"))
+        assertEquals("The first paragraph.X", index.text)
+    }
 }

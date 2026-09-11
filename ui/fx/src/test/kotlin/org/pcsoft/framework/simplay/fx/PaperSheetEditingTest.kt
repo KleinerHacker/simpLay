@@ -19,6 +19,7 @@ import javafx.scene.input.KeyCode
 import javafx.stage.Stage
 import org.junit.jupiter.api.Test
 import org.pcsoft.framework.simplay.engine.model.Document
+import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -410,4 +411,216 @@ class PaperSheetEditingTest : JavaFxTestBase() {
         assertTrue(skin.caretRenderedForTest)
         assertEquals(1.0, skin.caretOpacityForTest(), 1e-9)
     }
+
+    //region Page deactivation
+
+    /**
+     * Builds a shown, editable [PaperSheetView] over [PaperSheetTestFixtures.twoPageDocument] and
+     * returns it together with the linear index where the second raw page's single block starts.
+     */
+    private fun deactivationFixture(): Pair<Fixture, Int> = onFxThread {
+        val view = PaperSheetView()
+        view.mode = PaperSheetMode.EDITABLE
+        val stage = Stage()
+        stage.scene = Scene(view, 320.0, 500.0)
+        stage.show()
+        view.document = PaperSheetTestFixtures.twoPageDocument()
+        view.applyCss()
+        view.layout()
+        view.caretModel.moveToStartOfBlock(1)
+        val page2Start = (view.skin as PaperSheetViewSkin).caretIndexForTest
+        Fixture(view, view.skin as PaperSheetViewSkin) to page2Start
+    }
+
+    /** Marks the second raw page deactivated under [mode], without moving the caret. */
+    private fun deactivateSecondPage(view: PaperSheetView, mode: PageDeactivationMode) {
+        view.deactivatedPageHandling = mode
+        view.setPageDeactivated(1, true)
+    }
+
+    /**
+     * With `DISABLED` on the second page, typing at a caret already sitting inside it leaves the
+     * document and the caret untouched.
+     */
+    @Test
+    fun insertInsideDisabledPageIsRejected() {
+        val (fixture, page2Start) = deactivationFixture()
+        val (view, skin) = fixture
+
+        onFxThread {
+            view.caretModel.moveTo(page2Start + 2)
+            deactivateSecondPage(view, PageDeactivationMode.DISABLED)
+        }
+        val before = view.document
+        val caretBefore = skin.caretIndexForTest
+
+        onFxThread { skin.typeTextForTest("Z") }
+
+        assertEquals(before, view.document)
+        assertEquals(caretBefore, skin.caretIndexForTest)
+    }
+
+    /**
+     * With `READONLY` on the second page, typing at a caret sitting inside it leaves the document
+     * untouched and the caret stays at its position.
+     */
+    @Test
+    fun insertInsideReadonlyPageIsRejected() {
+        val (fixture, page2Start) = deactivationFixture()
+        val (view, skin) = fixture
+
+        onFxThread {
+            view.caretModel.moveTo(page2Start + 2)
+            deactivateSecondPage(view, PageDeactivationMode.READONLY)
+        }
+        val before = view.document
+        val caretBefore = skin.caretIndexForTest
+
+        onFxThread { skin.typeTextForTest("Z") }
+
+        assertEquals(before, view.document)
+        assertEquals(caretBefore, skin.caretIndexForTest)
+    }
+
+    /**
+     * A selection whose range touches a `DISABLED` page is discarded by `Backspace`: the document is
+     * unchanged.
+     */
+    @Test
+    fun deleteRangeTouchingDisabledPageIsRejected() {
+        val (fixture, page2Start) = deactivationFixture()
+        val (view, skin) = fixture
+
+        onFxThread {
+            view.selectionModel.selectRange(page2Start - 2, page2Start + 2)
+            deactivateSecondPage(view, PageDeactivationMode.DISABLED)
+        }
+        val before = view.document
+
+        onFxThread { skin.pressKeyForTest(KeyCode.BACK_SPACE) }
+
+        assertEquals(before, view.document)
+    }
+
+    /**
+     * Typing on the still-active first page keeps working normally in every
+     * [org.pcsoft.framework.simplay.uicommon.PageDeactivationMode].
+     */
+    @Test
+    fun typingOnActivePageStillWorks() {
+        for (mode in PageDeactivationMode.entries) {
+            val (fixture, _) = deactivationFixture()
+            val (view, skin) = fixture
+
+            onFxThread {
+                view.caretModel.moveTo(2)
+                deactivateSecondPage(view, mode)
+            }
+            val before = view.document!!.plain()
+
+            onFxThread { skin.typeTextForTest("Z") }
+
+            assertTrue(view.document!!.plain().contains("Z"), "typing should work in mode $mode")
+            assertTrue(view.document!!.plain().length > before.length, "document should grow in mode $mode")
+        }
+    }
+
+    /**
+     * In `DISABLED` mode, moving the caret forward into the deactivated page snaps it to the page's
+     * end instead of landing inside it.
+     */
+    @Test
+    fun caretSkipsDisabledPageForward() {
+        val (fixture, page2Start) = deactivationFixture()
+        val (view, skin) = fixture
+        val docLength = documentLength(view)
+
+        onFxThread {
+            view.caretModel.moveTo(page2Start - 1)
+            deactivateSecondPage(view, PageDeactivationMode.DISABLED)
+            view.caretModel.moveTo(page2Start + 2)
+        }
+
+        assertEquals(docLength, skin.caretIndexForTest)
+    }
+
+    /**
+     * In `DISABLED` mode, moving the caret backward from past the end of the deactivated page snaps
+     * it to the page's start instead of landing inside it.
+     */
+    @Test
+    fun caretSkipsDisabledPageBackward() {
+        val (fixture, page2Start) = deactivationFixture()
+        val (view, skin) = fixture
+        val docLength = documentLength(view)
+
+        onFxThread {
+            view.caretModel.moveTo(docLength)
+            deactivateSecondPage(view, PageDeactivationMode.DISABLED)
+            view.caretModel.moveTo(page2Start + 2)
+        }
+
+        assertEquals(page2Start, skin.caretIndexForTest)
+    }
+
+    /**
+     * In `READONLY` mode the caret enters and crosses the deactivated page exactly like a normal one:
+     * no snap happens.
+     */
+    @Test
+    fun caretEntersReadonlyPageNormally() {
+        val (fixture, page2Start) = deactivationFixture()
+        val (view, skin) = fixture
+
+        onFxThread {
+            view.caretModel.moveTo(page2Start - 1)
+            deactivateSecondPage(view, PageDeactivationMode.READONLY)
+            view.caretModel.moveTo(page2Start + 2)
+        }
+
+        assertEquals(page2Start + 2, skin.caretIndexForTest)
+    }
+
+    /**
+     * A `Shift` + navigation selection is allowed to span into a `DISABLED` page, and copying that
+     * selection still puts its full text on the clipboard.
+     */
+    @Test
+    fun shiftSelectionMaySpanDisabledPage() {
+        val (fixture, page2Start) = deactivationFixture()
+        val (view, skin) = fixture
+
+        onFxThread {
+            view.caretModel.moveTo(page2Start - 1)
+            deactivateSecondPage(view, PageDeactivationMode.DISABLED)
+            repeat(4) { skin.pressKeyForTest(KeyCode.RIGHT, shift = true) }
+        }
+
+        assertEquals(page2Start + 3, skin.caretIndexForTest)
+        assertEquals(4, view.selectionModel.length)
+
+        val clipboardText = onFxThread {
+            skin.pressKeyForTest(KeyCode.C, shortcut = true)
+            Clipboard.getSystemClipboard().string
+        }
+        assertEquals(view.selectedText, clipboardText)
+    }
+
+    /**
+     * [PaperSheetView.setPageDeactivated] stores the resolved page id, not the index passed in: it
+     * still marks the same page after the document is replaced with an edit that leaves the page count
+     * unchanged.
+     */
+    @Test
+    fun setPageDeactivatedByIndexResolvesToId() {
+        val (fixture, _) = deactivationFixture()
+        val (view, _) = fixture
+        val expectedId = view.document!!.pages[1].id
+
+        onFxThread { view.setPageDeactivated(1, true) }
+
+        assertEquals(setOf(expectedId), view.deactivatedPageIds)
+    }
+
+    //endregion
 }

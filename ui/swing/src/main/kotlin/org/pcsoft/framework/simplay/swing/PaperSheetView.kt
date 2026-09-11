@@ -20,6 +20,7 @@ import javax.swing.JComponent
 import javax.swing.UIManager
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetStyle
+import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 
 /**
  * A scrollable and zoomable Swing component that renders a [Document] as physical-looking sheets -
@@ -31,6 +32,11 @@ import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetStyle
  * which adds a blinking caret, character insertion / removal, clipboard cut / copy / paste, line
  * duplication, drag-and-drop of the selection and the standard caret-navigation keys. Editing
  * replaces [document] with a new instance; the previous document is not mutated.
+ *
+ * [deactivatedPageIds] (stable [org.pcsoft.framework.simplay.engine.model.Page.id] values) together
+ * with [deactivatedPageHandling] mark individual pages as deactivated. Both are transient view state,
+ * never persisted in [document]; see [PageDeactivationMode] for what each mode does. Use
+ * [setPageDeactivated] to toggle a page by its current index.
  *
  * Layout is controlled by [outerMargin] (space around the sheet stack) and [pageGap] (space between
  * two sheets). [zoom] scales the whole view and is always kept within `[minZoom, maxZoom]`. The
@@ -84,6 +90,41 @@ open class PaperSheetView : JComponent() {
             field = value
             firePropertyChange(PROP_MODE, old, value)
         }
+
+    //endregion
+
+    //region Page deactivation
+
+    /**
+     * Stable [org.pcsoft.framework.simplay.engine.model.Page.id] values of the pages currently marked
+     * deactivated. Purely transient view state, never persisted in [document]; how it is honoured is
+     * governed by [deactivatedPageHandling]. Ids no longer present in [document] are simply ignored.
+     */
+    var deactivatedPageIds: Set<String> = emptySet()
+        set(value) {
+            val old = field
+            field = value
+            firePropertyChange(PROP_DEACTIVATED_PAGE_IDS, old, value)
+        }
+
+    /** How [deactivatedPageIds] is honoured; defaults to [PageDeactivationMode.READONLY]. */
+    var deactivatedPageHandling: PageDeactivationMode = PageDeactivationMode.READONLY
+        set(value) {
+            val old = field
+            field = value
+            firePropertyChange(PROP_DEACTIVATED_PAGE_HANDLING, old, value)
+        }
+
+    /**
+     * Marks (or unmarks) the page currently at [index] of [document] as deactivated. Resolves [index]
+     * against the current [document] into that page's stable id immediately, so the marker stays
+     * attached to the same page even as later edits shift page indices. A no-op without a [document]
+     * or for an out-of-range [index].
+     */
+    fun setPageDeactivated(index: Int, deactivated: Boolean) {
+        val id = document?.pages?.getOrNull(index)?.id ?: return
+        deactivatedPageIds = if (deactivated) deactivatedPageIds + id else deactivatedPageIds - id
+    }
 
     //endregion
 
@@ -205,6 +246,22 @@ open class PaperSheetView : JComponent() {
             field = value
             markSet(PROP_CARET_COLOR)
             firePropertyChange(PROP_CARET_COLOR, old, value)
+        }
+
+    var deactivatedSheetBackground: Paint = PaperSheetStyle.DEFAULT_DEACTIVATED_SHEET_BACKGROUND
+        set(value) {
+            val old = field
+            field = value
+            markSet(PROP_DEACTIVATED_SHEET_BACKGROUND)
+            firePropertyChange(PROP_DEACTIVATED_SHEET_BACKGROUND, old, value)
+        }
+
+    var deactivatedOverlayColor: Paint = PaperSheetStyle.DEFAULT_DEACTIVATED_OVERLAY_COLOR
+        set(value) {
+            val old = field
+            field = value
+            markSet(PROP_DEACTIVATED_OVERLAY_COLOR)
+            firePropertyChange(PROP_DEACTIVATED_OVERLAY_COLOR, old, value)
         }
 
     //endregion
@@ -363,6 +420,8 @@ open class PaperSheetView : JComponent() {
 
         const val PROP_DOCUMENT = "document"
         const val PROP_MODE = "mode"
+        const val PROP_DEACTIVATED_PAGE_IDS = "deactivatedPageIds"
+        const val PROP_DEACTIVATED_PAGE_HANDLING = "deactivatedPageHandling"
         const val PROP_OUTER_MARGIN = "outerMargin"
         const val PROP_PAGE_GAP = "pageGap"
         const val PROP_MIN_ZOOM = "minZoom"
@@ -375,6 +434,8 @@ open class PaperSheetView : JComponent() {
         const val PROP_SHADOW_OFFSET = "shadowOffset"
         const val PROP_SELECTION_COLOR = "selectionColor"
         const val PROP_CARET_COLOR = "caretColor"
+        const val PROP_DEACTIVATED_SHEET_BACKGROUND = "deactivatedSheetBackground"
+        const val PROP_DEACTIVATED_OVERLAY_COLOR = "deactivatedOverlayColor"
         const val PROP_SMOOTH_CARET_BLINK = "smoothCaretBlink"
         const val PROP_CONTENT_SIZE = "contentSize"
         const val PROP_HOVERED_PARAGRAPH = "hoveredParagraph"

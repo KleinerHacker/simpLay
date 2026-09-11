@@ -29,6 +29,9 @@ import java.util.EventObject
  * @property text the trigger text: the selected text or the hovered paragraph text; `""` otherwise.
  * @property documentRange the covered character range for [FloatingOverlayTrigger.SELECTION] /
  *   [FloatingOverlayTrigger.CARET], else `null`.
+ * @property pageDeactivated whether the page the trigger sits on is currently deactivated (per
+ *   [PaperSheetView.deactivatedPageIds] / [PaperSheetView.deactivatedPageHandling]); always `false` at
+ *   [org.pcsoft.framework.simplay.uicommon.PageDeactivationMode.IGNORE] and on hide.
  * @property type whether the overlay was [Type.SHOWN] or [Type.HIDDEN].
  */
 class FloatingOverlayEvent internal constructor(
@@ -38,6 +41,7 @@ class FloatingOverlayEvent internal constructor(
     val index: Int,
     val text: String,
     val documentRange: IntRange?,
+    val pageDeactivated: Boolean,
     val type: Type,
 ) : EventObject(overlay) {
 

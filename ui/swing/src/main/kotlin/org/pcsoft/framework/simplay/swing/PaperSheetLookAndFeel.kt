@@ -38,6 +38,8 @@ object PaperSheetLookAndFeel {
     const val KEY_SELECTION_COLOR = "PaperSheetView.selectionColor"
     const val KEY_SELECTION_COLOR_READONLY = "PaperSheetView.selectionColorReadonly"
     const val KEY_CARET_COLOR = "PaperSheetView.caretColor"
+    const val KEY_DEACTIVATED_SHEET_BACKGROUND = "PaperSheetView.deactivatedSheetBackground"
+    const val KEY_DEACTIVATED_OVERLAY_COLOR = "PaperSheetView.deactivatedOverlayColor"
     const val KEY_OUTER_MARGIN = "PaperSheetView.outerMargin"
     const val KEY_PAGE_GAP = "PaperSheetView.pageGap"
 
@@ -52,6 +54,8 @@ object PaperSheetLookAndFeel {
         d.putIfAbsent(KEY_SELECTION_COLOR, PaperSheetStyle.DEFAULT_SELECTION_COLOR)
         d.putIfAbsent(KEY_SELECTION_COLOR_READONLY, PaperSheetStyle.DEFAULT_SELECTION_COLOR_READONLY)
         d.putIfAbsent(KEY_CARET_COLOR, PaperSheetStyle.DEFAULT_CARET_COLOR)
+        d.putIfAbsent(KEY_DEACTIVATED_SHEET_BACKGROUND, PaperSheetStyle.DEFAULT_DEACTIVATED_SHEET_BACKGROUND)
+        d.putIfAbsent(KEY_DEACTIVATED_OVERLAY_COLOR, PaperSheetStyle.DEFAULT_DEACTIVATED_OVERLAY_COLOR)
         d.putIfAbsent(KEY_OUTER_MARGIN, PaperSheetStyle.DEFAULT_OUTER_MARGIN)
         d.putIfAbsent(KEY_PAGE_GAP, PaperSheetStyle.DEFAULT_PAGE_GAP)
     }
@@ -68,6 +72,12 @@ object PaperSheetLookAndFeel {
             if (unset(PaperSheetView.PROP_SHADOW_OFFSET)) number(KEY_SHADOW_OFFSET)?.let { view.shadowOffset = it }
             if (unset(PaperSheetView.PROP_SELECTION_COLOR)) paint(KEY_SELECTION_COLOR)?.let { view.selectionColor = it }
             if (unset(PaperSheetView.PROP_CARET_COLOR)) color(KEY_CARET_COLOR)?.let { view.caretColor = it }
+            if (unset(PaperSheetView.PROP_DEACTIVATED_SHEET_BACKGROUND)) {
+                paint(KEY_DEACTIVATED_SHEET_BACKGROUND)?.let { view.deactivatedSheetBackground = it }
+            }
+            if (unset(PaperSheetView.PROP_DEACTIVATED_OVERLAY_COLOR)) {
+                paint(KEY_DEACTIVATED_OVERLAY_COLOR)?.let { view.deactivatedOverlayColor = it }
+            }
             if (unset(PaperSheetView.PROP_OUTER_MARGIN)) number(KEY_OUTER_MARGIN)?.let { view.outerMargin = it }
             if (unset(PaperSheetView.PROP_PAGE_GAP)) number(KEY_PAGE_GAP)?.let { view.pageGap = it }
         }

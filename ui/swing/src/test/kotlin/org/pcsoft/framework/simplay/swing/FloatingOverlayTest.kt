@@ -14,6 +14,7 @@ package org.pcsoft.framework.simplay.swing
 
 import java.awt.image.BufferedImage
 import javax.swing.JButton
+import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -95,5 +96,65 @@ class FloatingOverlayTest {
         assertTrue(overlay.isActive)
         ui.clearHoverForTest()
         assertFalse(overlay.isActive)
+    }
+
+    /**
+     * A `PAGE_HOVER` overlay's `onShown` event reports `pageDeactivated = true` while hovering a page
+     * that is marked deactivated under a non-`IGNORE` mode.
+     */
+    @Test
+    fun floatingOverlayEventReportsPageDeactivatedTrue() {
+        val view = PaperSheetView().apply {
+            document = TestDocuments.twoPage
+            deactivatedPageHandling = PageDeactivationMode.READONLY
+        }
+        val ui = view.getPaperSheetUI() as BasicPaperSheetUI
+        val overlay = FloatingOverlay().apply {
+            content = JButton("Page")
+            trigger = FloatingOverlayTrigger.PAGE_HOVER
+        }
+        view.floatingOverlays += overlay
+        val image = BufferedImage(500, 800, BufferedImage.TYPE_INT_ARGB)
+        image.createGraphics().let { g -> ui.paintForTest(g, 500, 800); g.dispose() }
+        view.setPageDeactivated(1, true)
+        image.createGraphics().let { g -> ui.paintForTest(g, 500, 800); g.dispose() }
+
+        val shown = ArrayList<FloatingOverlayEvent>()
+        overlay.onShown = FloatingOverlayListener { shown.add(it) }
+        ui.hoverAtForTest(80.0, 396.0)
+
+        assertTrue(overlay.isActive)
+        assertEquals(1, shown.size)
+        assertTrue(shown.first().pageDeactivated)
+    }
+
+    /**
+     * The same `PAGE_HOVER` overlay reports `pageDeactivated = false` while hovering the still-active
+     * first page, even though the second page is deactivated.
+     */
+    @Test
+    fun floatingOverlayEventReportsPageDeactivatedFalse() {
+        val view = PaperSheetView().apply {
+            document = TestDocuments.twoPage
+            deactivatedPageHandling = PageDeactivationMode.READONLY
+        }
+        val ui = view.getPaperSheetUI() as BasicPaperSheetUI
+        val overlay = FloatingOverlay().apply {
+            content = JButton("Page")
+            trigger = FloatingOverlayTrigger.PAGE_HOVER
+        }
+        view.floatingOverlays += overlay
+        val image = BufferedImage(500, 800, BufferedImage.TYPE_INT_ARGB)
+        image.createGraphics().let { g -> ui.paintForTest(g, 500, 800); g.dispose() }
+        view.setPageDeactivated(1, true)
+        image.createGraphics().let { g -> ui.paintForTest(g, 500, 800); g.dispose() }
+
+        val shown = ArrayList<FloatingOverlayEvent>()
+        overlay.onShown = FloatingOverlayListener { shown.add(it) }
+        ui.hoverAtForTest(80.0, 80.0)
+
+        assertTrue(overlay.isActive)
+        assertEquals(1, shown.size)
+        assertFalse(shown.first().pageDeactivated)
     }
 }

@@ -48,12 +48,12 @@ class TextBlockTest {
     }
 
     /**
-     * Verifies that runs of multiple whitespace characters are normalized to single spaces on the
-     * round trip.
+     * Verifies that a run of multiple whitespace characters is preserved verbatim on the round trip
+     * instead of being normalized to a single space.
      */
     @Test
-    fun normalizesMultipleWhitespace() {
-        assertEquals("a b c", TextBlock.of("a   b \t c", style).toString())
+    fun preservesMultipleWhitespaceVerbatim() {
+        assertEquals("a   b \t c", TextBlock.of("a   b \t c", style).toString())
     }
 
     /**
@@ -91,5 +91,15 @@ class TextBlockTest {
         assertEquals(block.parts, restyled.parts)
         assertEquals(TextAlignment.CENTER, restyled.style.alignment)
         assertEquals(TextAlignment.LEFT, block.style.alignment)
+    }
+
+    /**
+     * Verifies the exact bug scenario reported for the caret drift: a word directly following a
+     * symbol without any original whitespace between them (`"paragraph.X"`) round trips through
+     * [TextBlock.Companion.of] and [toString] without an invented space at the symbol/word boundary.
+     */
+    @Test
+    fun toStringRoundTripsExactOriginalTextIncludingSymbolWordBoundary() {
+        assertEquals("paragraph.X", TextBlock.of("paragraph.X", style).toString())
     }
 }

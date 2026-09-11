@@ -29,10 +29,10 @@ fun interface FloatingOverlayListener {
  * counterpart of the `fx` module's `FloatingOverlay`; the programmatic API is kept, the FXML support
  * is dropped and [content] is a [JComponent] instead of a JavaFX `Node`.
  *
- * While the trigger holds, the read-only [isActive], [activeBounds], [activeIndex], [activeText] and
- * [activeDocumentRange] fields carry the current context; [onShown] and [onHidden] fire on the show
- * / hide transitions with the same context in a [FloatingOverlayEvent]. A `PropertyChangeEvent`
- * under [PROP_ACTIVE] is fired whenever [isActive] flips.
+ * While the trigger holds, the read-only [isActive], [activeBounds], [activeIndex], [activeText],
+ * [activeDocumentRange] and [isActivePageDeactivated] fields carry the current context; [onShown] and
+ * [onHidden] fire on the show / hide transitions with the same context in a [FloatingOverlayEvent]. A
+ * `PropertyChangeEvent` under [PROP_ACTIVE] is fired whenever [isActive] flips.
  */
 class FloatingOverlay {
 
@@ -77,6 +77,9 @@ class FloatingOverlay {
     var activeDocumentRange: IntRange? = null
         private set
 
+    var isActivePageDeactivated: Boolean = false
+        private set
+
     //endregion
 
     //region Events
@@ -92,13 +95,20 @@ class FloatingOverlay {
 
     //region View-side updates
 
-    internal fun updateActiveState(bounds: Rectangle?, index: Int, text: String, documentRange: IntRange?) {
+    internal fun updateActiveState(
+        bounds: Rectangle?,
+        index: Int,
+        text: String,
+        documentRange: IntRange?,
+        pageDeactivated: Boolean,
+    ) {
         val wasActive = isActive
         isActive = true
         activeBounds = bounds
         activeIndex = index
         activeText = text
         activeDocumentRange = documentRange
+        isActivePageDeactivated = pageDeactivated
         if (!wasActive) pcs.firePropertyChange(PROP_ACTIVE, false, true)
     }
 
@@ -109,20 +119,22 @@ class FloatingOverlay {
         activeIndex = -1
         activeText = ""
         activeDocumentRange = null
+        isActivePageDeactivated = false
         if (wasActive) pcs.firePropertyChange(PROP_ACTIVE, true, false)
     }
 
     internal fun fireShown(kind: FloatingOverlayTrigger) {
         onShown?.handle(
             FloatingOverlayEvent(
-                this, kind, activeBounds, activeIndex, activeText, activeDocumentRange, FloatingOverlayEvent.Type.SHOWN,
+                this, kind, activeBounds, activeIndex, activeText, activeDocumentRange,
+                isActivePageDeactivated, FloatingOverlayEvent.Type.SHOWN,
             ),
         )
     }
 
     internal fun fireHidden(kind: FloatingOverlayTrigger) {
         onHidden?.handle(
-            FloatingOverlayEvent(this, kind, null, -1, "", null, FloatingOverlayEvent.Type.HIDDEN),
+            FloatingOverlayEvent(this, kind, null, -1, "", null, false, FloatingOverlayEvent.Type.HIDDEN),
         )
     }
 

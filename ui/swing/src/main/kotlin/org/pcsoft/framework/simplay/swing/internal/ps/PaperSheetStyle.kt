@@ -28,6 +28,8 @@ import java.awt.Paint
  * @property shadowOffset offset of the drop shadow to the lower right.
  * @property selectionColor fill of the text selection highlight.
  * @property caretColor stroke of the edit caret.
+ * @property deactivatedSheetBackground fill of a `DISABLED` sheet, instead of [sheetBackground].
+ * @property deactivatedOverlayColor colour of the diagonal hatch drawn over a `DISABLED` sheet.
  */
 class PaperSheetStyle(
     val sheetBackground: Paint = DEFAULT_SHEET_BACKGROUND,
@@ -37,6 +39,8 @@ class PaperSheetStyle(
     val shadowOffset: Double = DEFAULT_SHADOW_OFFSET,
     val selectionColor: Paint = DEFAULT_SELECTION_COLOR,
     val caretColor: Color = DEFAULT_CARET_COLOR,
+    val deactivatedSheetBackground: Paint = DEFAULT_DEACTIVATED_SHEET_BACKGROUND,
+    val deactivatedOverlayColor: Paint = DEFAULT_DEACTIVATED_OVERLAY_COLOR,
 ) {
 
     companion object {
@@ -49,6 +53,8 @@ class PaperSheetStyle(
         val DEFAULT_SELECTION_COLOR: Paint = Color(66, 133, 244, 89)
         val DEFAULT_SELECTION_COLOR_READONLY: Paint = Color(120, 120, 120, 77)
         val DEFAULT_CARET_COLOR: Color = Color(20, 20, 20)
+        val DEFAULT_DEACTIVATED_SHEET_BACKGROUND: Paint = Color(237, 237, 237)
+        val DEFAULT_DEACTIVATED_OVERLAY_COLOR: Paint = Color(0, 0, 0, 31)
 
         const val DEFAULT_OUTER_MARGIN: Double = 24.0
         const val DEFAULT_PAGE_GAP: Double = 16.0

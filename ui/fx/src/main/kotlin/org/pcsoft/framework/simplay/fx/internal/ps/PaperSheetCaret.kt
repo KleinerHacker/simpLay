@@ -28,6 +28,8 @@ import javafx.util.Duration
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
+import org.pcsoft.framework.simplay.uicommon.EditableRegions
+import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 import org.pcsoft.framework.simplay.uicommon.hitTest
 import org.pcsoft.framework.simplay.uicommon.segmentSpanX
 
@@ -239,7 +241,9 @@ internal class PaperSheetCaret(
      */
     fun setCaret(index: Int, extend: Boolean, keepDesiredX: Boolean = false) {
         val idx = textIndex() ?: return
-        val clamped = idx.clamp(index)
+        val rawClamped = idx.clamp(index)
+        // A `Shift` selection may span a DISABLED page; a plain move snaps out of it.
+        val clamped = if (extend) rawClamped else snapOutOfDisabled(rawClamped, position)
         if (extend) {
             if (shiftAnchor == null) shiftAnchor = position
             selection.setAnchorFocus(idx.clamp(shiftAnchor ?: position), clamped)
@@ -250,6 +254,21 @@ internal class PaperSheetCaret(
         position = clamped
         if (!keepDesiredX) desiredX = null
         restartBlink()
+    }
+
+    /**
+     * `target` when [PaperSheetView.deactivatedPageHandling] is not [PageDeactivationMode.DISABLED] or
+     * there is nothing deactivated; otherwise `target` snapped out of a blocked range in the direction
+     * of travel from `from`.
+     */
+    private fun snapOutOfDisabled(target: Int, from: Int): Int {
+        if (view.deactivatedPageHandling != PageDeactivationMode.DISABLED) return target
+        val ids = view.deactivatedPageIds
+        if (ids.isEmpty()) return target
+        val idx = textIndex() ?: return target
+        val doc = view.document ?: return target
+        val direction = if (target >= from) 1 else -1
+        return EditableRegions.of(idx, ids, PageDeactivationMode.DISABLED, doc).snapOutOfBlocked(target, direction)
     }
 
     private fun currentSeg(): DocumentTextIndex.Segment? {

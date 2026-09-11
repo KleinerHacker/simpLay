@@ -28,6 +28,8 @@ shown; register a `java.beans.PropertyChangeListener` to react.
 |----------|------|---------|---------|
 | `document` | `Document?` | `null` | The document to render. |
 | `mode` | `PaperSheetMode` | `READONLY` | `READONLY` (selection only) or `EDITABLE` (caret + editing). |
+| `deactivatedPageIds` | `Set<String>` | `emptySet()` | Stable `Page.id` values of the pages currently marked deactivated; see [Deactivating pages](#deactivating-pages). |
+| `deactivatedPageHandling` | `PageDeactivationMode` | `READONLY` | How `deactivatedPageIds` is honoured. |
 | `outerMargin` | `Double` | `24.0` | Space around the whole sheet stack, in layout units. |
 | `pageGap` | `Double` | `16.0` | Vertical space between two sheets, in layout units. |
 | `minZoom` / `maxZoom` / `zoom` | `Double` | `0.25` / `4.0` / `1.0` | `zoom` is always clamped into `[minZoom, maxZoom]`. |
@@ -40,6 +42,32 @@ shown; register a `java.beans.PropertyChangeListener` to react.
 
 The sheet chrome, drop shadow, selection highlight and caret are styled through
 the Look-and-Feel - see [Styling](styling.md).
+
+## Deactivating pages
+
+Individual pages can be marked deactivated by their stable
+`org.pcsoft.framework.simplay.engine.model.Page.id`, independently of `mode`.
+Both properties are transient view state and are never persisted in
+`document`:
+
+```kotlin
+view.setPageDeactivated(0, true) // resolves index 0 against the current document
+view.deactivatedPageHandling = PageDeactivationMode.HIDDEN
+```
+
+`PageDeactivationMode` controls how `deactivatedPageIds` is honoured:
+
+| Mode | Meaning |
+|------|---------|
+| `IGNORE` | `deactivatedPageIds` is fully ignored; behaves as an empty set. |
+| `DISABLED` | The page is not editable and the caret skips over it. |
+| `READONLY` (default) | The caret reaches and crosses the page normally, selection works, but every mutation touching it is discarded. |
+| `HIDDEN` | The page (and its flow overflow sheets) is removed entirely from layout, scroll area and hit-testing; the document itself is unchanged. |
+
+`setPageDeactivated(index, deactivated)` resolves `index` against the current
+`document` into an id immediately, so the marker stays attached to that page
+even as later edits shift page indices. `FloatingOverlayEvent.pageDeactivated`
+reports whether the triggering page is currently deactivated.
 
 ## Selection model
 

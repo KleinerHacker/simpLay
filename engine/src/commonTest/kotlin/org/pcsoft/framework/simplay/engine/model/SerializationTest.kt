@@ -16,6 +16,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
+import nl.adaptivity.xmlutil.serialization.XML
 import org.pcsoft.framework.simplay.engine.PageCountingMode
 import org.pcsoft.framework.simplay.engine.geometry.Margins
 import org.pcsoft.framework.simplay.engine.geometry.Size
@@ -23,6 +24,7 @@ import org.pcsoft.framework.simplay.engine.geometry.Size
 class SerializationTest {
 
     private val json = Json { prettyPrint = false }
+    private val xml = XML { autoPolymorphic = true }
     private val style = TextStyle(
         Font(
             "Serif",
@@ -127,5 +129,39 @@ class SerializationTest {
         val decoded = json.decodeFromString(Document.serializer(), encoded)
 
         assertEquals(document, decoded)
+    }
+
+    /**
+     * Verifies that a [TextWhitespace] part (both [WhitespaceKind]s) survives a JSON encode/decode
+     * round trip as part of a tokenized [TextBlock], keeping its polymorphic [TextPart] identity.
+     */
+    @Test
+    fun roundTripsTextWhitespaceViaJson() {
+        val block = TextBlock.of("one \t two", style)
+
+        val encoded = json.encodeToString(TextBlock.serializer(), block)
+        val decoded = json.decodeFromString(TextBlock.serializer(), encoded)
+
+        assertEquals(block, decoded)
+        assertTrue(decoded.parts.any { it is TextWhitespace && it.kind == WhitespaceKind.SPACE })
+        assertTrue(decoded.parts.any { it is TextWhitespace && it.kind == WhitespaceKind.TAB })
+        assertEquals("one \t two", decoded.toString())
+    }
+
+    /**
+     * Verifies that a [TextWhitespace] part (both [WhitespaceKind]s) survives an XML encode/decode
+     * round trip as part of a tokenized [TextBlock], keeping its polymorphic [TextPart] identity.
+     */
+    @Test
+    fun roundTripsTextWhitespaceViaXml() {
+        val block = TextBlock.of("one \t two", style)
+
+        val encoded = xml.encodeToString(TextBlock.serializer(), block)
+        val decoded = xml.decodeFromString(TextBlock.serializer(), encoded)
+
+        assertEquals(block, decoded)
+        assertTrue(decoded.parts.any { it is TextWhitespace && it.kind == WhitespaceKind.SPACE })
+        assertTrue(decoded.parts.any { it is TextWhitespace && it.kind == WhitespaceKind.TAB })
+        assertEquals("one \t two", decoded.toString())
     }
 }
