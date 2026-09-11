@@ -2,7 +2,14 @@
   "theme": "dark",
   "permissions": {
     "deny": [
-      "Edit(.claude/settings.json)"
+      "Edit(.claude/settings.json)",
+      "Bash(python *)",
+      "Bash(python3 *)",
+      "Bash(node *)",
+      "Bash(perl *)",
+      "Bash(sed *)",
+      "Bash(awk *)",
+      "Bash(tee *)"
     ],
     "allow": [
       "Read(*)",

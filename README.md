@@ -4,6 +4,12 @@ simpLay is a Kotlin framework for building simulations. The core is a Kotlin
 Multiplatform engine; the integration modules are grouped into user-interface
 bindings under `ui/`.
 
+## AI disclosure
+
+In accordance with EU transparency requirements, please note that this project -
+including its source code, tests, documentation and configuration - was created
+entirely with the assistance of artificial intelligence.
+
 ## Modules
 
 | Module             | Type                 | Artifact            | Purpose                                       |
