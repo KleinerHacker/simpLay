@@ -81,8 +81,11 @@ internal object Graphics2DDocumentRenderer {
         pageNumberLabel: PageNumberLabel? = null,
         numberingStyle: TextStyle = PageNumbering.DEFAULT_NUMBER_STYLE,
     ) {
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB)
         g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON)
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+        g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE)
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
         pageFrame?.decorate(g, page, originX, originY)
         val savedPaint = g.paint
         // The engine model carries no per-run text colour yet, so the document text is always
