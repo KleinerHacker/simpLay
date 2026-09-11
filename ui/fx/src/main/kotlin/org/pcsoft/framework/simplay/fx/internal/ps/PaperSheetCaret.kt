@@ -12,26 +12,21 @@
 
 package org.pcsoft.framework.simplay.fx.internal.ps
 
-import org.pcsoft.framework.simplay.fx.CaretModel
-import org.pcsoft.framework.simplay.fx.PaperSheetMode
-import org.pcsoft.framework.simplay.fx.PaperSheetView
-
 import javafx.animation.Interpolator
 import javafx.animation.KeyFrame
 import javafx.animation.KeyValue
 import javafx.animation.Timeline
 import javafx.beans.property.SimpleDoubleProperty
-import javafx.event.EventHandler
 import javafx.geometry.BoundingBox
 import javafx.geometry.Bounds
 import javafx.util.Duration
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
-import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
+import org.pcsoft.framework.simplay.engine.measure.MeasuredLine
+import org.pcsoft.framework.simplay.fx.CaretModel
+import org.pcsoft.framework.simplay.fx.PaperSheetMode
+import org.pcsoft.framework.simplay.fx.PaperSheetView
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
-import org.pcsoft.framework.simplay.uicommon.EditableRegions
-import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
-import org.pcsoft.framework.simplay.uicommon.hitTest
-import org.pcsoft.framework.simplay.uicommon.segmentSpanX
+import org.pcsoft.framework.simplay.uicommon.*
 
 /**
  * Everything the edit caret of a [PaperSheetView] needs: its [position] on the linear document text,
@@ -90,6 +85,10 @@ internal class PaperSheetCaret(
     init {
         opacity.addListener { _, _, _ -> requestRedraw() }
     }
+
+    /** Whether [mode] takes the deactivated pages out of plain caret navigation. */
+    private fun blocksNavigation(mode: PageDeactivationMode): Boolean =
+        mode == PageDeactivationMode.DISABLED || mode == PageDeactivationMode.HIDDEN
 
     private val editable: Boolean get() = view.mode == PaperSheetMode.EDITABLE
 
@@ -242,8 +241,8 @@ internal class PaperSheetCaret(
     fun setCaret(index: Int, extend: Boolean, keepDesiredX: Boolean = false) {
         val idx = textIndex() ?: return
         val rawClamped = idx.clamp(index)
-        // A `Shift` selection may span a DISABLED page; a plain move snaps out of it.
-        val clamped = if (extend) rawClamped else snapOutOfDisabled(rawClamped, position)
+        // A `Shift` selection may span a deactivated page; a plain move snaps out of it.
+        val clamped = if (extend) rawClamped else snapOutOfDeactivated(rawClamped, position)
         if (extend) {
             if (shiftAnchor == null) shiftAnchor = position
             selection.setAnchorFocus(idx.clamp(shiftAnchor ?: position), clamped)
@@ -257,19 +256,28 @@ internal class PaperSheetCaret(
     }
 
     /**
-     * `target` when [PaperSheetView.deactivatedPageHandling] is not [PageDeactivationMode.DISABLED] or
+     * `target` when [PaperSheetView.deactivatedPageHandling] keeps the deactivated pages navigable or
      * there is nothing deactivated; otherwise `target` snapped out of a blocked range in the direction
      * of travel from `from`.
      */
-    private fun snapOutOfDisabled(target: Int, from: Int): Int {
-        if (view.deactivatedPageHandling != PageDeactivationMode.DISABLED) return target
+    private fun snapOutOfDeactivated(target: Int, from: Int): Int {
+        val mode = view.deactivatedPageHandling
+        if (!blocksNavigation(mode)) return target
         val ids = view.deactivatedPageIds
         if (ids.isEmpty()) return target
         val idx = textIndex() ?: return target
         val doc = view.document ?: return target
         val direction = if (target >= from) 1 else -1
-        return EditableRegions.of(idx, ids, PageDeactivationMode.DISABLED, doc).snapOutOfBlocked(target, direction)
+        return EditableRegions.of(idx, ids, mode, doc).snapOutOfBlocked(target, direction)
     }
+
+    /** Whether the caret may come to rest on the page with [pageId] under the current mode. */
+    private fun isPageNavigable(pageId: String): Boolean =
+        !blocksNavigation(view.deactivatedPageHandling) || pageId !in view.deactivatedPageIds
+
+    /** The measured lines a vertical move may land on: every line outside a deactivated page. */
+    private fun navigableLines(idx: DocumentTextIndex): List<MeasuredLine> =
+        idx.segments.filter { isPageNavigable(it.page.raw.id) }.map { it.line }.distinct()
 
     private fun currentSeg(): DocumentTextIndex.Segment? {
         val idx = textIndex() ?: return null
@@ -325,8 +333,8 @@ internal class PaperSheetCaret(
     fun moveVertical(delta: Int, extend: Boolean) {
         val idx = textIndex() ?: return
         val seg = currentSeg() ?: return
-        val lines = idx.segments.map { it.line }.distinct()
-        val li = lines.indexOf(seg.line)
+        val lines = navigableLines(idx).ifEmpty { idx.segments.map { it.line }.distinct() }
+        val li = lines.indexOf(seg.line).takeIf { it >= 0 } ?: nearestNavigableLine(idx, lines, seg, delta)
         val target = li + delta
         if (li < 0 || target !in lines.indices) return
         if (desiredX == null) desiredX = geom(position)?.xContent ?: 0.0
@@ -344,6 +352,26 @@ internal class PaperSheetCaret(
         } ?: return
         val off = hitTest(partSeg.part, partSeg.font, dx, measurer).coerceIn(0, partSeg.part.text.length)
         setCaret(partSeg.start + off, extend, keepDesiredX = true)
+    }
+
+    /**
+     * The [lines] index a vertical move starts from when the caret sits on a deactivated page: the last
+     * navigable line before it for a downward move, the first one after it for an upward move; `-1`
+     * when there is none.
+     */
+    private fun nearestNavigableLine(
+        idx: DocumentTextIndex,
+        lines: List<MeasuredLine>,
+        seg: DocumentTextIndex.Segment,
+        delta: Int,
+    ): Int {
+        val all = idx.segments.map { it.line }.distinct()
+        val current = all.indexOf(seg.line)
+        return if (delta >= 0) {
+            lines.indexOfLast { all.indexOf(it) < current }
+        } else {
+            lines.indexOfFirst { all.indexOf(it) > current }
+        }
     }
 
     //endregion

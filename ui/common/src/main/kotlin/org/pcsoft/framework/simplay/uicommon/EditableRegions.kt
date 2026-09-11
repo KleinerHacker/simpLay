@@ -20,13 +20,16 @@ import org.pcsoft.framework.simplay.engine.model.Document
  *
  * Built once per [of] call from a [DocumentTextIndex], the set of deactivated page ids and a
  * [PageDeactivationMode]. A raw block is "blocked" when the id of the raw page it lives on
- * (`DocumentTextIndex.BlockRange.pageIndex` into `document.pages`) is in `deactivatedPageIds`.
+ * (`DocumentTextIndex.BlockRange.pageIndex` into `document.pages`) is in `deactivatedPageIds`. All
+ * blocked blocks of one page form a single blocked span, from the first block's start to the last
+ * block's end, so the separators between them are blocked as well and the caret cannot come to rest
+ * between two blocks of a deactivated page.
  *
  * * [editableRanges] - where a mutation may land ([DISABLED][PageDeactivationMode.DISABLED] and
  *   [READONLY][PageDeactivationMode.READONLY] both exclude the blocked ranges).
  * * [navigableRanges] - where the caret may come to rest after a plain (non-`Shift`) navigation move
- *   ([DISABLED][PageDeactivationMode.DISABLED] excludes the blocked ranges, every other mode is the
- *   full document).
+ *   ([DISABLED][PageDeactivationMode.DISABLED] and [HIDDEN][PageDeactivationMode.HIDDEN] exclude the
+ *   blocked ranges, every other mode is the full document).
  * * [visibleRanges] - what stays part of layout and hit-testing ([HIDDEN][PageDeactivationMode.HIDDEN]
  *   excludes the blocked ranges, every other mode is the full document).
  *
@@ -80,7 +83,8 @@ class EditableRegions private constructor(
             val blockedPairs = mergeIntervals(
                 index.blockRanges
                     .filter { document.pages.getOrNull(it.pageIndex)?.id in deactivatedPageIds }
-                    .map { it.start to it.end },
+                    .groupBy { it.pageIndex }
+                    .map { (_, ranges) -> ranges.minOf { it.start } to ranges.maxOf { it.end } },
             )
             if (blockedPairs.isEmpty()) {
                 return EditableRegions(full, full, full, emptyList())
