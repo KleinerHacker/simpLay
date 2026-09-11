@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) KleinerHacker alias Pfeiffer C Soft 2026.
  * This work is licensed under the Apache License, Version 2.0.
  * You may not use this file except in compliance with the License.
@@ -28,9 +28,9 @@ class CaretModelTest : JavaFxTestBase() {
 
     private val paragraphLength = PaperSheetTestFixtures.PARAGRAPH.length
 
-    private fun view(paragraphs: Int = 1, normal: Boolean = false): PaperSheetView = onFxThread {
+    private fun view(paragraphs: Int = 1, mode: PaperSheetMode = PaperSheetMode.NAVIGABLE): PaperSheetView = onFxThread {
         val view = PaperSheetView()
-        if (normal) view.mode = PaperSheetMode.EDITABLE
+        view.mode = mode
         val stage = Stage()
         stage.scene = Scene(view, 320.0, 260.0)
         stage.show()
@@ -41,12 +41,12 @@ class CaretModelTest : JavaFxTestBase() {
     }
 
     /**
-     * A fresh read-only view reports the caret at index `0` with no bounds, and the structural counts
-     * of the document it was given.
+     * A fresh view without caret support reports the caret at index `0` with no bounds, and the
+     * structural counts of the document it was given.
      */
     @Test
     fun freshModelReportsCaretAtStartAndCounts() {
-        val model = view().caretModel
+        val model = view(mode = PaperSheetMode.SELECTABLE).caretModel
 
         assertEquals(0, model.position)
         assertNull(model.bounds)
@@ -140,14 +140,14 @@ class CaretModelTest : JavaFxTestBase() {
     }
 
     /**
-     * In normal mode the caret bounds become a real viewport rectangle; in read-only mode they stay
-     * `null`.
+     * With caret support the caret bounds become a real viewport rectangle; in a mode without a
+     * caret they stay `null`.
      */
     @Test
-    fun boundsAreSetOnlyInNormalMode() {
-        assertNull(view(normal = false).caretModel.bounds)
+    fun boundsAreSetOnlyWithCaretSupport() {
+        assertNull(view(mode = PaperSheetMode.SELECTABLE).caretModel.bounds)
 
-        val model = view(normal = true).caretModel
+        val model = view(mode = PaperSheetMode.EDITABLE).caretModel
         onFxThread { model.moveTo(5) }
         val bounds = model.bounds
         assertTrue(bounds != null && bounds.height > 0.0)
@@ -160,7 +160,7 @@ class CaretModelTest : JavaFxTestBase() {
     @Test
     fun commandBeforeSkinIsAppliedOnSkinInit() {
         val view = onFxThread {
-            val v = PaperSheetView()
+            val v = PaperSheetView().apply { mode = PaperSheetMode.NAVIGABLE }
             v.document = PaperSheetTestFixtures.flowDocument(1)
             v.caretModel.moveToEnd()
             v

@@ -28,10 +28,13 @@ import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
  * copied to the system clipboard with `Ctrl+C` (`Cmd+C` on macOS) as styled HTML, RTF and plain
  * text. The Swing counterpart of the `fx` module's `PaperSheetView`.
  *
- * The [mode] switches between [PaperSheetMode.READONLY] (no caret) and [PaperSheetMode.EDITABLE],
- * which adds a blinking caret, character insertion / removal, clipboard cut / copy / paste, line
- * duplication, drag-and-drop of the selection and the standard caret-navigation keys. Editing
- * replaces [document] with a new instance; the previous document is not mutated.
+ * The [mode] picks one of four interaction levels: [PaperSheetMode.STATIC] (a plain picture - no
+ * selection, no caret, the default arrow cursor and no keyboard focus), [PaperSheetMode.SELECTABLE]
+ * (selecting and copying, no caret), [PaperSheetMode.NAVIGABLE] (adds a blinking caret and the
+ * standard caret-navigation keys, still without mutating the document) and [PaperSheetMode.EDITABLE]
+ * (adds character insertion / removal, clipboard cut / copy / paste, line duplication and
+ * drag-and-drop of the selection). Editing replaces [document] with a new instance; the previous
+ * document is not mutated.
  *
  * [deactivatedPageIds] (stable [org.pcsoft.framework.simplay.engine.model.Page.id] values) together
  * with [deactivatedPageHandling] mark individual pages as deactivated. Both are transient view state,
@@ -84,10 +87,12 @@ open class PaperSheetView : JComponent() {
 
     //region Mode
 
-    var mode: PaperSheetMode = PaperSheetMode.READONLY
+    /** How much interaction the view offers; defaults to [PaperSheetMode.SELECTABLE]. */
+    var mode: PaperSheetMode = PaperSheetMode.SELECTABLE
         set(value) {
             val old = field
             field = value
+            isFocusable = value.supportsFocus
             firePropertyChange(PROP_MODE, old, value)
         }
 
@@ -316,6 +321,7 @@ open class PaperSheetView : JComponent() {
     }
 
     private fun runSelectionCommand(block: TextSelectionModel.Commands.() -> Unit) {
+        if (!mode.supportsSelection) return
         val commands = selectionCommands
         if (commands != null) commands.block() else pendingSelectionCommand = block
     }
@@ -342,6 +348,7 @@ open class PaperSheetView : JComponent() {
     }
 
     private fun runCaretCommand(block: CaretModel.Commands.() -> Unit) {
+        if (!mode.supportsCaret) return
         val commands = caretCommands
         if (commands != null) commands.block() else pendingCaretCommand = block
     }
@@ -394,7 +401,7 @@ open class PaperSheetView : JComponent() {
     //region UI wiring
 
     init {
-        isFocusable = true
+        isFocusable = mode.supportsFocus
         isOpaque = true
         PaperSheetLookAndFeel.applyTo(this)
         updateUI()

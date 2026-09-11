@@ -44,6 +44,60 @@ class PaperSheetEditingTest {
         return view to ui
     }
 
+    /** Paints [view] off-screen once and returns it together with its UI delegate. */
+    private fun paintedView(mode: PaperSheetMode): Pair<PaperSheetView, BasicPaperSheetUI> {
+        val view = PaperSheetView().apply {
+            this.mode = mode
+            document = TestDocuments.short
+        }
+        val ui = view.getPaperSheetUI() as BasicPaperSheetUI
+        val image = BufferedImage(500, 400, BufferedImage.TYPE_INT_ARGB)
+        val g = image.createGraphics()
+        try {
+            ui.paintForTest(g, 500, 400)
+        } finally {
+            g.dispose()
+        }
+        return view to ui
+    }
+
+    /**
+     * Verifies that [PaperSheetMode.NAVIGABLE] moves the caret with the navigation keys but drops
+     * every mutating key, so the document instance stays untouched.
+     */
+    @Test
+    fun navigableModeMovesTheCaretButRejectsEdits() {
+        val (view, ui) = paintedView(PaperSheetMode.NAVIGABLE)
+        val before = view.document
+
+        ui.pressKeyForTest(KeyEvent.VK_RIGHT)
+        ui.typeTextForTest("Z")
+        ui.pressKeyForTest(KeyEvent.VK_BACK_SPACE)
+        ui.pressKeyForTest(KeyEvent.VK_DELETE)
+
+        assertEquals(before, view.document)
+        assertEquals(1, ui.caretIndexForTest)
+    }
+
+    /**
+     * Verifies that [PaperSheetMode.STATIC] ignores every key, keeps the caret at the document start
+     * and refuses a programmatic `selectAll`, so the document is shown like a plain picture.
+     */
+    @Test
+    fun staticModeRejectsKeysCaretAndSelection() {
+        val (view, ui) = paintedView(PaperSheetMode.STATIC)
+        val before = view.document
+
+        ui.pressKeyForTest(KeyEvent.VK_RIGHT)
+        ui.typeTextForTest("Z")
+        view.selectionModel.selectAll()
+        view.caretModel.moveToEnd()
+
+        assertEquals(before, view.document)
+        assertEquals(0, ui.caretIndexForTest)
+        assertTrue(view.selectionModel.isEmpty)
+    }
+
     /**
      * Verifies that replacing the document from outside resets the caret to the document start and
      * scrolls the viewport back to the top, no matter where the caret stood before.

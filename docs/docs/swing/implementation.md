@@ -69,8 +69,10 @@ through `selectionModel` (a `TextSelectionModel` with `text`, `startIndex` /
 `selectAll` / `clearSelection` commands), with `selectedText` and
 `selectionBounds` kept as convenience delegates.
 
-Setting `mode = PaperSheetMode.EDITABLE` turns the view into an editor: a
-blinking caret, character insertion and removal, clipboard cut / copy / paste,
+`mode` picks one of four interaction levels - `STATIC` (a plain picture),
+`SELECTABLE` (the default), `NAVIGABLE` (adds a caret without mutating the
+document) and `EDITABLE`. Setting `mode = PaperSheetMode.EDITABLE` turns the
+view into an editor: a blinking caret, character insertion and removal, clipboard cut / copy / paste,
 line and selection duplication, drag-and-drop of the selection and the standard
 caret keys (`Home`, `End`, `Ctrl+Home`, `Ctrl+End`, arrows, `Ctrl+Left` /
 `Ctrl+Right`, `Backspace`, `Delete`, each optionally with `Shift`). An edit

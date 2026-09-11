@@ -62,7 +62,9 @@ through `selectionModel` (a `TextSelectionModel` with `text`, `startIndex` /
 `selectAll` / `clearSelection` commands), with `selectedText` and
 `selectionBounds` kept as convenience delegates.
 
-Setting `mode = PaperSheetMode.EDITABLE` turns the view into an editor: a blinking
+`mode` picks one of four interaction levels - `STATIC` (a plain picture),
+`SELECTABLE` (the default), `NAVIGABLE` (adds a caret without mutating the
+document) and `EDITABLE`. Setting `mode = PaperSheetMode.EDITABLE` turns the view into an editor: a blinking
 caret, character insertion and removal, clipboard cut / copy / paste, line and
 selection duplication, drag-and-drop of the selection and the standard caret
 keys (`Home`, `End`, `Ctrl+Home`, `Ctrl+End`, arrows, `Ctrl+Left` /
@@ -81,8 +83,9 @@ hard on and off.
 editing). Overlays follow scroll and zoom and are clamped to the viewport edge.
 
 `PaperSheetView` is styleable through the standard JavaFX CSS mechanism: the
-style class is `paper-sheet-view`, a `:readonly` pseudo-class is active while
-`mode` is `PaperSheetMode.READONLY`, and a default user-agent stylesheet ships
+style class is `paper-sheet-view`, exactly one of the `:static`, `:selectable`,
+`:navigable` and `:editable` pseudo-classes is active for the current
+`PaperSheetMode`, and a default user-agent stylesheet ships
 with the module. The `-fx-` properties cover the sheet chrome
 (`-fx-sheet-background`, `-fx-sheet-border-color`, `-fx-sheet-border-width`), the
 drop shadow (`-fx-shadow-color`, `-fx-shadow-offset`), the selection highlight

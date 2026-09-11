@@ -34,6 +34,33 @@ excluded.
   layout entirely. `FloatingOverlayEvent` now reports `pageDeactivated` so a
   registered overlay can react to it.
 
+### Changed
+
+- `ui/fx` and `ui/swing`: `PaperSheetMode` now offers four interaction levels
+  instead of two. **Breaking:** `READONLY` and `EDITABLE` are replaced by
+  `STATIC` (the document behaves like an image - no selection, no caret, the
+  default arrow mouse cursor and no keyboard focus), `SELECTABLE` (the new
+  default, the former `READONLY`), `NAVIGABLE` (selection plus a blinking caret
+  and the caret-navigation keys, still without mutating the document) and
+  `EDITABLE` (unchanged). Each constant also exposes `supportsSelection`,
+  `supportsCaret`, `supportsEditing` and `supportsFocus`. Switching down to a
+  mode without selection drops the current selection.
+- `ui/fx`: **Breaking:** the `:readonly` CSS pseudo-class of `PaperSheetView` is
+  replaced by one pseudo-class per mode - `:static`, `:selectable`, `:navigable`
+  and `:editable` - of which exactly one is active. The bundled user-agent
+  stylesheet now greys the selection highlight for `:selectable` and
+  `:navigable`.
+- `ui/swing`: **Breaking:** the Look-and-Feel key
+  `PaperSheetView.selectionColorReadonly` is renamed to
+  `PaperSheetView.selectionColorNonEditable` (constant
+  `PaperSheetLookAndFeel.KEY_SELECTION_COLOR_NON_EDITABLE`, accessor
+  `nonEditableSelectionColor()`) and now applies to every non-editable mode.
+- `ui/fx` and `ui/swing`: a page marked deactivated under
+  `PageDeactivationMode.DISABLED` no longer shows any floating overlay and keeps
+  the default arrow mouse cursor over its text instead of the text cursor. The
+  same holds for the whole view in `PaperSheetMode.STATIC`, which now shows no
+  floating overlay at all.
+
 ### Fixed
 
 - `engine`: `TextBlock` no longer invents a space when reconstructing text

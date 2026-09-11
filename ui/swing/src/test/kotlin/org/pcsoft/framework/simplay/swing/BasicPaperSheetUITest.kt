@@ -93,6 +93,41 @@ class BasicPaperSheetUITest {
     }
 
     /**
+     * Verifies that a page locked by [PageDeactivationMode.DISABLED] keeps the default arrow pointer
+     * over its text content area instead of showing the text cursor.
+     */
+    @Test
+    fun pointerStaysDefaultOverADisabledPage() {
+        val view = PaperSheetView().apply {
+            document = TestDocuments.short
+            deactivatedPageHandling = PageDeactivationMode.DISABLED
+        }
+        val ui = ui(view)
+        paint(ui)
+        view.setPageDeactivated(0, true)
+        paint(ui)
+        assertEquals(Cursor.DEFAULT_CURSOR, ui.cursorAtForTest(80.0, 80.0).type)
+    }
+
+    /**
+     * Verifies that [PaperSheetMode.STATIC] keeps the default arrow pointer even over a page's text
+     * content area, and that the view refuses focus and a programmatic `selectAll` in that mode.
+     */
+    @Test
+    fun staticModeKeepsDefaultCursorAndRefusesSelection() {
+        val view = PaperSheetView().apply {
+            document = TestDocuments.short
+            mode = PaperSheetMode.STATIC
+        }
+        val ui = ui(view)
+        paint(ui)
+        view.selectionModel.selectAll()
+        assertEquals(Cursor.DEFAULT_CURSOR, ui.cursorAtForTest(80.0, 80.0).type)
+        assertFalse(view.isFocusable)
+        assertTrue(view.selectionModel.isEmpty)
+    }
+
+    /**
      * Verifies that the internal vertical scroll bar becomes enabled once the scaled content is
      * taller than the viewport.
      */

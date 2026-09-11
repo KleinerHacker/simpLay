@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) KleinerHacker alias Pfeiffer C Soft 2026.
  * This work is licensed under the Apache License, Version 2.0.
  * You may not use this file except in compliance with the License.
@@ -36,9 +36,9 @@ class PaperSheetEditingTest : JavaFxTestBase() {
 
     private data class Fixture(val view: PaperSheetView, val skin: PaperSheetViewSkin)
 
-    private fun fixture(paragraphs: Int = 1, normal: Boolean = true): Fixture = onFxThread {
+    private fun fixture(paragraphs: Int = 1, mode: PaperSheetMode = PaperSheetMode.EDITABLE): Fixture = onFxThread {
         val view = PaperSheetView()
-        if (normal) view.mode = PaperSheetMode.EDITABLE
+        view.mode = mode
         val stage = Stage()
         stage.scene = Scene(view, 320.0, 260.0)
         stage.show()
@@ -60,12 +60,12 @@ class PaperSheetEditingTest : JavaFxTestBase() {
     }
 
     /**
-     * In read-only mode no caret is drawn and typing or pressing an editing key leaves the document
-     * untouched.
+     * In [PaperSheetMode.SELECTABLE] no caret is drawn and typing or pressing an editing key leaves
+     * the document untouched.
      */
     @Test
-    fun readonlyModeShowsNoCaretAndRejectsInput() {
-        val (view, skin) = fixture(normal = false)
+    fun selectableModeShowsNoCaretAndRejectsInput() {
+        val (view, skin) = fixture(mode = PaperSheetMode.SELECTABLE)
         val before = view.document
 
         onFxThread {
@@ -79,16 +79,74 @@ class PaperSheetEditingTest : JavaFxTestBase() {
     }
 
     /**
-     * Switching the mode to normal makes the skin draw exactly one caret stroke.
+     * Switching the mode to [PaperSheetMode.EDITABLE] makes the skin draw exactly one caret stroke.
      */
     @Test
-    fun switchingToNormalRendersCaret() {
-        val (view, skin) = fixture(normal = false)
+    fun switchingToEditableRendersCaret() {
+        val (view, skin) = fixture(mode = PaperSheetMode.SELECTABLE)
 
         onFxThread { view.mode = PaperSheetMode.EDITABLE }
 
         assertTrue(skin.caretRenderedForTest)
         assertEquals(1, skin.caretDrawCount)
+    }
+
+    /**
+     * In [PaperSheetMode.NAVIGABLE] the caret is drawn and moves with the navigation keys, but every
+     * mutating key is dropped and the document stays the same instance.
+     */
+    @Test
+    fun navigableModeShowsCaretButRejectsEdits() {
+        val (view, skin) = fixture(mode = PaperSheetMode.NAVIGABLE)
+        val before = view.document
+
+        onFxThread {
+            skin.pressKeyForTest(KeyCode.RIGHT)
+            skin.typeTextForTest("Z")
+            skin.pressKeyForTest(KeyCode.BACK_SPACE)
+            skin.pressKeyForTest(KeyCode.DELETE)
+        }
+
+        assertEquals(before, view.document)
+        assertTrue(skin.caretRenderedForTest)
+        assertEquals(1, view.caretModel.position)
+    }
+
+    /**
+     * In [PaperSheetMode.STATIC] the view is not focus-traversable, draws no caret, ignores every key
+     * and refuses even a programmatic `selectAll`, so the document is shown like a plain picture.
+     */
+    @Test
+    fun staticModeHasNoCaretNoSelectionAndNoFocus() {
+        val (view, skin) = fixture(mode = PaperSheetMode.STATIC)
+        val before = view.document
+
+        onFxThread {
+            skin.typeTextForTest("Z")
+            skin.pressKeyForTest(KeyCode.RIGHT)
+            view.selectionModel.selectAll()
+        }
+
+        assertEquals(before, view.document)
+        assertFalse(view.isFocusTraversable)
+        assertFalse(skin.caretRenderedForTest)
+        assertEquals(0, skin.caretDrawCount)
+        assertTrue(view.selectionModel.isEmpty)
+    }
+
+    /**
+     * Switching away from a selecting mode into [PaperSheetMode.STATIC] drops the selection that was
+     * made before the switch.
+     */
+    @Test
+    fun switchingToStaticClearsAnExistingSelection() {
+        val (view, _) = fixture(mode = PaperSheetMode.SELECTABLE)
+
+        onFxThread { view.selectionModel.selectAll() }
+        assertFalse(view.selectionModel.isEmpty)
+
+        onFxThread { view.mode = PaperSheetMode.STATIC }
+        assertTrue(view.selectionModel.isEmpty)
     }
 
     /**
@@ -388,7 +446,7 @@ class PaperSheetEditingTest : JavaFxTestBase() {
      */
     @Test
     fun smoothCaretBlinkDefaultsOffAndIsSettable() {
-        val (view, _) = fixture(normal = false)
+        val (view, _) = fixture(mode = PaperSheetMode.SELECTABLE)
 
         assertFalse(view.smoothCaretBlink)
 

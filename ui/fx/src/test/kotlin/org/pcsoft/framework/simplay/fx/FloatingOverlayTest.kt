@@ -342,4 +342,67 @@ class FloatingOverlayTest : JavaFxTestBase() {
         assertEquals(1, shown.size)
         assertFalse(shown.first().pageDeactivated)
     }
+
+    /**
+     * A `PAGE_HOVER` overlay stays hidden while the hovered page is locked by
+     * [PageDeactivationMode.DISABLED], and appears again on the still-active first page.
+     */
+    @Test
+    fun overlayIsSuppressedOnADisabledPage() {
+        val overlay = FloatingOverlay().apply {
+            trigger = FloatingOverlayTrigger.PAGE_HOVER
+            content = Label("Page")
+        }
+        val skin = onFxThread {
+            val view = PaperSheetView()
+            view.floatingOverlays.add(overlay)
+            val stage = Stage()
+            stage.scene = Scene(view, 400.0, 700.0)
+            stage.show()
+            view.document = PaperSheetTestFixtures.twoPageDocument()
+            view.deactivatedPageHandling = PageDeactivationMode.DISABLED
+            view.setPageDeactivated(1, true)
+            view.applyCss()
+            view.layout()
+            view.skin as PaperSheetViewSkin
+        }
+
+        onFxThread { skin.hoverAtForTest(60.0, 336.0) }
+        assertFalse(overlay.isActive)
+
+        onFxThread { skin.hoverAtForTest(60.0, 60.0) }
+        assertTrue(overlay.isActive)
+    }
+
+    /**
+     * In [PaperSheetMode.STATIC] no overlay is shown at all, and an overlay that was visible before
+     * the mode switch is detached again.
+     */
+    @Test
+    fun noOverlayIsShownInStaticMode() {
+        val overlay = FloatingOverlay().apply {
+            trigger = FloatingOverlayTrigger.PAGE_HOVER
+            content = Label("Page")
+        }
+        val skin = onFxThread {
+            val view = PaperSheetView()
+            view.floatingOverlays.add(overlay)
+            val stage = Stage()
+            stage.scene = Scene(view, 400.0, 700.0)
+            stage.show()
+            view.document = PaperSheetTestFixtures.twoPageDocument()
+            view.applyCss()
+            view.layout()
+            view.skin as PaperSheetViewSkin
+        }
+
+        onFxThread { skin.hoverAtForTest(60.0, 60.0) }
+        assertTrue(overlay.isActive)
+
+        onFxThread {
+            skin.skinnable.mode = PaperSheetMode.STATIC
+            skin.hoverAtForTest(60.0, 60.0)
+        }
+        assertFalse(overlay.isActive)
+    }
 }

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) KleinerHacker alias Pfeiffer C Soft 2026.
  * This work is licensed under the Apache License, Version 2.0.
  * You may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ object PaperSheetLookAndFeel {
     const val KEY_SHADOW_COLOR = "PaperSheetView.shadowColor"
     const val KEY_SHADOW_OFFSET = "PaperSheetView.shadowOffset"
     const val KEY_SELECTION_COLOR = "PaperSheetView.selectionColor"
-    const val KEY_SELECTION_COLOR_READONLY = "PaperSheetView.selectionColorReadonly"
+    const val KEY_SELECTION_COLOR_NON_EDITABLE = "PaperSheetView.selectionColorNonEditable"
     const val KEY_CARET_COLOR = "PaperSheetView.caretColor"
     const val KEY_DEACTIVATED_SHEET_BACKGROUND = "PaperSheetView.deactivatedSheetBackground"
     const val KEY_DEACTIVATED_OVERLAY_COLOR = "PaperSheetView.deactivatedOverlayColor"
@@ -52,7 +52,7 @@ object PaperSheetLookAndFeel {
         d.putIfAbsent(KEY_SHADOW_COLOR, PaperSheetStyle.DEFAULT_SHADOW_COLOR)
         d.putIfAbsent(KEY_SHADOW_OFFSET, PaperSheetStyle.DEFAULT_SHADOW_OFFSET)
         d.putIfAbsent(KEY_SELECTION_COLOR, PaperSheetStyle.DEFAULT_SELECTION_COLOR)
-        d.putIfAbsent(KEY_SELECTION_COLOR_READONLY, PaperSheetStyle.DEFAULT_SELECTION_COLOR_READONLY)
+        d.putIfAbsent(KEY_SELECTION_COLOR_NON_EDITABLE, PaperSheetStyle.DEFAULT_SELECTION_COLOR_NON_EDITABLE)
         d.putIfAbsent(KEY_CARET_COLOR, PaperSheetStyle.DEFAULT_CARET_COLOR)
         d.putIfAbsent(KEY_DEACTIVATED_SHEET_BACKGROUND, PaperSheetStyle.DEFAULT_DEACTIVATED_SHEET_BACKGROUND)
         d.putIfAbsent(KEY_DEACTIVATED_OVERLAY_COLOR, PaperSheetStyle.DEFAULT_DEACTIVATED_OVERLAY_COLOR)
@@ -83,9 +83,9 @@ object PaperSheetLookAndFeel {
         }
     }
 
-    /** The `PaperSheetView.selectionColorReadonly` value, or the built-in default. */
-    fun readonlySelectionColor(): Paint =
-        paint(KEY_SELECTION_COLOR_READONLY) ?: PaperSheetStyle.DEFAULT_SELECTION_COLOR_READONLY
+    /** The `PaperSheetView.selectionColorNonEditable` value, or the built-in default. */
+    fun nonEditableSelectionColor(): Paint =
+        paint(KEY_SELECTION_COLOR_NON_EDITABLE) ?: PaperSheetStyle.DEFAULT_SELECTION_COLOR_NON_EDITABLE
 
     private fun paint(key: String): Paint? = UIManager.get(key) as? Paint
 

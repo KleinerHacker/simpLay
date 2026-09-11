@@ -54,9 +54,14 @@ The same list is populated from FXML as a `<floatingOverlays>` child element:
 | `SELECTION` (default) | the view has a non-empty text selection | the selection bounding box |
 | `PARAGRAPH_HOVER` | the mouse hovers a paragraph (a measured block) | that block's box |
 | `PAGE_HOVER` | the mouse hovers a sheet | that sheet's box |
-| `CARET` | an edit caret is placed (`EDITABLE` mode only) | the caret rectangle |
+| `CARET` | a caret is placed | the caret rectangle |
 
-A `CARET` overlay never appears while `mode` is `READONLY`.
+A `CARET` overlay only appears while `mode` is `NAVIGABLE` or `EDITABLE`.
+
+No overlay is shown at all while `mode` is `STATIC`, and no overlay is shown for
+a trigger sitting on a page locked by `PageDeactivationMode.DISABLED` - the same
+two cases in which the mouse pointer keeps the default arrow instead of the text
+cursor.
 
 ## Placement
 

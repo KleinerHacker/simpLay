@@ -53,6 +53,9 @@ internal class OverlayLayer : JComponent() {
  * Swing counterpart of the `fx` module's `PaperSheetOverlays`; instead of a list-change listener the
  * [refresh] reconciles against [PaperSheetView.floatingOverlays] on every pass. Also carries whether
  * the page the trigger sits on is currently deactivated.
+ *
+ * No overlay is shown at all in [PaperSheetMode.STATIC], nor for a trigger sitting on a page locked
+ * by [PageDeactivationMode.DISABLED].
  */
 internal class PaperSheetOverlays(
     private val view: PaperSheetView,
@@ -85,11 +88,23 @@ internal class PaperSheetOverlays(
         active.toList().forEach { if (it !in overlays) detach(it, fireEvent = true) }
         if (overlays.isEmpty() && active.isEmpty()) return
 
+        if (view.mode == PaperSheetMode.STATIC) {
+            active.toList().forEach { detach(it, fireEvent = true) }
+            layer.revalidate()
+            layer.repaint()
+            return
+        }
+
         for (overlay in overlays) {
             val geometry = geometryFor(overlay.trigger)
             val node = overlay.content
             if (geometry == null || node == null) {
                 if (overlay in active && overlay.autoHide) detach(overlay, fireEvent = true)
+                continue
+            }
+            val pageIndex = pageIndexForTrigger(overlay.trigger, geometry)
+            if (isPageDisabled(pageIndex)) {
+                detach(overlay, fireEvent = true)
                 continue
             }
             if (node.parent !== layer) layer.add(node)
@@ -101,8 +116,9 @@ internal class PaperSheetOverlays(
                 continue
             }
             node.setBounds(placed.first, placed.second, node.width.coerceAtLeast(1), node.height.coerceAtLeast(1))
-            val deactivated = isPageDeactivated(pageIndexForTrigger(overlay.trigger, geometry))
-            overlay.updateActiveState(geometry.bounds, geometry.index, geometry.text, geometry.range, deactivated)
+            overlay.updateActiveState(
+                geometry.bounds, geometry.index, geometry.text, geometry.range, isPageDeactivated(pageIndex),
+            )
             if (active.add(overlay)) overlay.fireShown(overlay.trigger)
         }
         layer.revalidate()
@@ -122,7 +138,7 @@ internal class PaperSheetOverlays(
         FloatingOverlayTrigger.PARAGRAPH_HOVER -> hover.paragraphGeometry()
         FloatingOverlayTrigger.PAGE_HOVER -> hover.pageGeometry()
         FloatingOverlayTrigger.CARET -> {
-            if (view.mode != PaperSheetMode.EDITABLE) {
+            if (!view.mode.supportsCaret) {
                 null
             } else {
                 val bounds = caret.viewportBounds()
@@ -145,6 +161,10 @@ internal class PaperSheetOverlays(
         val id = view.document?.pages?.getOrNull(pageIndex)?.id ?: return false
         return id in view.deactivatedPageIds
     }
+
+    /** Whether the raw page at [pageIndex] is locked by [PageDeactivationMode.DISABLED]. */
+    private fun isPageDisabled(pageIndex: Int): Boolean =
+        view.deactivatedPageHandling == PageDeactivationMode.DISABLED && isPageDeactivated(pageIndex)
 
     private fun detach(overlay: FloatingOverlay, fireEvent: Boolean) {
         overlay.content?.let { if (it.parent === layer) layer.remove(it) }

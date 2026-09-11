@@ -1,4 +1,4 @@
-# fx - Paper sheet component
+﻿# fx - Paper sheet component
 
 `PaperSheetView` (package `org.pcsoft.framework.simplay.fx`) is a JavaFX
 `Control` that renders a [`Document`](../engine/raw-model.md) as physical-looking
@@ -6,8 +6,9 @@ sheets - each with a border and a drop shadow - stacked vertically in a
 scrollable, zoomable viewport. Only the pages currently in view are drawn (simple
 page virtualisation).
 
-Its [`mode`](#modes) switches between read-only viewing and full in-place
-editing. Text is always selectable with the mouse and copyable with `Ctrl+C`.
+Its [`mode`](#modes) picks one of four interaction levels, from a plain picture
+up to full in-place editing. From `SELECTABLE` upwards text is selectable with
+the mouse and copyable with `Ctrl+C`.
 
 ## Adding it to a scene
 
@@ -51,7 +52,7 @@ the property object and `getXxx()` / `setXxx()` (or `isXxx()`) for the value.
 | Property | Type | Access | Meaning |
 |----------|------|--------|---------|
 | `document` | `Document?` | read/write | The document to render; `null` shows an empty view. An edit replaces it with a new instance. |
-| `mode` | `PaperSheetMode` | read/write | `READONLY` (default) or `EDITABLE`; see [Modes](#modes). |
+| `mode` | `PaperSheetMode` | read/write | `STATIC`, `SELECTABLE` (default), `NAVIGABLE` or `EDITABLE`; see [Modes](#modes). |
 | `deactivatedPageIds` | `Set<String>` | read/write | Stable `Page.id` values of the pages currently marked deactivated; see [Deactivating pages](#deactivating-pages). |
 | `deactivatedPageHandling` | `PageDeactivationMode` | read/write | How `deactivatedPageIds` is honoured. Default `READONLY`. |
 | `outerMargin` | `Double` | read/write, styleable | Space in layout units around the whole sheet stack. Default `24.0`. |
@@ -59,7 +60,7 @@ the property object and `getXxx()` / `setXxx()` (or `isXxx()`) for the value.
 | `minZoom` | `Double` | read/write | Lower bound for `zoom`. Default `0.25`. |
 | `maxZoom` | `Double` | read/write | Upper bound for `zoom`. Default `4.0`. |
 | `zoom` | `Double` | read/write | Current scale factor for the whole view, always kept within `[minZoom, maxZoom]`; assigning outside the range, or narrowing the range, re-clamps it. Default `1.0`. |
-| `smoothCaretBlink` | `Boolean` | read/write | When `true`, the caret fades in and out instead of blinking hard. Off by default; only effective in `EDITABLE`. |
+| `smoothCaretBlink` | `Boolean` | read/write | When `true`, the caret fades in and out instead of blinking hard. Off by default; only effective in a mode with a caret. |
 | `contentSize` | `Dimension2D` | read-only | Unscaled size of the whole sheet stack including `outerMargin` on every side; `0 x 0` for a `null` document. |
 | `selectionModel` | `TextSelectionModel` | read-only | The selection state and commands; see [Selection and clipboard](#selection-and-clipboard). |
 | `caretModel` | `CaretModel` | read-only | The caret state and move commands; see [The caret model](#the-caret-model). |
@@ -78,14 +79,24 @@ The styling-only colour and shadow properties are listed on the
 
 | Mode | Behaviour |
 |------|-----------|
-| `READONLY` (default) | Selectable, copyable text, no caret. `document` is never mutated. |
-| `EDITABLE` | Everything `READONLY` offers plus a blinking caret, character insertion and removal, clipboard cut / copy / paste, line and selection duplication, drag-and-drop of the selection and the caret-navigation keys. An edit replaces `document` with a new instance; the previous instance is untouched. |
+| `STATIC` | The document behaves like an image: no selection, no caret, no editing, no floating overlays, the default arrow mouse cursor and no keyboard focus. Zooming, scrolling and the `hoveredParagraph` / `hoveredPage` readouts still work. |
+| `SELECTABLE` (default) | Selectable, copyable text, no caret. `document` is never mutated. |
+| `NAVIGABLE` | Everything `SELECTABLE` offers plus a blinking caret and the caret-navigation keys (`Home`, `End`, `Ctrl+Home`, `Ctrl+End`, arrows, `Ctrl+Left` / `Ctrl+Right`, each optionally with `Shift`). `document` is still never mutated. |
+| `EDITABLE` | Everything `NAVIGABLE` offers plus character insertion and removal, clipboard cut / copy / paste, line and selection duplication and drag-and-drop of the selection. An edit replaces `document` with a new instance; the previous instance is untouched. |
+
+Each mode is a strict superset of the one above it. The three capability flags
+can also be read off the enum constant directly:
 
 ```kotlin
 view.mode = PaperSheetMode.EDITABLE
+
+PaperSheetMode.NAVIGABLE.supportsSelection // true
+PaperSheetMode.NAVIGABLE.supportsCaret     // true
+PaperSheetMode.NAVIGABLE.supportsEditing   // false
+PaperSheetMode.NAVIGABLE.supportsFocus     // true
 ```
 
-Switching to `READONLY` returns the component to exactly its read-only behaviour.
+Switching down to a mode without selection drops the current selection.
 
 ## Deactivating pages
 
@@ -103,7 +114,7 @@ view.deactivatedPageHandling = PageDeactivationMode.HIDDEN
 | Mode | Meaning |
 |------|---------|
 | `IGNORE` | `deactivatedPageIds` is fully ignored; behaves as an empty set. |
-| `DISABLED` | The page is not editable and the caret skips over it. |
+| `DISABLED` | The page is not editable and the caret skips over it. It also shows no floating overlay and keeps the default arrow mouse cursor. |
 | `READONLY` (default) | The caret reaches and crosses the page normally, selection works, but every mutation touching it is discarded. |
 | `HIDDEN` | The page (and its flow overflow sheets) is removed entirely from layout, scroll area and hit-testing; the document itself is unchanged. |
 
@@ -140,10 +151,11 @@ val families = view.selectionModel.runs.map { it.fontFamily }.distinct()
 
 ## The caret model
 
-In `EDITABLE` mode `caretModel` (`CaretModel`) reports the caret and moves it:
+In `NAVIGABLE` and `EDITABLE` mode `caretModel` (`CaretModel`) reports the caret
+and moves it; in the other modes every move command is a no-op:
 
 * **State** (read-only): `position` (offset in the linear text), `bounds`
-  (viewport rectangle, `null` in read-only mode), `isVisible` (blink phase),
+  (viewport rectangle, `null` without a caret), `isVisible` (blink phase),
   and `blockCount` / `wordCount` / `symbolCount` of the current document.
 * **Linear commands**: `moveTo(index)`, `moveToStart()`, `moveToEnd()`.
 * **Absolute structural commands**, addressing a zero-based ordinal:

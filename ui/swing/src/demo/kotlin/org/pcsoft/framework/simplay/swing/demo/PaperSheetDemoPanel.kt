@@ -19,6 +19,7 @@ import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import javax.swing.BorderFactory
 import javax.swing.JButton
+import javax.swing.JCheckBox
 import javax.swing.JComboBox
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -30,27 +31,52 @@ import org.pcsoft.framework.simplay.swing.OverlayAnchor
 import org.pcsoft.framework.simplay.swing.PaperSheetMode
 import org.pcsoft.framework.simplay.swing.PaperSheetView
 import org.pcsoft.framework.simplay.swing.TextSelectionModel
+import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 
 /**
- * Demo tab for a read-only [PaperSheetView]: a sample selector, a page number position selector, a
- * zoom slider, a live readout of the current selection length and two floating overlays - a `Copy`
- * button above the text selection and a label above the paragraph under the mouse.
+ * Demo tab for the [PaperSheetView]: a [PaperSheetMode] selector, a sample selector, a page number
+ * position selector, a zoom slider, a live readout of the current selection length and two floating
+ * overlays - a `Copy` button above the text selection and a label above the paragraph under the
+ * mouse.
+ *
+ * Switching the mode selector is the way to compare the four interaction levels on the same
+ * document: [PaperSheetMode.STATIC] has no selection, no caret and the default arrow cursor,
+ * [PaperSheetMode.SELECTABLE] selects without a caret, [PaperSheetMode.NAVIGABLE] adds the caret
+ * without mutating the document and [PaperSheetMode.EDITABLE] edits.
+ *
+ * Page deactivation is demonstrated by the `Deactivate` check boxes - one per page of the current
+ * document, up to [MAX_DEACTIVATION_PAGES] - together with the [PageDeactivationMode] selector in
+ * the same tool bar, which can be switched at any time to compare the modes on the same marked
+ * pages. The "Four pages" sample is the one to pick here. Marks are dropped whenever the document is
+ * replaced, because the page ids change with it.
  */
-class ReadonlyDemoPanel : JPanel(BorderLayout()) {
+class PaperSheetDemoPanel : JPanel(BorderLayout()) {
 
     private val view = PaperSheetView().apply {
-        mode = PaperSheetMode.READONLY
+        mode = PaperSheetMode.EDITABLE
+        smoothCaretBlink = true
+    }
+    private val mode = JComboBox(PaperSheetMode.entries.toTypedArray()).apply {
+        selectedItem = view.mode
     }
     private val sample = JComboBox(DemoDocuments.all.map { it.first }.toTypedArray())
     private val pageNumber = JComboBox(PageNumberPositions.labels.toTypedArray())
     private val zoom = JSlider(25, 400, 100)
     private val selectionInfo = JLabel("selection: 0")
+    private val deactivationMode = JComboBox(PageDeactivationMode.entries.toTypedArray()).apply {
+        selectedItem = view.deactivatedPageHandling
+    }
+    private val deactivatedPageBoxes: List<JCheckBox> =
+        (0 until MAX_DEACTIVATION_PAGES).map { index -> JCheckBox("P${index + 1}") }
+    private val deactivatedLabel = JLabel()
 
     init {
         addSelectionCopyOverlay()
         addParagraphHoverOverlay()
 
         val bar = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+            add(JLabel("Mode:"))
+            add(mode)
             add(JLabel("Sample:"))
             add(sample)
             add(JLabel("Page number:"))
@@ -58,15 +84,30 @@ class ReadonlyDemoPanel : JPanel(BorderLayout()) {
             add(JLabel("Zoom:"))
             add(zoom)
             add(selectionInfo)
+            add(JLabel("Deactivation:"))
+            add(deactivationMode)
+            add(JLabel("Deactivate:"))
+            deactivatedPageBoxes.forEach { add(it) }
+            add(deactivatedLabel)
         }
         add(bar, BorderLayout.NORTH)
         add(view, BorderLayout.CENTER)
 
+        mode.addActionListener { view.mode = mode.selectedItem as PaperSheetMode }
         sample.addActionListener { selectPageNumberFromSample(); applySample() }
         pageNumber.addActionListener { applySample() }
         zoom.addChangeListener { view.zoom = zoom.value / 100.0 }
         view.selectionModel.addPropertyChangeListener(TextSelectionModel.PROP_LENGTH) {
             selectionInfo.text = "selection: ${view.selectionModel.length}"
+        }
+        deactivationMode.addActionListener {
+            view.deactivatedPageHandling = deactivationMode.selectedItem as PageDeactivationMode
+        }
+        deactivatedPageBoxes.forEachIndexed { index, box ->
+            box.addActionListener {
+                view.setPageDeactivated(index, box.isSelected)
+                updateDeactivatedLabel()
+            }
         }
 
         selectPageNumberFromSample()
@@ -83,6 +124,26 @@ class ReadonlyDemoPanel : JPanel(BorderLayout()) {
         val base = DemoDocuments.all[sample.selectedIndex].second
         val position = PageNumberPositions.positionOf(pageNumber.selectedItem as String)
         view.document = base.withPageNumberPosition(position)
+        resetDeactivation()
+    }
+
+    /**
+     * Drops every deactivation mark and re-enables one check box per page of the current document:
+     * the ids of the previous document no longer exist, so keeping the marks would be misleading.
+     */
+    private fun resetDeactivation() {
+        view.deactivatedPageIds = emptySet()
+        val pages = view.document?.pages?.size ?: 0
+        deactivatedPageBoxes.forEachIndexed { index, box ->
+            box.isSelected = false
+            box.isEnabled = index < pages
+        }
+        updateDeactivatedLabel()
+    }
+
+    private fun updateDeactivatedLabel() {
+        val pages = deactivatedPageBoxes.withIndex().filter { it.value.isSelected }.map { it.index + 1 }
+        deactivatedLabel.text = if (pages.isEmpty()) "none" else "pages ${pages.joinToString(", ")}"
     }
 
     /** A `Copy` button that floats above the current text selection. */
@@ -116,5 +177,11 @@ class ReadonlyDemoPanel : JPanel(BorderLayout()) {
             offsetY = -4.0
             onShown = FloatingOverlayListener { event -> badge.text = "Paragraph #${event.index}" }
         }
+    }
+
+    private companion object {
+
+        /** Number of `Deactivate` check boxes; enough for the "Four pages" sample. */
+        const val MAX_DEACTIVATION_PAGES = 4
     }
 }

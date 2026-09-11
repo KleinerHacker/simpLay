@@ -29,7 +29,8 @@
     -fx-page-gap: 16.0;
 }
 
-/* Read-only mode: a more neutral, greyed selection highlight. */
-.paper-sheet-view:readonly {
+/* Non-editable modes: a more neutral, greyed selection highlight. */
+.paper-sheet-view:selectable,
+.paper-sheet-view:navigable {
     -fx-selection-color: rgba(120, 120, 120, 0.30);
 }

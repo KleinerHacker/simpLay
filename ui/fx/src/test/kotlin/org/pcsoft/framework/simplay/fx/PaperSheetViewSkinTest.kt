@@ -21,6 +21,7 @@ import javafx.scene.input.KeyCode
 import javafx.scene.paint.Color
 import javafx.stage.Stage
 import org.junit.jupiter.api.Test
+import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 import kotlin.math.abs
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -35,8 +36,14 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
 
     private data class Fixture(val view: PaperSheetView, val skin: PaperSheetViewSkin)
 
-    private fun fixture(paragraphs: Int, width: Double = 320.0, height: Double = 260.0): Fixture = onFxThread {
+    private fun fixture(
+        paragraphs: Int,
+        width: Double = 320.0,
+        height: Double = 260.0,
+        mode: PaperSheetMode = PaperSheetMode.SELECTABLE,
+    ): Fixture = onFxThread {
         val view = PaperSheetView()
+        view.mode = mode
         val stage = Stage()
         stage.scene = Scene(view, width, height)
         stage.show()
@@ -99,10 +106,10 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
     }
 
     /**
-     * The read-only component never draws a caret.
+     * A mode without a caret never draws one.
      */
     @Test
-    fun noCaretIsRenderedInReadonly() {
+    fun noCaretIsRenderedWithoutCaretSupport() {
         val (_, skin) = fixture(paragraphs = 6)
 
         assertEquals(0, skin.caretDrawCount)
@@ -118,6 +125,35 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
 
         assertEquals(Cursor.TEXT, onFxThread { skin.cursorAtForTest(80.0, 90.0) })
         assertEquals(Cursor.DEFAULT, onFxThread { skin.cursorAtForTest(4.0, 4.0) })
+    }
+
+    /**
+     * Over a page locked by [PageDeactivationMode.DISABLED] the pointer keeps the default arrow
+     * instead of turning into the text cursor.
+     */
+    @Test
+    fun cursorStaysDefaultOverADisabledPage() {
+        val (view, skin) = fixture(paragraphs = 6)
+
+        onFxThread {
+            view.deactivatedPageHandling = PageDeactivationMode.DISABLED
+            view.setPageDeactivated(0, true)
+            view.applyCss()
+            view.layout()
+        }
+
+        assertEquals(Cursor.DEFAULT, onFxThread { skin.cursorAtForTest(80.0, 90.0) })
+    }
+
+    /**
+     * In [PaperSheetMode.STATIC] the pointer keeps the default arrow even over a page's content
+     * area, because there is nothing to select there.
+     */
+    @Test
+    fun cursorStaysDefaultOverContentAreaInStaticMode() {
+        val (_, skin) = fixture(paragraphs = 6, mode = PaperSheetMode.STATIC)
+
+        assertEquals(Cursor.DEFAULT, onFxThread { skin.cursorAtForTest(80.0, 90.0) })
     }
 
     /**

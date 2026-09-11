@@ -31,9 +31,10 @@ import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
  * [PaperSheetCaret.onEditApplied] then restores the caret. The Swing counterpart of the `fx` module's
  * `PaperSheetEditor`.
  *
- * A per-view helper the delegate creates once and routes key events and selection drops to. Outside
- * [PaperSheetMode.EDITABLE] every key is ignored except `Ctrl+C` / `Cmd+C`, which still copies the
- * selection.
+ * A per-view helper the delegate creates once and routes key events and selection drops to. The
+ * caret-navigation keys need [PaperSheetMode.supportsCaret], every mutating key needs
+ * [PaperSheetMode.supportsEditing] and `Ctrl+C` / `Cmd+C` needs [PaperSheetMode.supportsSelection];
+ * every other key is ignored.
  *
  * Every mutation is checked against [EditableRegions.isEditRangeAllowed] first: in
  * [PageDeactivationMode.DISABLED] and [PageDeactivationMode.READONLY] a mutation whose range touches a
@@ -49,7 +50,11 @@ internal class PaperSheetEditor(
     private val markInternalEdit: () -> Unit,
 ) {
 
-    private val editable: Boolean get() = view.mode == PaperSheetMode.EDITABLE
+    private val editable: Boolean get() = view.mode.supportsEditing
+
+    private val caretActive: Boolean get() = view.mode.supportsCaret
+
+    private val selectable: Boolean get() = view.mode.supportsSelection
 
     private val shortcutMask: Int = runCatching { Toolkit.getDefaultToolkit().menuShortcutKeyMaskEx }
         .getOrDefault(java.awt.event.InputEvent.CTRL_DOWN_MASK)
@@ -60,10 +65,10 @@ internal class PaperSheetEditor(
 
     fun onKeyPressed(event: KeyEvent) {
         if (event.keyCode == KeyEvent.VK_C && event.isShortcutDown() && !event.isAltDown) {
-            if (selection.putStyledSelectionOnClipboard()) event.consume()
+            if (selectable && selection.putStyledSelectionOnClipboard()) event.consume()
             return
         }
-        if (!editable) return
+        if (!caretActive) return
         val shift = event.isShiftDown
         val shortcut = event.isShortcutDown()
         when (event.keyCode) {
@@ -73,11 +78,11 @@ internal class PaperSheetEditor(
             KeyEvent.VK_DOWN -> caret.moveVertical(1, shift)
             KeyEvent.VK_HOME -> if (shortcut) caret.moveDocStart(shift) else caret.moveLineStart(shift)
             KeyEvent.VK_END -> if (shortcut) caret.moveDocEnd(shift) else caret.moveLineEnd(shift)
-            KeyEvent.VK_BACK_SPACE -> backspace()
-            KeyEvent.VK_DELETE -> deleteForward()
-            KeyEvent.VK_V -> if (shortcut) paste() else return
-            KeyEvent.VK_X -> if (shortcut) cut() else return
-            KeyEvent.VK_D -> if (shortcut) duplicate() else return
+            KeyEvent.VK_BACK_SPACE -> if (editable) backspace() else return
+            KeyEvent.VK_DELETE -> if (editable) deleteForward() else return
+            KeyEvent.VK_V -> if (shortcut && editable) paste() else return
+            KeyEvent.VK_X -> if (shortcut && editable) cut() else return
+            KeyEvent.VK_D -> if (shortcut && editable) duplicate() else return
             else -> return
         }
         event.consume()

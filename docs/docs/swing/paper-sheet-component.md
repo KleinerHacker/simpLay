@@ -10,7 +10,7 @@ stacked vertically. It is the Swing counterpart of the `fx` module's
 ```kotlin
 val view = PaperSheetView().apply {
     document = myDocument
-    mode = PaperSheetMode.READONLY
+    mode = PaperSheetMode.SELECTABLE
 }
 someContainer.add(view, BorderLayout.CENTER)
 ```
@@ -27,7 +27,7 @@ shown; register a `java.beans.PropertyChangeListener` to react.
 | Property | Type | Default | Purpose |
 |----------|------|---------|---------|
 | `document` | `Document?` | `null` | The document to render. |
-| `mode` | `PaperSheetMode` | `READONLY` | `READONLY` (selection only) or `EDITABLE` (caret + editing). |
+| `mode` | `PaperSheetMode` | `SELECTABLE` | `STATIC` (picture only), `SELECTABLE` (selection only), `NAVIGABLE` (selection + caret) or `EDITABLE` (caret + editing); see [Modes](#modes). |
 | `deactivatedPageIds` | `Set<String>` | `emptySet()` | Stable `Page.id` values of the pages currently marked deactivated; see [Deactivating pages](#deactivating-pages). |
 | `deactivatedPageHandling` | `PageDeactivationMode` | `READONLY` | How `deactivatedPageIds` is honoured. |
 | `outerMargin` | `Double` | `24.0` | Space around the whole sheet stack, in layout units. |
@@ -42,6 +42,22 @@ shown; register a `java.beans.PropertyChangeListener` to react.
 
 The sheet chrome, drop shadow, selection highlight and caret are styled through
 the Look-and-Feel - see [Styling](styling.md).
+
+## Modes
+
+`PaperSheetMode` selects what the component does with the document; each mode is
+a strict superset of the one above it:
+
+| Mode | Behaviour |
+|------|-----------|
+| `STATIC` | The document behaves like an image: no selection, no caret, no editing, no floating overlays, the default arrow mouse cursor and no keyboard focus. Zooming, scrolling and the `hoveredParagraph` / `hoveredPage` readouts still work. |
+| `SELECTABLE` (default) | Selectable, copyable text, no caret. `document` is never mutated. |
+| `NAVIGABLE` | Everything `SELECTABLE` offers plus a blinking caret and the caret-navigation keys. `document` is still never mutated. |
+| `EDITABLE` | Everything `NAVIGABLE` offers plus character insertion and removal, clipboard cut / copy / paste, line and selection duplication and drag-and-drop of the selection. An edit replaces `document` with a new instance. |
+
+The capability flags can also be read off the enum constant directly
+(`supportsSelection`, `supportsCaret`, `supportsEditing`, `supportsFocus`).
+Switching down to a mode without selection drops the current selection.
 
 ## Deactivating pages
 
@@ -60,7 +76,7 @@ view.deactivatedPageHandling = PageDeactivationMode.HIDDEN
 | Mode | Meaning |
 |------|---------|
 | `IGNORE` | `deactivatedPageIds` is fully ignored; behaves as an empty set. |
-| `DISABLED` | The page is not editable and the caret skips over it. |
+| `DISABLED` | The page is not editable and the caret skips over it. It also shows no floating overlay and keeps the default arrow mouse cursor. |
 | `READONLY` (default) | The caret reaches and crosses the page normally, selection works, but every mutation touching it is discarded. |
 | `HIDDEN` | The page (and its flow overflow sheets) is removed entirely from layout, scroll area and hit-testing; the document itself is unchanged. |
 
@@ -81,11 +97,11 @@ view:
 * `addPropertyChangeListener(name, listener)` with the `PROP_*` names (`PROP_TEXT`,
   `PROP_LENGTH`, `PROP_BOUNDS`, ...).
 
-## Caret model (editable mode)
+## Caret model (`NAVIGABLE` and `EDITABLE`)
 
-`caretModel` is a `CaretModel`:
+`caretModel` is a `CaretModel`; in the other modes every move command is a no-op:
 
-* Read-only state: `position`, `bounds` (`Rectangle`, `null` in read-only mode),
+* Read-only state: `position`, `bounds` (`Rectangle`, `null` without a caret),
   `isVisible` (blink phase), `blockCount`, `wordCount`, `symbolCount`.
 * Linear commands: `moveTo(index)`, `moveToStart()`, `moveToEnd()`.
 * Absolute structural commands, addressing a zero-based ordinal:

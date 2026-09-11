@@ -19,14 +19,14 @@ built-in default. The key names are also available as constants on
 | `PaperSheetView.shadowColor` | `shadowColor` | `java.awt.Paint` | `rgba(0,0,0,0.25)` |
 | `PaperSheetView.shadowOffset` | `shadowOffset` | `Double` | `4.0` |
 | `PaperSheetView.selectionColor` | `selectionColor` | `java.awt.Paint` | `rgba(66,133,244,0.35)` |
-| `PaperSheetView.selectionColorReadonly` | (none) | `java.awt.Paint` | `rgba(120,120,120,0.30)` |
+| `PaperSheetView.selectionColorNonEditable` | (none) | `java.awt.Paint` | `rgba(120,120,120,0.30)` |
 | `PaperSheetView.caretColor` | `caretColor` | `java.awt.Color` | `#141414` |
 | `PaperSheetView.outerMargin` | `outerMargin` | `Double` | `24.0` |
 | `PaperSheetView.pageGap` | `pageGap` | `Double` | `16.0` |
 
 The fill values are `java.awt.Paint`, so a `GradientPaint` or `TexturePaint`
-works too; `caretColor` is a plain `Color`. `selectionColorReadonly` is used for
-the selection highlight while `mode` is `PaperSheetMode.READONLY` and no
+works too; `caretColor` is a plain `Color`. `selectionColorNonEditable` is used
+for the selection highlight while `mode` is not `PaperSheetMode.EDITABLE` and no
 `selectionColor` was set programmatically.
 
 ## Overriding from the Look-and-Feel

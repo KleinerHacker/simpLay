@@ -13,21 +13,45 @@
 package org.pcsoft.framework.simplay.fx
 
 /**
- * The interaction mode of a [PaperSheetView].
+ * The interaction mode of a [PaperSheetView]. Each constant is a strict superset of the previous one:
+ * [STATIC] only paints, [SELECTABLE] adds text selection, [NAVIGABLE] adds the caret and
+ * [EDITABLE] adds the document mutations.
+ *
+ * @property supportsSelection whether text can be selected and copied.
+ * @property supportsCaret whether a caret is placed, painted and navigated.
+ * @property supportsEditing whether input replaces [PaperSheetView.document] with a new instance.
+ * @property supportsFocus whether the view takes keyboard focus.
  */
-enum class PaperSheetMode {
+enum class PaperSheetMode(
+    val supportsSelection: Boolean,
+    val supportsCaret: Boolean,
+    val supportsEditing: Boolean,
+    val supportsFocus: Boolean,
+) {
+
+    /**
+     * The document behaves like an image: no selection, no caret, no editing, no floating overlays,
+     * the default arrow mouse cursor and no keyboard focus. Zooming, scrolling and the
+     * [PaperSheetView.hoveredParagraph] / [PaperSheetView.hoveredPage] readouts still work.
+     */
+    STATIC(supportsSelection = false, supportsCaret = false, supportsEditing = false, supportsFocus = false),
 
     /**
      * Selectable and copyable text, no caret. The view never mutates its [PaperSheetView.document].
-     * This is exactly the behaviour of the read-only component.
      */
-    READONLY,
+    SELECTABLE(supportsSelection = true, supportsCaret = false, supportsEditing = false, supportsFocus = true),
 
     /**
-     * Everything [READONLY] offers plus a blinking caret, character insertion and removal, clipboard
-     * cut / copy / paste, line duplication, drag-and-drop of the selection and the standard caret
-     * navigation keys. Editing produces a new [PaperSheetView.document]; the previous document
-     * instance is not changed.
+     * Everything [SELECTABLE] offers plus a blinking caret and the standard caret navigation keys
+     * (`Home`, `End`, `Ctrl+Home`, `Ctrl+End`, arrows, `Ctrl+Left` / `Ctrl+Right`, each optionally
+     * with `Shift`). The view still never mutates its [PaperSheetView.document].
      */
-    EDITABLE,
+    NAVIGABLE(supportsSelection = true, supportsCaret = true, supportsEditing = false, supportsFocus = true),
+
+    /**
+     * Everything [NAVIGABLE] offers plus character insertion and removal, clipboard cut / copy /
+     * paste, line duplication and drag-and-drop of the selection. Editing produces a new
+     * [PaperSheetView.document]; the previous document instance is not changed.
+     */
+    EDITABLE(supportsSelection = true, supportsCaret = true, supportsEditing = true, supportsFocus = true),
 }

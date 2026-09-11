@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) KleinerHacker alias Pfeiffer C Soft 2026.
  * This work is licensed under the Apache License, Version 2.0.
  * You may not use this file except in compliance with the License.
@@ -92,7 +92,8 @@ internal class PaperSheetCaret(
     private fun blocksNavigation(mode: PageDeactivationMode): Boolean =
         mode == PageDeactivationMode.DISABLED || mode == PageDeactivationMode.HIDDEN
 
-    private val editable: Boolean get() = view.mode == PaperSheetMode.EDITABLE
+    /** Whether the current [PaperSheetMode] shows and navigates a caret at all. */
+    private val caretActive: Boolean get() = view.mode.supportsCaret
 
     //region Geometry / painting
 
@@ -113,7 +114,7 @@ internal class PaperSheetCaret(
     /** The caret rectangle to paint (in page content-area coordinates), or `null` when hidden. */
     fun caretPaint(): CaretPaint? {
         val preview = dropPreview
-        if (preview == null && !editable) return null
+        if (preview == null && !caretActive) return null
         val g = geom(preview ?: position) ?: return null
         return CaretPaint(g.pageIndex, g.xContent, g.yContent, g.height)
     }
@@ -134,7 +135,7 @@ internal class PaperSheetCaret(
     /** Opacity `0..1` the caret is painted with right now, honouring mode, focus, blink phase and fade. */
     fun currentOpacity(): Double = when {
         dropPreview != null -> 1.0
-        !editable -> 0.0
+        !caretActive -> 0.0
         !view.isFocused -> 0.0
         !blinkOn -> 0.0
         view.smoothCaretBlink -> opacity.get().coerceIn(0.0, 1.0)
@@ -146,7 +147,7 @@ internal class PaperSheetCaret(
         val idx = textIndex()
         val model = view.caretModel
         model.updateCounts(idx?.blockCount ?: 0, idx?.wordCount ?: 0, idx?.symbolCount ?: 0)
-        val active = editable || dropPreview != null
+        val active = caretActive || dropPreview != null
         model.update(
             position.coerceIn(0, idx?.length ?: 0),
             if (active) viewportBounds() else null,
@@ -174,7 +175,7 @@ internal class PaperSheetCaret(
     fun restartBlink() {
         blink.stop()
         blink = if (view.smoothCaretBlink) buildSmoothBlink() else buildHardBlink()
-        blinkOn = editable && view.isFocused
+        blinkOn = caretActive && view.isFocused
         opacity.set(1.0)
         if (blinkOn) blink.playFromStart()
         requestRedraw()

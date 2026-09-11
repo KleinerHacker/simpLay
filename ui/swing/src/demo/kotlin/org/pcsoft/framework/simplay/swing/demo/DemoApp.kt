@@ -19,11 +19,11 @@ import javax.swing.SwingUtilities
 import javax.swing.UIManager
 
 /**
- * Demo application for the `swing` module. Hosts a [JTabbedPane] with the tabs `Image`, `Readonly`
- * and `Read/Write`: the `Image` tab shows [org.pcsoft.framework.simplay.swing.DocumentImageRenderer]
- * via [ImageDemoPanel]; the `Readonly` tab shows the
- * [org.pcsoft.framework.simplay.swing.PaperSheetView] in read-only mode via [ReadonlyDemoPanel]; the
- * `Read/Write` tab shows the same component in editing mode via [ReadWriteDemoPanel].
+ * Demo application for the `swing` module. Hosts a [JTabbedPane] with the tabs `Image` and
+ * `Paper Sheet`: the `Image` tab shows [org.pcsoft.framework.simplay.swing.DocumentImageRenderer]
+ * via [ImageDemoPanel]; the `Paper Sheet` tab shows the
+ * [org.pcsoft.framework.simplay.swing.PaperSheetView] via [PaperSheetDemoPanel], whose own mode
+ * selector switches between the [org.pcsoft.framework.simplay.swing.PaperSheetMode] levels.
  */
 fun main() {
     SwingUtilities.invokeLater {
@@ -31,8 +31,7 @@ fun main() {
 
         val tabs = JTabbedPane().apply {
             addTab("Image", ImageDemoPanel())
-            addTab("Readonly", ReadonlyDemoPanel())
-            addTab("Read/Write", ReadWriteDemoPanel())
+            addTab("Paper Sheet", PaperSheetDemoPanel())
         }
 
         JFrame("SimpLay - swing demo").apply {

@@ -19,11 +19,11 @@ import javafx.scene.control.TabPane
 import javafx.stage.Stage
 
 /**
- * Demo application for the `fx` module. Hosts a [TabPane] with the tabs `Canvas`, `Readonly` and
- * `Read/Write`. The `Canvas` tab shows the [org.pcsoft.framework.simplay.fx.CanvasDocumentRenderer]
- * via [CanvasDemoTab]; the `Readonly` tab shows the
- * [org.pcsoft.framework.simplay.fx.PaperSheetView] in read-only mode via [ReadonlyDemoTab];
- * the `Read/Write` tab shows the same control in normal (editing) mode via [ReadWriteDemoTab].
+ * Demo application for the `fx` module. Hosts a [TabPane] with the tabs `Canvas` and `Paper Sheet`.
+ * The `Canvas` tab shows the [org.pcsoft.framework.simplay.fx.CanvasDocumentRenderer] via
+ * [CanvasDemoTab]; the `Paper Sheet` tab shows the
+ * [org.pcsoft.framework.simplay.fx.PaperSheetView] via [PaperSheetDemoTab], whose own mode selector
+ * switches between the [org.pcsoft.framework.simplay.fx.PaperSheetMode] levels.
  */
 class DemoApp : Application() {
 
@@ -32,8 +32,7 @@ class DemoApp : Application() {
             tabClosingPolicy = TabPane.TabClosingPolicy.UNAVAILABLE
             tabs.addAll(
                 Tab("Canvas", CanvasDemoTab()),
-                Tab("Readonly", ReadonlyDemoTab()),
-                Tab("Read/Write", ReadWriteDemoTab()),
+                Tab("Paper Sheet", PaperSheetDemoTab()),
             )
         }
 

@@ -47,12 +47,13 @@ import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
  * border and a drop shadow - stacked vertically. Text can be selected with the mouse and copied to
  * the system clipboard with `Ctrl+C` as styled HTML, RTF and plain text.
  *
- * The [mode] switches between [PaperSheetMode.READONLY] (no caret, exactly the read-only behaviour)
- * and [PaperSheetMode.EDITABLE], which adds a blinking caret, character insertion / removal, clipboard
- * cut / copy / paste (`Ctrl+X` / `Ctrl+C` / `Ctrl+V`), line duplication (`Ctrl+D`), drag-and-drop of
- * the selection and the standard caret-navigation keys (`Home`, `End`, `Ctrl+Home`, `Ctrl+End`,
- * arrows, `Ctrl+Left` / `Ctrl+Right`, `Backspace`, `Delete`, each optionally with `Shift`). Editing
- * replaces [document] with a new instance; the previous document is not mutated.
+ * The [mode] picks one of four interaction levels: [PaperSheetMode.STATIC] (a plain picture - no
+ * selection, no caret, the default arrow cursor and no keyboard focus), [PaperSheetMode.SELECTABLE]
+ * (selecting and copying, no caret), [PaperSheetMode.NAVIGABLE] (adds a blinking caret and the
+ * standard caret-navigation keys, still without mutating the document) and [PaperSheetMode.EDITABLE]
+ * (adds character insertion / removal, clipboard cut / copy / paste (`Ctrl+X` / `Ctrl+C` / `Ctrl+V`),
+ * line duplication (`Ctrl+D`) and drag-and-drop of the selection). Editing replaces [document] with a
+ * new instance; the previous document is not mutated.
  *
  * [deactivatedPageIds] (stable [org.pcsoft.framework.simplay.engine.model.Page.id] values) together
  * with [deactivatedPageHandling] mark individual pages as deactivated. Both are transient view state,
@@ -69,9 +70,10 @@ import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
  * caret through [caretModel].
  *
  * The sheet chrome, the drop shadow, the selection highlight, the caret and the two layout values are
- * styleable through the standard JavaFX CSS mechanism. The style class is `paper-sheet-view`, a
- * `:readonly` pseudo-class is active while [mode] is [PaperSheetMode.READONLY] (the inherited
- * `:focused` pseudo-class works as usual), and [getUserAgentStylesheet] ships the default look. The
+ * styleable through the standard JavaFX CSS mechanism. The style class is `paper-sheet-view`, and
+ * exactly one of the pseudo-classes `:static`, `:selectable`, `:navigable` and `:editable` is active,
+ * matching the current [mode] (the inherited `:focused` pseudo-class works as usual);
+ * [getUserAgentStylesheet] ships the default look. The
  * `-fx-` properties are `-fx-sheet-background`, `-fx-sheet-border-color`, `-fx-sheet-border-width`,
  * `-fx-shadow-color`, `-fx-shadow-offset`, `-fx-selection-color`, `-fx-caret-color`,
  * `-fx-deactivated-sheet-background`, `-fx-deactivated-overlay-color`, `-fx-outer-margin` and
@@ -104,9 +106,9 @@ class PaperSheetView : Control() {
     /** The [mode] property, for binding and change listeners. */
     @get:JvmName("modeProperty")
     val modeProperty: ObjectProperty<PaperSheetMode> =
-        SimpleObjectProperty(this, "mode", PaperSheetMode.READONLY)
+        SimpleObjectProperty(this, "mode", PaperSheetMode.SELECTABLE)
 
-    /** Whether the view only shows text or also edits it; defaults to [PaperSheetMode.READONLY]. */
+    /** How much interaction the view offers; defaults to [PaperSheetMode.SELECTABLE]. */
     var mode: PaperSheetMode
         get() = modeProperty.get()
         set(value) {
@@ -460,9 +462,15 @@ class PaperSheetView : Control() {
         if (commands != null) commands.block() else pendingSelectionCommand = block
     }
 
-    internal fun requestSelectRange(start: Int, end: Int) = runSelectionCommand { selectRange(start, end) }
+    internal fun requestSelectRange(start: Int, end: Int) {
+        if (!mode.supportsSelection) return
+        runSelectionCommand { selectRange(start, end) }
+    }
 
-    internal fun requestSelectAll() = runSelectionCommand { selectAll() }
+    internal fun requestSelectAll() {
+        if (!mode.supportsSelection) return
+        runSelectionCommand { selectAll() }
+    }
 
     internal fun requestClearSelection() = runSelectionCommand { clearSelection() }
 
@@ -490,7 +498,7 @@ class PaperSheetView : Control() {
 
     /**
      * When `true`, the caret fades in and out instead of blinking hard on and off. Off by default.
-     * Only takes effect in [PaperSheetMode.EDITABLE].
+     * Only takes effect in a [mode] with [PaperSheetMode.supportsCaret].
      */
     var smoothCaretBlink: Boolean
         get() = smoothCaretBlinkProperty.get()
@@ -534,6 +542,7 @@ class PaperSheetView : Control() {
     }
 
     internal fun requestCaret(block: CaretCommands.() -> Unit) {
+        if (!mode.supportsCaret) return
         val commands = caretCommands
         if (commands != null) commands.block() else pendingCaretCommand = block
     }
@@ -602,14 +611,19 @@ class PaperSheetView : Control() {
 
     init {
         styleClass.add(DEFAULT_STYLE_CLASS)
-        isFocusTraversable = true
         zoomProperty.addListener { _, _, _ -> clampZoom() }
         minZoomProperty.addListener { _, _, _ -> clampZoom() }
         maxZoomProperty.addListener { _, _, _ -> clampZoom() }
 
-        pseudoClassStateChanged(READONLY_PSEUDO_CLASS, mode == PaperSheetMode.READONLY)
-        modeProperty.addListener { _, _, value ->
-            pseudoClassStateChanged(READONLY_PSEUDO_CLASS, value == PaperSheetMode.READONLY)
+        applyMode(mode)
+        modeProperty.addListener { _, _, value -> applyMode(value) }
+    }
+
+    private fun applyMode(value: PaperSheetMode) {
+        isFocusTraversable = value.supportsFocus
+        if (!value.supportsFocus && isFocused) parent?.requestFocus()
+        for ((candidate, pseudoClass) in MODE_PSEUDO_CLASSES) {
+            pseudoClassStateChanged(pseudoClass, candidate == value)
         }
     }
 
@@ -628,8 +642,9 @@ class PaperSheetView : Control() {
         const val DEFAULT_MAX_ZOOM = 4.0
         const val DEFAULT_ZOOM = 1.0
 
-        /** Pseudo-class active while [mode] is [PaperSheetMode.READONLY]. */
-        private val READONLY_PSEUDO_CLASS: PseudoClass = PseudoClass.getPseudoClass("readonly")
+        /** The pseudo-class activated for each [PaperSheetMode]; exactly one is active at a time. */
+        private val MODE_PSEUDO_CLASSES: Map<PaperSheetMode, PseudoClass> =
+            PaperSheetMode.entries.associateWith { PseudoClass.getPseudoClass(it.name.lowercase()) }
 
         private val USER_AGENT_STYLESHEET: String =
             PaperSheetView::class.java.getResource("paper-sheet-view.css")!!.toExternalForm()

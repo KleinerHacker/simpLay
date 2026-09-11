@@ -12,6 +12,7 @@
 
 package org.pcsoft.framework.simplay.fx.demo
 
+import javafx.geometry.Pos
 import javafx.scene.control.Button
 import javafx.scene.control.CheckBox
 import javafx.scene.control.ChoiceBox
@@ -20,27 +21,42 @@ import javafx.scene.control.Label
 import javafx.scene.control.Separator
 import javafx.scene.control.Spinner
 import javafx.scene.control.ToolBar
+import javafx.scene.input.Clipboard
+import javafx.scene.input.ClipboardContent
 import javafx.scene.layout.BorderPane
 import javafx.scene.text.Font as FxFont
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.SinglePage
 import org.pcsoft.framework.simplay.engine.model.TextBlock
+import org.pcsoft.framework.simplay.fx.FloatingOverlay
+import org.pcsoft.framework.simplay.fx.FloatingOverlayTrigger
 import org.pcsoft.framework.simplay.fx.PaperSheetMode
 import org.pcsoft.framework.simplay.fx.PaperSheetView
 import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 
 /**
- * Content of the demo's `Read/Write` tab: a [PaperSheetView] in [PaperSheetMode.EDITABLE], driven by a
- * [ToolBar] that exposes the mode, the smooth-caret-blink switch and every value the `Readonly` tab
- * exposes (sample document, font family, page number position, stylesheet, outer margin, page gap,
- * min/max/current zoom), and reads back the current zoom, the caret position from
- * [PaperSheetView.caretModel] and the size of the (edited) document (characters and pages). `Go to
- * start` / `Go to end` drive the caret model directly.
+ * Content of the demo's `Paper Sheet` tab: a [PaperSheetView] driven by a [ToolBar] that exposes the
+ * [PaperSheetMode] selector, the smooth-caret-blink switch and every externally settable value
+ * (sample document, font family, page number position, stylesheet, outer margin, page gap,
+ * min/max/current zoom). It reads back the current zoom, the current text selection from
+ * [PaperSheetView.selectionModel] (range, length, run count), the caret position from
+ * [PaperSheetView.caretModel] and the size of the (edited) document. `Select all` / `Clear` drive
+ * the selection model, `Go to start` / `Go to end` the caret model.
+ *
+ * Switching the mode selector is the way to compare the four interaction levels on the same
+ * document: [PaperSheetMode.STATIC] has no selection, no caret and the default arrow cursor,
+ * [PaperSheetMode.SELECTABLE] selects without a caret, [PaperSheetMode.NAVIGABLE] adds the caret
+ * without mutating the document and [PaperSheetMode.EDITABLE] edits.
  *
  * The "Stylesheet" selector switches between the built-in look ("Standard") and the bundled
  * `demo-dark.css` example ("Dark"). The "Page number" selector overrides the position of the
  * sample's [org.pcsoft.framework.simplay.engine.model.PageNumbering]; "Off" hides it.
+ *
+ * Two [FloatingOverlay]s show that feature off: a `Copy` bar that follows the text selection
+ * ([FloatingOverlayTrigger.SELECTION]) and a small label that tracks the paragraph under the mouse
+ * ([FloatingOverlayTrigger.PARAGRAPH_HOVER]). A toolbar label reads back the last triggered
+ * paragraph and page index.
  *
  * Page deactivation is demonstrated by the "Deactivate" check boxes - one per page of the current
  * document, up to [MAX_DEACTIVATION_PAGES] - together with the [PageDeactivationMode] selector next
@@ -48,7 +64,7 @@ import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
  * "Four pages" sample is the one to pick here. Marks are dropped whenever the document is replaced,
  * because the page ids change with it.
  */
-class ReadWriteDemoTab : BorderPane() {
+class PaperSheetDemoTab : BorderPane() {
 
     private val view = PaperSheetView().apply { mode = PaperSheetMode.EDITABLE }
 
@@ -93,13 +109,41 @@ class ReadWriteDemoTab : BorderPane() {
     private val maxZoomSpinner = Spinner<Double>(1.0, 8.0, view.maxZoom, 0.5)
     private val zoomSpinner = Spinner<Double>(0.1, 8.0, view.zoom, 0.1)
 
+    private val selectAllButton = Button("Select all").apply { setOnAction { view.selectionModel.selectAll() } }
+    private val clearButton = Button("Clear").apply { setOnAction { view.selectionModel.clearSelection() } }
+
     private val goStartButton = Button("Go to start").apply { setOnAction { view.caretModel.moveToStart() } }
     private val goEndButton = Button("Go to end").apply { setOnAction { view.caretModel.moveToEnd() } }
 
     private val zoomLabel = Label()
+    private val selectionLabel = Label()
+    private val overlayLabel = Label()
     private val caretLabel = Label()
     private val documentLabel = Label()
     private val deactivatedLabel = Label()
+
+    private val copyBar = Button("Copy").apply {
+        setOnAction {
+            Clipboard.getSystemClipboard().setContent(ClipboardContent().apply { putString(view.selectedText) })
+        }
+    }
+    private val hoverBadge = Label().apply { style = HOVER_BADGE_STYLE }
+
+    private val copyOverlay = FloatingOverlay().apply {
+        trigger = FloatingOverlayTrigger.SELECTION
+        anchor = Pos.TOP_LEFT
+        offsetY = -4.0
+        content = copyBar
+    }
+    private val hoverOverlay = FloatingOverlay().apply {
+        trigger = FloatingOverlayTrigger.PARAGRAPH_HOVER
+        anchor = Pos.TOP_LEFT
+        offsetY = -2.0
+        content = hoverBadge
+        // `onShown` fires only on the show transition; the badge text has to track every move
+        // between paragraphs, so it is bound to the read-only `activeIndex` field instead.
+        hoverBadge.textProperty().bind(activeIndexProperty.asString("Paragraph %d"))
+    }
 
     init {
         top = ToolBar(
@@ -122,12 +166,16 @@ class ReadWriteDemoTab : BorderPane() {
                 addAll(listOf(Label("Max zoom:"), maxZoomSpinner))
                 addAll(listOf(Label("Zoom:"), zoomSpinner, zoomLabel))
                 add(Separator())
+                addAll(listOf(selectAllButton, clearButton, selectionLabel))
+                add(Separator())
                 addAll(listOf(goStartButton, goEndButton, caretLabel))
                 add(Separator())
-                add(documentLabel)
+                addAll(listOf(overlayLabel, documentLabel))
             }.toTypedArray(),
         )
         center = view
+
+        view.floatingOverlays.addAll(copyOverlay, hoverOverlay)
 
         modeBox.valueProperty().addListener { _, _, v -> if (v != null) view.mode = v }
         smoothCaretBox.selectedProperty().addListener { _, _, v -> view.smoothCaretBlink = v }
@@ -152,12 +200,17 @@ class ReadWriteDemoTab : BorderPane() {
             zoomLabel.text = "Zoom: ${format(v.toDouble())}"
             if (zoomSpinner.value != v.toDouble()) zoomSpinner.valueFactory.value = v.toDouble()
         }
+        view.selectionModel.textProperty.addListener { _, _, _ -> updateSelectionLabel() }
+        view.hoveredParagraphProperty.addListener { _, _, _ -> updateOverlayLabel() }
+        view.hoveredPageProperty.addListener { _, _, _ -> updateOverlayLabel() }
         view.caretModel.positionProperty.addListener { _, _, _ -> updateCaretLabel() }
         view.documentProperty.addListener { _, _, _ -> updateDocumentLabel() }
 
         selectPageNumberBoxFromSample()
         applySample()
         zoomLabel.text = "Zoom: ${format(view.zoom)}"
+        updateSelectionLabel()
+        updateOverlayLabel()
         updateCaretLabel()
         updateDocumentLabel()
     }
@@ -209,6 +262,19 @@ class ReadWriteDemoTab : BorderPane() {
         },
     )
 
+    private fun updateSelectionLabel() {
+        val model = view.selectionModel
+        selectionLabel.text = if (model.isEmpty) {
+            "Selection: -"
+        } else {
+            "Selection: ${model.length} chars [${model.startIndex}–${model.endIndex}], ${model.runs.size} run(s)"
+        }
+    }
+
+    private fun updateOverlayLabel() {
+        overlayLabel.text = "Hover: paragraph ${view.hoveredParagraph}, page ${view.hoveredPage}"
+    }
+
     private fun updateCaretLabel() {
         val caret = view.caretModel
         caretLabel.text =
@@ -240,6 +306,9 @@ class ReadWriteDemoTab : BorderPane() {
         const val MAX_DEACTIVATION_PAGES = 4
 
         val DARK_STYLESHEET: String =
-            ReadWriteDemoTab::class.java.getResource("demo-dark.css")!!.toExternalForm()
+            PaperSheetDemoTab::class.java.getResource("demo-dark.css")!!.toExternalForm()
+
+        const val HOVER_BADGE_STYLE =
+            "-fx-background-color: #1e88e5; -fx-text-fill: white; -fx-padding: 2 6 2 6; -fx-background-radius: 3;"
     }
 }

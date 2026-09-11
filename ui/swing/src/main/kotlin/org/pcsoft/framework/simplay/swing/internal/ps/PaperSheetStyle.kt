@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) KleinerHacker alias Pfeiffer C Soft 2026.
  * This work is licensed under the Apache License, Version 2.0.
  * You may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ class PaperSheetStyle(
         val DEFAULT_SHADOW_COLOR: Paint = Color(0, 0, 0, 64)
         const val DEFAULT_SHADOW_OFFSET: Double = 4.0
         val DEFAULT_SELECTION_COLOR: Paint = Color(66, 133, 244, 89)
-        val DEFAULT_SELECTION_COLOR_READONLY: Paint = Color(120, 120, 120, 77)
+        val DEFAULT_SELECTION_COLOR_NON_EDITABLE: Paint = Color(120, 120, 120, 77)
         val DEFAULT_CARET_COLOR: Color = Color(20, 20, 20)
         val DEFAULT_DEACTIVATED_SHEET_BACKGROUND: Paint = Color(237, 237, 237)
         val DEFAULT_DEACTIVATED_OVERLAY_COLOR: Paint = Color(0, 0, 0, 31)

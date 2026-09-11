@@ -103,7 +103,11 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     private val shortcutMask: Int = runCatching { Toolkit.getDefaultToolkit().menuShortcutKeyMaskEx }
         .getOrDefault(java.awt.event.InputEvent.CTRL_DOWN_MASK)
 
-    private val editable: Boolean get() = view.mode == PaperSheetMode.EDITABLE
+    private val editable: Boolean get() = view.mode.supportsEditing
+
+    private val caretActive: Boolean get() = view.mode.supportsCaret
+
+    private val selectable: Boolean get() = view.mode.supportsSelection
 
     /** Whether [page] is excluded from layout entirely by [PageDeactivationMode.HIDDEN]. */
     private fun isPageHidden(page: MeasuredPage): Boolean =
@@ -203,7 +207,11 @@ open class BasicPaperSheetUI : PaperSheetUI() {
                 PaperSheetView.PROP_DEACTIVATED_PAGE_IDS,
                 PaperSheetView.PROP_DEACTIVATED_PAGE_HANDLING,
                 -> relayout()
-                PaperSheetView.PROP_MODE -> { caret.onModeChanged(); redraw() }
+                PaperSheetView.PROP_MODE -> {
+                    if (!selectable) selection.clearSelection()
+                    caret.onModeChanged()
+                    redraw()
+                }
                 PaperSheetView.PROP_SMOOTH_CARET_BLINK -> caret.restartBlink()
                 PaperSheetView.PROP_SHEET_BACKGROUND,
                 PaperSheetView.PROP_SHEET_BORDER_COLOR,
@@ -357,10 +365,10 @@ open class BasicPaperSheetUI : PaperSheetUI() {
 
     private fun currentStyle(): PaperSheetStyle {
         val selectionColor = if (
-            view.mode == PaperSheetMode.READONLY &&
+            !view.mode.supportsEditing &&
             PaperSheetView.PROP_SELECTION_COLOR !in view.styleSetByUser
         ) {
-            PaperSheetLookAndFeel.readonlySelectionColor()
+            PaperSheetLookAndFeel.nonEditableSelectionColor()
         } else {
             view.selectionColor
         }
@@ -451,7 +459,13 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         return pageIndex to bestDist
     }
 
+    /**
+     * The pointer shape at a viewport point: a text cursor over a page content area, else default.
+     * A mode without [PaperSheetMode.supportsSelection] and a [PageDeactivationMode.DISABLED] page
+     * always keep the default arrow.
+     */
     private fun cursorFor(px: Double, py: Double): Cursor {
+        if (!selectable) return Cursor.getDefaultCursor()
         val doc = measured ?: return Cursor.getDefaultCursor()
         if (doc.pages.isEmpty()) return Cursor.getDefaultCursor()
         val zoom = view.zoom
@@ -460,6 +474,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         val cy = (py + scrollOffset()) / zoom
         val (pageIndex, bandDistance) = nearestPage(cy)
         if (bandDistance > 0.0) return Cursor.getDefaultCursor()
+        if (isPageDisabled(doc.pages[pageIndex])) return Cursor.getDefaultCursor()
         val contentArea = doc.pages[pageIndex].contentArea
         val localX = cx - outer - contentArea.x
         val localY = cy - (outer + pageTops[pageIndex]) - contentArea.y
@@ -526,6 +541,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     }
 
     private fun onMousePressed(event: MouseEvent) {
+        if (!selectable) return
         view.requestFocusInWindow()
         caret.clearShiftAnchor()
         val i = hitIndexAt(event.x.toDouble(), event.y.toDouble())
@@ -537,7 +553,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         }
         selection.beginAt(i)
         dragging = true
-        if (editable) caret.placeCaret(i) else redraw()
+        if (caretActive) caret.placeCaret(i) else redraw()
     }
 
     private fun onMouseDragged(event: MouseEvent) {
@@ -564,8 +580,9 @@ open class BasicPaperSheetUI : PaperSheetUI() {
 
     private fun onMouseClicked(event: MouseEvent) {
         if (event.clickCount != 2) return
+        if (!selectable) return
         selection.selectWordAt(hitIndexAt(event.x.toDouble(), event.y.toDouble()))
-        if (editable) caret.placeCaret(selection.end)
+        if (caretActive) caret.placeCaret(selection.end)
         redraw()
     }
 

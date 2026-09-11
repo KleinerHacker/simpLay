@@ -8,7 +8,8 @@ properties, and a default user-agent stylesheet ships with the module.
 ## Style class and pseudo-classes
 
 * Style class: `paper-sheet-view` (added to every instance).
-* `:readonly` - active while `mode` is `PaperSheetMode.READONLY`.
+* `:static`, `:selectable`, `:navigable`, `:editable` - exactly one of them is
+  active, matching the current `PaperSheetMode`.
 * `:focused` - the inherited JavaFX `Node` pseudo-class, working as usual.
 
 ## Properties
@@ -36,7 +37,7 @@ user-agent stylesheet, exactly as elsewhere in JavaFX.
 `getUserAgentStylesheet()` returns a bundled `paper-sheet-view.css` whose values
 are identical to the built-in property defaults - removing a rule changes
 nothing. It exists so the values can be discovered and overridden from a caller
-stylesheet. It also greys the selection highlight in read-only mode:
+stylesheet. It also greys the selection highlight in the non-editable modes:
 
 ```css
 .paper-sheet-view {
@@ -51,7 +52,8 @@ stylesheet. It also greys the selection highlight in read-only mode:
     -fx-page-gap: 16.0;
 }
 
-.paper-sheet-view:readonly {
+.paper-sheet-view:selectable,
+.paper-sheet-view:navigable {
     -fx-selection-color: rgba(120, 120, 120, 0.30);
 }
 ```
@@ -72,7 +74,8 @@ scene-level stylesheet overrides the user-agent one:
     -fx-caret-color: #f0f0f0;
 }
 
-.paper-sheet-view:readonly {
+.paper-sheet-view:selectable,
+.paper-sheet-view:navigable {
     -fx-selection-color: rgba(180, 180, 180, 0.35);
 }
 ```

@@ -206,7 +206,10 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         registerChangeListener(control.outerMarginProperty) { relayout() }
         registerChangeListener(control.pageGapProperty) { relayout() }
         registerChangeListener(control.zoomProperty) { relayout() }
-        registerChangeListener(control.modeProperty) { caret.onModeChanged() }
+        registerChangeListener(control.modeProperty) {
+            if (!mode.supportsSelection) selection.clearSelection()
+            caret.onModeChanged()
+        }
         registerChangeListener(control.smoothCaretBlinkProperty) { caret.restartBlink() }
         registerChangeListener(control.focusedProperty()) { caret.restartBlink() }
 
@@ -430,8 +433,13 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         return pageIndex to bestDist
     }
 
-    /** The pointer shape at a viewport point: a text cursor over a page content area, else default. */
+    /**
+     * The pointer shape at a viewport point: a text cursor over a page content area, else default.
+     * A mode without [PaperSheetMode.supportsSelection] and a [PageDeactivationMode.DISABLED] page
+     * always keep the default arrow.
+     */
     private fun cursorFor(px: Double, py: Double): Cursor {
+        if (!mode.supportsSelection) return Cursor.DEFAULT
         val doc = measured ?: return Cursor.DEFAULT
         if (doc.pages.isEmpty()) return Cursor.DEFAULT
         val zoom = skinnable.zoom
@@ -440,6 +448,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         val cy = (py + scrollOffset()) / zoom
         val (pageIndex, bandDistance) = nearestPage(cy)
         if (bandDistance > 0.0) return Cursor.DEFAULT
+        if (isPageDisabled(doc.pages[pageIndex])) return Cursor.DEFAULT
         val contentArea = doc.pages[pageIndex].contentArea
         val localX = cx - outer - contentArea.x
         val localY = cy - (outer + pageTops[pageIndex]) - contentArea.y
@@ -501,10 +510,11 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     }
 
     private fun onMousePressed(event: MouseEvent) {
-        skinnable.requestFocus()
+        if (!mode.supportsSelection) return
+        if (mode.supportsFocus) skinnable.requestFocus()
         caret.clearShiftAnchor()
         val i = hitIndexAt(event.x, event.y)
-        if (mode == PaperSheetMode.EDITABLE && !selection.isEmpty && selection.contains(event.x, event.y)) {
+        if (mode.supportsEditing && !selection.isEmpty && selection.contains(event.x, event.y)) {
             draggingSelection = true
             dragging = false
             caret.setDropPreview(i)
@@ -513,7 +523,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         }
         selection.beginAt(i)
         dragging = true
-        if (mode == PaperSheetMode.EDITABLE) {
+        if (mode.supportsCaret) {
             caret.placeCaret(i)
         } else {
             redraw()
@@ -548,8 +558,9 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     private fun onMouseClicked(event: MouseEvent) {
         if (event.clickCount != 2) return
+        if (!mode.supportsSelection) return
         selection.selectWordAt(hitIndexAt(event.x, event.y))
-        if (mode == PaperSheetMode.EDITABLE) caret.placeCaret(selection.end)
+        if (mode.supportsCaret) caret.placeCaret(selection.end)
         redraw()
         event.consume()
     }

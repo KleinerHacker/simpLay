@@ -33,8 +33,9 @@ import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
  *
  * A per-view helper the skin creates once and routes key events and selection drops to. The text
  * index is read through [textIndex]; navigation keys are delegated to [caret], clipboard text to
- * [selection]. Outside [PaperSheetMode.EDITABLE] every key is ignored except `Ctrl+C`, which still
- * copies the selection.
+ * [selection]. The caret-navigation keys need [PaperSheetMode.supportsCaret], every mutating key
+ * needs [PaperSheetMode.supportsEditing] and `Ctrl+C` needs [PaperSheetMode.supportsSelection];
+ * every other key is ignored.
  *
  * Every mutation is checked against [EditableRegions.isEditRangeAllowed] first: in
  * [PageDeactivationMode.DISABLED] and [PageDeactivationMode.READONLY] a mutation whose range touches a
@@ -59,16 +60,20 @@ internal class PaperSheetEditor(
     private val markInternalEdit: () -> Unit,
 ) {
 
-    private val editable: Boolean get() = view.mode == PaperSheetMode.EDITABLE
+    private val editable: Boolean get() = view.mode.supportsEditing
+
+    private val caretActive: Boolean get() = view.mode.supportsCaret
+
+    private val selectable: Boolean get() = view.mode.supportsSelection
 
     //region Key handling
 
     fun onKeyPressed(event: KeyEvent) {
         if (event.code == KeyCode.C && event.isShortcutDown && !event.isAltDown) {
-            if (selection.putStyledSelectionOnClipboard()) event.consume()
+            if (selectable && selection.putStyledSelectionOnClipboard()) event.consume()
             return
         }
-        if (!editable) return
+        if (!caretActive) return
         val shift = event.isShiftDown
         val shortcut = event.isShortcutDown
         when (event.code) {
@@ -78,11 +83,11 @@ internal class PaperSheetEditor(
             KeyCode.DOWN -> caret.moveVertical(1, shift)
             KeyCode.HOME -> if (shortcut) caret.moveDocStart(shift) else caret.moveLineStart(shift)
             KeyCode.END -> if (shortcut) caret.moveDocEnd(shift) else caret.moveLineEnd(shift)
-            KeyCode.BACK_SPACE -> backspace()
-            KeyCode.DELETE -> deleteForward()
-            KeyCode.V -> if (shortcut) paste() else return
-            KeyCode.X -> if (shortcut) cut() else return
-            KeyCode.D -> if (shortcut) duplicate() else return
+            KeyCode.BACK_SPACE -> if (editable) backspace() else return
+            KeyCode.DELETE -> if (editable) deleteForward() else return
+            KeyCode.V -> if (shortcut && editable) paste() else return
+            KeyCode.X -> if (shortcut && editable) cut() else return
+            KeyCode.D -> if (shortcut && editable) duplicate() else return
             else -> return
         }
         event.consume()
