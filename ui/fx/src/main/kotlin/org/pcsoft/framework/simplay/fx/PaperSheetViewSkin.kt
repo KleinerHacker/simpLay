@@ -95,6 +95,9 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     /** `true` while the mouse drags an existing selection to a new drop position. */
     private var draggingSelection = false
 
+    /** `true` while the next `document` change comes from [editor] rather than from outside. */
+    private var internalEdit = false
+
     /** The text selection: anchor/focus, geometry, styled runs and the model command sink. */
     private val selection = PaperSheetSelection(
         view = control,
@@ -116,6 +119,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         pageTops = { pageTops },
         scrollOffset = ::scrollOffset,
         requestRedraw = ::redraw,
+        scrollCaretIntoView = ::scrollCaretIntoView,
     )
 
     /** The keyboard shortcuts, the text mutations they trigger and the selection drop. */
@@ -125,6 +129,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         caret = caret,
         textIndex = { index },
         requestRedraw = ::redraw,
+        markInternalEdit = { internalEdit = true },
     )
 
     /** Tracks the paragraph and sheet under the mouse for the hover overlay triggers. */
@@ -251,7 +256,10 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         hover.clear()
         computeLayoutMetrics()
         selection.publish()
-        caret.onDocumentRemeasured()
+        val reload = !internalEdit
+        internalEdit = false
+        caret.onDocumentRemeasured(reload)
+        if (reload) scrollBar.value = 0.0
     }
 
     private fun relayout() {
@@ -333,6 +341,26 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     //region Drawing
 
     private fun scrollOffset(): Double = scrollBar.value.coerceIn(0.0, scrollBar.max)
+
+    /**
+     * Scrolls the viewport by the smallest amount that brings the caret back into it, leaving
+     * [CARET_SCROLL_PADDING] of slack above and below; does nothing while there is nothing to scroll
+     * or the caret has no geometry.
+     */
+    private fun scrollCaretIntoView() {
+        if (scrollBar.max <= 0.0) return
+        val viewportHeight = canvas.height
+        if (viewportHeight <= 0.0) return
+        val bounds = caret.viewportBounds() ?: return
+        val top = bounds.minY - CARET_SCROLL_PADDING
+        val bottom = bounds.maxY + CARET_SCROLL_PADDING
+        val delta = when {
+            top < 0.0 -> top
+            bottom > viewportHeight -> bottom - viewportHeight
+            else -> return
+        }
+        scrollBar.value = (scrollBar.value + delta).coerceIn(0.0, scrollBar.max)
+    }
 
     private fun currentStyle(): PaperSheetStyle = PaperSheetStyle(
         sheetBackground = skinnable.sheetBackground,
@@ -597,6 +625,9 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
         const val DEFAULT_SCROLLBAR_WIDTH = 14.0
         const val LINE_SCROLL_STEP = 40.0
+
+        /** Slack kept above and below the caret when scrolling it back into the viewport. */
+        const val CARET_SCROLL_PADDING = 8.0
         const val PREF_MIN = 240.0
         const val PREF_MAX = 2000.0
     }

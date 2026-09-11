@@ -44,6 +44,18 @@ excluded.
   from both - instead of being discarded during
   tokenizing, which also fixes a caret/character-order drift that could occur
   while typing right after such a symbol.
+- `ui/fx` and `ui/swing`: an editable `PaperSheetView` no longer keeps a
+  statically visible caret while it does not own the focus. The caret is now
+  hidden as soon as the view loses the focus and reappears, blinking, when it
+  regains it.
+- `ui/fx` and `ui/swing`: the viewport of a `PaperSheetView` now follows the
+  caret. Whenever the caret moves out of the visible area - by typing, by
+  keyboard navigation or through a `CaretModel` command such as `moveToEnd()` -
+  the view scrolls by the smallest amount that brings it back into sight.
+- `ui/fx` and `ui/swing`: replacing `PaperSheetView.document` from outside now
+  always resets the caret to the document start and scrolls the view back to
+  the top, instead of keeping a caret position that belonged to the previous
+  document. Editing keeps its caret as before.
 
 ## [0.2.2]
 

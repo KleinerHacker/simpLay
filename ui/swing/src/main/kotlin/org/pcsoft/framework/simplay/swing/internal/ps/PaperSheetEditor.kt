@@ -46,6 +46,7 @@ internal class PaperSheetEditor(
     private val caret: PaperSheetCaret,
     private val textIndex: () -> DocumentTextIndex?,
     private val requestRedraw: () -> Unit,
+    private val markInternalEdit: () -> Unit,
 ) {
 
     private val editable: Boolean get() = view.mode == PaperSheetMode.EDITABLE
@@ -115,6 +116,7 @@ internal class PaperSheetEditor(
         val doc = view.document ?: return
         if (!regionsAllow(idx, doc, lo, hi)) return
         val result = op(idx, doc)
+        markInternalEdit()
         view.document = result.document
         caret.onEditApplied(result.caretIndex)
     }

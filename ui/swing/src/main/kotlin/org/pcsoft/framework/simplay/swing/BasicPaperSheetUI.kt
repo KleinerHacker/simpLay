@@ -91,6 +91,9 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     /** `true` while the mouse drags an existing selection to a new drop position. */
     private var draggingSelection = false
 
+    /** `true` while the next `document` change comes from [editor] rather than from outside. */
+    private var internalEdit = false
+
     private lateinit var propertyListener: PropertyChangeListener
     private lateinit var mouseListener: MouseAdapter
     private lateinit var keyListener: KeyAdapter
@@ -138,6 +141,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             pageTops = { pageTops },
             scrollOffset = ::scrollOffset,
             requestRedraw = ::redraw,
+            scrollCaretIntoView = ::scrollCaretIntoView,
         )
         editor = PaperSheetEditor(
             view = view,
@@ -145,6 +149,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             caret = caret,
             textIndex = { index },
             requestRedraw = ::redraw,
+            markInternalEdit = { internalEdit = true },
         )
         hover = PaperSheetHoverTracker(
             view = view,
@@ -260,7 +265,10 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         hover.clear()
         computeLayoutMetrics()
         selection.publish()
-        caret.onDocumentRemeasured()
+        val reload = !internalEdit
+        internalEdit = false
+        caret.onDocumentRemeasured(reload)
+        if (reload) scrollBar.value = 0
         redraw()
     }
 
@@ -325,6 +333,27 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     }
 
     private fun scrollOffset(): Double = scrollBar.value.toDouble()
+
+    /**
+     * Scrolls the viewport by the smallest amount that brings the caret back into it, leaving
+     * [CARET_SCROLL_PADDING] of slack above and below; does nothing while there is nothing to scroll
+     * or the caret has no geometry.
+     */
+    private fun scrollCaretIntoView() {
+        if (!scrollBar.isEnabled) return
+        val height = viewportHeight().toInt()
+        if (height <= 0) return
+        val bounds = caret.viewportBounds() ?: return
+        val top = bounds.y - CARET_SCROLL_PADDING
+        val bottom = bounds.y + bounds.height + CARET_SCROLL_PADDING
+        val delta = when {
+            top < 0 -> top
+            bottom > height -> bottom - height
+            else -> return
+        }
+        val maxValue = (scrollBar.maximum - scrollBar.visibleAmount).coerceAtLeast(0)
+        scrollBar.value = (scrollBar.value + delta).coerceIn(0, maxValue)
+    }
 
     private fun currentStyle(): PaperSheetStyle {
         val selectionColor = if (
@@ -595,6 +624,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     internal val pageCountForTest: Int get() = measured?.pages?.size ?: 0
     internal val caretIndexForTest: Int get() = caret.position
     internal fun caretBoundsForTest(): Rectangle? = caret.viewportBounds()
+
+    internal fun caretOpacityForTest(): Double = caret.currentOpacity()
     internal val verticalScrollBarForTest: JScrollBar get() = scrollBar
 
     //endregion
@@ -603,6 +634,9 @@ open class BasicPaperSheetUI : PaperSheetUI() {
 
         private const val DEFAULT_SCROLLBAR_WIDTH = 14
         private const val LINE_SCROLL_STEP = 40
+
+        /** Slack kept above and below the caret when scrolling it back into the viewport. */
+        private const val CARET_SCROLL_PADDING = 8
         private const val PREF_MIN = 240.0
         private const val PREF_MAX = 2000.0
 

@@ -47,6 +47,8 @@ import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
  * @property caret the shared caret, for its position, navigation moves and post-edit restore.
  * @property textIndex the current linear text index, or `null` without a document.
  * @property requestRedraw repaints the skin's canvas (used by the no-op drop path).
+ * @property markInternalEdit tells the skin that the next `document` change comes from this editor,
+ *   so that the re-measure keeps the caret instead of treating the change as a document reload.
  */
 internal class PaperSheetEditor(
     private val view: PaperSheetView,
@@ -54,6 +56,7 @@ internal class PaperSheetEditor(
     private val caret: PaperSheetCaret,
     private val textIndex: () -> DocumentTextIndex?,
     private val requestRedraw: () -> Unit,
+    private val markInternalEdit: () -> Unit,
 ) {
 
     private val editable: Boolean get() = view.mode == PaperSheetMode.EDITABLE
@@ -119,6 +122,7 @@ internal class PaperSheetEditor(
         val doc = view.document ?: return
         if (!regionsAllow(idx, doc, lo, hi)) return
         val result = op(idx, doc)
+        markInternalEdit()
         view.document = result.document
         caret.onEditApplied(result.caretIndex)
         view.requestLayout()

@@ -18,6 +18,7 @@ import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -41,6 +42,89 @@ class PaperSheetEditingTest {
             g.dispose()
         }
         return view to ui
+    }
+
+    /**
+     * Verifies that replacing the document from outside resets the caret to the document start and
+     * scrolls the viewport back to the top, no matter where the caret stood before.
+     */
+    @Test
+    fun replacingTheDocumentResetsCaretAndScroll() {
+        val view = PaperSheetView().apply {
+            mode = PaperSheetMode.EDITABLE
+            document = TestDocuments.long
+        }
+        val ui = view.getPaperSheetUI() as BasicPaperSheetUI
+        val image = BufferedImage(500, 200, BufferedImage.TYPE_INT_ARGB)
+        val g = image.createGraphics()
+        try {
+            ui.paintForTest(g, 500, 200)
+        } finally {
+            g.dispose()
+        }
+        view.caretModel.moveToEnd()
+        assertTrue(ui.caretIndexForTest > 0)
+        assertTrue(ui.verticalScrollBarForTest.value > 0)
+
+        view.document = TestDocuments.short
+
+        assertEquals(0, ui.caretIndexForTest)
+        assertEquals(0, ui.verticalScrollBarForTest.value)
+    }
+
+    /**
+     * Verifies that typing replaces the document instance as well, but is not treated as a reload:
+     * the caret stays behind the typed character instead of jumping back to the document start.
+     */
+    @Test
+    fun typingKeepsTheCaretDespiteTheDocumentChange() {
+        val (_, ui) = editableView()
+
+        ui.placeCaretAtForTest(35.0, 45.0)
+        val before = ui.caretIndexForTest
+        ui.typeTextForTest("X")
+
+        assertEquals(before + 1, ui.caretIndexForTest)
+    }
+
+    /**
+     * Verifies that moving the caret to the end of a document taller than the viewport scrolls the
+     * view down, so that the caret stays inside the visible area.
+     */
+    @Test
+    fun caretMoveScrollsTheViewportToTheCaret() {
+        val view = PaperSheetView().apply {
+            mode = PaperSheetMode.EDITABLE
+            document = TestDocuments.long
+        }
+        val ui = view.getPaperSheetUI() as BasicPaperSheetUI
+        val image = BufferedImage(500, 200, BufferedImage.TYPE_INT_ARGB)
+        val g = image.createGraphics()
+        try {
+            ui.paintForTest(g, 500, 200)
+        } finally {
+            g.dispose()
+        }
+        assertTrue(ui.verticalScrollBarForTest.isEnabled)
+
+        view.caretModel.moveToEnd()
+
+        assertTrue(ui.verticalScrollBarForTest.value > 0)
+        val bounds = assertNotNull(ui.caretBoundsForTest())
+        assertTrue(bounds.y >= 0)
+        assertTrue(bounds.y + bounds.height <= 200)
+    }
+
+    /**
+     * Verifies that an editable view which is not the focus owner paints no caret at all: the caret
+     * opacity stays at zero, so an unfocused sheet does not show a misleading caret.
+     */
+    @Test
+    fun unfocusedEditableViewHidesCaret() {
+        val (view, ui) = editableView()
+
+        assertFalse(view.isFocusOwner)
+        assertEquals(0.0, ui.caretOpacityForTest(), 1e-9)
     }
 
     /**

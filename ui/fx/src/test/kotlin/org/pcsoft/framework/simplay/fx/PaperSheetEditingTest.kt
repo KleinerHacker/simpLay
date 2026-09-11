@@ -45,6 +45,7 @@ class PaperSheetEditingTest : JavaFxTestBase() {
         view.document = PaperSheetTestFixtures.flowDocument(paragraphs)
         view.applyCss()
         view.layout()
+        view.requestFocus()
         Fixture(view, view.skin as PaperSheetViewSkin)
     }
 
@@ -410,6 +411,92 @@ class PaperSheetEditingTest : JavaFxTestBase() {
 
         assertTrue(skin.caretRenderedForTest)
         assertEquals(1.0, skin.caretOpacityForTest(), 1e-9)
+    }
+
+    /**
+     * With the focus moved to another node of the same scene the editable view paints no caret: the
+     * caret opacity drops to zero so an unfocused sheet does not show a misleading caret.
+     */
+    @Test
+    fun unfocusedEditableViewHidesCaret() {
+        val (view, skin) = fixture()
+
+        onFxThread {
+            val scene = view.scene
+            val other = javafx.scene.control.Button("other")
+            scene.root = javafx.scene.layout.VBox()
+            scene.root = javafx.scene.layout.VBox(view, other)
+            other.requestFocus()
+        }
+
+        assertFalse(view.isFocused)
+        assertEquals(0.0, skin.caretOpacityForTest(), 1e-9)
+    }
+
+    /**
+     * Moving the caret to the end of a document taller than the viewport scrolls the view down so
+     * that the caret stays inside the visible area.
+     */
+    @Test
+    fun caretMoveScrollsTheViewportToTheCaret() {
+        val (view, skin) = fixture(paragraphs = 40)
+
+        onFxThread { view.caretModel.moveToEnd() }
+
+        assertTrue(skin.verticalScrollBar.value > 0.0)
+        val bounds = assertNotNull(skin.caretBoundsForTest())
+        assertTrue(bounds.minY >= 0.0)
+        assertTrue(bounds.maxY <= skin.viewportHeight)
+    }
+
+    /**
+     * Scrolling away from the caret and then moving it back to the document start scrolls the
+     * viewport back up so that the caret is visible again.
+     */
+    @Test
+    fun caretMoveScrollsBackUpToTheCaret() {
+        val (view, skin) = fixture(paragraphs = 40)
+
+        onFxThread { skin.verticalScrollBar.value = skin.verticalScrollBar.max }
+        onFxThread { view.caretModel.moveToStart() }
+
+        assertTrue(skin.verticalScrollBar.value < skin.verticalScrollBar.max)
+        val bounds = assertNotNull(skin.caretBoundsForTest())
+        assertTrue(bounds.minY >= 0.0)
+        assertTrue(bounds.maxY <= skin.viewportHeight)
+    }
+
+    /**
+     * Replacing the document from outside resets the caret to the document start and scrolls the
+     * viewport back to the top, no matter where the caret stood before.
+     */
+    @Test
+    fun replacingTheDocumentResetsCaretAndScroll() {
+        val (view, skin) = fixture(paragraphs = 40)
+
+        onFxThread { view.caretModel.moveToEnd() }
+        assertTrue(skin.caretIndexForTest > 0)
+        assertTrue(skin.verticalScrollBar.value > 0.0)
+
+        onFxThread { view.document = PaperSheetTestFixtures.flowDocument(40) }
+
+        assertEquals(0, skin.caretIndexForTest)
+        assertEquals(0.0, skin.verticalScrollBar.value, 1e-9)
+    }
+
+    /**
+     * Typing replaces the document instance as well, but is not treated as a reload: the caret stays
+     * behind the typed character instead of jumping back to the document start.
+     */
+    @Test
+    fun typingKeepsTheCaretDespiteTheDocumentChange() {
+        val (_, skin) = fixture()
+
+        onFxThread { skin.placeCaretAtForTest(60.0, 60.0) }
+        val before = skin.caretIndexForTest
+        onFxThread { skin.typeTextForTest("X") }
+
+        assertEquals(before + 1, skin.caretIndexForTest)
     }
 
     //region Page deactivation

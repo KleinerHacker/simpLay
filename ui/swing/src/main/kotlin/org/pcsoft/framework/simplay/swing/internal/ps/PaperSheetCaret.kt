@@ -36,7 +36,8 @@ import org.pcsoft.framework.simplay.uicommon.segmentSpanX
  * A per-view helper `BasicPaperSheetUI` creates once and forwards mouse, keyboard and lifecycle
  * events to. The caret reads the measured document, the text index, the page tops, the scroll offset
  * and the [PaperSheetView] settings through the supplied accessors, shares the delegate's selection
- * (so `Shift` + navigation can extend it) and asks the delegate to repaint through [requestRedraw].
+ * (so `Shift` + navigation can extend it) and asks the delegate to repaint through [requestRedraw]
+ * and to keep the caret visible through [scrollCaretIntoView].
  *
  * In [PageDeactivationMode.DISABLED] and [PageDeactivationMode.HIDDEN] every plain (non-`Shift`)
  * [setCaret] move snaps out of a deactivated page in the direction of travel, per
@@ -52,6 +53,7 @@ internal class PaperSheetCaret(
     private val pageTops: () -> DoubleArray,
     private val scrollOffset: () -> Double,
     private val requestRedraw: () -> Unit,
+    private val scrollCaretIntoView: () -> Unit,
 ) : CaretModel.Commands {
 
     /** Caret offset into the linear document text. */
@@ -119,10 +121,11 @@ internal class PaperSheetCaret(
         )
     }
 
-    /** Opacity `0..1` the caret is painted with right now, honouring mode, blink phase and fade. */
+    /** Opacity `0..1` the caret is painted with right now, honouring mode, focus, blink phase and fade. */
     fun currentOpacity(): Double = when {
         dropPreview != null -> 1.0
         !editable -> 0.0
+        !view.isFocusOwner -> 0.0
         view.smoothCaretBlink -> opacity.coerceIn(0.0, 1.0)
         !blinkOn -> 0.0
         else -> 1.0
@@ -153,11 +156,11 @@ internal class PaperSheetCaret(
     /** Restarts the blink, picking the hard or smooth variant and resetting to a fully visible caret. */
     fun restartBlink() {
         stopTimers()
-        blinkOn = editable
+        blinkOn = editable && view.isFocusOwner
         opacity = 1.0
         smoothPhase = 1.0
         smoothRising = false
-        if (blinkOn && view.isFocusOwner) {
+        if (blinkOn) {
             if (view.smoothCaretBlink) {
                 smoothTimer = Timer(SMOOTH_STEP_MILLIS) {
                     val delta = SMOOTH_STEP_MILLIS.toDouble() / SMOOTH_BLINK_MILLIS
@@ -184,9 +187,13 @@ internal class PaperSheetCaret(
 
     //region Lifecycle from the delegate
 
-    /** Re-clamps the caret after a re-measure and republishes; does not restart the blink. */
-    fun onDocumentRemeasured() {
-        position = position.coerceIn(0, textIndex()?.length ?: 0)
+    /**
+     * Re-clamps the caret after a re-measure and republishes; does not restart the blink. With
+     * [reload] - the document was replaced from outside instead of by an edit - the caret always
+     * falls back to the document start.
+     */
+    fun onDocumentRemeasured(reload: Boolean) {
+        position = if (reload) 0 else position.coerceIn(0, textIndex()?.length ?: 0)
         desiredX = null
         shiftAnchor = null
         publish()
@@ -207,6 +214,7 @@ internal class PaperSheetCaret(
         shiftAnchor = null
         desiredX = null
         restartBlink()
+        scrollCaretIntoView()
     }
 
     /** Forgets the `Shift` + navigation anchor (mouse press starts a fresh gesture). */
@@ -231,6 +239,7 @@ internal class PaperSheetCaret(
         desiredX = null
         shiftAnchor = null
         restartBlink()
+        scrollCaretIntoView()
     }
 
     /**
@@ -253,6 +262,7 @@ internal class PaperSheetCaret(
         position = clamped
         if (!keepDesiredX) desiredX = null
         restartBlink()
+        scrollCaretIntoView()
     }
 
     /**
