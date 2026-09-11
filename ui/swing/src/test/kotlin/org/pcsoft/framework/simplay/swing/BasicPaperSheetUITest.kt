@@ -166,7 +166,8 @@ class BasicPaperSheetUITest {
 
     /**
      * A `READONLY` second page is painted exactly like a normal one, and it still counts in the
-     * rendered pages even though every mutation on it is rejected.
+     * rendered pages even though every mutation on it is rejected. The caret is placed strictly
+     * inside the blocked block, because an insertion point on its boundary is allowed by contract.
      */
     @Test
     fun readonlyPageIsPaintedNormallyButNotEditable() {
@@ -176,7 +177,7 @@ class BasicPaperSheetUITest {
         }
         val ui = ui(view)
         paint(ui, height = 800)
-        view.caretModel.moveToStartOfBlock(1)
+        view.caretModel.moveIntoBlock(1, 2)
         view.deactivatedPageHandling = PageDeactivationMode.READONLY
         view.setPageDeactivated(1, true)
         paint(ui, height = 800)
