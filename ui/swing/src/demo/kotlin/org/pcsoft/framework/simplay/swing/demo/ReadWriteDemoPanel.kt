@@ -28,17 +28,17 @@ import org.pcsoft.framework.simplay.swing.PaperSheetMode
 import org.pcsoft.framework.simplay.swing.PaperSheetView
 
 /**
- * Demo tab for an editable [PaperSheetView]: a sample selector, a zoom slider and a `Copy` floating
- * overlay that appears above the current text selection.
+ * Demo tab for an editable [PaperSheetView]: a sample selector, a page number position selector, a
+ * zoom slider and a `Copy` floating overlay that appears above the current text selection.
  */
 class ReadWriteDemoPanel : JPanel(BorderLayout()) {
 
     private val view = PaperSheetView().apply {
         mode = PaperSheetMode.EDITABLE
-        document = DemoDocuments.short
         smoothCaretBlink = true
     }
     private val sample = JComboBox(DemoDocuments.all.map { it.first }.toTypedArray())
+    private val pageNumber = JComboBox(PageNumberPositions.labels.toTypedArray())
     private val zoom = JSlider(25, 400, 100)
 
     init {
@@ -58,13 +58,31 @@ class ReadWriteDemoPanel : JPanel(BorderLayout()) {
         val bar = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
             add(JLabel("Sample:"))
             add(sample)
+            add(JLabel("Page number:"))
+            add(pageNumber)
             add(JLabel("Zoom:"))
             add(zoom)
         }
         add(bar, BorderLayout.NORTH)
         add(view, BorderLayout.CENTER)
 
-        sample.addActionListener { view.document = DemoDocuments.all[sample.selectedIndex].second }
+        sample.addActionListener { selectPageNumberFromSample(); applySample() }
+        pageNumber.addActionListener { applySample() }
         zoom.addChangeListener { view.zoom = zoom.value / 100.0 }
+
+        selectPageNumberFromSample()
+        applySample()
+    }
+
+    /** Seeds [pageNumber] from the currently selected sample's own numbering position. */
+    private fun selectPageNumberFromSample() {
+        val base = DemoDocuments.all[sample.selectedIndex].second
+        pageNumber.selectedItem = PageNumberPositions.labelOf(base.numbering.position)
+    }
+
+    private fun applySample() {
+        val base = DemoDocuments.all[sample.selectedIndex].second
+        val position = PageNumberPositions.positionOf(pageNumber.selectedItem as String)
+        view.document = base.withPageNumberPosition(position)
     }
 }

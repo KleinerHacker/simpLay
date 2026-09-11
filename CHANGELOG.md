@@ -12,6 +12,19 @@ excluded.
 
 ## [UNRELEASED]
 
+### Added
+
+- `engine`: page numbering. `Document.numbering: PageNumbering` (default off)
+  configures where a page number is drawn (`PageNumberPosition`: `OFF`, plus
+  every combination of top/bottom with left, center, right, and the
+  binding-aware `INNER` / `OUTER` that alternate side by page parity), the
+  first displayed number (`startNumber`), a set of pages excluded from
+  numbering by their new stable `Page.id`, and how an excluded page affects the
+  running count (`PageCountingMode.CONTINUOUS` / `SKIP_EXCLUDED`).
+- `ui/fx` and `ui/swing`: `CanvasDocumentRenderer`, `DocumentImageRenderer` and
+  both `PaperSheetView` controls now draw the configured page number on every
+  page automatically, using `PageNumbering.textStyle` for its font.
+
 ## [0.2.2]
 
 ### Added

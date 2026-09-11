@@ -51,4 +51,17 @@ class YamlRoundTripTest {
             restored.pages.flatMap { it.blocks }.map { it.toString() },
         )
     }
+
+    /**
+     * Use case: a document with a non-default [org.pcsoft.framework.simplay.engine.model.PageNumbering]
+     * survives the YAML round-trip unchanged.
+     */
+    @Test
+    fun yamlRoundTripPreservesPageNumbering() {
+        val numbered = E2ETestData.numberedSampleDocument()
+        val text = yaml.encodeToString(Document.serializer(), numbered)
+        val restored = yaml.decodeFromString(Document.serializer(), text)
+
+        assertEquals(numbered, restored)
+    }
 }

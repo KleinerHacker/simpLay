@@ -18,13 +18,16 @@ import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.Font
 import org.pcsoft.framework.simplay.engine.model.PageLayout
+import org.pcsoft.framework.simplay.engine.model.PageNumbering
+import org.pcsoft.framework.simplay.engine.model.PageNumberPosition
 import org.pcsoft.framework.simplay.engine.model.TextBlock
 import org.pcsoft.framework.simplay.engine.model.TextStyle
 
 /** Sample [Document]s shared by the `swing` module tests. All text is English. */
 internal object TestDocuments {
 
-    private val layout = PageLayout(
+    /** The page layout [short] and [long] use; exposed so tests can compute expected geometry. */
+    val layout = PageLayout(
         size = Size(width = 400.0, height = 300.0),
         margins = Margins(left = 30.0, top = 30.0, right = 30.0, bottom = 30.0),
     )
@@ -56,4 +59,8 @@ internal object TestDocuments {
             ),
         ),
     )
+
+    /** [short] with page numbering turned on at [position] (top-center by default). */
+    fun numberedShort(position: PageNumberPosition = PageNumberPosition.TOP_CENTER): Document =
+        short.copy(numbering = PageNumbering(position = position))
 }

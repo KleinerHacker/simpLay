@@ -15,9 +15,15 @@ package org.pcsoft.framework.simplay.fx.internal
 import javafx.geometry.VPos
 import javafx.scene.canvas.GraphicsContext
 import javafx.scene.paint.Color
+import javafx.scene.text.TextAlignment as FxTextAlignment
+import org.pcsoft.framework.simplay.engine.PageNumberLabel
+import org.pcsoft.framework.simplay.engine.planPageNumbers
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.engine.measure.MeasuredFont
 import org.pcsoft.framework.simplay.engine.measure.MeasuredPage
+import org.pcsoft.framework.simplay.engine.model.PageNumbering
+import org.pcsoft.framework.simplay.engine.model.TextAlignment
+import org.pcsoft.framework.simplay.engine.model.TextStyle
 
 /**
  * Module-internal drawing of a measured tree onto a JavaFX [GraphicsContext]: the surface-free
@@ -74,7 +80,8 @@ internal object CanvasRenderer {
     /**
      * Draws one measured [page] onto [gc], offset by ([originX], [originY]) on the target surface.
      * Every part becomes one [GraphicsContext.fillText] on its line baseline. [fonts] resolves the
-     * JavaFX font per block. [pageFrame] runs before the text if given.
+     * JavaFX font per block. [pageFrame] runs before the text if given. [pageNumberLabel], when
+     * given, is drawn last using [numberingStyle] for its font.
      */
     fun renderPage(
         gc: GraphicsContext,
@@ -83,6 +90,8 @@ internal object CanvasRenderer {
         originY: Double = 0.0,
         fonts: FxFontMeasureCalculator = FxFontMeasureCalculator(),
         pageFrame: PageFrameDecorator? = null,
+        pageNumberLabel: PageNumberLabel? = null,
+        numberingStyle: TextStyle = PageNumbering.DEFAULT_NUMBER_STYLE,
     ) {
         pageFrame?.decorate(gc, page, originX, originY)
         gc.textBaseline = VPos.BASELINE
@@ -98,12 +107,16 @@ internal object CanvasRenderer {
             onPart = { text, x, baselineY -> gc.fillText(text, x, baselineY) },
         )
         gc.fill = savedFill
+        if (pageNumberLabel != null) {
+            drawPageNumber(gc, pageNumberLabel, originX, originY, numberingStyle, fonts)
+        }
     }
 
     /**
      * Draws a whole measured [document] onto [gc], pages stacked vertically with [gap] layout units
      * between them. [pageFrame] runs per page, [pageSeparator] runs per inter-page gap; both
-     * optional.
+     * optional. [numbering] configures the page numbers drawn per page; defaults to
+     * [PageNumbering.OFF].
      */
     fun renderDocument(
         gc: GraphicsContext,
@@ -112,16 +125,62 @@ internal object CanvasRenderer {
         fonts: FxFontMeasureCalculator = FxFontMeasureCalculator(),
         pageFrame: PageFrameDecorator? = null,
         pageSeparator: PageSeparatorDecorator? = null,
+        numbering: PageNumbering = PageNumbering.OFF,
     ) {
         val width = if (document.pages.isEmpty()) 0.0 else document.pages.maxOf { it.effectiveSize.width }
+        val labels = document.planPageNumbers(numbering)
         var y = 0.0
         document.pages.forEachIndexed { index, page ->
-            renderPage(gc, page, originX = 0.0, originY = y, fonts = fonts, pageFrame = pageFrame)
+            renderPage(
+                gc,
+                page,
+                originX = 0.0,
+                originY = y,
+                fonts = fonts,
+                pageFrame = pageFrame,
+                pageNumberLabel = labels.getOrNull(index),
+                numberingStyle = numbering.textStyle,
+            )
             y += page.effectiveSize.height
             if (index != document.pages.lastIndex) {
                 pageSeparator?.decorate(gc, y, y + gap, width)
                 y += gap
             }
         }
+    }
+
+    /**
+     * Draws [label] onto [gc], offset by ([originX], [originY]), using [textStyle] resolved through
+     * [fonts]. The graphics-context font, text alignment, text baseline and fill are restored
+     * afterwards.
+     */
+    private fun drawPageNumber(
+        gc: GraphicsContext,
+        label: PageNumberLabel,
+        originX: Double,
+        originY: Double,
+        textStyle: TextStyle,
+        fonts: FxFontMeasureCalculator,
+    ) {
+        val savedFont = gc.font
+        val savedAlign = gc.textAlign
+        val savedBaseline = gc.textBaseline
+        val savedFill = gc.fill
+        gc.font = fonts.toFxFont(textStyle.font)
+        gc.textAlign = label.alignment.toFx()
+        gc.textBaseline = VPos.CENTER
+        gc.fill = Color.BLACK
+        gc.fillText(label.text, originX + label.x, originY + label.y)
+        gc.font = savedFont
+        gc.textAlign = savedAlign
+        gc.textBaseline = savedBaseline
+        gc.fill = savedFill
+    }
+
+    private fun TextAlignment.toFx(): FxTextAlignment = when (this) {
+        TextAlignment.LEFT -> FxTextAlignment.LEFT
+        TextAlignment.CENTER -> FxTextAlignment.CENTER
+        TextAlignment.RIGHT -> FxTextAlignment.RIGHT
+        TextAlignment.JUSTIFY -> FxTextAlignment.LEFT
     }
 }

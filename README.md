@@ -85,6 +85,11 @@ Build tasks relevant for consumers and maintainers:
     * [x] Font fingerprinting: `Document.withFontFingerprints`, per-font
       `MeasuredFont.fingerprintStatus` and `MeasuredDocument.fingerprintDeviations`
       to detect a missing or silently replaced font on reopen
+    * [x] Page numbering: `Document.numbering` (`PageNumbering`) configures
+      position (eleven anchors, including binding-aware `INNER` / `OUTER`),
+      start number, per-page exclusion by stable `Page.id` and the counting mode
+      (`CONTINUOUS` / `SKIP_EXCLUDED`); `MeasuredDocument.planPageNumbers` lays out the labels,
+      drawn by `ui/fx` and `ui/swing`
     * [ ] End-to-end layout and persistence tests
     * [ ] Engine user documentation (MkDocs, KDoc alignment)
 * [ ] Console output integration (`ui/console`)

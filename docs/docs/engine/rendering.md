@@ -161,6 +161,19 @@ Page 1
 Swap `consoleMeasurer` for a real text stack and the same walk drives a canvas or
 a PDF - only the per-part draw call changes.
 
+## Page numbering
+
+A renderer that wants page numbers does not lay them out itself: it calls
+`measured.planPageNumbers(document.numbering)` once (see
+[SimpLayEngine](simplay-engine.md#page-numbering)) and draws the resulting
+`PageNumberLabel`s alongside the part walk above, one per page. Each label
+already carries its page-local anchor (`x`, `y`) and horizontal `alignment`; the
+renderer only resolves the label's font from `numbering.textStyle` through its
+own `FontMeasureCalculator` and draws the text - no position math beyond that.
+`ui/fx` and `ui/swing` both follow this pattern; see
+[fx - Canvas rendering](../fx/canvas-rendering.md#page-numbers) and
+[swing - Image rendering](../swing/image-rendering.md#page-numbers).
+
 ## Where platform modules plug in
 
 A platform module (`ui/fx`, `ui/swing`, `export/jvm-pdf`, `export/jvm-print`) supplies two things:

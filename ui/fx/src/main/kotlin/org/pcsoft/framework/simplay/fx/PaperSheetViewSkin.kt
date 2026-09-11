@@ -165,6 +165,9 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     /** The current viewport height in pixels; for tests. */
     internal val viewportHeight: Double get() = canvas.height
 
+    /** The painted canvas; for tests that snapshot pixels. */
+    internal val canvasForTest: Canvas get() = canvas
+
     private val mode: PaperSheetMode get() = skinnable.mode
 
     //endregion

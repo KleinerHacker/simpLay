@@ -34,10 +34,10 @@ import org.pcsoft.framework.simplay.fx.PaperSheetView
 
 /**
  * Content of the demo's `Readonly` tab: a [PaperSheetView] in its read-only mode, driven by a
- * [ToolBar] that exposes every externally settable value (sample document, font family, outer
- * margin, page gap, min/max/current zoom) and reads back the current zoom and the current text
- * selection from [PaperSheetView.selectionModel] (range, length, run count). Two buttons drive
- * the selection model with `selectAll` and `clearSelection`.
+ * [ToolBar] that exposes every externally settable value (sample document, font family, page
+ * number position, outer margin, page gap, min/max/current zoom) and reads back the current zoom
+ * and the current text selection from [PaperSheetView.selectionModel] (range, length, run count).
+ * Two buttons drive the selection model with `selectAll` and `clearSelection`.
  *
  * A "Stylesheet" selector switches between the built-in look ("Standard") and the bundled
  * `demo-dark.css` example ("Dark"), which overrides the `-fx-sheet-background`, `-fx-shadow-color`,
@@ -50,7 +50,8 @@ import org.pcsoft.framework.simplay.fx.PaperSheetView
  *
  * The font selector lists every font family installed on the system ([FxFont.getFamilies]); picking
  * one rebuilds the sample document with that family. "Default (document)" keeps the family the
- * sample was built with.
+ * sample was built with. The "Page number" selector overrides the position of the sample's
+ * [org.pcsoft.framework.simplay.engine.model.PageNumbering]; "Off" hides it.
  */
 class ReadonlyDemoTab : BorderPane() {
 
@@ -65,6 +66,10 @@ class ReadonlyDemoTab : BorderPane() {
         items.add(FONT_DEFAULT)
         items.addAll(FxFont.getFamilies())
         selectionModel.selectFirst()
+    }
+
+    private val pageNumberBox = ComboBox<String>().apply {
+        items.setAll(PageNumberPositions.labels)
     }
 
     private val stylesheetBox = ChoiceBox<String>().apply {
@@ -112,6 +117,7 @@ class ReadonlyDemoTab : BorderPane() {
         top = ToolBar(
             Label("Document:"), sampleBox,
             Label("Font:"), fontFamilyBox,
+            Label("Page number:"), pageNumberBox,
             Label("Stylesheet:"), stylesheetBox,
             Separator(),
             Label("Outer margin:"), outerMarginSpinner,
@@ -129,8 +135,9 @@ class ReadonlyDemoTab : BorderPane() {
 
         view.floatingOverlays.addAll(copyOverlay, hoverOverlay)
 
-        sampleBox.valueProperty().addListener { _, _, _ -> applySample() }
+        sampleBox.valueProperty().addListener { _, _, _ -> selectPageNumberBoxFromSample(); applySample() }
         fontFamilyBox.valueProperty().addListener { _, _, _ -> applySample() }
+        pageNumberBox.valueProperty().addListener { _, _, _ -> applySample() }
         stylesheetBox.valueProperty().addListener { _, _, v -> applyStylesheet(v) }
         outerMarginSpinner.valueProperty().addListener { _, _, v -> view.outerMargin = v }
         pageGapSpinner.valueProperty().addListener { _, _, v -> view.pageGap = v }
@@ -146,16 +153,24 @@ class ReadonlyDemoTab : BorderPane() {
         view.hoveredParagraphProperty.addListener { _, _, _ -> updateOverlayLabel() }
         view.hoveredPageProperty.addListener { _, _, _ -> updateOverlayLabel() }
 
+        selectPageNumberBoxFromSample()
         applySample()
         zoomLabel.text = "Zoom: ${format(view.zoom)}"
         updateSelectionLabel()
         updateOverlayLabel()
     }
 
+    /** Seeds [pageNumberBox] from the currently selected sample's own numbering position. */
+    private fun selectPageNumberBoxFromSample() {
+        val base = DemoDocuments.all.first { it.first == sampleBox.value }.second
+        pageNumberBox.value = PageNumberPositions.labelOf(base.numbering.position)
+    }
+
     private fun applySample() {
         val base = DemoDocuments.all.first { it.first == sampleBox.value }.second
         val family = fontFamilyBox.value
-        view.document = if (family == null || family == FONT_DEFAULT) base else base.withFontFamily(family)
+        val withFont = if (family == null || family == FONT_DEFAULT) base else base.withFontFamily(family)
+        view.document = withFont.withPageNumberPosition(PageNumberPositions.positionOf(pageNumberBox.value))
     }
 
     /** Adds or removes the bundled `demo-dark.css` on this tab so it cascades to [view]. */

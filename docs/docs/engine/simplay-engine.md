@@ -159,6 +159,38 @@ The content width here is `200 - 10 - 10 = 180`, so at 6 units per glyph the
 block wraps into multiple `MeasuredLine` objects, each with a `lineBox` inside the
 page content area.
 
+## Page numbering
+
+Turning `Document.numbering` (a raw [`PageNumbering`](raw-model.md#page-numbering)
+value) into the labels a renderer draws is a two-step, pure computation:
+
+1. `numbering.counting` (a `PageCountingMode`) *is* the `PageCountingStrategy` to
+   run - the enum implements the strategy interface directly, so the persisted
+   setting and its executable behaviour are one value with no lookup or bridging
+   step in between. `numbering.counting.numbers(sheetCount, excludedSheetFlags,
+   startNumber)` returns the displayed number per sheet, `null` for an excluded
+   one.
+2. `measured.planPageNumbers(numbering)` - an extension function on
+   `MeasuredDocument` - combines that with the sheet geometry: it marks a sheet
+   excluded when its `MeasuredPage.raw.id` is in `numbering.excludedPageIds`,
+   resolves `TOP_INNER` / `TOP_OUTER` / `BOTTOM_INNER` / `BOTTOM_OUTER` against
+   the sheet's 1-based parity, and returns one `PageNumberLabel?` per sheet -
+   `null` where nothing is drawn, and an empty list outright when
+   `numbering.position == PageNumberPosition.OFF`.
+
+```kotlin
+import org.pcsoft.framework.simplay.engine.PageNumberLabel
+import org.pcsoft.framework.simplay.engine.planPageNumbers
+
+val labels: List<PageNumberLabel?> = measured.planPageNumbers(document.numbering)
+```
+
+A `PageNumberLabel` carries the rendered `text`, its page-local anchor (`x`, `y`)
+and a horizontal `alignment`; a renderer only draws it; every layout decision
+already happened in `planPageNumbers`. See
+[Rendering](rendering.md#page-numbering) for how `fx` and `swing` draw the
+result.
+
 ## Next
 
 * [Rendering](rendering.md) - walking the `MeasuredDocument` to draw it.

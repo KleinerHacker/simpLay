@@ -18,6 +18,7 @@ import javafx.scene.paint.Color
 import javafx.scene.paint.Paint
 import kotlin.math.max
 import kotlin.math.min
+import org.pcsoft.framework.simplay.engine.planPageNumbers
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.engine.measure.MeasuredLine
 import org.pcsoft.framework.simplay.engine.measure.MeasuredPage
@@ -130,6 +131,7 @@ internal class PaperSheetCanvasPainter(private val canvas: Canvas) {
         gc.save()
         gc.scale(zoom, zoom)
 
+        val numberLabels = measured.planPageNumbers(measured.raw.numbering)
         val visible = ArrayList<Int>()
         var chrome = 0
         measured.pages.forEachIndexed { i, page ->
@@ -146,7 +148,11 @@ internal class PaperSheetCanvasPainter(private val canvas: Canvas) {
                         gc, index, i, selectionStart, selectionEnd, originX, originY, fonts, style.selectionColor,
                     )
                 }
-                CanvasRenderer.renderPage(gc, page, originX = originX, originY = originY, fonts = fonts)
+                CanvasRenderer.renderPage(
+                    gc, page, originX = originX, originY = originY, fonts = fonts,
+                    pageNumberLabel = numberLabels.getOrNull(i),
+                    numberingStyle = measured.raw.numbering.textStyle,
+                )
                 if (caret != null && caretOpacity > 0.0 && caret.pageIndex == i) {
                     drawCaretOnPage(gc, page, caret, originX, originY, caretOpacity.coerceIn(0.0, 1.0), style.caretColor)
                     caretDrawCount = 1

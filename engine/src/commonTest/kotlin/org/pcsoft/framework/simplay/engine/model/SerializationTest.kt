@@ -14,7 +14,9 @@ package org.pcsoft.framework.simplay.engine.model
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
+import org.pcsoft.framework.simplay.engine.PageCountingMode
 import org.pcsoft.framework.simplay.engine.geometry.Margins
 import org.pcsoft.framework.simplay.engine.geometry.Size
 
@@ -79,5 +81,51 @@ class SerializationTest {
         val document = Document()
         val encoded = json.encodeToString(Document.serializer(), document)
         assertEquals(document, json.decodeFromString(Document.serializer(), encoded))
+    }
+
+    /**
+     * Verifies that a page's stable [Page.id] is preserved across a JSON encode/decode round trip.
+     */
+    @Test
+    fun roundTripPreservesPageId() {
+        val page = FlowPage(layout, emptyList())
+        val encoded = json.encodeToString(Page.serializer(), page)
+        val decoded = json.decodeFromString(Page.serializer(), encoded)
+
+        assertEquals(page.id, decoded.id)
+    }
+
+    /**
+     * Verifies that decoding a page JSON payload without an "id" field assigns a fresh, non-blank
+     * identifier via the field default, instead of failing.
+     */
+    @Test
+    fun decodingWithoutIdAssignsFreshId() {
+        val legacyJson = """{"type":"flow","layout":${json.encodeToString(PageLayout.serializer(), layout)}}"""
+        val decoded = json.decodeFromString(Page.serializer(), legacyJson)
+
+        assertTrue(decoded.id.isNotBlank())
+    }
+
+    /**
+     * Verifies that a non-default [PageNumbering] configuration on a [Document] survives a JSON
+     * encode/decode round trip unchanged.
+     */
+    @Test
+    fun roundTripPreservesPageNumbering() {
+        val document = Document(
+            pages = listOf(FlowPage(layout, emptyList())),
+            numbering = PageNumbering(
+                position = PageNumberPosition.BOTTOM_OUTER,
+                startNumber = 5,
+                excludedPageIds = setOf("some-page-id"),
+                counting = PageCountingMode.SKIP_EXCLUDED,
+            ),
+        )
+
+        val encoded = json.encodeToString(Document.serializer(), document)
+        val decoded = json.decodeFromString(Document.serializer(), encoded)
+
+        assertEquals(document, decoded)
     }
 }

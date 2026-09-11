@@ -20,6 +20,7 @@ import java.awt.geom.Line2D
 import java.awt.geom.Rectangle2D
 import kotlin.math.max
 import kotlin.math.min
+import org.pcsoft.framework.simplay.engine.planPageNumbers
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.engine.measure.MeasuredLine
 import org.pcsoft.framework.simplay.engine.measure.MeasuredPage
@@ -94,6 +95,7 @@ internal class PaperSheetSwingPainter {
         val saved = g.transform
         g.scale(zoom, zoom)
 
+        val numberLabels = measured.planPageNumbers(measured.raw.numbering)
         val visible = ArrayList<Int>()
         var chrome = 0
         measured.pages.forEachIndexed { i, page ->
@@ -110,7 +112,11 @@ internal class PaperSheetSwingPainter {
                         g, index, i, selectionStart, selectionEnd, originX, originY, fonts, style.selectionColor,
                     )
                 }
-                Graphics2DDocumentRenderer.renderPage(g, page, originX = originX, originY = originY, fonts = fonts)
+                Graphics2DDocumentRenderer.renderPage(
+                    g, page, originX = originX, originY = originY, fonts = fonts,
+                    pageNumberLabel = numberLabels.getOrNull(i),
+                    numberingStyle = measured.raw.numbering.textStyle,
+                )
                 if (caret != null && caretOpacity > 0.0 && caret.pageIndex == i) {
                     drawCaretOnPage(g, page, caret, originX, originY, caretOpacity.coerceIn(0.0, 1.0), style.caretColor)
                     caretDrawCount = 1

@@ -15,8 +15,10 @@ package org.pcsoft.framework.simplay.fx
 import javafx.scene.Cursor
 import javafx.scene.Scene
 import javafx.scene.control.Label
+import javafx.scene.image.WritableImage
 import javafx.scene.input.Clipboard
 import javafx.scene.input.KeyCode
+import javafx.scene.paint.Color
 import javafx.stage.Stage
 import org.junit.jupiter.api.Test
 import kotlin.math.abs
@@ -247,5 +249,58 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
 
         assertFalse(overlay.isActive)
         assertEquals(0, skin.overlayNodeCountForTest)
+    }
+
+    /**
+     * When the document turns on top-center page numbering, a dark pixel appears near the expected
+     * anchor in the top margin band of the first page - the number the plain fixture never draws.
+     */
+    @Test
+    fun pageNumberIsPaintedAtExpectedEdge() {
+        val plain = fixture(paragraphs = 2)
+        val expectedX = plain.view.outerMargin + PaperSheetTestFixtures.layout.size.width / 2.0
+        val expectedY = plain.view.outerMargin + PaperSheetTestFixtures.layout.margins.top / 2.0
+
+        assertFalse(
+            hasDarkPixelNear(plain.skin, expectedX, expectedY),
+            "unnumbered fixture should not paint anything near the numbering anchor",
+        )
+
+        val numbered = onFxThread {
+            val view = PaperSheetView()
+            val stage = Stage()
+            stage.scene = Scene(view, 320.0, 260.0)
+            stage.show()
+            view.document = PaperSheetTestFixtures.numberedFlowDocument(paragraphs = 2)
+            view.applyCss()
+            view.layout()
+            Fixture(view, view.skin as PaperSheetViewSkin)
+        }
+
+        assertTrue(
+            hasDarkPixelNear(numbered.skin, expectedX, expectedY),
+            "numbered fixture should paint the page number near its planned anchor",
+        )
+    }
+
+    /**
+     * Scans a small box around ([cx], [cy]) on the skin's canvas for a pixel darker than mid-gray,
+     * the signature of drawn black text over the white sheet background.
+     */
+    private fun hasDarkPixelNear(skin: PaperSheetViewSkin, cx: Double, cy: Double): Boolean = onFxThread {
+        val canvas = skin.canvasForTest
+        val image: WritableImage = canvas.snapshot(null, null)
+        val reader = image.pixelReader
+        var found = false
+        for (dx in -10..10) {
+            for (dy in -7..7) {
+                val x = (cx + dx).toInt()
+                val y = (cy + dy).toInt()
+                if (x < 0 || y < 0 || x >= image.width.toInt() || y >= image.height.toInt()) continue
+                val color: Color = reader.getColor(x, y)
+                if (color.brightness < 0.5) found = true
+            }
+        }
+        found
     }
 }

@@ -18,6 +18,8 @@ import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.Font
 import org.pcsoft.framework.simplay.engine.model.PageLayout
+import org.pcsoft.framework.simplay.engine.model.PageNumbering
+import org.pcsoft.framework.simplay.engine.model.PageNumberPosition
 import org.pcsoft.framework.simplay.engine.model.TextBlock
 import org.pcsoft.framework.simplay.engine.model.TextStyle
 
@@ -30,7 +32,8 @@ object PaperSheetTestFixtures {
     const val PARAGRAPH: String =
         "The quick brown fox jumps over the lazy dog and then quietly rests beneath the old oak tree."
 
-    private val layout = PageLayout(
+    /** The page layout every fixture document uses; exposed so tests can compute expected geometry. */
+    val layout = PageLayout(
         size = Size(width = 360.0, height = 260.0),
         margins = Margins(left = 30.0, top = 30.0, right = 30.0, bottom = 30.0),
     )
@@ -47,4 +50,10 @@ object PaperSheetTestFixtures {
                 ),
             ),
         )
+
+    /** [flowDocument] with page numbering turned on at [position] (top-center by default). */
+    fun numberedFlowDocument(
+        paragraphs: Int,
+        position: PageNumberPosition = PageNumberPosition.TOP_CENTER,
+    ): Document = flowDocument(paragraphs).copy(numbering = PageNumbering(position = position))
 }

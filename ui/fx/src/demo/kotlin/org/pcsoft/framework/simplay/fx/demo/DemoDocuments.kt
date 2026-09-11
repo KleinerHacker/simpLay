@@ -19,6 +19,8 @@ import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.Font
 import org.pcsoft.framework.simplay.engine.model.FontWeight
 import org.pcsoft.framework.simplay.engine.model.PageLayout
+import org.pcsoft.framework.simplay.engine.model.PageNumbering
+import org.pcsoft.framework.simplay.engine.model.PageNumberPosition
 import org.pcsoft.framework.simplay.engine.model.SinglePage
 import org.pcsoft.framework.simplay.engine.model.TextBlock
 import org.pcsoft.framework.simplay.engine.model.TextStyle
@@ -45,7 +47,7 @@ object DemoDocuments {
             "How vexingly quick daft zebras jump. The five boxing wizards jump quickly. " +
             "Sphinx of black quartz, judge my vow. Jackdaws love my big sphinx of quartz."
 
-    /** A short one-page flow document. */
+    /** A short one-page flow document, numbered bottom-center - the default sample shown at startup. */
     val short: Document = Document(
         pages = listOf(
             FlowPage(
@@ -56,9 +58,10 @@ object DemoDocuments {
                 ),
             ),
         ),
+        numbering = PageNumbering(position = PageNumberPosition.BOTTOM_CENTER),
     )
 
-    /** A flow document whose content spills across several pages. */
+    /** A flow document whose content spills across several pages, numbered bottom-center. */
     val multiPage: Document = Document(
         pages = listOf(
             FlowPage(
@@ -69,11 +72,13 @@ object DemoDocuments {
                 },
             ),
         ),
+        numbering = PageNumbering(position = PageNumberPosition.BOTTOM_CENTER),
     )
 
     /**
      * A novella-length flow document of roughly 150 A4 pages, meant as a rendering performance
-     * test. The exact page count depends on the platform font metrics.
+     * test. The exact page count depends on the platform font metrics. Numbered bottom-center,
+     * starting at `1`.
      */
     val novella: Document = Document(
         pages = listOf(
@@ -85,9 +90,13 @@ object DemoDocuments {
                 },
             ),
         ),
+        numbering = PageNumbering(position = PageNumberPosition.BOTTOM_CENTER),
     )
 
-    /** A mix of a growing single page followed by a flow page. */
+    /**
+     * A mix of a growing single page followed by a flow page, numbered bottom-outer so the two
+     * pages show the binding-aware parity swap (page 1 outer = right, page 2 outer = left).
+     */
     val mixed: Document = Document(
         pages = listOf(
             SinglePage(
@@ -105,6 +114,7 @@ object DemoDocuments {
                 },
             ),
         ),
+        numbering = PageNumbering(position = PageNumberPosition.BOTTOM_OUTER),
     )
 
     /** All samples with a display name, in menu order. */

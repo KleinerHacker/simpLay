@@ -32,13 +32,14 @@ import org.pcsoft.framework.simplay.fx.PaperSheetView
 /**
  * Content of the demo's `Read/Write` tab: a [PaperSheetView] in [PaperSheetMode.EDITABLE], driven by a
  * [ToolBar] that exposes the mode, the smooth-caret-blink switch and every value the `Readonly` tab
- * exposes (sample document, font family, stylesheet, outer margin, page gap, min/max/current zoom),
- * and reads back the current zoom, the caret position from [PaperSheetView.caretModel] and the size
- * of the (edited) document (characters and pages). `Go to start` / `Go to end` drive the caret model
- * directly.
+ * exposes (sample document, font family, page number position, stylesheet, outer margin, page gap,
+ * min/max/current zoom), and reads back the current zoom, the caret position from
+ * [PaperSheetView.caretModel] and the size of the (edited) document (characters and pages). `Go to
+ * start` / `Go to end` drive the caret model directly.
  *
  * The "Stylesheet" selector switches between the built-in look ("Standard") and the bundled
- * `demo-dark.css` example ("Dark").
+ * `demo-dark.css` example ("Dark"). The "Page number" selector overrides the position of the
+ * sample's [org.pcsoft.framework.simplay.engine.model.PageNumbering]; "Off" hides it.
  */
 class ReadWriteDemoTab : BorderPane() {
 
@@ -60,6 +61,10 @@ class ReadWriteDemoTab : BorderPane() {
         items.add(FONT_DEFAULT)
         items.addAll(FxFont.getFamilies())
         selectionModel.selectFirst()
+    }
+
+    private val pageNumberBox = ComboBox<String>().apply {
+        items.setAll(PageNumberPositions.labels)
     }
 
     private val stylesheetBox = ChoiceBox<String>().apply {
@@ -86,6 +91,7 @@ class ReadWriteDemoTab : BorderPane() {
             Separator(),
             Label("Document:"), sampleBox,
             Label("Font:"), fontFamilyBox,
+            Label("Page number:"), pageNumberBox,
             Label("Stylesheet:"), stylesheetBox,
             Separator(),
             Label("Outer margin:"), outerMarginSpinner,
@@ -104,8 +110,9 @@ class ReadWriteDemoTab : BorderPane() {
 
         modeBox.valueProperty().addListener { _, _, v -> if (v != null) view.mode = v }
         smoothCaretBox.selectedProperty().addListener { _, _, v -> view.smoothCaretBlink = v }
-        sampleBox.valueProperty().addListener { _, _, _ -> applySample() }
+        sampleBox.valueProperty().addListener { _, _, _ -> selectPageNumberBoxFromSample(); applySample() }
         fontFamilyBox.valueProperty().addListener { _, _, _ -> applySample() }
+        pageNumberBox.valueProperty().addListener { _, _, _ -> applySample() }
         stylesheetBox.valueProperty().addListener { _, _, v -> applyStylesheet(v) }
         outerMarginSpinner.valueProperty().addListener { _, _, v -> view.outerMargin = v }
         pageGapSpinner.valueProperty().addListener { _, _, v -> view.pageGap = v }
@@ -120,16 +127,24 @@ class ReadWriteDemoTab : BorderPane() {
         view.caretModel.positionProperty.addListener { _, _, _ -> updateCaretLabel() }
         view.documentProperty.addListener { _, _, _ -> updateDocumentLabel() }
 
+        selectPageNumberBoxFromSample()
         applySample()
         zoomLabel.text = "Zoom: ${format(view.zoom)}"
         updateCaretLabel()
         updateDocumentLabel()
     }
 
+    /** Seeds [pageNumberBox] from the currently selected sample's own numbering position. */
+    private fun selectPageNumberBoxFromSample() {
+        val base = DemoDocuments.all.first { it.first == sampleBox.value }.second
+        pageNumberBox.value = PageNumberPositions.labelOf(base.numbering.position)
+    }
+
     private fun applySample() {
         val base = DemoDocuments.all.first { it.first == sampleBox.value }.second
         val family = fontFamilyBox.value
-        view.document = if (family == null || family == FONT_DEFAULT) base else base.withFontFamily(family)
+        val withFont = if (family == null || family == FONT_DEFAULT) base else base.withFontFamily(family)
+        view.document = withFont.withPageNumberPosition(PageNumberPositions.positionOf(pageNumberBox.value))
     }
 
     /** Adds or removes the bundled `demo-dark.css` on this tab so it cascades to [view]. */

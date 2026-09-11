@@ -9,11 +9,21 @@ optionally persist it, and hand it to `SimpLayEngine.measure(document)`.
 
 | Type | Purpose |
 |------|---------|
-| `Document` | Ordered list of `Page` objects. May be empty. |
-| `Page` | Sealed type; holds a `PageLayout` and a list of `TextBlock`. |
+| `Document` | Ordered list of `Page` objects, plus `numbering: PageNumbering`. May be empty. |
+| `Page` | Sealed type; holds a stable `id: String`, a `PageLayout` and a list of `TextBlock`. |
 | `FlowPage` | A page whose content flows onto additional pages when it does not fit. |
 | `SinglePage` | A page that is never continued; it grows in height instead. |
 | `PageLayout` | Physical page frame: outer `Size` plus inner `Margins`. |
+
+### Page identity
+
+Every `Page` carries an `id: String`, a random UUID (`kotlin.uuid.Uuid`) filled in
+by a field default when the page is constructed. It identifies a page
+independently of its position in `Document.pages`, so it survives edits that
+reorder or splice pages and flow overflow that turns one model page into several
+sheets - every overflow sheet of a `FlowPage` shares the same `id`. A document
+persisted before this field existed gets a fresh `id` per page on load, through
+the same default.
 
 `PageLayout` exposes the derived values `contentWidth` (`size.width - margins.left
 - margins.right`) and `contentHeight` (the vertical counterpart). All geometry
@@ -98,6 +108,39 @@ or a `*FontProbe` in a UI module. See
 is `@Serializable` and `PlatformSerializable`, so it round-trips with the rest of
 the model; `encode()` / `FontFingerprint.decode(text)` give a one-line text form for
 storing it outside the model.
+
+## Page numbering
+
+`Document.numbering: PageNumbering` (default `PageNumbering.OFF`) configures the
+page numbers a renderer draws:
+
+| Field | Purpose |
+|-------|---------|
+| `position: PageNumberPosition` | Where the number sits, or `OFF` to draw nothing. |
+| `startNumber: Int` | The display value of the first counted sheet (default `1`). |
+| `excludedPageIds: Set<String>` | `Page.id`s that show no number, referenced by id, never by index. |
+| `counting: PageCountingMode` | How an excluded sheet affects the running counter; also the executable strategy - see below. |
+| `textStyle: TextStyle` | Font of the number; defaults to a small serif. |
+
+`PageNumberPosition` has eleven values: `OFF`, and every combination of `TOP_` /
+`BOTTOM_` with `LEFT`, `CENTER`, `RIGHT`, `INNER` and `OUTER`. `INNER` / `OUTER`
+alternate their horizontal side by sheet parity: an odd sheet is treated as a
+right-hand page (inner = left, outer = right), an even sheet as a left-hand page
+(inner = right, outer = left).
+
+`PageCountingMode` (package `org.pcsoft.framework.simplay.engine`) selects how
+`excludedPageIds` interact with the running counter, and is itself the
+`PageCountingStrategy` that carries the behaviour out - a persisted setting and
+its executable strategy are the same enum value, with no separate lookup step:
+
+* `CONTINUOUS` (default) - every sheet advances the counter, including an
+  excluded one; only its own label is suppressed.
+* `SKIP_EXCLUDED` - an excluded sheet shows no label and does not advance the
+  counter, so the following sheet gets the number the excluded one would have.
+
+The `planPageNumbers` extension function that lays out the label per sheet from a
+`PageNumbering` is engine, not model, logic; see
+[SimpLayEngine](simplay-engine.md#page-numbering).
 
 ## Counting extensions
 

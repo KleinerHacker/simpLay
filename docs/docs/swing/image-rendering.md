@@ -56,3 +56,13 @@ val page: BufferedImage = renderer.renderPage(0)
   page; `pageImageSizes.count` equals `pageCount`.
 
 The instance is immutable and single-document; it is not thread-safe.
+
+## Page numbers
+
+When the bound document has `document.numbering` configured (anything other than
+`PageNumbering.OFF`), every render call also draws the page numbers, resolved
+through `MeasuredDocument.planPageNumbers` from the engine (see
+[engine - Rendering: Page numbering](../engine/rendering.md#page-numbering)) and
+drawn with `numbering.textStyle` through the same `SwingFontMeasureCalculator`
+used for the document text. No extra call or configuration is needed on the
+renderer itself - the numbering lives on the document.

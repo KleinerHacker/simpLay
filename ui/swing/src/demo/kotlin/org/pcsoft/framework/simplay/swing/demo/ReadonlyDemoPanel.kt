@@ -32,17 +32,17 @@ import org.pcsoft.framework.simplay.swing.PaperSheetView
 import org.pcsoft.framework.simplay.swing.TextSelectionModel
 
 /**
- * Demo tab for a read-only [PaperSheetView]: a sample selector, a zoom slider, a live readout of the
- * current selection length and two floating overlays - a `Copy` button above the text selection and
- * a label above the paragraph under the mouse.
+ * Demo tab for a read-only [PaperSheetView]: a sample selector, a page number position selector, a
+ * zoom slider, a live readout of the current selection length and two floating overlays - a `Copy`
+ * button above the text selection and a label above the paragraph under the mouse.
  */
 class ReadonlyDemoPanel : JPanel(BorderLayout()) {
 
     private val view = PaperSheetView().apply {
         mode = PaperSheetMode.READONLY
-        document = DemoDocuments.short
     }
     private val sample = JComboBox(DemoDocuments.all.map { it.first }.toTypedArray())
+    private val pageNumber = JComboBox(PageNumberPositions.labels.toTypedArray())
     private val zoom = JSlider(25, 400, 100)
     private val selectionInfo = JLabel("selection: 0")
 
@@ -53,6 +53,8 @@ class ReadonlyDemoPanel : JPanel(BorderLayout()) {
         val bar = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
             add(JLabel("Sample:"))
             add(sample)
+            add(JLabel("Page number:"))
+            add(pageNumber)
             add(JLabel("Zoom:"))
             add(zoom)
             add(selectionInfo)
@@ -60,11 +62,27 @@ class ReadonlyDemoPanel : JPanel(BorderLayout()) {
         add(bar, BorderLayout.NORTH)
         add(view, BorderLayout.CENTER)
 
-        sample.addActionListener { view.document = DemoDocuments.all[sample.selectedIndex].second }
+        sample.addActionListener { selectPageNumberFromSample(); applySample() }
+        pageNumber.addActionListener { applySample() }
         zoom.addChangeListener { view.zoom = zoom.value / 100.0 }
         view.selectionModel.addPropertyChangeListener(TextSelectionModel.PROP_LENGTH) {
             selectionInfo.text = "selection: ${view.selectionModel.length}"
         }
+
+        selectPageNumberFromSample()
+        applySample()
+    }
+
+    /** Seeds [pageNumber] from the currently selected sample's own numbering position. */
+    private fun selectPageNumberFromSample() {
+        val base = DemoDocuments.all[sample.selectedIndex].second
+        pageNumber.selectedItem = PageNumberPositions.labelOf(base.numbering.position)
+    }
+
+    private fun applySample() {
+        val base = DemoDocuments.all[sample.selectedIndex].second
+        val position = PageNumberPositions.positionOf(pageNumber.selectedItem as String)
+        view.document = base.withPageNumberPosition(position)
     }
 
     /** A `Copy` button that floats above the current text selection. */

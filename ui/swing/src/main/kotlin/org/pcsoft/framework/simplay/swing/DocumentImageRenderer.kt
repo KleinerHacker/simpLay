@@ -18,6 +18,7 @@ import java.awt.Dimension
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
 import kotlin.math.ceil
+import org.pcsoft.framework.simplay.engine.planPageNumbers
 import org.pcsoft.framework.simplay.engine.geometry.Size
 import org.pcsoft.framework.simplay.engine.measure
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
@@ -97,6 +98,7 @@ class DocumentImageRenderer private constructor(
             gap = config.pageGap,
             fonts = measurer,
             pageSeparator = { gg, gapTop, gapBottom, width -> drawSeparator(gg, gapTop, gapBottom, width) },
+            numbering = measured.raw.numbering,
         )
         g.transform = saved
     }
@@ -129,7 +131,14 @@ class DocumentImageRenderer private constructor(
         val page = pageAt(pageIndex)
         val saved = g.transform
         g.scale(config.unitScale, config.unitScale)
-        Graphics2DDocumentRenderer.renderPage(g = g, page = page, fonts = measurer)
+        val label = measured.planPageNumbers(measured.raw.numbering).getOrNull(pageIndex)
+        Graphics2DDocumentRenderer.renderPage(
+            g = g,
+            page = page,
+            fonts = measurer,
+            pageNumberLabel = label,
+            numberingStyle = measured.raw.numbering.textStyle,
+        )
         g.transform = saved
     }
 

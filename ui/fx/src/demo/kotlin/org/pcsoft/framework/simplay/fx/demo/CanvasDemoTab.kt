@@ -64,6 +64,10 @@ class CanvasDemoTab : BorderPane() {
         selectionModel.selectFirst()
     }
 
+    private val pageNumberBox = ComboBox<String>().apply {
+        items.setAll(PageNumberPositions.labels)
+    }
+
     private val unitScaleSpinner = Spinner<Double>(0.25, 4.0, 1.0, 0.25)
 
     private val pageGapSpinner = Spinner<Double>(0.0, 120.0, 24.0, 4.0)
@@ -96,6 +100,7 @@ class CanvasDemoTab : BorderPane() {
         top = ToolBar(
             Label("Document:"), sampleBox,
             Label("Font:"), fontFamilyBox,
+            Label("Page number:"), pageNumberBox,
             Separator(),
             Label("Unit scale:"), unitScaleSpinner,
             Label("Page gap:"), pageGapSpinner,
@@ -110,7 +115,8 @@ class CanvasDemoTab : BorderPane() {
         )
         center = ScrollPane(canvasHolder).apply { padding = Insets(12.0) }
 
-        listOf(sampleBox, fontFamilyBox, modeBox, lineBreakBox, wordBreakBox).forEach {
+        sampleBox.valueProperty().addListener { _, _, _ -> selectPageNumberBoxFromSample(); redraw() }
+        listOf(fontFamilyBox, pageNumberBox, modeBox, lineBreakBox, wordBreakBox).forEach {
             it.valueProperty().addListener { _, _, _ -> redraw() }
         }
         listOf(unitScaleSpinner, pageGapSpinner).forEach {
@@ -118,7 +124,14 @@ class CanvasDemoTab : BorderPane() {
         }
         pageIndexSpinner.valueProperty().addListener { _, _, _ -> redraw() }
 
+        selectPageNumberBoxFromSample()
         redraw()
+    }
+
+    /** Seeds [pageNumberBox] from the currently selected sample's own numbering position. */
+    private fun selectPageNumberBoxFromSample() {
+        val base = DemoDocuments.all.first { it.first == sampleBox.value }.second
+        pageNumberBox.value = PageNumberPositions.labelOf(base.numbering.position)
     }
 
     private fun redraw() {
@@ -210,7 +223,8 @@ class CanvasDemoTab : BorderPane() {
     private fun selectedDocument(): Document {
         val base = DemoDocuments.all.first { it.first == sampleBox.value }.second
         val family = fontFamilyBox.value
-        return if (family == null || family == FONT_DEFAULT) base else base.withFontFamily(family)
+        val withFont = if (family == null || family == FONT_DEFAULT) base else base.withFontFamily(family)
+        return withFont.withPageNumberPosition(PageNumberPositions.positionOf(pageNumberBox.value))
     }
 
     /** Rebuilds every block of [this] document with [family] as the font family, keeping all text. */
