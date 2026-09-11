@@ -36,9 +36,9 @@ class TokenizerTest {
         assertEquals(
             listOf(
                 TextWord("The"),
-                TextWhitespace(WhitespaceKind.SPACE, " "),
+                TextWhitespace(WhitespaceKind.SPACE),
                 TextWord("quick"),
-                TextWhitespace(WhitespaceKind.SPACE, " "),
+                TextWhitespace(WhitespaceKind.SPACE),
                 TextWord("fox")
             ),
             parts("The quick fox"),
@@ -55,7 +55,7 @@ class TokenizerTest {
             listOf(
                 TextWord("Hello"),
                 TextSymbol(','),
-                TextWhitespace(WhitespaceKind.SPACE, " "),
+                TextWhitespace(WhitespaceKind.SPACE),
                 TextWord("world"),
                 TextSymbol('!')
             ),
@@ -105,14 +105,14 @@ class TokenizerTest {
 
     /**
      * Verifies that a line break acts as a word separator like a space, and is itself preserved as a
-     * [TextWhitespace] of kind [WhitespaceKind.SPACE] so the round trip stays lossless.
+     * [TextWhitespace] of kind [WhitespaceKind.LINE_BREAK] so the round trip stays lossless.
      */
     @Test
     fun treatsLineBreakAsSeparator() {
         assertEquals(
             listOf(
                 TextWord("first"),
-                TextWhitespace(WhitespaceKind.SPACE, "\n"),
+                TextWhitespace(WhitespaceKind.LINE_BREAK),
                 TextWord("second")
             ),
             parts("first\nsecond"),
@@ -121,16 +121,16 @@ class TokenizerTest {
 
     /**
      * Verifies that a run of whitespace mixing spaces and a tab splits into one [TextWhitespace] per
-     * kind change, each run keeping its exact original characters.
+     * kind change, each run keeping the length of its own original run.
      */
     @Test
     fun mixedWhitespaceSplitsAtKindChange() {
         assertEquals(
             listOf(
                 TextWord("a"),
-                TextWhitespace(WhitespaceKind.SPACE, "    "),
-                TextWhitespace(WhitespaceKind.TAB, "\t"),
-                TextWhitespace(WhitespaceKind.SPACE, "  "),
+                TextWhitespace(WhitespaceKind.SPACE, 4),
+                TextWhitespace(WhitespaceKind.TAB),
+                TextWhitespace(WhitespaceKind.SPACE, 2),
                 TextWord("b")
             ),
             parts("a    \t  b"),
@@ -147,14 +147,14 @@ class TokenizerTest {
 
     /**
      * Verifies that a single space between two words becomes one [TextWhitespace] run of kind
-     * [WhitespaceKind.SPACE].
+     * [WhitespaceKind.SPACE] with a count of one.
      */
     @Test
     fun tokenizePreservesSingleSpaceBetweenWords() {
         assertEquals(
             listOf(
                 TextWord("one"),
-                TextWhitespace(WhitespaceKind.SPACE, " "),
+                TextWhitespace(WhitespaceKind.SPACE),
                 TextWord("two")
             ),
             parts("one two"),
@@ -162,15 +162,15 @@ class TokenizerTest {
     }
 
     /**
-     * Verifies that several consecutive spaces collapse into a single [TextWhitespace] run that
-     * keeps every original space character.
+     * Verifies that several consecutive spaces collapse into a single [TextWhitespace] run whose
+     * count matches the number of original space characters.
      */
     @Test
     fun tokenizePreservesMultipleSpacesAsOneRun() {
         assertEquals(
             listOf(
                 TextWord("one"),
-                TextWhitespace(WhitespaceKind.SPACE, "   "),
+                TextWhitespace(WhitespaceKind.SPACE, 3),
                 TextWord("two")
             ),
             parts("one   two"),
@@ -186,7 +186,7 @@ class TokenizerTest {
         assertEquals(
             listOf(
                 TextWord("one"),
-                TextWhitespace(WhitespaceKind.TAB, "\t\t"),
+                TextWhitespace(WhitespaceKind.TAB, 2),
                 TextWord("two")
             ),
             parts("one\t\ttwo"),
@@ -207,5 +207,40 @@ class TokenizerTest {
             ),
             parts("paragraph.X"),
         )
+    }
+
+    /**
+     * Verifies that a text mixing alternating runs of spaces and tabs - including a leading and a
+     * trailing run - is tokenized into one [TextWhitespace] part per run, each keeping its own
+     * [WhitespaceKind] and its own run length.
+     */
+    @Test
+    fun tokenizeSplitsAlternatingWhitespaceRunsIncludingLeadingAndTrailing() {
+        assertEquals(
+            listOf(
+                TextWhitespace(WhitespaceKind.SPACE, 2),
+                TextWhitespace(WhitespaceKind.TAB, 2),
+                TextWord("one"),
+                TextWhitespace(WhitespaceKind.SPACE),
+                TextWhitespace(WhitespaceKind.TAB),
+                TextWhitespace(WhitespaceKind.SPACE, 3),
+                TextWord("two"),
+                TextSymbol('.'),
+                TextWhitespace(WhitespaceKind.TAB),
+                TextWhitespace(WhitespaceKind.SPACE, 2)
+            ),
+            parts("  \t\tone \t   two.\t  "),
+        )
+    }
+
+    /**
+     * Verifies that the [TextWhitespace.text] of a run is derived from its kind and count instead of
+     * being stored separately, for every [WhitespaceKind].
+     */
+    @Test
+    fun whitespaceTextIsDerivedFromKindAndCount() {
+        assertEquals("   ", TextWhitespace(WhitespaceKind.SPACE, 3).text)
+        assertEquals("\t\t", TextWhitespace(WhitespaceKind.TAB, 2).text)
+        assertEquals("\n", TextWhitespace(WhitespaceKind.LINE_BREAK).text)
     }
 }

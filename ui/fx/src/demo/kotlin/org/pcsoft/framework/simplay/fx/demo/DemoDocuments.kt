@@ -117,11 +117,30 @@ object DemoDocuments {
         numbering = PageNumbering(position = PageNumberPosition.BOTTOM_OUTER),
     )
 
+    /**
+     * Four separate, clearly labelled [SinglePage]s - one model page each, so every page has its own
+     * [org.pcsoft.framework.simplay.engine.model.Page.id]. The sample for the page deactivation
+     * controls, where a page has to be recognizable at a glance.
+     */
+    val fourPages: Document = Document(
+        pages = listOf("One", "Two", "Three", "Four").map { name ->
+            SinglePage(
+                layout = a4,
+                blocks = buildList {
+                    add(TextBlock.of("Page $name", heading))
+                    repeat(6) { add(TextBlock.of(lorem, body)) }
+                },
+            )
+        },
+        numbering = PageNumbering(position = PageNumberPosition.BOTTOM_CENTER),
+    )
+
     /** All samples with a display name, in menu order. */
     val all: List<Pair<String, Document>> = listOf(
         "Short" to short,
         "Multi-page" to multiPage,
         "Mixed" to mixed,
+        "Four pages" to fourPages,
         "Novella (~150 pages)" to novella,
     )
 }

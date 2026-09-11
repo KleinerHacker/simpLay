@@ -102,4 +102,15 @@ class TextBlockTest {
     fun toStringRoundTripsExactOriginalTextIncludingSymbolWordBoundary() {
         assertEquals("paragraph.X", TextBlock.of("paragraph.X", style).toString())
     }
+
+    /**
+     * Verifies that alternating runs of several spaces and several tabs - at the start, between
+     * words, directly after a symbol and at the end - are reproduced character for character by
+     * [toString], with no run normalized, merged or dropped.
+     */
+    @Test
+    fun toStringRoundTripsAlternatingSpaceAndTabRuns() {
+        val text = "  \t\tone \t   two.\tthree\t \tfour  "
+        assertEquals(text, TextBlock.of(text, style).toString())
+    }
 }

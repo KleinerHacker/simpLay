@@ -38,8 +38,10 @@ excluded.
 
 - `engine`: `TextBlock` no longer invents a space when reconstructing text
   where a symbol (e.g. `.`, `-`, `(`) was directly followed by a word with no
-  whitespace in between. Original spaces and tabs are now preserved as
-  explicit `TextWhitespace` parts instead of being discarded during
+  whitespace in between. Original spaces, tabs and line breaks are now
+  preserved as explicit `TextWhitespace(kind, count)` parts - a run is
+  described by its `WhitespaceKind` and its length, and its `text` is derived
+  from both - instead of being discarded during
   tokenizing, which also fixes a caret/character-order drift that could occur
   while typing right after such a symbol.
 

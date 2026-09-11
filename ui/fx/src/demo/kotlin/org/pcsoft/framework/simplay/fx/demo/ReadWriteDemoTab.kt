@@ -28,6 +28,7 @@ import org.pcsoft.framework.simplay.engine.model.SinglePage
 import org.pcsoft.framework.simplay.engine.model.TextBlock
 import org.pcsoft.framework.simplay.fx.PaperSheetMode
 import org.pcsoft.framework.simplay.fx.PaperSheetView
+import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 
 /**
  * Content of the demo's `Read/Write` tab: a [PaperSheetView] in [PaperSheetMode.EDITABLE], driven by a
@@ -40,6 +41,12 @@ import org.pcsoft.framework.simplay.fx.PaperSheetView
  * The "Stylesheet" selector switches between the built-in look ("Standard") and the bundled
  * `demo-dark.css` example ("Dark"). The "Page number" selector overrides the position of the
  * sample's [org.pcsoft.framework.simplay.engine.model.PageNumbering]; "Off" hides it.
+ *
+ * Page deactivation is demonstrated by the "Deactivate" check boxes - one per page of the current
+ * document, up to [MAX_DEACTIVATION_PAGES] - together with the [PageDeactivationMode] selector next
+ * to them, which can be switched at any time to compare the modes on the same marked pages. The
+ * "Four pages" sample is the one to pick here. Marks are dropped whenever the document is replaced,
+ * because the page ids change with it.
  */
 class ReadWriteDemoTab : BorderPane() {
 
@@ -72,6 +79,14 @@ class ReadWriteDemoTab : BorderPane() {
         value = STYLE_STANDARD
     }
 
+    private val deactivationModeBox = ChoiceBox<PageDeactivationMode>().apply {
+        items.setAll(PageDeactivationMode.entries)
+        value = view.deactivatedPageHandling
+    }
+
+    private val deactivatedPageBoxes: List<CheckBox> =
+        (0 until MAX_DEACTIVATION_PAGES).map { index -> CheckBox("P${index + 1}") }
+
     private val outerMarginSpinner = Spinner<Double>(0.0, 200.0, view.outerMargin, 4.0)
     private val pageGapSpinner = Spinner<Double>(0.0, 200.0, view.pageGap, 4.0)
     private val minZoomSpinner = Spinner<Double>(0.1, 2.0, view.minZoom, 0.05)
@@ -84,27 +99,33 @@ class ReadWriteDemoTab : BorderPane() {
     private val zoomLabel = Label()
     private val caretLabel = Label()
     private val documentLabel = Label()
+    private val deactivatedLabel = Label()
 
     init {
         top = ToolBar(
-            Label("Mode:"), modeBox, smoothCaretBox,
-            Separator(),
-            Label("Document:"), sampleBox,
-            Label("Font:"), fontFamilyBox,
-            Label("Page number:"), pageNumberBox,
-            Label("Stylesheet:"), stylesheetBox,
-            Separator(),
-            Label("Outer margin:"), outerMarginSpinner,
-            Label("Page gap:"), pageGapSpinner,
-            Separator(),
-            Label("Min zoom:"), minZoomSpinner,
-            Label("Max zoom:"), maxZoomSpinner,
-            Label("Zoom:"), zoomSpinner,
-            zoomLabel,
-            Separator(),
-            goStartButton, goEndButton, caretLabel,
-            Separator(),
-            documentLabel,
+            *buildList {
+                addAll(listOf(Label("Mode:"), modeBox, smoothCaretBox))
+                add(Separator())
+                addAll(listOf(Label("Document:"), sampleBox))
+                addAll(listOf(Label("Font:"), fontFamilyBox))
+                addAll(listOf(Label("Page number:"), pageNumberBox))
+                addAll(listOf(Label("Stylesheet:"), stylesheetBox))
+                add(Separator())
+                addAll(listOf(Label("Deactivation:"), deactivationModeBox, Label("Deactivate:")))
+                addAll(deactivatedPageBoxes)
+                add(deactivatedLabel)
+                add(Separator())
+                addAll(listOf(Label("Outer margin:"), outerMarginSpinner))
+                addAll(listOf(Label("Page gap:"), pageGapSpinner))
+                add(Separator())
+                addAll(listOf(Label("Min zoom:"), minZoomSpinner))
+                addAll(listOf(Label("Max zoom:"), maxZoomSpinner))
+                addAll(listOf(Label("Zoom:"), zoomSpinner, zoomLabel))
+                add(Separator())
+                addAll(listOf(goStartButton, goEndButton, caretLabel))
+                add(Separator())
+                add(documentLabel)
+            }.toTypedArray(),
         )
         center = view
 
@@ -114,6 +135,13 @@ class ReadWriteDemoTab : BorderPane() {
         fontFamilyBox.valueProperty().addListener { _, _, _ -> applySample() }
         pageNumberBox.valueProperty().addListener { _, _, _ -> applySample() }
         stylesheetBox.valueProperty().addListener { _, _, v -> applyStylesheet(v) }
+        deactivationModeBox.valueProperty().addListener { _, _, v -> if (v != null) view.deactivatedPageHandling = v }
+        deactivatedPageBoxes.forEachIndexed { index, box ->
+            box.selectedProperty().addListener { _, _, selected ->
+                view.setPageDeactivated(index, selected)
+                updateDeactivatedLabel()
+            }
+        }
         outerMarginSpinner.valueProperty().addListener { _, _, v -> view.outerMargin = v }
         pageGapSpinner.valueProperty().addListener { _, _, v -> view.pageGap = v }
         minZoomSpinner.valueProperty().addListener { _, _, v -> view.minZoom = v }
@@ -145,6 +173,21 @@ class ReadWriteDemoTab : BorderPane() {
         val family = fontFamilyBox.value
         val withFont = if (family == null || family == FONT_DEFAULT) base else base.withFontFamily(family)
         view.document = withFont.withPageNumberPosition(PageNumberPositions.positionOf(pageNumberBox.value))
+        resetDeactivation()
+    }
+
+    /**
+     * Drops every deactivation mark and re-enables one check box per page of the current document:
+     * the ids of the previous document no longer exist, so keeping the marks would be misleading.
+     */
+    private fun resetDeactivation() {
+        view.deactivatedPageIds = emptySet()
+        val pages = view.document?.pages?.size ?: 0
+        deactivatedPageBoxes.forEachIndexed { index, box ->
+            box.isSelected = false
+            box.isDisable = index >= pages
+        }
+        updateDeactivatedLabel()
     }
 
     /** Adds or removes the bundled `demo-dark.css` on this tab so it cascades to [view]. */
@@ -179,6 +222,11 @@ class ReadWriteDemoTab : BorderPane() {
         documentLabel.text = "Document: $chars chars in $pages page(s)"
     }
 
+    private fun updateDeactivatedLabel() {
+        val pages = deactivatedPageBoxes.withIndex().filter { it.value.isSelected }.map { it.index + 1 }
+        deactivatedLabel.text = if (pages.isEmpty()) "none" else "pages ${pages.joinToString(", ")}"
+    }
+
     private fun format(value: Double): String = ((value * 100.0).toInt() / 100.0).toString()
 
     private companion object {
@@ -187,6 +235,9 @@ class ReadWriteDemoTab : BorderPane() {
 
         const val STYLE_STANDARD = "Standard"
         const val STYLE_DARK = "Dark"
+
+        /** Number of `Deactivate` check boxes; enough for the "Four pages" sample. */
+        const val MAX_DEACTIVATION_PAGES = 4
 
         val DARK_STYLESHEET: String =
             ReadWriteDemoTab::class.java.getResource("demo-dark.css")!!.toExternalForm()

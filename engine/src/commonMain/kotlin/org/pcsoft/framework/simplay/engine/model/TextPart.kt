@@ -49,25 +49,38 @@ data class TextSymbol private constructor(override val text: String) :
 }
 
 /**
- * The kind of whitespace character a [TextWhitespace] run is made of.
+ * The kind of whitespace character a [TextWhitespace] run is made of. Each kind carries the [char]
+ * every character of such a run consists of.
  */
 @Serializable
-enum class WhitespaceKind {
+enum class WhitespaceKind(val char: Char) {
     /** A run made of the space character (`' '`). */
-    SPACE,
+    SPACE(' '),
 
     /** A run made of the tab character (`'\t'`). */
-    TAB,
+    TAB('\t'),
+
+    /** A run made of the line feed character (`'\n'`). */
+    LINE_BREAK('\n'),
 }
 
 /**
- * A maximal run of whitespace characters of a single [kind] (space or tab; a run never mixes the
- * two, nor does it cross a line break).
+ * A maximal run of [count] whitespace characters of a single [kind] (a run never mixes kinds).
  *
- * Preserved verbatim for a lossless [TextBlock.Companion.of] / [TextBlock.toString] round trip, but
- * it is not addressable on its own: it produces no glyph in layout and no caret-selectable segment
- * in `DocumentTextIndex`.
+ * The run is described by kind and length only; its [text] is derived from those, so the same
+ * characters are never stored twice. Preserved for a lossless [TextBlock.Companion.of] /
+ * [TextBlock.toString] round trip, but not addressable on its own: it produces no glyph in layout
+ * and no caret-selectable segment in `DocumentTextIndex`.
  */
 @Serializable
 @SerialName("whitespace")
-data class TextWhitespace(val kind: WhitespaceKind, override val text: String) : TextPart
+data class TextWhitespace(val kind: WhitespaceKind, val count: Int = 1) : TextPart {
+
+    init {
+        require(count >= 1) { "A whitespace run needs at least one character, got $count" }
+    }
+
+    /** The [count] characters of this run, derived from [WhitespaceKind.char]. */
+    override val text: String
+        get() = kind.char.toString().repeat(count)
+}

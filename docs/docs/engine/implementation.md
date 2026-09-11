@@ -114,7 +114,7 @@ val engine = SimpLayEngine.builder(measurer)
 ```kotlin
 fun interface LineBreakerStrategy {
     fun breakIntoLines(
-        parts: List<TextPart>,          // the parts of one block, no whitespace parts
+        parts: List<TextPart>,          // the parts of one block, may contain TextWhitespace
         font: MeasuredFont,             // the resolved block font
         maxWidth: Double,               // the content width available for a line
         measurer: FontMeasureCalculator,

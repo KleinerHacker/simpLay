@@ -57,13 +57,15 @@ data class TextBlock private constructor(
  *
  * Maximal runs of [Char.isLetterOrDigit] become a [TextWord], every other non-whitespace
  * character becomes its own [TextSymbol], and a maximal run of whitespace of a single
- * [WhitespaceKind] (space or tab) becomes a [TextWhitespace]; a run splits at a change of kind
- * (e.g. a space directly followed by a tab yields two [TextWhitespace] parts).
+ * [WhitespaceKind] (space, tab or line break) becomes a [TextWhitespace] carrying that kind and the
+ * length of the run; a run splits at a change of kind (e.g. a space directly followed by a tab
+ * yields two [TextWhitespace] parts). Any other whitespace character is taken as
+ * [WhitespaceKind.SPACE].
  */
 private fun tokenize(text: String): List<TextPart> {
     val parts = mutableListOf<TextPart>()
     val word = StringBuilder()
-    val whitespace = StringBuilder()
+    var whitespaceCount = 0
     var whitespaceKind: WhitespaceKind? = null
 
     fun flushWord() {
@@ -75,10 +77,10 @@ private fun tokenize(text: String): List<TextPart> {
 
     fun flushWhitespace() {
         val kind = whitespaceKind
-        if (kind != null && whitespace.isNotEmpty()) {
-            parts += TextWhitespace(kind, whitespace.toString())
+        if (kind != null && whitespaceCount > 0) {
+            parts += TextWhitespace(kind, whitespaceCount)
         }
-        whitespace.clear()
+        whitespaceCount = 0
         whitespaceKind = null
     }
 
@@ -86,10 +88,14 @@ private fun tokenize(text: String): List<TextPart> {
         when {
             ch.isWhitespace() -> {
                 flushWord()
-                val kind = if (ch == '\t') WhitespaceKind.TAB else WhitespaceKind.SPACE
+                val kind = when (ch) {
+                    '\t' -> WhitespaceKind.TAB
+                    '\n' -> WhitespaceKind.LINE_BREAK
+                    else -> WhitespaceKind.SPACE
+                }
                 if (whitespaceKind != null && whitespaceKind != kind) flushWhitespace()
                 whitespaceKind = kind
-                whitespace.append(ch)
+                whitespaceCount++
             }
             ch.isLetterOrDigit() -> {
                 flushWhitespace()

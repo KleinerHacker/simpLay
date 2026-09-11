@@ -45,14 +45,19 @@ val page = FlowPage(layout = layout, blocks = emptyList())
 ## Text blocks and parts
 
 A `TextBlock` is a run of styled text. It holds an ordered list of `TextPart` and
-one `TextStyle`. `TextPart` is a sealed type with two realisations:
+one `TextStyle`. `TextPart` is a sealed type with three realisations:
 
 * `TextWord` - a maximal run of letters and/or digits.
 * `TextSymbol` - a single non-letter, non-digit, non-whitespace character. Its
   public constructor takes a `Char`; the character is also available through
   `symbol`.
+* `TextWhitespace` - a maximal run of whitespace of one `WhitespaceKind`
+  (`SPACE`, `TAB`, `LINE_BREAK`). It stores only that kind and the run length
+  `count`; its `text` is derived from both. A run never mixes kinds, so a space
+  followed by a tab yields two parts.
 
-Whitespace is never stored as a part.
+A `TextWhitespace` is not addressable on its own: it produces no glyph in the
+layout and no caret-selectable segment, but it keeps the original spacing.
 
 ### Building a block
 
@@ -69,15 +74,16 @@ val block = TextBlock.of("Hello, world!", style)
 // parts: TextWord("Hello"), TextSymbol(','), TextWord("world"), TextSymbol('!')
 ```
 
-### `toString()` normalisation
+### `toString()` round trip
 
-`TextBlock.toString()` rejoins the parts with a fixed whitespace rule:
+`TextBlock.toString()` rejoins the parts by concatenating their `text` in order.
+Because every whitespace run is kept as its own `TextWhitespace` part, the round
+trip is lossless - no character is invented or dropped:
 
-* one space before every `TextWord` except the first part of the block;
-* no space before a `TextSymbol`.
-
-So `TextBlock.of("Hello,   world !", style).toString()` yields `"Hello, world !"`.
-The rule normalises whitespace runs; it does not preserve the original spacing.
+```kotlin
+TextBlock.of("Hello,   world !", style).toString() // "Hello,   world !"
+TextBlock.of("paragraph.X", style).toString()      // "paragraph.X"
+```
 
 ## Style and font
 
