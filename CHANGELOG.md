@@ -25,14 +25,17 @@ excluded.
   both `PaperSheetView` controls now draw the configured page number on every
   page automatically, using `PageNumbering.textStyle` for its font.
 - `ui/common`, `ui/fx` and `ui/swing`: individual pages of a `PaperSheetView`
-  can be marked deactivated by their stable `Page.id`. The new
-  `deactivatedPageIds` and `deactivatedPageHandling` (`PageDeactivationMode`:
-  `IGNORE`, `DISABLED`, `READONLY` (default), `HIDDEN`) properties, plus the
-  index-based `setPageDeactivated(index, Boolean)` convenience setter, control
-  whether a deactivated page is ignored, shown greyed out and locked with the
-  caret skipping over it, kept navigable but not editable, or removed from the
-  layout entirely. `FloatingOverlayEvent` now reports `pageDeactivated` so a
-  registered overlay can react to it.
+  can override its `mode` with their own `PageMode`, keyed by their stable
+  `Page.id`, through the new `pageModes` property and the index-based
+  `setPageMode(index, PageMode?)` convenience setter. `PageMode` (`HIDDEN`,
+  `DISABLED`, `STATIC`, `SELECTABLE`, `NAVIGABLE`, `EDITABLE`) offers the same
+  interaction levels as `PaperSheetMode`, so a page can be made more
+  restrictive (e.g. read-only in an otherwise editable view) or more
+  permissive (e.g. editable in an otherwise static view) than the view as a
+  whole. `pageModes` resets to empty automatically whenever `document` is
+  reloaded from outside, but is left untouched by an edit.
+  `FloatingOverlayEvent` now reports
+  `pageDeactivated` so a registered overlay can react to a page's override.
 
 ### Changed
 
@@ -55,11 +58,10 @@ excluded.
   `PaperSheetView.selectionColorNonEditable` (constant
   `PaperSheetLookAndFeel.KEY_SELECTION_COLOR_NON_EDITABLE`, accessor
   `nonEditableSelectionColor()`) and now applies to every non-editable mode.
-- `ui/fx` and `ui/swing`: a page marked deactivated under
-  `PageDeactivationMode.DISABLED` no longer shows any floating overlay and keeps
-  the default arrow mouse cursor over its text instead of the text cursor. The
-  same holds for the whole view in `PaperSheetMode.STATIC`, which now shows no
-  floating overlay at all.
+- `ui/fx` and `ui/swing`: a page whose effective mode is `PageMode.DISABLED` no
+  longer shows any floating overlay and keeps the default arrow mouse cursor
+  over its text instead of the text cursor. The same holds for the whole view
+  in `PaperSheetMode.STATIC`, which now shows no floating overlay at all.
 
 ### Fixed
 

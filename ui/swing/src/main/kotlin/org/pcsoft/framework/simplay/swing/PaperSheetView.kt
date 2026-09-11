@@ -20,7 +20,7 @@ import javax.swing.JComponent
 import javax.swing.UIManager
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetStyle
-import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
+import org.pcsoft.framework.simplay.uicommon.PageMode
 
 /**
  * A scrollable and zoomable Swing component that renders a [Document] as physical-looking sheets -
@@ -36,10 +36,12 @@ import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
  * drag-and-drop of the selection). Editing replaces [document] with a new instance; the previous
  * document is not mutated.
  *
- * [deactivatedPageIds] (stable [org.pcsoft.framework.simplay.engine.model.Page.id] values) together
- * with [deactivatedPageHandling] mark individual pages as deactivated. Both are transient view state,
- * never persisted in [document]; see [PageDeactivationMode] for what each mode does. Use
- * [setPageDeactivated] to toggle a page by its current index.
+ * [pageModes] (keyed by the stable [org.pcsoft.framework.simplay.engine.model.Page.id]) overrides
+ * [mode] for individual pages: a page absent from the map, or mapped to `null`, follows [mode]; a page
+ * mapped to a [PageMode] uses that mode instead, independent of [mode]. Purely transient view state,
+ * never persisted in [document] and reset to empty whenever [document] is reloaded from outside - an
+ * edit (which also replaces [document] with a new instance) leaves it untouched, since the page ids
+ * it is keyed by do not change. Use [setPageMode] to override a page by its current index.
  *
  * Layout is controlled by [outerMargin] (space around the sheet stack) and [pageGap] (space between
  * two sheets). [zoom] scales the whole view and is always kept within `[minZoom, maxZoom]`. The
@@ -92,44 +94,57 @@ open class PaperSheetView : JComponent() {
         set(value) {
             val old = field
             field = value
-            isFocusable = value.supportsFocus
+            isFocusable = anyFocus
             firePropertyChange(PROP_MODE, old, value)
         }
 
     //endregion
 
-    //region Page deactivation
+    //region Page mode
 
     /**
-     * Stable [org.pcsoft.framework.simplay.engine.model.Page.id] values of the pages currently marked
-     * deactivated. Purely transient view state, never persisted in [document]; how it is honoured is
-     * governed by [deactivatedPageHandling]. Ids no longer present in [document] are simply ignored.
+     * Per-page [PageMode] overrides, keyed by the stable
+     * [org.pcsoft.framework.simplay.engine.model.Page.id]. A page absent from the map follows [mode].
+     * Purely transient view state, never persisted in [document]; reset to empty whenever [document]
+     * is reloaded from outside (not by an edit). Ids no longer present in [document] are simply ignored.
      */
-    var deactivatedPageIds: Set<String> = emptySet()
+    var pageModes: Map<String, PageMode> = emptyMap()
         set(value) {
             val old = field
             field = value
-            firePropertyChange(PROP_DEACTIVATED_PAGE_IDS, old, value)
-        }
-
-    /** How [deactivatedPageIds] is honoured; defaults to [PageDeactivationMode.READONLY]. */
-    var deactivatedPageHandling: PageDeactivationMode = PageDeactivationMode.READONLY
-        set(value) {
-            val old = field
-            field = value
-            firePropertyChange(PROP_DEACTIVATED_PAGE_HANDLING, old, value)
+            isFocusable = anyFocus
+            firePropertyChange(PROP_PAGE_MODES, old, value)
         }
 
     /**
-     * Marks (or unmarks) the page currently at [index] of [document] as deactivated. Resolves [index]
-     * against the current [document] into that page's stable id immediately, so the marker stays
-     * attached to the same page even as later edits shift page indices. A no-op without a [document]
-     * or for an out-of-range [index].
+     * Overrides (or clears, for `mode == null`) the [PageMode] of the page currently at [index] of
+     * [document]. Resolves [index] against the current [document] into that page's stable id
+     * immediately, so the override stays attached to the same page even as later edits shift page
+     * indices. A no-op without a [document] or for an out-of-range [index].
      */
-    fun setPageDeactivated(index: Int, deactivated: Boolean) {
+    fun setPageMode(index: Int, mode: PageMode?) {
         val id = document?.pages?.getOrNull(index)?.id ?: return
-        deactivatedPageIds = if (deactivated) deactivatedPageIds + id else deactivatedPageIds - id
+        pageModes = if (mode != null) pageModes + (id to mode) else pageModes - id
     }
+
+    /** The effective [PageMode] of page [pageId]: its [pageModes] override, or [mode] otherwise. */
+    fun effectivePageMode(pageId: String): PageMode = pageModes[pageId] ?: mode.asPageMode()
+
+    /** Whether any page (via [mode] or a [pageModes] override) currently supports selection. */
+    internal val anySelection: Boolean
+        get() = mode.supportsSelection || pageModes.values.any { it.supportsSelection }
+
+    /** Whether any page (via [mode] or a [pageModes] override) currently supports the caret. */
+    internal val anyCaret: Boolean
+        get() = mode.supportsCaret || pageModes.values.any { it.supportsCaret }
+
+    /** Whether any page (via [mode] or a [pageModes] override) currently supports editing. */
+    internal val anyEditing: Boolean
+        get() = mode.supportsEditing || pageModes.values.any { it.supportsEditing }
+
+    /** Whether the view should take keyboard focus: [mode] does, or a [pageModes] override needs it. */
+    internal val anyFocus: Boolean
+        get() = mode.supportsFocus || anySelection || anyCaret || anyEditing
 
     //endregion
 
@@ -321,7 +336,7 @@ open class PaperSheetView : JComponent() {
     }
 
     private fun runSelectionCommand(block: TextSelectionModel.Commands.() -> Unit) {
-        if (!mode.supportsSelection) return
+        if (!anySelection) return
         val commands = selectionCommands
         if (commands != null) commands.block() else pendingSelectionCommand = block
     }
@@ -348,7 +363,7 @@ open class PaperSheetView : JComponent() {
     }
 
     private fun runCaretCommand(block: CaretModel.Commands.() -> Unit) {
-        if (!mode.supportsCaret) return
+        if (!anyCaret) return
         val commands = caretCommands
         if (commands != null) commands.block() else pendingCaretCommand = block
     }
@@ -401,7 +416,7 @@ open class PaperSheetView : JComponent() {
     //region UI wiring
 
     init {
-        isFocusable = mode.supportsFocus
+        isFocusable = anyFocus
         isOpaque = true
         PaperSheetLookAndFeel.applyTo(this)
         updateUI()
@@ -427,8 +442,7 @@ open class PaperSheetView : JComponent() {
 
         const val PROP_DOCUMENT = "document"
         const val PROP_MODE = "mode"
-        const val PROP_DEACTIVATED_PAGE_IDS = "deactivatedPageIds"
-        const val PROP_DEACTIVATED_PAGE_HANDLING = "deactivatedPageHandling"
+        const val PROP_PAGE_MODES = "pageModes"
         const val PROP_OUTER_MARGIN = "outerMargin"
         const val PROP_PAGE_GAP = "pageGap"
         const val PROP_MIN_ZOOM = "minZoom"

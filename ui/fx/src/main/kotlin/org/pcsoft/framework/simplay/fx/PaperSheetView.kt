@@ -40,7 +40,7 @@ import javafx.scene.paint.Color
 import javafx.scene.paint.Paint
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetStyleableProperties
-import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
+import org.pcsoft.framework.simplay.uicommon.PageMode
 
 /**
  * A scrollable and zoomable view that renders a [Document] as physical-looking sheets - each with a
@@ -55,12 +55,16 @@ import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
  * line duplication (`Ctrl+D`) and drag-and-drop of the selection). Editing replaces [document] with a
  * new instance; the previous document is not mutated.
  *
- * [deactivatedPageIds] (stable [org.pcsoft.framework.simplay.engine.model.Page.id] values) together
- * with [deactivatedPageHandling] mark individual pages as deactivated. Both are transient view state,
- * never persisted in [document]; see [PageDeactivationMode] for what each mode does. Use
- * [setPageDeactivated] to toggle a page by its current index - it resolves the index against
- * [document] into an id immediately, so the marker stays attached to that page even as later edits
- * shift indices.
+ * [pageModes] (keyed by the stable [org.pcsoft.framework.simplay.engine.model.Page.id]) overrides
+ * [mode] for individual pages: a page absent from the map, or mapped to `null`, simply follows [mode];
+ * a page mapped to a [PageMode] uses that mode instead, independent of [mode] - both more restrictive
+ * (a read-only page inside an editable view) and more permissive (an editable page inside a static
+ * view) are possible. Purely transient view state, never persisted in [document] and cleared back to
+ * empty whenever [document] is reloaded from outside - an edit (which also replaces [document] with a
+ * new instance) leaves it untouched, since the page ids it is keyed by do not change. Use
+ * [setPageMode] to override a page by its current index - it resolves the index against [document]
+ * into an id immediately, so the override stays attached to that page even as later edits shift
+ * indices.
  *
  * The only input is [document]. Layout is controlled by [outerMargin] (space around the sheet stack)
  * and [pageGap] (space between two sheets). [zoom] scales the whole view and is always kept within
@@ -117,46 +121,54 @@ class PaperSheetView : Control() {
 
     //endregion
 
-    //region Page deactivation
+    //region Page mode
 
-    /** The [deactivatedPageIds] property, for binding and change listeners. */
-    @get:JvmName("deactivatedPageIdsProperty")
-    val deactivatedPageIdsProperty: ObjectProperty<Set<String>> =
-        SimpleObjectProperty(this, "deactivatedPageIds", emptySet())
+    /** The [pageModes] property, for binding and change listeners. */
+    @get:JvmName("pageModesProperty")
+    val pageModesProperty: ObjectProperty<Map<String, PageMode>> =
+        SimpleObjectProperty(this, "pageModes", emptyMap())
 
     /**
-     * Stable [org.pcsoft.framework.simplay.engine.model.Page.id] values of the pages currently marked
-     * deactivated. Purely transient view state, never persisted in [document]; how it is honoured is
-     * governed by [deactivatedPageHandling]. Ids no longer present in [document] are simply ignored.
+     * Per-page [PageMode] overrides, keyed by the stable
+     * [org.pcsoft.framework.simplay.engine.model.Page.id]. A page absent from the map follows [mode].
+     * Purely transient view state, never persisted in [document]; reset to empty whenever [document]
+     * is replaced with a different instance. Ids no longer present in [document] are simply ignored.
      */
-    var deactivatedPageIds: Set<String>
-        get() = deactivatedPageIdsProperty.get()
+    var pageModes: Map<String, PageMode>
+        get() = pageModesProperty.get()
         set(value) {
-            deactivatedPageIdsProperty.set(value)
-        }
-
-    /** The [deactivatedPageHandling] property, for binding and change listeners. */
-    @get:JvmName("deactivatedPageHandlingProperty")
-    val deactivatedPageHandlingProperty: ObjectProperty<PageDeactivationMode> =
-        SimpleObjectProperty(this, "deactivatedPageHandling", PageDeactivationMode.READONLY)
-
-    /** How [deactivatedPageIds] is honoured; defaults to [PageDeactivationMode.READONLY]. */
-    var deactivatedPageHandling: PageDeactivationMode
-        get() = deactivatedPageHandlingProperty.get()
-        set(value) {
-            deactivatedPageHandlingProperty.set(value)
+            pageModesProperty.set(value)
         }
 
     /**
-     * Marks (or unmarks) the page currently at [index] of [document] as deactivated. Resolves [index]
-     * against the current [document] into that page's stable id immediately, so the marker stays
-     * attached to the same page even as later edits shift page indices. A no-op without a [document]
-     * or for an out-of-range [index].
+     * Overrides (or clears, for `mode == null`) the [PageMode] of the page currently at [index] of
+     * [document]. Resolves [index] against the current [document] into that page's stable id
+     * immediately, so the override stays attached to the same page even as later edits shift page
+     * indices. A no-op without a [document] or for an out-of-range [index].
      */
-    fun setPageDeactivated(index: Int, deactivated: Boolean) {
+    fun setPageMode(index: Int, mode: PageMode?) {
         val id = document?.pages?.getOrNull(index)?.id ?: return
-        deactivatedPageIds = if (deactivated) deactivatedPageIds + id else deactivatedPageIds - id
+        pageModes = if (mode != null) pageModes + (id to mode) else pageModes - id
     }
+
+    /** The effective [PageMode] of page [pageId]: its [pageModes] override, or [mode] otherwise. */
+    fun effectivePageMode(pageId: String): PageMode = pageModes[pageId] ?: mode.asPageMode()
+
+    /** Whether any page (via [mode] or a [pageModes] override) currently supports selection. */
+    internal val anySelection: Boolean
+        get() = mode.supportsSelection || pageModes.values.any { it.supportsSelection }
+
+    /** Whether any page (via [mode] or a [pageModes] override) currently supports the caret. */
+    internal val anyCaret: Boolean
+        get() = mode.supportsCaret || pageModes.values.any { it.supportsCaret }
+
+    /** Whether any page (via [mode] or a [pageModes] override) currently supports editing. */
+    internal val anyEditing: Boolean
+        get() = mode.supportsEditing || pageModes.values.any { it.supportsEditing }
+
+    /** Whether the view should take keyboard focus: [mode] does, or a [pageModes] override needs it. */
+    internal val anyFocus: Boolean
+        get() = mode.supportsFocus || anySelection || anyCaret || anyEditing
 
     //endregion
 
@@ -307,7 +319,7 @@ class PaperSheetView : Control() {
             PaperSheetStyleableProperties.DEFAULT_DEACTIVATED_SHEET_BACKGROUND,
         )
 
-    /** Fill of a [PageDeactivationMode.DISABLED] sheet, instead of [sheetBackground]. */
+    /** Fill of a [PageMode.DISABLED] sheet, instead of [sheetBackground]. */
     var deactivatedSheetBackground: Paint
         get() = deactivatedSheetBackgroundProperty.get()
         set(value) {
@@ -322,7 +334,7 @@ class PaperSheetView : Control() {
             PaperSheetStyleableProperties.DEFAULT_DEACTIVATED_OVERLAY_COLOR,
         )
 
-    /** Colour of the diagonal hatch drawn over a [PageDeactivationMode.DISABLED] sheet. */
+    /** Colour of the diagonal hatch drawn over a [PageMode.DISABLED] sheet. */
     var deactivatedOverlayColor: Paint
         get() = deactivatedOverlayColorProperty.get()
         set(value) {
@@ -463,12 +475,12 @@ class PaperSheetView : Control() {
     }
 
     internal fun requestSelectRange(start: Int, end: Int) {
-        if (!mode.supportsSelection) return
+        if (!anySelection) return
         runSelectionCommand { selectRange(start, end) }
     }
 
     internal fun requestSelectAll() {
-        if (!mode.supportsSelection) return
+        if (!anySelection) return
         runSelectionCommand { selectAll() }
     }
 
@@ -542,7 +554,7 @@ class PaperSheetView : Control() {
     }
 
     internal fun requestCaret(block: CaretCommands.() -> Unit) {
-        if (!mode.supportsCaret) return
+        if (!anyCaret) return
         val commands = caretCommands
         if (commands != null) commands.block() else pendingCaretCommand = block
     }

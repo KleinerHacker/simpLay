@@ -101,7 +101,7 @@ Build tasks relevant for consumers and maintainers:
 * [ ] Console output integration (`ui/console`)
 * [x] Toolkit-agnostic GUI building blocks (`ui/common`): linear document text
   index, glyph hit test, selection span, document text editor, styled-text
-  clipboard serialisation and per-page deactivation (`PageDeactivationMode`),
+  clipboard serialisation and per-page interaction modes (`PageMode`),
   shared by `ui/fx` and `ui/swing`
 * [x] JavaFX integration (`ui/fx`): `CanvasDocumentRenderer` (whole-document and
   single-page canvas rendering) and `PaperSheetView` - a scrollable, zoomable

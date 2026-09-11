@@ -21,7 +21,7 @@ import javafx.scene.input.KeyCode
 import javafx.scene.paint.Color
 import javafx.stage.Stage
 import org.junit.jupiter.api.Test
-import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
+import org.pcsoft.framework.simplay.uicommon.PageMode
 import kotlin.math.abs
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -128,16 +128,15 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
     }
 
     /**
-     * Over a page locked by [PageDeactivationMode.DISABLED] the pointer keeps the default arrow
-     * instead of turning into the text cursor.
+     * Over a page locked by [PageMode.DISABLED] the pointer keeps the default arrow instead of
+     * turning into the text cursor.
      */
     @Test
     fun cursorStaysDefaultOverADisabledPage() {
         val (view, skin) = fixture(paragraphs = 6)
 
         onFxThread {
-            view.deactivatedPageHandling = PageDeactivationMode.DISABLED
-            view.setPageDeactivated(0, true)
+            view.setPageMode(0, PageMode.DISABLED)
             view.applyCss()
             view.layout()
         }

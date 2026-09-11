@@ -15,93 +15,108 @@ package org.pcsoft.framework.simplay.uicommon
 import org.pcsoft.framework.simplay.engine.model.Document
 
 /**
- * The editable, navigable and visible linear-text regions of a document once a set of pages has been
- * deactivated, shared by the `fx` and `swing` `PaperSheetView` implementations.
+ * The editable, selectable, navigable and visible linear-text regions of a document once every page
+ * has been resolved to its [PageMode], shared by the `fx` and `swing` `PaperSheetView`
+ * implementations.
  *
- * Built once per [of] call from a [DocumentTextIndex], the set of deactivated page ids and a
- * [PageDeactivationMode]. A raw block is "blocked" when the id of the raw page it lives on
- * (`DocumentTextIndex.BlockRange.pageIndex` into `document.pages`) is in `deactivatedPageIds`. All
- * blocked blocks of one page form a single blocked span, from the first block's start to the last
- * block's end, so the separators between them are blocked as well and the caret cannot come to rest
- * between two blocks of a deactivated page.
+ * Built once per [of] call from a [DocumentTextIndex], the per-page mode overrides and the view-wide
+ * fallback mode. The mode of a raw page is `pageModes[page.id] ?: globalMode`; a raw block belongs to
+ * the raw page its `DocumentTextIndex.BlockRange.pageIndex` points at. All blocks of one page form a
+ * single span, from the first block's start to the last block's end, so the separators between them
+ * are treated like the blocks themselves and the caret cannot come to rest between two blocks of a
+ * page it may not enter.
  *
- * * [editableRanges] - where a mutation may land ([DISABLED][PageDeactivationMode.DISABLED] and
- *   [READONLY][PageDeactivationMode.READONLY] both exclude the blocked ranges).
+ * * [editableRanges] - where a mutation may land (pages without [PageMode.supportsEditing] are cut out).
+ * * [selectableRanges] - what may be selected (pages without [PageMode.supportsSelection] are cut out).
  * * [navigableRanges] - where the caret may come to rest after a plain (non-`Shift`) navigation move
- *   ([DISABLED][PageDeactivationMode.DISABLED] and [HIDDEN][PageDeactivationMode.HIDDEN] exclude the
- *   blocked ranges, every other mode is the full document).
- * * [visibleRanges] - what stays part of layout and hit-testing ([HIDDEN][PageDeactivationMode.HIDDEN]
- *   excludes the blocked ranges, every other mode is the full document).
+ *   (pages without [PageMode.supportsCaret] are cut out).
+ * * [visibleRanges] - what stays part of layout and hit-testing (pages without [PageMode.laidOut] are
+ *   cut out).
  *
- * At [PageDeactivationMode.IGNORE] or with an empty `deactivatedPageIds` every region is simply the
- * whole document and [isEditRangeAllowed] / [snapOutOfBlocked] never intervene.
+ * [isEditRangeAllowed] judges a mutation against the editable pages, [snapOutOfBlocked] pushes the
+ * caret out of a page it may not enter.
  */
 class EditableRegions private constructor(
     val editableRanges: List<IntRange>,
+    val selectableRanges: List<IntRange>,
     val navigableRanges: List<IntRange>,
     val visibleRanges: List<IntRange>,
-    private val blockedPairs: List<Pair<Int, Int>>,
+    private val editBlockedPairs: List<Pair<Int, Int>>,
+    private val caretBlockedPairs: List<Pair<Int, Int>>,
 ) {
 
     /**
      * Whether the half-open mutation range `[lo, hi)` (order-independent; `lo == hi` for an insertion
      * point) may be applied. A zero-length range is rejected only when it sits strictly inside a
-     * blocked range; its boundaries (the edges of the active text) are always allowed.
+     * non-editable page; its boundaries (the edges of the editable text) are always allowed.
      */
     fun isEditRangeAllowed(lo: Int, hi: Int): Boolean {
         val a = minOf(lo, hi)
         val b = maxOf(lo, hi)
-        return blockedPairs.none { (s, e) -> if (a == b) a in (s + 1) until e else a < e && s < b }
+        return editBlockedPairs.none { (s, e) -> if (a == b) a in (s + 1) until e else a < e && s < b }
     }
 
     /**
-     * `index` when it does not sit strictly inside a blocked range; otherwise the nearest allowed
-     * index in movement [direction] (`>= 0` forward, `< 0` backward) - the blocked range's end for a
-     * forward move, its start for a backward move.
+     * `index` when it does not sit strictly inside a page the caret may not enter; otherwise the
+     * nearest allowed index in movement [direction] (`>= 0` forward, `< 0` backward) - the page span's
+     * end for a forward move, its start for a backward move.
      */
     fun snapOutOfBlocked(index: Int, direction: Int): Int {
-        val hit = blockedPairs.firstOrNull { (s, e) -> index > s && index < e } ?: return index
+        val hit = caretBlockedPairs.firstOrNull { (s, e) -> index > s && index < e } ?: return index
         return if (direction >= 0) hit.second else hit.first
     }
 
     companion object {
 
-        /** Builds the [EditableRegions] for [index] once [deactivatedPageIds] and [mode] are known. */
+        /**
+         * Builds the [EditableRegions] for [index] once the per-page overrides [pageModes] and the
+         * view-wide fallback [globalMode] are known. Ids in [pageModes] that are no longer present in
+         * [document] are ignored.
+         */
         fun of(
             index: DocumentTextIndex,
-            deactivatedPageIds: Set<String>,
-            mode: PageDeactivationMode,
+            pageModes: Map<String, PageMode>,
+            globalMode: PageMode,
             document: Document,
         ): EditableRegions {
             val length = index.length
             val full = if (length > 0) listOf(0 until length) else emptyList()
 
-            if (mode == PageDeactivationMode.IGNORE || deactivatedPageIds.isEmpty()) {
-                return EditableRegions(full, full, full, emptyList())
-            }
+            val spans = index.blockRanges
+                .groupBy { it.pageIndex }
+                .mapNotNull { (pageIndex, ranges) ->
+                    val id = document.pages.getOrNull(pageIndex)?.id ?: return@mapNotNull null
+                    modeOf(id, pageModes, globalMode) to (ranges.minOf { it.start } to ranges.maxOf { it.end })
+                }
 
-            val blockedPairs = mergeIntervals(
-                index.blockRanges
-                    .filter { document.pages.getOrNull(it.pageIndex)?.id in deactivatedPageIds }
-                    .groupBy { it.pageIndex }
-                    .map { (_, ranges) -> ranges.minOf { it.start } to ranges.maxOf { it.end } },
+            fun blocked(allowed: (PageMode) -> Boolean): List<Pair<Int, Int>> =
+                mergeIntervals(spans.filterNot { allowed(it.first) }.map { it.second })
+
+            fun ranges(blocked: List<Pair<Int, Int>>): List<IntRange> =
+                if (blocked.isEmpty()) full else toRanges(subtract(length, blocked))
+
+            val editBlocked = blocked { it.supportsEditing }
+            val selectBlocked = blocked { it.supportsSelection }
+            val caretBlocked = blocked { it.supportsCaret }
+            val hiddenBlocked = blocked { it.laidOut }
+
+            return EditableRegions(
+                editableRanges = ranges(editBlocked),
+                selectableRanges = ranges(selectBlocked),
+                navigableRanges = ranges(caretBlocked),
+                visibleRanges = ranges(hiddenBlocked),
+                editBlockedPairs = editBlocked,
+                caretBlockedPairs = caretBlocked,
             )
-            if (blockedPairs.isEmpty()) {
-                return EditableRegions(full, full, full, emptyList())
-            }
-
-            val subtracted = toRanges(subtract(length, blockedPairs))
-            return when (mode) {
-                PageDeactivationMode.DISABLED -> EditableRegions(subtracted, subtracted, full, blockedPairs)
-                PageDeactivationMode.READONLY -> EditableRegions(subtracted, full, full, blockedPairs)
-                PageDeactivationMode.HIDDEN -> EditableRegions(subtracted, subtracted, subtracted, blockedPairs)
-                PageDeactivationMode.IGNORE -> EditableRegions(full, full, full, emptyList())
-            }
         }
 
+        /** The mode page [pageId] is shown with: its own override, or [globalMode] when it has none. */
+        fun modeOf(pageId: String, pageModes: Map<String, PageMode>, globalMode: PageMode): PageMode =
+            pageModes[pageId] ?: globalMode
+
         /** Whether the page with [pageId] stays part of layout / scroll / hit-testing. */
-        fun isPageVisible(pageId: String, deactivatedPageIds: Set<String>, mode: PageDeactivationMode): Boolean =
-            !(mode == PageDeactivationMode.HIDDEN && pageId in deactivatedPageIds)
+        fun isPageVisible(pageId: String, pageModes: Map<String, PageMode>, globalMode: PageMode): Boolean =
+            modeOf(pageId, pageModes, globalMode).laidOut
 
         private fun mergeIntervals(intervals: List<Pair<Int, Int>>): List<Pair<Int, Int>> {
             if (intervals.isEmpty()) return emptyList()

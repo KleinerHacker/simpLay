@@ -30,7 +30,7 @@ import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.engine.measure.MeasuredPage
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
-import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
+import org.pcsoft.framework.simplay.uicommon.PageMode
 import org.pcsoft.framework.simplay.uicommon.hitTest
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetCanvasPainter
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetCaret
@@ -61,10 +61,10 @@ import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetStyle
  *
  * The sheet chrome, the selection highlight and the caret are painted with the values from the
  * styleable [PaperSheetView] properties (`-fx-sheet-background` and friends); a change to any of them
- * triggers a repaint. A page whose id is in [PaperSheetView.deactivatedPageIds] is excluded from
- * layout entirely ([PageDeactivationMode.HIDDEN]) or drawn specially ([PageDeactivationMode.DISABLED])
- * as decided by [PaperSheetView.deactivatedPageHandling]; both are re-evaluated on every relayout /
- * redraw, so a change to either property takes effect immediately.
+ * triggers a repaint. Each page's effective [PageMode] ([PaperSheetView.effectivePageMode]) decides
+ * whether it is excluded from layout entirely ([PageMode.laidOut]) or drawn specially
+ * ([PageMode.paintedDisabled]); both are re-evaluated on every relayout / redraw, so a change to
+ * [PaperSheetView.mode] or [PaperSheetView.pageModes] takes effect immediately.
  */
 internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheetView>(control) {
 
@@ -181,15 +181,13 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     private val mode: PaperSheetMode get() = skinnable.mode
 
-    /** Whether [page] is excluded from layout entirely by [PageDeactivationMode.HIDDEN]. */
-    private fun isPageHidden(page: MeasuredPage): Boolean =
-        skinnable.deactivatedPageHandling == PageDeactivationMode.HIDDEN &&
-            page.raw.id in skinnable.deactivatedPageIds
+    private fun pageMode(page: MeasuredPage): PageMode = skinnable.effectivePageMode(page.raw.id)
 
-    /** Whether [page] is drawn specially by [PageDeactivationMode.DISABLED]. */
-    private fun isPageDisabled(page: MeasuredPage): Boolean =
-        skinnable.deactivatedPageHandling == PageDeactivationMode.DISABLED &&
-            page.raw.id in skinnable.deactivatedPageIds
+    /** Whether [page] is excluded from layout entirely by its effective [PageMode]. */
+    private fun isPageHidden(page: MeasuredPage): Boolean = !pageMode(page).laidOut
+
+    /** Whether [page] is drawn specially by its effective [PageMode]. */
+    private fun isPageDisabled(page: MeasuredPage): Boolean = pageMode(page).paintedDisabled
 
     //endregion
 
@@ -207,14 +205,17 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         registerChangeListener(control.pageGapProperty) { relayout() }
         registerChangeListener(control.zoomProperty) { relayout() }
         registerChangeListener(control.modeProperty) {
-            if (!mode.supportsSelection) selection.clearSelection()
+            if (!control.anySelection) selection.clearSelection()
             caret.onModeChanged()
         }
         registerChangeListener(control.smoothCaretBlinkProperty) { caret.restartBlink() }
         registerChangeListener(control.focusedProperty()) { caret.restartBlink() }
 
-        registerChangeListener(control.deactivatedPageIdsProperty) { relayout() }
-        registerChangeListener(control.deactivatedPageHandlingProperty) { relayout() }
+        registerChangeListener(control.pageModesProperty) {
+            if (!control.anySelection) selection.clearSelection()
+            caret.onModeChanged()
+            relayout()
+        }
 
         registerChangeListener(control.sheetBackgroundProperty) { redraw() }
         registerChangeListener(control.sheetBorderColorProperty) { redraw() }
@@ -252,6 +253,12 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     //region Measuring / layout
 
     private fun remeasure() {
+        val reload = !internalEdit
+        internalEdit = false
+        // A page override is tied to a specific page instance; once the document is reloaded from
+        // outside (as opposed to replaced by an edit), none of the previous overrides can still be
+        // meaningful, so the default state - every page following the global mode - is restored.
+        if (reload) skinnable.pageModes = emptyMap()
         val document = skinnable.document
         measured = document?.measure(measurer, renderConfig)
         index = measured?.let { DocumentTextIndex(it) }
@@ -259,8 +266,6 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         hover.clear()
         computeLayoutMetrics()
         selection.publish()
-        val reload = !internalEdit
-        internalEdit = false
         caret.onDocumentRemeasured(reload)
         if (reload) scrollBar.value = 0.0
     }
@@ -409,7 +414,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     /**
      * The page whose vertical band is closest to [cyUnscaled] (0 distance when inside it), with the
      * signed distance; used for hit-testing, the pointer shape and the hover tracker. Pages excluded
-     * from layout by [PageDeactivationMode.HIDDEN] are skipped.
+     * from layout by their effective [PageMode] are skipped.
      */
     private fun nearestPage(cyUnscaled: Double): Pair<Int, Double> {
         val doc = measured!!
@@ -435,11 +440,11 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     /**
      * The pointer shape at a viewport point: a text cursor over a page content area, else default.
-     * A mode without [PaperSheetMode.supportsSelection] and a [PageDeactivationMode.DISABLED] page
-     * always keep the default arrow.
+     * No page currently supporting selection, or a page whose own effective [PageMode] does not
+     * support selection, always keeps the default arrow.
      */
     private fun cursorFor(px: Double, py: Double): Cursor {
-        if (!mode.supportsSelection) return Cursor.DEFAULT
+        if (!skinnable.anySelection) return Cursor.DEFAULT
         val doc = measured ?: return Cursor.DEFAULT
         if (doc.pages.isEmpty()) return Cursor.DEFAULT
         val zoom = skinnable.zoom
@@ -448,7 +453,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         val cy = (py + scrollOffset()) / zoom
         val (pageIndex, bandDistance) = nearestPage(cy)
         if (bandDistance > 0.0) return Cursor.DEFAULT
-        if (isPageDisabled(doc.pages[pageIndex])) return Cursor.DEFAULT
+        if (!pageMode(doc.pages[pageIndex]).supportsSelection) return Cursor.DEFAULT
         val contentArea = doc.pages[pageIndex].contentArea
         val localX = cx - outer - contentArea.x
         val localY = cy - (outer + pageTops[pageIndex]) - contentArea.y
@@ -510,11 +515,14 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     }
 
     private fun onMousePressed(event: MouseEvent) {
-        if (!mode.supportsSelection) return
-        if (mode.supportsFocus) skinnable.requestFocus()
+        val doc = measured
+        val hitPageMode = doc?.pages?.takeIf { it.isNotEmpty() }
+            ?.let { pageMode(it[nearestPage((event.y + scrollOffset()) / skinnable.zoom).first]) }
+        if (hitPageMode?.supportsSelection != true) return
+        if (skinnable.anyFocus) skinnable.requestFocus()
         caret.clearShiftAnchor()
         val i = hitIndexAt(event.x, event.y)
-        if (mode.supportsEditing && !selection.isEmpty && selection.contains(event.x, event.y)) {
+        if (hitPageMode.supportsEditing && !selection.isEmpty && selection.contains(event.x, event.y)) {
             draggingSelection = true
             dragging = false
             caret.setDropPreview(i)
@@ -523,7 +531,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         }
         selection.beginAt(i)
         dragging = true
-        if (mode.supportsCaret) {
+        if (hitPageMode.supportsCaret) {
             caret.placeCaret(i)
         } else {
             redraw()
@@ -558,9 +566,11 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     private fun onMouseClicked(event: MouseEvent) {
         if (event.clickCount != 2) return
-        if (!mode.supportsSelection) return
+        val doc = measured?.takeIf { it.pages.isNotEmpty() } ?: return
+        val hitPageMode = pageMode(doc.pages[nearestPage((event.y + scrollOffset()) / skinnable.zoom).first])
+        if (!hitPageMode.supportsSelection) return
         selection.selectWordAt(hitIndexAt(event.x, event.y))
-        if (mode.supportsCaret) caret.placeCaret(selection.end)
+        if (hitPageMode.supportsCaret) caret.placeCaret(selection.end)
         redraw()
         event.consume()
     }

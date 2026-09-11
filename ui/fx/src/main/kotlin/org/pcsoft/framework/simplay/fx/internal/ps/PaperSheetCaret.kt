@@ -23,8 +23,8 @@ import javafx.util.Duration
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.engine.measure.MeasuredLine
 import org.pcsoft.framework.simplay.fx.CaretModel
-import org.pcsoft.framework.simplay.fx.PaperSheetMode
 import org.pcsoft.framework.simplay.fx.PaperSheetView
+import org.pcsoft.framework.simplay.fx.asPageMode
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
 import org.pcsoft.framework.simplay.uicommon.*
 
@@ -88,12 +88,8 @@ internal class PaperSheetCaret(
         opacity.addListener { _, _, _ -> requestRedraw() }
     }
 
-    /** Whether [mode] takes the deactivated pages out of plain caret navigation. */
-    private fun blocksNavigation(mode: PageDeactivationMode): Boolean =
-        mode == PageDeactivationMode.DISABLED || mode == PageDeactivationMode.HIDDEN
-
-    /** Whether the current [PaperSheetMode] shows and navigates a caret at all. */
-    private val caretActive: Boolean get() = view.mode.supportsCaret
+    /** Whether any page currently shows and navigates a caret at all. */
+    private val caretActive: Boolean get() = view.anyCaret
 
     //region Geometry / painting
 
@@ -251,7 +247,7 @@ internal class PaperSheetCaret(
     fun setCaret(index: Int, extend: Boolean, keepDesiredX: Boolean = false) {
         val idx = textIndex() ?: return
         val rawClamped = idx.clamp(index)
-        // A `Shift` selection may span a deactivated page; a plain move snaps out of it.
+        // A `Shift` selection may span a page the caret may not enter; a plain move snaps out of it.
         val clamped = if (extend) rawClamped else snapOutOfDeactivated(rawClamped, position)
         if (extend) {
             if (shiftAnchor == null) shiftAnchor = position
@@ -267,26 +263,20 @@ internal class PaperSheetCaret(
     }
 
     /**
-     * `target` when [PaperSheetView.deactivatedPageHandling] keeps the deactivated pages navigable or
-     * there is nothing deactivated; otherwise `target` snapped out of a blocked range in the direction
-     * of travel from `from`.
+     * `target` when every page's effective [PageMode] supports the caret; otherwise `target` snapped
+     * out of a page it may not enter, in the direction of travel from `from`.
      */
     private fun snapOutOfDeactivated(target: Int, from: Int): Int {
-        val mode = view.deactivatedPageHandling
-        if (!blocksNavigation(mode)) return target
-        val ids = view.deactivatedPageIds
-        if (ids.isEmpty()) return target
         val idx = textIndex() ?: return target
         val doc = view.document ?: return target
         val direction = if (target >= from) 1 else -1
-        return EditableRegions.of(idx, ids, mode, doc).snapOutOfBlocked(target, direction)
+        return EditableRegions.of(idx, view.pageModes, view.mode.asPageMode(), doc).snapOutOfBlocked(target, direction)
     }
 
-    /** Whether the caret may come to rest on the page with [pageId] under the current mode. */
-    private fun isPageNavigable(pageId: String): Boolean =
-        !blocksNavigation(view.deactivatedPageHandling) || pageId !in view.deactivatedPageIds
+    /** Whether the caret may come to rest on the page with [pageId] under its effective [PageMode]. */
+    private fun isPageNavigable(pageId: String): Boolean = view.effectivePageMode(pageId).supportsCaret
 
-    /** The measured lines a vertical move may land on: every line outside a deactivated page. */
+    /** The measured lines a vertical move may land on: every line whose page allows the caret. */
     private fun navigableLines(idx: DocumentTextIndex): List<MeasuredLine> =
         idx.segments.filter { isPageNavigable(it.page.raw.id) }.map { it.line }.distinct()
 
@@ -366,9 +356,9 @@ internal class PaperSheetCaret(
     }
 
     /**
-     * The [lines] index a vertical move starts from when the caret sits on a deactivated page: the last
-     * navigable line before it for a downward move, the first one after it for an upward move; `-1`
-     * when there is none.
+     * The [lines] index a vertical move starts from when the caret sits on a page it may not enter:
+     * the last navigable line before it for a downward move, the first one after it for an upward
+     * move; `-1` when there is none.
      */
     private fun nearestNavigableLine(
         idx: DocumentTextIndex,

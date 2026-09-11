@@ -12,6 +12,8 @@
 
 package org.pcsoft.framework.simplay.swing
 
+import org.pcsoft.framework.simplay.uicommon.PageMode
+
 /**
  * The interaction mode of a [PaperSheetView]. Each constant is a strict superset of the previous one:
  * [STATIC] only paints, [SELECTABLE] adds text selection, [NAVIGABLE] adds the caret and
@@ -54,4 +56,12 @@ enum class PaperSheetMode(
      * [PaperSheetView.document]; the previous document instance is not changed.
      */
     EDITABLE(supportsSelection = true, supportsCaret = true, supportsEditing = true, supportsFocus = true),
+}
+
+/** The [PageMode] a page without its own override effectively uses when the view is in [this] mode. */
+internal fun PaperSheetMode.asPageMode(): PageMode = when (this) {
+    PaperSheetMode.STATIC -> PageMode.STATIC
+    PaperSheetMode.SELECTABLE -> PageMode.SELECTABLE
+    PaperSheetMode.NAVIGABLE -> PageMode.NAVIGABLE
+    PaperSheetMode.EDITABLE -> PageMode.EDITABLE
 }

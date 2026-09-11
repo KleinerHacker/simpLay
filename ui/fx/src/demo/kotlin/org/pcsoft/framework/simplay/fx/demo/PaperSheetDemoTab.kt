@@ -14,8 +14,8 @@ package org.pcsoft.framework.simplay.fx.demo
 
 import javafx.geometry.Pos
 import javafx.scene.control.Button
-import javafx.scene.control.CheckBox
 import javafx.scene.control.ChoiceBox
+import javafx.scene.control.CheckBox
 import javafx.scene.control.ComboBox
 import javafx.scene.control.Label
 import javafx.scene.control.Separator
@@ -33,7 +33,7 @@ import org.pcsoft.framework.simplay.fx.FloatingOverlay
 import org.pcsoft.framework.simplay.fx.FloatingOverlayTrigger
 import org.pcsoft.framework.simplay.fx.PaperSheetMode
 import org.pcsoft.framework.simplay.fx.PaperSheetView
-import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
+import org.pcsoft.framework.simplay.uicommon.PageMode
 
 /**
  * Content of the demo's `Paper Sheet` tab: a [PaperSheetView] driven by a [ToolBar] that exposes the
@@ -58,11 +58,11 @@ import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
  * ([FloatingOverlayTrigger.PARAGRAPH_HOVER]). A toolbar label reads back the last triggered
  * paragraph and page index.
  *
- * Page deactivation is demonstrated by the "Deactivate" check boxes - one per page of the current
- * document, up to [MAX_DEACTIVATION_PAGES] - together with the [PageDeactivationMode] selector next
- * to them, which can be switched at any time to compare the modes on the same marked pages. The
- * "Four pages" sample is the one to pick here. Marks are dropped whenever the document is replaced,
- * because the page ids change with it.
+ * Per-page mode overrides are demonstrated by the "Page mode" boxes - one per page of the current
+ * document, up to [MAX_OVERRIDE_PAGES] - each a [PageMode] selector left empty for "follow the
+ * global mode" or set to any [PageMode] independent of it. The "Four pages" sample is the one to
+ * pick here. Overrides are dropped whenever the document is replaced, because the page ids change
+ * with it - [PaperSheetView.pageModes] itself does that automatically.
  */
 class PaperSheetDemoTab : BorderPane() {
 
@@ -95,13 +95,16 @@ class PaperSheetDemoTab : BorderPane() {
         value = STYLE_STANDARD
     }
 
-    private val deactivationModeBox = ChoiceBox<PageDeactivationMode>().apply {
-        items.setAll(PageDeactivationMode.entries)
-        value = view.deactivatedPageHandling
-    }
-
-    private val deactivatedPageBoxes: List<CheckBox> =
-        (0 until MAX_DEACTIVATION_PAGES).map { index -> CheckBox("P${index + 1}") }
+    /** One [PageMode] override selector per page; `null` means "follow the global mode". */
+    private val pageModeBoxes: List<ChoiceBox<PageMode?>> =
+        (0 until MAX_OVERRIDE_PAGES).map { index ->
+            ChoiceBox<PageMode?>().apply {
+                items.add(null)
+                items.addAll(PageMode.entries)
+                value = null
+                id = "P${index + 1}"
+            }
+        }
 
     private val outerMarginSpinner = Spinner<Double>(0.0, 200.0, view.outerMargin, 4.0)
     private val pageGapSpinner = Spinner<Double>(0.0, 200.0, view.pageGap, 4.0)
@@ -120,7 +123,7 @@ class PaperSheetDemoTab : BorderPane() {
     private val overlayLabel = Label()
     private val caretLabel = Label()
     private val documentLabel = Label()
-    private val deactivatedLabel = Label()
+    private val pageModeLabel = Label()
 
     private val copyBar = Button("Copy").apply {
         setOnAction {
@@ -155,9 +158,9 @@ class PaperSheetDemoTab : BorderPane() {
                 addAll(listOf(Label("Page number:"), pageNumberBox))
                 addAll(listOf(Label("Stylesheet:"), stylesheetBox))
                 add(Separator())
-                addAll(listOf(Label("Deactivation:"), deactivationModeBox, Label("Deactivate:")))
-                addAll(deactivatedPageBoxes)
-                add(deactivatedLabel)
+                add(Label("Page mode:"))
+                addAll(pageModeBoxes)
+                add(pageModeLabel)
                 add(Separator())
                 addAll(listOf(Label("Outer margin:"), outerMarginSpinner))
                 addAll(listOf(Label("Page gap:"), pageGapSpinner))
@@ -183,11 +186,10 @@ class PaperSheetDemoTab : BorderPane() {
         fontFamilyBox.valueProperty().addListener { _, _, _ -> applySample() }
         pageNumberBox.valueProperty().addListener { _, _, _ -> applySample() }
         stylesheetBox.valueProperty().addListener { _, _, v -> applyStylesheet(v) }
-        deactivationModeBox.valueProperty().addListener { _, _, v -> if (v != null) view.deactivatedPageHandling = v }
-        deactivatedPageBoxes.forEachIndexed { index, box ->
-            box.selectedProperty().addListener { _, _, selected ->
-                view.setPageDeactivated(index, selected)
-                updateDeactivatedLabel()
+        pageModeBoxes.forEachIndexed { index, box ->
+            box.valueProperty().addListener { _, _, mode ->
+                view.setPageMode(index, mode)
+                updatePageModeLabel()
             }
         }
         outerMarginSpinner.valueProperty().addListener { _, _, v -> view.outerMargin = v }
@@ -205,6 +207,9 @@ class PaperSheetDemoTab : BorderPane() {
         view.hoveredPageProperty.addListener { _, _, _ -> updateOverlayLabel() }
         view.caretModel.positionProperty.addListener { _, _, _ -> updateCaretLabel() }
         view.documentProperty.addListener { _, _, _ -> updateDocumentLabel() }
+        // `pageModes` is reset by the view itself whenever the document is reloaded from outside
+        // (e.g. a new sample, not an edit); the demo's own boxes and label just follow that reset.
+        view.pageModesProperty.addListener { _, _, modes -> if (modes.isEmpty()) resetPageModeBoxes() }
 
         selectPageNumberBoxFromSample()
         applySample()
@@ -226,21 +231,19 @@ class PaperSheetDemoTab : BorderPane() {
         val family = fontFamilyBox.value
         val withFont = if (family == null || family == FONT_DEFAULT) base else base.withFontFamily(family)
         view.document = withFont.withPageNumberPosition(PageNumberPositions.positionOf(pageNumberBox.value))
-        resetDeactivation()
     }
 
     /**
-     * Drops every deactivation mark and re-enables one check box per page of the current document:
-     * the ids of the previous document no longer exist, so keeping the marks would be misleading.
+     * Re-enables one box per page of the current document; called once [PaperSheetView.pageModes]
+     * has already been reset to empty by the view's own document-change listener.
      */
-    private fun resetDeactivation() {
-        view.deactivatedPageIds = emptySet()
+    private fun resetPageModeBoxes() {
         val pages = view.document?.pages?.size ?: 0
-        deactivatedPageBoxes.forEachIndexed { index, box ->
-            box.isSelected = false
+        pageModeBoxes.forEachIndexed { index, box ->
+            box.value = null
             box.isDisable = index >= pages
         }
-        updateDeactivatedLabel()
+        updatePageModeLabel()
     }
 
     /** Adds or removes the bundled `demo-dark.css` on this tab so it cascades to [view]. */
@@ -288,9 +291,9 @@ class PaperSheetDemoTab : BorderPane() {
         documentLabel.text = "Document: $chars chars in $pages page(s)"
     }
 
-    private fun updateDeactivatedLabel() {
-        val pages = deactivatedPageBoxes.withIndex().filter { it.value.isSelected }.map { it.index + 1 }
-        deactivatedLabel.text = if (pages.isEmpty()) "none" else "pages ${pages.joinToString(", ")}"
+    private fun updatePageModeLabel() {
+        val overridden = pageModeBoxes.withIndex().filter { it.value.value != null }.map { it.index + 1 }
+        pageModeLabel.text = if (overridden.isEmpty()) "none" else "pages ${overridden.joinToString(", ")}"
     }
 
     private fun format(value: Double): String = ((value * 100.0).toInt() / 100.0).toString()
@@ -302,8 +305,8 @@ class PaperSheetDemoTab : BorderPane() {
         const val STYLE_STANDARD = "Standard"
         const val STYLE_DARK = "Dark"
 
-        /** Number of `Deactivate` check boxes; enough for the "Four pages" sample. */
-        const val MAX_DEACTIVATION_PAGES = 4
+        /** Number of `Page mode` selectors; enough for the "Four pages" sample. */
+        const val MAX_OVERRIDE_PAGES = 4
 
         val DARK_STYLESHEET: String =
             PaperSheetDemoTab::class.java.getResource("demo-dark.css")!!.toExternalForm()

@@ -19,7 +19,7 @@ import javafx.scene.input.KeyCode
 import javafx.stage.Stage
 import org.junit.jupiter.api.Test
 import org.pcsoft.framework.simplay.engine.model.Document
-import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
+import org.pcsoft.framework.simplay.uicommon.PageMode
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -577,10 +577,9 @@ class PaperSheetEditingTest : JavaFxTestBase() {
         Fixture(view, view.skin as PaperSheetViewSkin) to page2Start
     }
 
-    /** Marks the second raw page deactivated under [mode], without moving the caret. */
-    private fun deactivateSecondPage(view: PaperSheetView, mode: PageDeactivationMode) {
-        view.deactivatedPageHandling = mode
-        view.setPageDeactivated(1, true)
+    /** Gives the second raw page its own [mode], without moving the caret. */
+    private fun overrideSecondPage(view: PaperSheetView, mode: PageMode) {
+        view.setPageMode(1, mode)
     }
 
     /**
@@ -594,7 +593,7 @@ class PaperSheetEditingTest : JavaFxTestBase() {
 
         onFxThread {
             view.caretModel.moveTo(page2Start + 2)
-            deactivateSecondPage(view, PageDeactivationMode.DISABLED)
+            overrideSecondPage(view, PageMode.DISABLED)
         }
         val before = view.document
         val caretBefore = skin.caretIndexForTest
@@ -606,17 +605,17 @@ class PaperSheetEditingTest : JavaFxTestBase() {
     }
 
     /**
-     * With `READONLY` on the second page, typing at a caret sitting inside it leaves the document
+     * With `NAVIGABLE` on the second page, typing at a caret sitting inside it leaves the document
      * untouched and the caret stays at its position.
      */
     @Test
-    fun insertInsideReadonlyPageIsRejected() {
+    fun insertInsideNavigablePageIsRejected() {
         val (fixture, page2Start) = deactivationFixture()
         val (view, skin) = fixture
 
         onFxThread {
             view.caretModel.moveTo(page2Start + 2)
-            deactivateSecondPage(view, PageDeactivationMode.READONLY)
+            overrideSecondPage(view, PageMode.NAVIGABLE)
         }
         val before = view.document
         val caretBefore = skin.caretIndexForTest
@@ -638,7 +637,7 @@ class PaperSheetEditingTest : JavaFxTestBase() {
 
         onFxThread {
             view.selectionModel.selectRange(page2Start - 2, page2Start + 2)
-            deactivateSecondPage(view, PageDeactivationMode.DISABLED)
+            overrideSecondPage(view, PageMode.DISABLED)
         }
         val before = view.document
 
@@ -648,18 +647,18 @@ class PaperSheetEditingTest : JavaFxTestBase() {
     }
 
     /**
-     * Typing on the still-active first page keeps working normally in every
-     * [org.pcsoft.framework.simplay.uicommon.PageDeactivationMode].
+     * Typing on the first page, which has no own mode, keeps working normally for every
+     * [org.pcsoft.framework.simplay.uicommon.PageMode] of the second page.
      */
     @Test
     fun typingOnActivePageStillWorks() {
-        for (mode in PageDeactivationMode.entries) {
+        for (mode in PageMode.entries) {
             val (fixture, _) = deactivationFixture()
             val (view, skin) = fixture
 
             onFxThread {
                 view.caretModel.moveTo(2)
-                deactivateSecondPage(view, mode)
+                overrideSecondPage(view, mode)
             }
             val before = view.document!!.plain()
 
@@ -682,7 +681,7 @@ class PaperSheetEditingTest : JavaFxTestBase() {
 
         onFxThread {
             view.caretModel.moveTo(page2Start - 1)
-            deactivateSecondPage(view, PageDeactivationMode.DISABLED)
+            overrideSecondPage(view, PageMode.DISABLED)
             view.caretModel.moveTo(page2Start + 2)
         }
 
@@ -701,7 +700,7 @@ class PaperSheetEditingTest : JavaFxTestBase() {
 
         onFxThread {
             view.caretModel.moveTo(docLength)
-            deactivateSecondPage(view, PageDeactivationMode.DISABLED)
+            overrideSecondPage(view, PageMode.DISABLED)
             view.caretModel.moveTo(page2Start + 2)
         }
 
@@ -709,17 +708,17 @@ class PaperSheetEditingTest : JavaFxTestBase() {
     }
 
     /**
-     * In `READONLY` mode the caret enters and crosses the deactivated page exactly like a normal one:
+     * In `NAVIGABLE` mode the caret enters and crosses the overridden page exactly like a normal one:
      * no snap happens.
      */
     @Test
-    fun caretEntersReadonlyPageNormally() {
+    fun caretEntersNavigablePageNormally() {
         val (fixture, page2Start) = deactivationFixture()
         val (view, skin) = fixture
 
         onFxThread {
             view.caretModel.moveTo(page2Start - 1)
-            deactivateSecondPage(view, PageDeactivationMode.READONLY)
+            overrideSecondPage(view, PageMode.NAVIGABLE)
             view.caretModel.moveTo(page2Start + 2)
         }
 
@@ -737,7 +736,7 @@ class PaperSheetEditingTest : JavaFxTestBase() {
 
         onFxThread {
             view.caretModel.moveTo(page2Start - 1)
-            deactivateSecondPage(view, PageDeactivationMode.DISABLED)
+            overrideSecondPage(view, PageMode.DISABLED)
             repeat(4) { skin.pressKeyForTest(KeyCode.RIGHT, shift = true) }
         }
 
@@ -752,19 +751,56 @@ class PaperSheetEditingTest : JavaFxTestBase() {
     }
 
     /**
-     * [PaperSheetView.setPageDeactivated] stores the resolved page id, not the index passed in: it
-     * still marks the same page after the document is replaced with an edit that leaves the page count
+     * [PaperSheetView.setPageMode] stores the resolved page id, not the index passed in: it still
+     * marks the same page after the document is replaced with an edit that leaves the page count
      * unchanged.
      */
     @Test
-    fun setPageDeactivatedByIndexResolvesToId() {
+    fun setPageModeByIndexResolvesToId() {
         val (fixture, _) = deactivationFixture()
         val (view, _) = fixture
         val expectedId = view.document!!.pages[1].id
 
-        onFxThread { view.setPageDeactivated(1, true) }
+        onFxThread { view.setPageMode(1, PageMode.DISABLED) }
 
-        assertEquals(setOf(expectedId), view.deactivatedPageIds)
+        assertEquals(mapOf(expectedId to PageMode.DISABLED), view.pageModes)
+    }
+
+    /**
+     * An edit replaces [PaperSheetView.document] with a new instance, but that is not a reload from
+     * outside, so an existing [PaperSheetView.pageModes] override must survive it untouched.
+     */
+    @Test
+    fun editingDocumentDoesNotResetPageModes() {
+        val (fixture, _) = deactivationFixture()
+        val (view, skin) = fixture
+        val expectedId = view.document!!.pages[1].id
+        onFxThread { view.setPageMode(0, PageMode.DISABLED) }
+
+        onFxThread {
+            view.caretModel.moveTo(1)
+            skin.typeTextForTest("Z")
+        }
+
+        assertEquals(mapOf(view.document!!.pages[0].id to PageMode.DISABLED), view.pageModes)
+        assertEquals(expectedId, view.document!!.pages[1].id)
+    }
+
+    /**
+     * Replacing [PaperSheetView.document] with an entirely different document - a reload from outside,
+     * not an edit - drops every [PaperSheetView.pageModes] override because the previous page ids no
+     * longer apply.
+     */
+    @Test
+    fun reloadingDocumentResetsPageModes() {
+        val (fixture, _) = deactivationFixture()
+        val (view, _) = fixture
+        onFxThread { view.setPageMode(0, PageMode.DISABLED) }
+        assertTrue(view.pageModes.isNotEmpty())
+
+        onFxThread { view.document = PaperSheetTestFixtures.flowDocument(2) }
+
+        assertEquals(emptyMap(), view.pageModes)
     }
 
     //endregion

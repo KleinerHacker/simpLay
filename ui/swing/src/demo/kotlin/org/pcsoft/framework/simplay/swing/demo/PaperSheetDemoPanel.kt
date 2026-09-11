@@ -19,7 +19,6 @@ import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import javax.swing.BorderFactory
 import javax.swing.JButton
-import javax.swing.JCheckBox
 import javax.swing.JComboBox
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -31,7 +30,7 @@ import org.pcsoft.framework.simplay.swing.OverlayAnchor
 import org.pcsoft.framework.simplay.swing.PaperSheetMode
 import org.pcsoft.framework.simplay.swing.PaperSheetView
 import org.pcsoft.framework.simplay.swing.TextSelectionModel
-import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
+import org.pcsoft.framework.simplay.uicommon.PageMode
 
 /**
  * Demo tab for the [PaperSheetView]: a [PaperSheetMode] selector, a sample selector, a page number
@@ -44,11 +43,11 @@ import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
  * [PaperSheetMode.SELECTABLE] selects without a caret, [PaperSheetMode.NAVIGABLE] adds the caret
  * without mutating the document and [PaperSheetMode.EDITABLE] edits.
  *
- * Page deactivation is demonstrated by the `Deactivate` check boxes - one per page of the current
- * document, up to [MAX_DEACTIVATION_PAGES] - together with the [PageDeactivationMode] selector in
- * the same tool bar, which can be switched at any time to compare the modes on the same marked
- * pages. The "Four pages" sample is the one to pick here. Marks are dropped whenever the document is
- * replaced, because the page ids change with it.
+ * Per-page mode overrides are demonstrated by the `Page mode` selectors - one per page of the
+ * current document, up to [MAX_OVERRIDE_PAGES] - each a [PageMode] combo box left on "(global)" for
+ * "follow the global mode" or set to any [PageMode] independent of it. The "Four pages" sample is the
+ * one to pick here. Overrides are dropped whenever the document is replaced, because the page ids
+ * change with it - [PaperSheetView.pageModes] itself does that automatically.
  */
 class PaperSheetDemoPanel : JPanel(BorderLayout()) {
 
@@ -63,12 +62,18 @@ class PaperSheetDemoPanel : JPanel(BorderLayout()) {
     private val pageNumber = JComboBox(PageNumberPositions.labels.toTypedArray())
     private val zoom = JSlider(25, 400, 100)
     private val selectionInfo = JLabel("selection: 0")
-    private val deactivationMode = JComboBox(PageDeactivationMode.entries.toTypedArray()).apply {
-        selectedItem = view.deactivatedPageHandling
-    }
-    private val deactivatedPageBoxes: List<JCheckBox> =
-        (0 until MAX_DEACTIVATION_PAGES).map { index -> JCheckBox("P${index + 1}") }
-    private val deactivatedLabel = JLabel()
+
+    /** One [PageMode] override combo per page; the leading `null` entry means "follow the global mode". */
+    private val pageModeBoxes: List<JComboBox<PageMode?>> =
+        (0 until MAX_OVERRIDE_PAGES).map { index ->
+            JComboBox(arrayOf<PageMode?>(null, *PageMode.entries.toTypedArray())).apply {
+                renderer = javax.swing.DefaultListCellRenderer().apply {
+                    horizontalAlignment = JLabel.LEFT
+                }
+                name = "P${index + 1}"
+            }
+        }
+    private val pageModeLabel = JLabel()
 
     init {
         addSelectionCopyOverlay()
@@ -84,11 +89,9 @@ class PaperSheetDemoPanel : JPanel(BorderLayout()) {
             add(JLabel("Zoom:"))
             add(zoom)
             add(selectionInfo)
-            add(JLabel("Deactivation:"))
-            add(deactivationMode)
-            add(JLabel("Deactivate:"))
-            deactivatedPageBoxes.forEach { add(it) }
-            add(deactivatedLabel)
+            add(JLabel("Page mode:"))
+            pageModeBoxes.forEach { add(JLabel(it.name)); add(it) }
+            add(pageModeLabel)
         }
         add(bar, BorderLayout.NORTH)
         add(view, BorderLayout.CENTER)
@@ -100,14 +103,16 @@ class PaperSheetDemoPanel : JPanel(BorderLayout()) {
         view.selectionModel.addPropertyChangeListener(TextSelectionModel.PROP_LENGTH) {
             selectionInfo.text = "selection: ${view.selectionModel.length}"
         }
-        deactivationMode.addActionListener {
-            view.deactivatedPageHandling = deactivationMode.selectedItem as PageDeactivationMode
-        }
-        deactivatedPageBoxes.forEachIndexed { index, box ->
+        pageModeBoxes.forEachIndexed { index, box ->
             box.addActionListener {
-                view.setPageDeactivated(index, box.isSelected)
-                updateDeactivatedLabel()
+                view.setPageMode(index, box.selectedItem as PageMode?)
+                updatePageModeLabel()
             }
+        }
+        // `pageModes` is reset by the view itself whenever the document is reloaded from outside
+        // (e.g. a new sample, not an edit); the demo's own boxes and label just follow that reset.
+        view.addPropertyChangeListener(PaperSheetView.PROP_PAGE_MODES) {
+            if (view.pageModes.isEmpty()) resetPageModeBoxes()
         }
 
         selectPageNumberFromSample()
@@ -124,26 +129,24 @@ class PaperSheetDemoPanel : JPanel(BorderLayout()) {
         val base = DemoDocuments.all[sample.selectedIndex].second
         val position = PageNumberPositions.positionOf(pageNumber.selectedItem as String)
         view.document = base.withPageNumberPosition(position)
-        resetDeactivation()
     }
 
     /**
-     * Drops every deactivation mark and re-enables one check box per page of the current document:
-     * the ids of the previous document no longer exist, so keeping the marks would be misleading.
+     * Re-enables one combo per page of the current document; called once [PaperSheetView.pageModes]
+     * has already been reset to empty by the view's own document-change listener.
      */
-    private fun resetDeactivation() {
-        view.deactivatedPageIds = emptySet()
+    private fun resetPageModeBoxes() {
         val pages = view.document?.pages?.size ?: 0
-        deactivatedPageBoxes.forEachIndexed { index, box ->
-            box.isSelected = false
+        pageModeBoxes.forEachIndexed { index, box ->
+            box.selectedItem = null
             box.isEnabled = index < pages
         }
-        updateDeactivatedLabel()
+        updatePageModeLabel()
     }
 
-    private fun updateDeactivatedLabel() {
-        val pages = deactivatedPageBoxes.withIndex().filter { it.value.isSelected }.map { it.index + 1 }
-        deactivatedLabel.text = if (pages.isEmpty()) "none" else "pages ${pages.joinToString(", ")}"
+    private fun updatePageModeLabel() {
+        val overridden = pageModeBoxes.withIndex().filter { it.value.selectedItem != null }.map { it.index + 1 }
+        pageModeLabel.text = if (overridden.isEmpty()) "none" else "pages ${overridden.joinToString(", ")}"
     }
 
     /** A `Copy` button that floats above the current text selection. */
@@ -181,7 +184,7 @@ class PaperSheetDemoPanel : JPanel(BorderLayout()) {
 
     private companion object {
 
-        /** Number of `Deactivate` check boxes; enough for the "Four pages" sample. */
-        const val MAX_DEACTIVATION_PAGES = 4
+        /** Number of `Page mode` selectors; enough for the "Four pages" sample. */
+        const val MAX_OVERRIDE_PAGES = 4
     }
 }

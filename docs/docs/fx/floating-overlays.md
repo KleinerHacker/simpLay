@@ -59,9 +59,9 @@ The same list is populated from FXML as a `<floatingOverlays>` child element:
 A `CARET` overlay only appears while `mode` is `NAVIGABLE` or `EDITABLE`.
 
 No overlay is shown at all while `mode` is `STATIC`, and no overlay is shown for
-a trigger sitting on a page locked by `PageDeactivationMode.DISABLED` - the same
-two cases in which the mouse pointer keeps the default arrow instead of the text
-cursor.
+a trigger sitting on a page whose effective mode is `PageMode.DISABLED` - the
+same two cases in which the mouse pointer keeps the default arrow instead of
+the text cursor.
 
 ## Placement
 

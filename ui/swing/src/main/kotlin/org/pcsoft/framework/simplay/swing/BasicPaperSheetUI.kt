@@ -44,7 +44,7 @@ import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetSelection
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetStyle
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetSwingPainter
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
-import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
+import org.pcsoft.framework.simplay.uicommon.PageMode
 import org.pcsoft.framework.simplay.uicommon.hitTest
 
 /**
@@ -62,9 +62,9 @@ import org.pcsoft.framework.simplay.uicommon.hitTest
  * [PaperSheetOverlays] (the registered [FloatingOverlay]s and the overlay layer on top of the
  * viewport).
  *
- * A page whose id is in [PaperSheetView.deactivatedPageIds] is excluded from layout entirely
- * ([PageDeactivationMode.HIDDEN]) or drawn specially ([PageDeactivationMode.DISABLED]) as decided by
- * [PaperSheetView.deactivatedPageHandling]; both are re-evaluated on every relayout / redraw.
+ * Each page's effective [PageMode] ([PaperSheetView.effectivePageMode]) decides whether it is
+ * excluded from layout entirely ([PageMode.laidOut]) or drawn specially ([PageMode.paintedDisabled]);
+ * both are re-evaluated on every relayout / redraw.
  */
 open class BasicPaperSheetUI : PaperSheetUI() {
 
@@ -103,19 +103,19 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     private val shortcutMask: Int = runCatching { Toolkit.getDefaultToolkit().menuShortcutKeyMaskEx }
         .getOrDefault(java.awt.event.InputEvent.CTRL_DOWN_MASK)
 
-    private val editable: Boolean get() = view.mode.supportsEditing
+    private val editable: Boolean get() = view.anyEditing
 
-    private val caretActive: Boolean get() = view.mode.supportsCaret
+    private val caretActive: Boolean get() = view.anyCaret
 
-    private val selectable: Boolean get() = view.mode.supportsSelection
+    private val selectable: Boolean get() = view.anySelection
 
-    /** Whether [page] is excluded from layout entirely by [PageDeactivationMode.HIDDEN]. */
-    private fun isPageHidden(page: MeasuredPage): Boolean =
-        view.deactivatedPageHandling == PageDeactivationMode.HIDDEN && page.raw.id in view.deactivatedPageIds
+    private fun pageMode(page: MeasuredPage): PageMode = view.effectivePageMode(page.raw.id)
 
-    /** Whether [page] is drawn specially by [PageDeactivationMode.DISABLED]. */
-    private fun isPageDisabled(page: MeasuredPage): Boolean =
-        view.deactivatedPageHandling == PageDeactivationMode.DISABLED && page.raw.id in view.deactivatedPageIds
+    /** Whether [page] is excluded from layout entirely by its effective [PageMode]. */
+    private fun isPageHidden(page: MeasuredPage): Boolean = !pageMode(page).laidOut
+
+    /** Whether [page] is drawn specially by its effective [PageMode]. */
+    private fun isPageDisabled(page: MeasuredPage): Boolean = pageMode(page).paintedDisabled
 
     //region install / uninstall
 
@@ -204,8 +204,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
                 PaperSheetView.PROP_ZOOM,
                 PaperSheetView.PROP_MIN_ZOOM,
                 PaperSheetView.PROP_MAX_ZOOM,
-                PaperSheetView.PROP_DEACTIVATED_PAGE_IDS,
-                PaperSheetView.PROP_DEACTIVATED_PAGE_HANDLING,
+                PaperSheetView.PROP_PAGE_MODES,
                 -> relayout()
                 PaperSheetView.PROP_MODE -> {
                     if (!selectable) selection.clearSelection()
@@ -267,14 +266,18 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     //region measuring / layout
 
     private fun remeasure() {
+        val reload = !internalEdit
+        internalEdit = false
+        // A page override is tied to a specific page instance; once the document is reloaded from
+        // outside (as opposed to replaced by an edit), none of the previous overrides can still be
+        // meaningful, so the default state - every page following the global mode - is restored.
+        if (reload) view.pageModes = emptyMap()
         measured = view.document?.measure(measurer, renderConfig)
         index = measured?.let { DocumentTextIndex(it) }
         selection.onDocumentChanged(index)
         hover.clear()
         computeLayoutMetrics()
         selection.publish()
-        val reload = !internalEdit
-        internalEdit = false
         caret.onDocumentRemeasured(reload)
         if (reload) scrollBar.value = 0
         redraw()
@@ -365,7 +368,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
 
     private fun currentStyle(): PaperSheetStyle {
         val selectionColor = if (
-            !view.mode.supportsEditing &&
+            !editable &&
             PaperSheetView.PROP_SELECTION_COLOR !in view.styleSetByUser
         ) {
             PaperSheetLookAndFeel.nonEditableSelectionColor()
@@ -461,8 +464,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
 
     /**
      * The pointer shape at a viewport point: a text cursor over a page content area, else default.
-     * A mode without [PaperSheetMode.supportsSelection] and a [PageDeactivationMode.DISABLED] page
-     * always keep the default arrow.
+     * No page currently supporting selection, or a page whose own effective [PageMode] does not
+     * support selection, always keeps the default arrow.
      */
     private fun cursorFor(px: Double, py: Double): Cursor {
         if (!selectable) return Cursor.getDefaultCursor()
@@ -474,7 +477,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         val cy = (py + scrollOffset()) / zoom
         val (pageIndex, bandDistance) = nearestPage(cy)
         if (bandDistance > 0.0) return Cursor.getDefaultCursor()
-        if (isPageDisabled(doc.pages[pageIndex])) return Cursor.getDefaultCursor()
+        if (!pageMode(doc.pages[pageIndex]).supportsSelection) return Cursor.getDefaultCursor()
         val contentArea = doc.pages[pageIndex].contentArea
         val localX = cx - outer - contentArea.x
         val localY = cy - (outer + pageTops[pageIndex]) - contentArea.y
@@ -541,11 +544,14 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     }
 
     private fun onMousePressed(event: MouseEvent) {
-        if (!selectable) return
+        val doc = measured
+        val hitPageMode = doc?.pages?.takeIf { it.isNotEmpty() }
+            ?.let { pageMode(it[nearestPage((event.y + scrollOffset()) / view.zoom).first]) }
+        if (hitPageMode?.supportsSelection != true) return
         view.requestFocusInWindow()
         caret.clearShiftAnchor()
         val i = hitIndexAt(event.x.toDouble(), event.y.toDouble())
-        if (editable && !selection.isEmpty && selection.contains(event.x.toDouble(), event.y.toDouble())) {
+        if (hitPageMode.supportsEditing && !selection.isEmpty && selection.contains(event.x.toDouble(), event.y.toDouble())) {
             draggingSelection = true
             dragging = false
             caret.setDropPreview(i)
@@ -553,7 +559,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         }
         selection.beginAt(i)
         dragging = true
-        if (caretActive) caret.placeCaret(i) else redraw()
+        if (hitPageMode.supportsCaret) caret.placeCaret(i) else redraw()
     }
 
     private fun onMouseDragged(event: MouseEvent) {
@@ -580,9 +586,11 @@ open class BasicPaperSheetUI : PaperSheetUI() {
 
     private fun onMouseClicked(event: MouseEvent) {
         if (event.clickCount != 2) return
-        if (!selectable) return
+        val doc = measured?.takeIf { it.pages.isNotEmpty() } ?: return
+        val hitPageMode = pageMode(doc.pages[nearestPage((event.y + scrollOffset()) / view.zoom).first])
+        if (!hitPageMode.supportsSelection) return
         selection.selectWordAt(hitIndexAt(event.x.toDouble(), event.y.toDouble()))
-        if (caretActive) caret.placeCaret(selection.end)
+        if (hitPageMode.supportsCaret) caret.placeCaret(selection.end)
         redraw()
     }
 

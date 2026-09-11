@@ -19,7 +19,7 @@ import javafx.scene.Scene
 import javafx.scene.control.Label
 import javafx.stage.Stage
 import org.junit.jupiter.api.Test
-import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
+import org.pcsoft.framework.simplay.uicommon.PageMode
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -279,7 +279,7 @@ class FloatingOverlayTest : JavaFxTestBase() {
 
     /**
      * A `PAGE_HOVER` overlay's `onShown` event reports `pageDeactivated = true` while hovering a page
-     * that is marked deactivated under a non-`IGNORE` mode.
+     * whose own [PageMode] is more restrictive than the view-wide mode.
      */
     @Test
     fun floatingOverlayEventReportsPageDeactivatedTrue() {
@@ -296,8 +296,7 @@ class FloatingOverlayTest : JavaFxTestBase() {
             stage.scene = Scene(view, 400.0, 700.0)
             stage.show()
             view.document = PaperSheetTestFixtures.twoPageDocument()
-            view.deactivatedPageHandling = PageDeactivationMode.READONLY
-            view.setPageDeactivated(1, true)
+            view.setPageMode(1, PageMode.NAVIGABLE)
             view.applyCss()
             view.layout()
             view.skin as PaperSheetViewSkin
@@ -311,8 +310,8 @@ class FloatingOverlayTest : JavaFxTestBase() {
     }
 
     /**
-     * The same `PAGE_HOVER` overlay reports `pageDeactivated = false` while hovering the still-active
-     * first page, even though the second page is deactivated.
+     * The same `PAGE_HOVER` overlay reports `pageDeactivated = false` while hovering the first page,
+     * which has no own [PageMode], even though the second page has one.
      */
     @Test
     fun floatingOverlayEventReportsPageDeactivatedFalse() {
@@ -329,8 +328,7 @@ class FloatingOverlayTest : JavaFxTestBase() {
             stage.scene = Scene(view, 400.0, 700.0)
             stage.show()
             view.document = PaperSheetTestFixtures.twoPageDocument()
-            view.deactivatedPageHandling = PageDeactivationMode.READONLY
-            view.setPageDeactivated(1, true)
+            view.setPageMode(1, PageMode.NAVIGABLE)
             view.applyCss()
             view.layout()
             view.skin as PaperSheetViewSkin
@@ -345,7 +343,7 @@ class FloatingOverlayTest : JavaFxTestBase() {
 
     /**
      * A `PAGE_HOVER` overlay stays hidden while the hovered page is locked by
-     * [PageDeactivationMode.DISABLED], and appears again on the still-active first page.
+     * [PageMode.DISABLED], and appears again on the first page, which has no own mode.
      */
     @Test
     fun overlayIsSuppressedOnADisabledPage() {
@@ -360,8 +358,7 @@ class FloatingOverlayTest : JavaFxTestBase() {
             stage.scene = Scene(view, 400.0, 700.0)
             stage.show()
             view.document = PaperSheetTestFixtures.twoPageDocument()
-            view.deactivatedPageHandling = PageDeactivationMode.DISABLED
-            view.setPageDeactivated(1, true)
+            view.setPageMode(1, PageMode.DISABLED)
             view.applyCss()
             view.layout()
             view.skin as PaperSheetViewSkin

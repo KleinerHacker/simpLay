@@ -14,7 +14,7 @@ package org.pcsoft.framework.simplay.swing
 
 import java.awt.Cursor
 import java.awt.image.BufferedImage
-import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
+import org.pcsoft.framework.simplay.uicommon.PageMode
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -93,18 +93,17 @@ class BasicPaperSheetUITest {
     }
 
     /**
-     * Verifies that a page locked by [PageDeactivationMode.DISABLED] keeps the default arrow pointer
-     * over its text content area instead of showing the text cursor.
+     * Verifies that a page locked by [PageMode.DISABLED] keeps the default arrow pointer over its
+     * text content area instead of showing the text cursor.
      */
     @Test
     fun pointerStaysDefaultOverADisabledPage() {
         val view = PaperSheetView().apply {
             document = TestDocuments.short
-            deactivatedPageHandling = PageDeactivationMode.DISABLED
         }
         val ui = ui(view)
         paint(ui)
-        view.setPageDeactivated(0, true)
+        view.setPageMode(0, PageMode.DISABLED)
         paint(ui)
         assertEquals(Cursor.DEFAULT_CURSOR, ui.cursorAtForTest(80.0, 80.0).type)
     }
@@ -166,8 +165,7 @@ class BasicPaperSheetUITest {
         val ui = ui(view)
         paint(ui, height = 800)
         view.caretModel.moveToStartOfBlock(1)
-        view.deactivatedPageHandling = PageDeactivationMode.DISABLED
-        view.setPageDeactivated(1, true)
+        view.setPageMode(1, PageMode.DISABLED)
         paint(ui, height = 800)
 
         assertTrue(ui.renderedPageIndicesForTest.contains(1), "the DISABLED page is still drawn")
@@ -188,8 +186,7 @@ class BasicPaperSheetUITest {
         val view = PaperSheetView().apply { document = TestDocuments.twoPage }
         val ui = ui(view)
         paint(ui, height = 800)
-        view.deactivatedPageHandling = PageDeactivationMode.HIDDEN
-        view.setPageDeactivated(1, true)
+        view.setPageMode(1, PageMode.HIDDEN)
         paint(ui, height = 800)
 
         assertFalse(ui.renderedPageIndicesForTest.contains(1), "the HIDDEN page must not be painted")
@@ -200,12 +197,12 @@ class BasicPaperSheetUITest {
     }
 
     /**
-     * A `READONLY` second page is painted exactly like a normal one, and it still counts in the
+     * A `NAVIGABLE` second page is painted exactly like a normal one, and it still counts in the
      * rendered pages even though every mutation on it is rejected. The caret is placed strictly
      * inside the blocked block, because an insertion point on its boundary is allowed by contract.
      */
     @Test
-    fun readonlyPageIsPaintedNormallyButNotEditable() {
+    fun navigablePageIsPaintedNormallyButNotEditable() {
         val view = PaperSheetView().apply {
             mode = PaperSheetMode.EDITABLE
             document = TestDocuments.twoPage
@@ -213,14 +210,13 @@ class BasicPaperSheetUITest {
         val ui = ui(view)
         paint(ui, height = 800)
         view.caretModel.moveIntoBlock(1, 2)
-        view.deactivatedPageHandling = PageDeactivationMode.READONLY
-        view.setPageDeactivated(1, true)
+        view.setPageMode(1, PageMode.NAVIGABLE)
         paint(ui, height = 800)
 
         assertTrue(ui.renderedPageIndicesForTest.contains(1))
         val before = view.document
         ui.typeTextForTest("Z")
-        assertEquals(before, view.document, "READONLY must reject the mutation")
+        assertEquals(before, view.document, "NAVIGABLE must reject the mutation")
     }
 
     //endregion

@@ -21,7 +21,6 @@ import org.pcsoft.framework.simplay.swing.OverlayAnchor
 import org.pcsoft.framework.simplay.swing.PaperSheetMode
 import org.pcsoft.framework.simplay.swing.PaperSheetView
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
-import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 
 /**
  * The anchor box and context a satisfied [FloatingOverlayTrigger] hands to [PaperSheetOverlays]:
@@ -54,8 +53,8 @@ internal class OverlayLayer : JComponent() {
  * [refresh] reconciles against [PaperSheetView.floatingOverlays] on every pass. Also carries whether
  * the page the trigger sits on is currently deactivated.
  *
- * No overlay is shown at all in [PaperSheetMode.STATIC], nor for a trigger sitting on a page locked
- * by [PageDeactivationMode.DISABLED].
+ * No overlay is shown at all in [PaperSheetMode.STATIC], nor for a trigger sitting on a page whose
+ * effective mode paints it disabled.
  */
 internal class PaperSheetOverlays(
     private val view: PaperSheetView,
@@ -138,7 +137,7 @@ internal class PaperSheetOverlays(
         FloatingOverlayTrigger.PARAGRAPH_HOVER -> hover.paragraphGeometry()
         FloatingOverlayTrigger.PAGE_HOVER -> hover.pageGeometry()
         FloatingOverlayTrigger.CARET -> {
-            if (!view.mode.supportsCaret) {
+            if (!view.anyCaret) {
                 null
             } else {
                 val bounds = caret.viewportBounds()
@@ -154,17 +153,19 @@ internal class PaperSheetOverlays(
         FloatingOverlayTrigger.PARAGRAPH_HOVER, FloatingOverlayTrigger.PAGE_HOVER -> view.hoveredPage
     }
 
-    /** Whether the raw page at [pageIndex] is currently deactivated per the view's state. */
+    /** Whether the raw page at [pageIndex] currently has a [org.pcsoft.framework.simplay.uicommon.PageMode] override. */
     private fun isPageDeactivated(pageIndex: Int): Boolean {
         if (pageIndex < 0) return false
-        if (view.deactivatedPageHandling == PageDeactivationMode.IGNORE) return false
         val id = view.document?.pages?.getOrNull(pageIndex)?.id ?: return false
-        return id in view.deactivatedPageIds
+        return id in view.pageModes
     }
 
-    /** Whether the raw page at [pageIndex] is locked by [PageDeactivationMode.DISABLED]. */
-    private fun isPageDisabled(pageIndex: Int): Boolean =
-        view.deactivatedPageHandling == PageDeactivationMode.DISABLED && isPageDeactivated(pageIndex)
+    /** Whether the raw page at [pageIndex] is painted disabled by its effective mode. */
+    private fun isPageDisabled(pageIndex: Int): Boolean {
+        if (pageIndex < 0) return false
+        val id = view.document?.pages?.getOrNull(pageIndex)?.id ?: return false
+        return view.effectivePageMode(id).paintedDisabled
+    }
 
     private fun detach(overlay: FloatingOverlay, fireEvent: Boolean) {
         overlay.content?.let { if (it.parent === layer) layer.remove(it) }

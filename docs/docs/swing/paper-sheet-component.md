@@ -28,8 +28,7 @@ shown; register a `java.beans.PropertyChangeListener` to react.
 |----------|------|---------|---------|
 | `document` | `Document?` | `null` | The document to render. |
 | `mode` | `PaperSheetMode` | `SELECTABLE` | `STATIC` (picture only), `SELECTABLE` (selection only), `NAVIGABLE` (selection + caret) or `EDITABLE` (caret + editing); see [Modes](#modes). |
-| `deactivatedPageIds` | `Set<String>` | `emptySet()` | Stable `Page.id` values of the pages currently marked deactivated; see [Deactivating pages](#deactivating-pages). |
-| `deactivatedPageHandling` | `PageDeactivationMode` | `READONLY` | How `deactivatedPageIds` is honoured. |
+| `pageModes` | `Map<String, PageMode>` | `emptyMap()` | Per-page `PageMode` overrides, keyed by stable `Page.id`; see [Per-page modes](#per-page-modes). Reset to empty when `document` is reloaded from outside, but not by an edit. |
 | `outerMargin` | `Double` | `24.0` | Space around the whole sheet stack, in layout units. |
 | `pageGap` | `Double` | `16.0` | Vertical space between two sheets, in layout units. |
 | `minZoom` / `maxZoom` / `zoom` | `Double` | `0.25` / `4.0` / `1.0` | `zoom` is always clamped into `[minZoom, maxZoom]`. |
@@ -59,31 +58,39 @@ The capability flags can also be read off the enum constant directly
 (`supportsSelection`, `supportsCaret`, `supportsEditing`, `supportsFocus`).
 Switching down to a mode without selection drops the current selection.
 
-## Deactivating pages
+## Per-page modes
 
-Individual pages can be marked deactivated by their stable
-`org.pcsoft.framework.simplay.engine.model.Page.id`, independently of `mode`.
-Both properties are transient view state and are never persisted in
-`document`:
+Individual pages can override `mode` with their own `PageMode`, keyed by their
+stable `org.pcsoft.framework.simplay.engine.model.Page.id`. A page absent from
+`pageModes` simply follows `mode`; an overridden page uses its own `PageMode`
+instead, independently of `mode` - both more restrictive (a read-only page in
+an editable view) and more permissive (an editable page in a static view) are
+possible. `pageModes` is transient view state, never persisted in `document`,
+and is reset to empty automatically whenever `document` is reloaded from
+outside - an edit, which also replaces `document` with a new instance, leaves
+it untouched, since the page ids it is keyed by do not change:
 
 ```kotlin
-view.setPageDeactivated(0, true) // resolves index 0 against the current document
-view.deactivatedPageHandling = PageDeactivationMode.HIDDEN
+view.setPageMode(0, PageMode.HIDDEN) // resolves index 0 against the current document
 ```
 
-`PageDeactivationMode` controls how `deactivatedPageIds` is honoured:
+`PageMode` defines the same capability flags as `PaperSheetMode` plus two
+layout-only ones:
 
 | Mode | Meaning |
 |------|---------|
-| `IGNORE` | `deactivatedPageIds` is fully ignored; behaves as an empty set. |
-| `DISABLED` | The page is not editable and the caret skips over it. It also shows no floating overlay and keeps the default arrow mouse cursor. |
-| `READONLY` (default) | The caret reaches and crosses the page normally, selection works, but every mutation touching it is discarded. |
 | `HIDDEN` | The page (and its flow overflow sheets) is removed entirely from layout, scroll area and hit-testing; the document itself is unchanged. |
+| `DISABLED` | The page is not editable and the caret skips over it. It is also drawn with the special disabled fill and hatch, shows no floating overlay and keeps the default arrow mouse cursor. |
+| `STATIC` | The page behaves like an image: no selection, no caret, no editing, no special drawing. |
+| `SELECTABLE` | Selectable, copyable text, no caret. The page is never mutated. |
+| `NAVIGABLE` | Everything `SELECTABLE` offers plus a caret that reaches and crosses the page; every mutation touching it is discarded. |
+| `EDITABLE` | Everything `NAVIGABLE` offers plus the document mutations. |
 
-`setPageDeactivated(index, deactivated)` resolves `index` against the current
-`document` into an id immediately, so the marker stays attached to that page
-even as later edits shift page indices. `FloatingOverlayEvent.pageDeactivated`
-reports whether the triggering page is currently deactivated.
+`setPageMode(index, mode)` resolves `index` against the current `document`
+into an id immediately, so the override stays attached to that page even as
+later edits shift page indices; `mode = null` clears the override.
+`FloatingOverlayEvent.pageDeactivated` reports whether the triggering page
+currently has a `pageModes` override.
 
 ## Selection model
 

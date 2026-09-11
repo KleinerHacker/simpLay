@@ -18,10 +18,10 @@ import java.awt.event.KeyEvent
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.swing.PaperSheetMode
 import org.pcsoft.framework.simplay.swing.PaperSheetView
+import org.pcsoft.framework.simplay.swing.asPageMode
 import org.pcsoft.framework.simplay.uicommon.DocumentEditor
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 import org.pcsoft.framework.simplay.uicommon.EditableRegions
-import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
 
 /**
  * The editable-mode input controller of a [PaperSheetView]: the keyboard shortcuts (character
@@ -36,10 +36,9 @@ import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
  * [PaperSheetMode.supportsEditing] and `Ctrl+C` / `Cmd+C` needs [PaperSheetMode.supportsSelection];
  * every other key is ignored.
  *
- * Every mutation is checked against [EditableRegions.isEditRangeAllowed] first: in
- * [PageDeactivationMode.DISABLED] and [PageDeactivationMode.READONLY] a mutation whose range touches a
- * deactivated page is silently dropped; `Ctrl+C` is never blocked. [PageDeactivationMode.IGNORE] and
- * [PageDeactivationMode.HIDDEN] never block anything.
+ * Every mutation is checked against [EditableRegions.isEditRangeAllowed] first: a mutation whose range
+ * touches a page whose effective mode does not support editing is silently dropped; `Ctrl+C` is never
+ * blocked by it.
  */
 internal class PaperSheetEditor(
     private val view: PaperSheetView,
@@ -50,11 +49,11 @@ internal class PaperSheetEditor(
     private val markInternalEdit: () -> Unit,
 ) {
 
-    private val editable: Boolean get() = view.mode.supportsEditing
+    private val editable: Boolean get() = view.anyEditing
 
-    private val caretActive: Boolean get() = view.mode.supportsCaret
+    private val caretActive: Boolean get() = view.anyCaret
 
-    private val selectable: Boolean get() = view.mode.supportsSelection
+    private val selectable: Boolean get() = view.anySelection
 
     private val shortcutMask: Int = runCatching { Toolkit.getDefaultToolkit().menuShortcutKeyMaskEx }
         .getOrDefault(java.awt.event.InputEvent.CTRL_DOWN_MASK)
@@ -100,15 +99,12 @@ internal class PaperSheetEditor(
 
     //endregion
 
-    //region Page-deactivation lock
+    //region Page-mode lock
 
-    /** Whether the mutation range `[lo, hi)` may be applied, per the view's deactivation state. */
+    /** Whether the mutation range `[lo, hi)` may be applied, per every page's effective mode. */
     private fun regionsAllow(idx: DocumentTextIndex, doc: Document, lo: Int, hi: Int): Boolean {
-        val mode = view.deactivatedPageHandling
-        if (mode == PageDeactivationMode.IGNORE || mode == PageDeactivationMode.HIDDEN) return true
-        val ids = view.deactivatedPageIds
-        if (ids.isEmpty()) return true
-        return EditableRegions.of(idx, ids, mode, doc).isEditRangeAllowed(lo, hi)
+        if (view.pageModes.isEmpty()) return true
+        return EditableRegions.of(idx, view.pageModes, view.mode.asPageMode(), doc).isEditRangeAllowed(lo, hi)
     }
 
     //endregion

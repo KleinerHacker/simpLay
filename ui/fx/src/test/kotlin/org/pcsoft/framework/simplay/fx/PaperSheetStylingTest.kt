@@ -17,7 +17,7 @@ import javafx.scene.Scene
 import javafx.scene.paint.Color
 import javafx.stage.Stage
 import org.junit.jupiter.api.Test
-import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
+import org.pcsoft.framework.simplay.uicommon.PageMode
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -208,8 +208,7 @@ class PaperSheetStylingTest : JavaFxTestBase() {
 
         onFxThread {
             view.caretModel.moveToStartOfBlock(1)
-            view.deactivatedPageHandling = PageDeactivationMode.DISABLED
-            view.setPageDeactivated(1, true)
+            view.setPageMode(1, PageMode.DISABLED)
             view.layout()
         }
 
@@ -227,8 +226,7 @@ class PaperSheetStylingTest : JavaFxTestBase() {
 
         val (view, skin) = deactivationFixture()
         onFxThread {
-            view.deactivatedPageHandling = PageDeactivationMode.HIDDEN
-            view.setPageDeactivated(1, true)
+            view.setPageMode(1, PageMode.HIDDEN)
             view.layout()
         }
 
@@ -240,24 +238,23 @@ class PaperSheetStylingTest : JavaFxTestBase() {
     }
 
     /**
-     * A `READONLY` second page is painted exactly like a normal one: no deactivated fill, and it still
+     * A `NAVIGABLE` second page is painted exactly like a normal one: no deactivated fill, and it still
      * counts in the rendered pages even though every mutation on it is rejected.
      */
     @Test
-    fun readonlyPageIsPaintedNormallyButNotEditable() {
+    fun navigablePageIsPaintedNormallyButNotEditable() {
         val (view, skin) = deactivationFixture()
 
         onFxThread {
             view.caretModel.moveIntoBlock(1, 2)
-            view.deactivatedPageHandling = PageDeactivationMode.READONLY
-            view.setPageDeactivated(1, true)
+            view.setPageMode(1, PageMode.NAVIGABLE)
             view.layout()
         }
 
         assertTrue(skin.renderedPageIndices.contains(1))
         val before = view.document
         onFxThread { skin.typeTextForTest("Z") }
-        assertEquals(before, view.document, "READONLY must reject the mutation")
+        assertEquals(before, view.document, "NAVIGABLE must reject the mutation")
     }
 
     //endregion

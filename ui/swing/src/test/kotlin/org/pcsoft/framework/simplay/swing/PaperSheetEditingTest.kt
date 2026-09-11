@@ -15,7 +15,7 @@ package org.pcsoft.framework.simplay.swing
 import java.awt.event.KeyEvent
 import java.awt.image.BufferedImage
 import org.pcsoft.framework.simplay.engine.model.Document
-import org.pcsoft.framework.simplay.uicommon.PageDeactivationMode
+import org.pcsoft.framework.simplay.uicommon.PageMode
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -257,10 +257,9 @@ class PaperSheetEditingTest {
         return (view to ui) to page2Start
     }
 
-    /** Marks the second raw page deactivated under [mode], without moving the caret. */
-    private fun deactivateSecondPage(view: PaperSheetView, mode: PageDeactivationMode) {
-        view.deactivatedPageHandling = mode
-        view.setPageDeactivated(1, true)
+    /** Gives the second raw page its own [mode], without moving the caret. */
+    private fun overrideSecondPage(view: PaperSheetView, mode: PageMode) {
+        view.setPageMode(1, mode)
     }
 
     /**
@@ -273,7 +272,7 @@ class PaperSheetEditingTest {
         val (view, ui) = viewUi
 
         view.caretModel.moveTo(page2Start + 2)
-        deactivateSecondPage(view, PageDeactivationMode.DISABLED)
+        overrideSecondPage(view, PageMode.DISABLED)
         val before = view.document
         val caretBefore = ui.caretIndexForTest
 
@@ -284,16 +283,16 @@ class PaperSheetEditingTest {
     }
 
     /**
-     * With `READONLY` on the second page, typing at a caret sitting inside it leaves the document
+     * With `NAVIGABLE` on the second page, typing at a caret sitting inside it leaves the document
      * untouched and the caret stays at its position.
      */
     @Test
-    fun insertInsideReadonlyPageIsRejected() {
+    fun insertInsideNavigablePageIsRejected() {
         val (viewUi, page2Start) = deactivationFixture()
         val (view, ui) = viewUi
 
         view.caretModel.moveTo(page2Start + 2)
-        deactivateSecondPage(view, PageDeactivationMode.READONLY)
+        overrideSecondPage(view, PageMode.NAVIGABLE)
         val before = view.document
         val caretBefore = ui.caretIndexForTest
 
@@ -313,7 +312,7 @@ class PaperSheetEditingTest {
         val (view, ui) = viewUi
 
         view.selectionModel.selectRange(page2Start - 2, page2Start + 2)
-        deactivateSecondPage(view, PageDeactivationMode.DISABLED)
+        overrideSecondPage(view, PageMode.DISABLED)
         val before = view.document
 
         ui.pressKeyForTest(KeyEvent.VK_BACK_SPACE)
@@ -322,17 +321,17 @@ class PaperSheetEditingTest {
     }
 
     /**
-     * Typing on the still-active first page keeps working normally in every
-     * [org.pcsoft.framework.simplay.uicommon.PageDeactivationMode].
+     * Typing on the first page, which has no own mode, keeps working normally for every
+     * [org.pcsoft.framework.simplay.uicommon.PageMode] of the second page.
      */
     @Test
     fun typingOnActivePageStillWorks() {
-        for (mode in PageDeactivationMode.entries) {
+        for (mode in PageMode.entries) {
             val (viewUi, _) = deactivationFixture()
             val (view, ui) = viewUi
 
             view.caretModel.moveTo(2)
-            deactivateSecondPage(view, mode)
+            overrideSecondPage(view, mode)
             val before = view.document!!.plain()
 
             ui.typeTextForTest("Z")
@@ -353,7 +352,7 @@ class PaperSheetEditingTest {
         val docLength = view.selectionModel.let { it.selectAll(); val l = it.text.length; it.clearSelection(); l }
 
         view.caretModel.moveTo(page2Start - 1)
-        deactivateSecondPage(view, PageDeactivationMode.DISABLED)
+        overrideSecondPage(view, PageMode.DISABLED)
         view.caretModel.moveTo(page2Start + 2)
 
         assertEquals(docLength, ui.caretIndexForTest)
@@ -370,23 +369,23 @@ class PaperSheetEditingTest {
         val docLength = view.selectionModel.let { it.selectAll(); val l = it.text.length; it.clearSelection(); l }
 
         view.caretModel.moveTo(docLength)
-        deactivateSecondPage(view, PageDeactivationMode.DISABLED)
+        overrideSecondPage(view, PageMode.DISABLED)
         view.caretModel.moveTo(page2Start + 2)
 
         assertEquals(page2Start, ui.caretIndexForTest)
     }
 
     /**
-     * In `READONLY` mode the caret enters and crosses the deactivated page exactly like a normal one:
+     * In `NAVIGABLE` mode the caret enters and crosses the overridden page exactly like a normal one:
      * no snap happens.
      */
     @Test
-    fun caretEntersReadonlyPageNormally() {
+    fun caretEntersNavigablePageNormally() {
         val (viewUi, page2Start) = deactivationFixture()
         val (view, ui) = viewUi
 
         view.caretModel.moveTo(page2Start - 1)
-        deactivateSecondPage(view, PageDeactivationMode.READONLY)
+        overrideSecondPage(view, PageMode.NAVIGABLE)
         view.caretModel.moveTo(page2Start + 2)
 
         assertEquals(page2Start + 2, ui.caretIndexForTest)
@@ -401,7 +400,7 @@ class PaperSheetEditingTest {
         val (view, ui) = viewUi
 
         view.caretModel.moveTo(page2Start - 1)
-        deactivateSecondPage(view, PageDeactivationMode.DISABLED)
+        overrideSecondPage(view, PageMode.DISABLED)
         repeat(4) { ui.pressKeyForTest(KeyEvent.VK_RIGHT, shift = true) }
 
         assertEquals(page2Start + 3, ui.caretIndexForTest)
@@ -409,17 +408,50 @@ class PaperSheetEditingTest {
     }
 
     /**
-     * [PaperSheetView.setPageDeactivated] stores the resolved page id, not the index passed in.
+     * [PaperSheetView.setPageMode] stores the resolved page id, not the index passed in.
      */
     @Test
-    fun setPageDeactivatedByIndexResolvesToId() {
+    fun setPageModeByIndexResolvesToId() {
         val (viewUi, _) = deactivationFixture()
         val (view, _) = viewUi
         val expectedId = view.document!!.pages[1].id
 
-        view.setPageDeactivated(1, true)
+        view.setPageMode(1, PageMode.DISABLED)
 
-        assertEquals(setOf(expectedId), view.deactivatedPageIds)
+        assertEquals(mapOf(expectedId to PageMode.DISABLED), view.pageModes)
+    }
+
+    /**
+     * An edit replaces [PaperSheetView.document] with a new instance, but that is not a reload from
+     * outside, so an existing [PaperSheetView.pageModes] override must survive it untouched.
+     */
+    @Test
+    fun editingDocumentDoesNotResetPageModes() {
+        val (viewUi, _) = deactivationFixture()
+        val (view, ui) = viewUi
+        view.setPageMode(0, PageMode.DISABLED)
+
+        view.caretModel.moveTo(1)
+        ui.typeTextForTest("Z")
+
+        assertEquals(mapOf(view.document!!.pages[0].id to PageMode.DISABLED), view.pageModes)
+    }
+
+    /**
+     * Replacing [PaperSheetView.document] with an entirely different document - a reload from outside,
+     * not an edit - drops every [PaperSheetView.pageModes] override because the previous page ids no
+     * longer apply.
+     */
+    @Test
+    fun reloadingDocumentResetsPageModes() {
+        val (viewUi, _) = deactivationFixture()
+        val (view, _) = viewUi
+        view.setPageMode(0, PageMode.DISABLED)
+        assertTrue(view.pageModes.isNotEmpty())
+
+        view.document = TestDocuments.short
+
+        assertEquals(emptyMap(), view.pageModes)
     }
 
     //endregion
