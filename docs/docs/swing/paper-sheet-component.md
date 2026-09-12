@@ -151,6 +151,7 @@ of the character about to be overwritten - instead of the thin line.
 
 | Shortcut | Action |
 |----------|--------|
+| `Ctrl+A` / `Cmd+A` | Select the whole document text. Works in both modes. |
 | `Ctrl+C` / `Cmd+C` | Copy the selection as plain text + styled HTML + RTF. Works in both modes. |
 | double-click | Select the word under the pointer. |
 | `Ctrl+X` | Cut the selection (editable). |

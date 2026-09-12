@@ -25,16 +25,16 @@ import org.pcsoft.framework.simplay.uicommon.EditableRegions
 
 /**
  * The editable-mode input controller of a [PaperSheetView]: the keyboard shortcuts (character
- * typing, `Backspace` / `Delete`, `Insert` (insert/overwrite typing mode), `Ctrl+C` / `Ctrl+V` /
- * `Ctrl+X` / `Ctrl+D`, the caret-navigation keys) and the text mutations they trigger, plus
- * drag-and-drop of the selection. Every mutation runs through [DocumentEditor] and replaces
+ * typing, `Backspace` / `Delete`, `Insert` (insert/overwrite typing mode), `Ctrl+A` / `Ctrl+C` /
+ * `Ctrl+V` / `Ctrl+X` / `Ctrl+D`, the caret-navigation keys) and the text mutations they trigger,
+ * plus drag-and-drop of the selection. Every mutation runs through [DocumentEditor] and replaces
  * [PaperSheetView.document] with the rebuilt document; [PaperSheetCaret.onEditApplied] then restores
  * the caret. The Swing counterpart of the `fx` module's `PaperSheetEditor`.
  *
  * A per-view helper the delegate creates once and routes key events and selection drops to. The
  * caret-navigation keys need [PaperSheetMode.supportsCaret], every mutating key needs
- * [PaperSheetMode.supportsEditing] and `Ctrl+C` / `Cmd+C` needs [PaperSheetMode.supportsSelection];
- * every other key is ignored.
+ * [PaperSheetMode.supportsEditing] and `Ctrl+A` / `Ctrl+C` / `Cmd+A` / `Cmd+C` need
+ * [PaperSheetMode.supportsSelection]; every other key is ignored.
  *
  * Every mutation is checked against [EditableRegions.isEditRangeAllowed] first: a mutation whose range
  * touches a page whose effective mode does not support editing is silently dropped; `Ctrl+C` is never
@@ -65,6 +65,13 @@ internal class PaperSheetEditor(
     fun onKeyPressed(event: KeyEvent) {
         if (event.keyCode == KeyEvent.VK_C && event.isShortcutDown() && !event.isAltDown) {
             if (selectable && selection.putStyledSelectionOnClipboard()) event.consume()
+            return
+        }
+        if (event.keyCode == KeyEvent.VK_A && event.isShortcutDown() && !event.isAltDown) {
+            if (selectable) {
+                selection.selectAll()
+                event.consume()
+            }
             return
         }
         if (!caretActive) return

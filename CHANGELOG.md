@@ -53,6 +53,9 @@ excluded.
   shown as a filled block the width of the character about to be overwritten,
   instead of the usual thin line; in `fx` this is also reflected as the new
   `:overwrite` CSS pseudo-class.
+- `ui/fx` and `ui/swing`: `Ctrl+A` (`Cmd+A` on macOS) selects the whole
+  document text in `PaperSheetView`, in every mode that supports selection
+  (`SELECTABLE`, `NAVIGABLE`, `EDITABLE`).
 
 ### Changed
 

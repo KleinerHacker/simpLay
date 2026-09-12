@@ -26,16 +26,16 @@ import org.pcsoft.framework.simplay.uicommon.EditableRegions
 
 /**
  * The editable-mode input controller of a [PaperSheetView]: the keyboard shortcuts (character
- * typing, `Backspace` / `Delete`, `Insert` (insert/overwrite typing mode), `Ctrl+C` / `Ctrl+V` /
- * `Ctrl+X` / `Ctrl+D`, the caret-navigation keys) and the text mutations they trigger, plus
- * drag-and-drop of the selection. Every mutation runs through [DocumentEditor] and replaces
+ * typing, `Backspace` / `Delete`, `Insert` (insert/overwrite typing mode), `Ctrl+A` / `Ctrl+C` /
+ * `Ctrl+V` / `Ctrl+X` / `Ctrl+D`, the caret-navigation keys) and the text mutations they trigger,
+ * plus drag-and-drop of the selection. Every mutation runs through [DocumentEditor] and replaces
  * [PaperSheetView.document] with the rebuilt document; [PaperSheetCaret.onEditApplied] then restores
  * the caret.
  *
  * A per-view helper the skin creates once and routes key events and selection drops to. The text
  * index is read through [textIndex]; navigation keys are delegated to [caret], clipboard text to
  * [selection]. The caret-navigation keys need [PaperSheetMode.supportsCaret], every mutating key
- * needs [PaperSheetMode.supportsEditing] and `Ctrl+C` needs [PaperSheetMode.supportsSelection];
+ * needs [PaperSheetMode.supportsEditing] and `Ctrl+A` / `Ctrl+C` need [PaperSheetMode.supportsSelection];
  * every other key is ignored.
  *
  * Every mutation is checked against [EditableRegions.isEditRangeAllowed] first: a mutation whose range
@@ -70,6 +70,13 @@ internal class PaperSheetEditor(
     fun onKeyPressed(event: KeyEvent) {
         if (event.code == KeyCode.C && event.isShortcutDown && !event.isAltDown) {
             if (selectable && selection.putStyledSelectionOnClipboard()) event.consume()
+            return
+        }
+        if (event.code == KeyCode.A && event.isShortcutDown && !event.isAltDown) {
+            if (selectable) {
+                selection.selectAll()
+                event.consume()
+            }
             return
         }
         if (!caretActive) return

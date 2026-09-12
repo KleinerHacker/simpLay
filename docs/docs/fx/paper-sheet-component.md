@@ -134,10 +134,10 @@ currently has a `pageModes` override.
 ## Selection and clipboard
 
 The mouse always selects: drag to extend, double-click to take a word. The
-highlight also covers the whitespace between selected words. `Ctrl+C` copies the
-selection to the system clipboard as plain text plus styled HTML and RTF that
-carry the font (family, size, weight, slant), so a rich paste target keeps the
-text style.
+highlight also covers the whitespace between selected words. `Ctrl+A` selects
+the whole document text. `Ctrl+C` copies the selection to the system clipboard
+as plain text plus styled HTML and RTF that carry the font (family, size,
+weight, slant), so a rich paste target keeps the text style.
 
 `selectionModel` (`TextSelectionModel`) exposes the state and the commands:
 
@@ -213,6 +213,7 @@ with any caret-navigation key to extend the selection instead of moving.
 
 | Key | Action | Mode |
 |-----|--------|------|
+| `Ctrl+A` | Select the whole document text | `SELECTABLE`, `NAVIGABLE`, `EDITABLE` |
 | `Ctrl+C` | Copy selection (plain text + styled HTML + RTF) | both |
 | `Ctrl+X` | Cut selection | `EDITABLE` |
 | `Ctrl+V` | Paste clipboard text at the caret | `EDITABLE` |
