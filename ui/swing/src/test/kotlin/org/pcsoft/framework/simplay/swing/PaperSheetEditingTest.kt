@@ -62,6 +62,24 @@ class PaperSheetEditingTest {
     }
 
     /**
+     * Verifies that typing at the very start of the document rewrites [PaperSheetView.document]
+     * with the typed text spliced in at exactly that position: the model's plain text begins with
+     * the typed characters followed unbroken by the original content, proving the edit round-trips
+     * all the way back into the model instead of only advancing the on-screen caret.
+     */
+    @Test
+    fun typedTextIsWrittenBackIntoDocumentAtCaretPosition() {
+        val (view, ui) = editableView()
+        val originalText = view.document!!.plain()
+
+        view.caretModel.moveToStart()
+        ui.typeTextForTest("HELLO")
+
+        val updatedText = view.document!!.plain()
+        assertEquals("HELLO$originalText", updatedText)
+    }
+
+    /**
      * Verifies that [PaperSheetMode.NAVIGABLE] moves the caret with the navigation keys but drops
      * every mutating key, so the document instance stays untouched.
      */

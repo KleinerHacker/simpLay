@@ -60,6 +60,26 @@ class PaperSheetEditingTest : JavaFxTestBase() {
     }
 
     /**
+     * Typing at the very start of the document rewrites [PaperSheetView.document] with the typed
+     * text spliced in at exactly that position: the model's plain text begins with the typed
+     * characters followed unbroken by the original content, proving the edit round-trips all the
+     * way back into the model instead of only advancing the on-screen caret.
+     */
+    @Test
+    fun typedTextIsWrittenBackIntoDocumentAtCaretPosition() {
+        val (view, skin) = fixture(paragraphs = 1)
+        val originalText = view.document!!.plain()
+
+        onFxThread {
+            view.caretModel.moveToStart()
+            skin.typeTextForTest("HELLO")
+        }
+
+        val updatedText = view.document!!.plain()
+        assertEquals("HELLO$originalText", updatedText)
+    }
+
+    /**
      * In [PaperSheetMode.SELECTABLE] no caret is drawn and typing or pressing an editing key leaves
      * the document untouched.
      */
