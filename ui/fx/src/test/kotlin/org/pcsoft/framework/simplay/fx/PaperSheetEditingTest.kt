@@ -456,19 +456,22 @@ class PaperSheetEditingTest : JavaFxTestBase() {
 
     /**
      * With the smooth blink enabled the caret is still rendered and starts fully opaque right after a
-     * caret move.
+     * caret move. The opacity is read from inside the FX-thread block: reading it afterwards from the
+     * test thread would race a real animation pulse of the smooth-blink [javafx.animation.Timeline] and
+     * observe a value that already drifted a tiny bit below `1.0`.
      */
     @Test
     fun smoothCaretBlinkKeepsCaretRenderedAtFullOpacityAfterMove() {
         val (view, skin) = fixture()
 
-        onFxThread {
+        val (rendered, opacity) = onFxThread {
             view.smoothCaretBlink = true
             view.caretModel.moveTo(4)
+            skin.caretRenderedForTest to skin.caretOpacityForTest()
         }
 
-        assertTrue(skin.caretRenderedForTest)
-        assertEquals(1.0, skin.caretOpacityForTest(), 1e-9)
+        assertTrue(rendered)
+        assertEquals(1.0, opacity, 1e-9)
     }
 
     /**
