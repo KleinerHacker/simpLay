@@ -1,0 +1,633 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>DocumentTextIndex</title>
+<link href="../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../../";</script>
+    <script>document.documentElement.classList.replace("no-js", "js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+      if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      } else {
+        const savedDarkMode = JSON.parse(storage)
+        if (savedDarkMode === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      }
+    </script>
+<script type="text/javascript" src="../../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../../styles/style.css" rel="Stylesheet">
+<link href="../../../../styles/main.css" rel="Stylesheet">
+<link href="../../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../../scripts/safe-local-storage_blocking.js"></script>
+<script type="text/javascript" src="../../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../../ui-kit/ui-kit.min.js" defer></script></head>
+<body>
+<div class="root">
+    <header class="navigation theme-dark" id="navigation-wrapper" role="banner">
+<a class="library-name--link" href="../../../../index.html" tabindex="1">
+                    simplay
+            </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">1.0-SNAPSHOT
+        </div>
+        <div class="navigation-controls">
+        <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
+                <button class="platform-tag platform-selector jvm-like" data-active="" aria-pressed="true" data-filter=":ui:common/main">jvm</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox" aria-label="Target filter">
+                    <div class="dropdown--header"><span>Target filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close target filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":ui:common/main" data-filter=":ui:common/main">
+                                <span class="checkbox--icon"></span>
+                                jvm
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </ul>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button" type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </header>
+    <div id="container">
+        <nav id="leftColumn" class="sidebar" data-item-type="SECTION" data-item-config="{&quot;defaultSize&quot;: 280, &quot;minSize&quot;: 200, &quot;maxSize&quot;: 400}">
+            <a class="toc--skip-link" href="#main">Skip to content</a>
+            <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list" data-role="dropdown-listbox" aria-label="Table of contents">
+                    <div class="dropdown--header">
+                            <span>
+                                    simplay
+                            </span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                    <div class="sidebar--inner" id="sideMenu"></div>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </nav>
+        <div id="resizer" class="resizer" data-item-type="BAR"></div>
+        <div id="main" data-item-type="SECTION" role="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="common::org.pcsoft.framework.simplay.uicommon/DocumentTextIndex///PointingToDeclaration//2086038527">
+  <div class="breadcrumbs"><a href="../../index.html">common</a><span class="delimiter">/</span><a href="../index.html">org.pcsoft.framework.simplay.uicommon</a><span class="delimiter">/</span><span class="current">DocumentTextIndex</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Document</span><wbr><span>Text</span><wbr><span><span>Index</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">DocumentTextIndex</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">measured<span class="token operator">: </span><a href="../../../../engine/org.pcsoft.framework.simplay.engine.measure/-measured-document/index.html">MeasuredDocument</a></span></span><span class="token punctuation">)</span></div><p class="paragraph">A flat, linear view of the text in a <a href="../../../../engine/org.pcsoft.framework.simplay.engine.measure/-measured-document/index.html">MeasuredDocument</a> for block- and page-spanning selection and for editing.</p><p class="paragraph">The measured tree (<code class="lang-kotlin">pages -&gt; blocks -&gt; lines -&gt; parts</code>) is walked once and turned into a single <a href="text.html">text</a> string plus one <a href="-segment/index.html">Segment</a> per <a href="../../../../engine/org.pcsoft.framework.simplay.engine.measure/-measured-text-part/index.html">MeasuredTextPart</a>. Each segment records where that part's characters sit in <a href="text.html">text</a> (<code class="lang-kotlin">start</code> until <code class="lang-kotlin">end</code>) together with the measured geometry needed to draw a selection highlight and to hit-test a pointer position.</p><p class="paragraph">The separators inserted between parts mirror <a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/index.html">org.pcsoft.framework.simplay.engine.model.TextBlock.toString</a>: within one block the separator is the actual whitespace text of the <a href="../../../../engine/org.pcsoft.framework.simplay.engine.model/-text-whitespace/index.html">org.pcsoft.framework.simplay.engine.model.TextWhitespace</a> part (if any) originally tokenized between the two parts - <code class="lang-kotlin">""</code> when there was none, e.g. a word directly after a symbol - and a line break separates blocks and pages. Separators are part of <a href="text.html">text</a> (so a copied range reads naturally) but never belong to a <a href="-segment/index.html">Segment</a> range, so a selection can only ever cover real glyphs. <a href="../../../../engine/org.pcsoft.framework.simplay.engine.model/-text-whitespace/index.html">TextWhitespace</a> itself is never addressable: it produces no <a href="../../../../engine/org.pcsoft.framework.simplay.engine.measure/-measured-text-part/index.html">MeasuredTextPart</a> and so no <a href="-segment/index.html">Segment</a>, <a href="word-ranges.html">wordRanges</a> entry or <a href="symbol-ranges.html">symbolRanges</a> entry.</p><p class="paragraph">On top of that flat axis the index also exposes the structural elements a caret can address: <a href="block-ranges.html">blockRanges</a> (one entry per raw block of the document, in document order), <a href="word-ranges.html">wordRanges</a> and <a href="symbol-ranges.html">symbolRanges</a> (one entry per measured part of that kind). The <code class="lang-kotlin">*Of*</code> helpers map a structural ordinal plus an in-element offset onto a linear text index, and the <code class="lang-kotlin">next*</code> / <code class="lang-kotlin">prev*</code> helpers step from a linear index to the next / previous element start.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="tableheader">Constructors</h2>
+        <div class="table"><a data-name="850065195%2FConstructors%2F2086038527" anchor-label="DocumentTextIndex" id="850065195%2FConstructors%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-togglable="CONSTRUCTOR" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-document-text-index.html"><span>Document</span><wbr><span>Text</span><wbr><span><span>Index</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="850065195%2FConstructors%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">measured<span class="token operator">: </span><a href="../../../../engine/org.pcsoft.framework.simplay.engine.measure/-measured-document/index.html">MeasuredDocument</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="TYPE">
+        <h2 class="tableheader">Types</h2>
+        <div class="table"><a data-name="580958055%2FClasslikes%2F2086038527" anchor-label="BlockRange" id="580958055%2FClasslikes%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-block-range/index.html"><span>Block</span><wbr><span><span>Range</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="580958055%2FClasslikes%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">class </span><a href="-block-range/index.html">BlockRange</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>pageIndex<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>blockIndex<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>start<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>end<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">The half-open linear-text span <code class="lang-kotlin">[start, end)</code> of one raw block of the document.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1538953272%2FClasslikes%2F2086038527" anchor-label="Segment" id="1538953272%2FClasslikes%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-segment/index.html"><span><span>Segment</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1538953272%2FClasslikes%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">class </span><a href="-segment/index.html">Segment</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>pageIndex<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>page<span class="token operator">: </span><a href="../../../../engine/org.pcsoft.framework.simplay.engine.measure/-measured-page/index.html">MeasuredPage</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>block<span class="token operator">: </span><a href="../../../../engine/org.pcsoft.framework.simplay.engine.measure/-measured-text-block/index.html">MeasuredTextBlock</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>line<span class="token operator">: </span><a href="../../../../engine/org.pcsoft.framework.simplay.engine.measure/-measured-line/index.html">MeasuredLine</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>part<span class="token operator">: </span><a href="../../../../engine/org.pcsoft.framework.simplay.engine.measure/-measured-text-part/index.html">MeasuredTextPart</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>font<span class="token operator">: </span><a href="../../../../engine/org.pcsoft.framework.simplay.engine.model/-font/index.html">Font</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>start<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>end<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">One measured text part placed on the linear <a href="text.html">text</a> axis.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1799379923%2FClasslikes%2F2086038527" anchor-label="StyledRun" id="1799379923%2FClasslikes%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-styled-run/index.html"><span>Styled</span><wbr><span><span>Run</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1799379923%2FClasslikes%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">data </span><span class="token keyword">class </span><a href="-styled-run/index.html">StyledRun</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>text<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>font<span class="token operator">: </span><a href="../../../../engine/org.pcsoft.framework.simplay.engine.model/-font/index.html">Font</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">One run of the linear <a href="../../../../ui/common/org.pcsoft.framework.simplay.uicommon/-document-text-index/-styled-run/--root--.html">text</a> for a selection range: either a slice of a single measured part (then <a href="../../../../ui/common/org.pcsoft.framework.simplay.uicommon/-document-text-index/-styled-run/--root--.html">font</a> is that part's font) or a stretch of the separators between parts (then <a href="../../../../ui/common/org.pcsoft.framework.simplay.uicommon/-document-text-index/-styled-run/--root--.html">font</a> is <code class="lang-kotlin">null</code>). Concatenating the <a href="-styled-run/text.html">StyledRun.text</a> of consecutive runs rebuilds the selected substring.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="tableheader">Properties</h2>
+        <div class="table"><a data-name="483405280%2FProperties%2F2086038527" anchor-label="blockCount" id="483405280%2FProperties%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="block-count.html"><span>block</span><wbr><span><span>Count</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="483405280%2FProperties%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="block-count.html">blockCount</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Number of addressable raw blocks.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-132341867%2FProperties%2F2086038527" anchor-label="blockRanges" id="-132341867%2FProperties%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="block-ranges.html"><span>block</span><wbr><span><span>Ranges</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-132341867%2FProperties%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="block-ranges.html">blockRanges</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="-block-range/index.html">DocumentTextIndex.BlockRange</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">One entry per raw block that produced glyphs, in document order.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1415671172%2FProperties%2F2086038527" anchor-label="length" id="-1415671172%2FProperties%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="length.html"><span><span>length</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1415671172%2FProperties%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="length.html">length</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">The total character count of <a href="text.html">text</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1053181378%2FProperties%2F2086038527" anchor-label="segments" id="1053181378%2FProperties%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="segments.html"><span><span>segments</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1053181378%2FProperties%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="segments.html">segments</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="-segment/index.html">DocumentTextIndex.Segment</a><span class="token operator">&gt;</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2010400129%2FProperties%2F2086038527" anchor-label="symbolCount" id="2010400129%2FProperties%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="symbol-count.html"><span>symbol</span><wbr><span><span>Count</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2010400129%2FProperties%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="symbol-count.html">symbolCount</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Number of addressable symbols.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-40141804%2FProperties%2F2086038527" anchor-label="symbolRanges" id="-40141804%2FProperties%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="symbol-ranges.html"><span>symbol</span><wbr><span><span>Ranges</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-40141804%2FProperties%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="symbol-ranges.html">symbolRanges</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.ranges/-int-range/index.html">IntRange</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">One <code class="lang-kotlin">[start, end)</code> linear-text range per measured symbol part, in document order.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1994869589%2FProperties%2F2086038527" anchor-label="text" id="1994869589%2FProperties%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="text.html"><span><span>text</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1994869589%2FProperties%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="text.html">text</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">The whole document text, real glyphs plus the readable separators between parts.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-626797005%2FProperties%2F2086038527" anchor-label="wordCount" id="-626797005%2FProperties%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="word-count.html"><span>word</span><wbr><span><span>Count</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-626797005%2FProperties%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="word-count.html">wordCount</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Number of addressable words.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-188874334%2FProperties%2F2086038527" anchor-label="wordRanges" id="-188874334%2FProperties%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="word-ranges.html"><span>word</span><wbr><span><span>Ranges</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-188874334%2FProperties%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="word-ranges.html">wordRanges</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.ranges/-int-range/index.html">IntRange</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">One <code class="lang-kotlin">[start, end)</code> linear-text range per measured word part, in document order.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="tableheader">Functions</h2>
+        <div class="table"><a data-name="-998141637%2FFunctions%2F2086038527" anchor-label="clamp" id="-998141637%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="clamp.html"><span><span>clamp</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-998141637%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="clamp.html"><span class="token function">clamp</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">index<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Clamps <a href="clamp.html">index</a> to the valid <code class="lang-kotlin">0..length</code> range.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-740223547%2FFunctions%2F2086038527" anchor-label="endOfBlock" id="-740223547%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="end-of-block.html"><span>end</span><wbr><span>Of</span><wbr><span><span>Block</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-740223547%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="end-of-block.html"><span class="token function">endOfBlock</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">block<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Linear index one past the last character of block <a href="end-of-block.html">block</a>; the ordinal is clamped.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1972286708%2FFunctions%2F2086038527" anchor-label="endOfSymbol" id="-1972286708%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="end-of-symbol.html"><span>end</span><wbr><span>Of</span><wbr><span><span>Symbol</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1972286708%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="end-of-symbol.html"><span class="token function">endOfSymbol</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">symbol<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Linear index past symbol <a href="end-of-symbol.html">symbol</a>; the ordinal is clamped.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="171279002%2FFunctions%2F2086038527" anchor-label="endOfWord" id="171279002%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="end-of-word.html"><span>end</span><wbr><span>Of</span><wbr><span><span>Word</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="171279002%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="end-of-word.html"><span class="token function">endOfWord</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">word<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Linear index one past the last character of word <a href="end-of-word.html">word</a>; the ordinal is clamped.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1934918504%2FFunctions%2F2086038527" anchor-label="nextBlockStart" id="-1934918504%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="next-block-start.html"><span>next</span><wbr><span>Block</span><wbr><span><span>Start</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1934918504%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="next-block-start.html"><span class="token function">nextBlockStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">from<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Start of the first block that begins after <a href="next-block-start.html">from</a>; <a href="length.html">length</a> when there is none.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="438171135%2FFunctions%2F2086038527" anchor-label="nextSymbolStart" id="438171135%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="next-symbol-start.html"><span>next</span><wbr><span>Symbol</span><wbr><span><span>Start</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="438171135%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="next-symbol-start.html"><span class="token function">nextSymbolStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">from<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Position of the first symbol that starts after <a href="next-symbol-start.html">from</a>; <a href="length.html">length</a> when there is none.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="634636529%2FFunctions%2F2086038527" anchor-label="nextWordStart" id="634636529%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="next-word-start.html"><span>next</span><wbr><span>Word</span><wbr><span><span>Start</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="634636529%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="next-word-start.html"><span class="token function">nextWordStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">from<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Start of the first word that begins after <a href="next-word-start.html">from</a>; <a href="length.html">length</a> when there is none.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-924607396%2FFunctions%2F2086038527" anchor-label="offsetInBlock" id="-924607396%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="offset-in-block.html"><span>offset</span><wbr><span>In</span><wbr><span><span>Block</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-924607396%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="offset-in-block.html"><span class="token function">offsetInBlock</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">block<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">index<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Linear index <a href="offset-in-block.html">index</a> characters into block <a href="offset-in-block.html">block</a>; ordinal and offset are clamped.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1631885343%2FFunctions%2F2086038527" anchor-label="offsetInWord" id="1631885343%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="offset-in-word.html"><span>offset</span><wbr><span>In</span><wbr><span><span>Word</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1631885343%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="offset-in-word.html"><span class="token function">offsetInWord</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">word<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">index<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Linear index <a href="offset-in-word.html">index</a> characters into word <a href="offset-in-word.html">word</a>; ordinal and offset are clamped.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="941193598%2FFunctions%2F2086038527" anchor-label="offsetOfSymbol" id="941193598%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="offset-of-symbol.html"><span>offset</span><wbr><span>Of</span><wbr><span><span>Symbol</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="941193598%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="offset-of-symbol.html"><span class="token function">offsetOfSymbol</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">symbol<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Linear index in front of symbol <a href="offset-of-symbol.html">symbol</a>; the ordinal is clamped.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1398046528%2FFunctions%2F2086038527" anchor-label="pageIndexAt" id="-1398046528%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="page-index-at.html"><span>page</span><wbr><span>Index</span><wbr><span><span>At</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1398046528%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="page-index-at.html"><span class="token function">pageIndexAt</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">linearIndex<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Index of the raw page (into <code class="lang-kotlin">measured.raw.pages</code>, i.e. <code class="lang-kotlin">Document.pages</code>) that owns the character at linear index <a href="page-index-at.html">linearIndex</a>; <code class="lang-kotlin">-1</code> when the document has no blocks.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="904342872%2FFunctions%2F2086038527" anchor-label="prevBlockStart" id="904342872%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="prev-block-start.html"><span>prev</span><wbr><span>Block</span><wbr><span><span>Start</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="904342872%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="prev-block-start.html"><span class="token function">prevBlockStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">from<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Start of the last block that begins before <a href="prev-block-start.html">from</a>; <code class="lang-kotlin">0</code> when there is none.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1739039425%2FFunctions%2F2086038527" anchor-label="prevSymbolStart" id="-1739039425%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="prev-symbol-start.html"><span>prev</span><wbr><span>Symbol</span><wbr><span><span>Start</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1739039425%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="prev-symbol-start.html"><span class="token function">prevSymbolStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">from<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Position of the last symbol that starts before <a href="prev-symbol-start.html">from</a>; <code class="lang-kotlin">0</code> when there is none.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="33488945%2FFunctions%2F2086038527" anchor-label="prevWordStart" id="33488945%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="prev-word-start.html"><span>prev</span><wbr><span>Word</span><wbr><span><span>Start</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="33488945%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="prev-word-start.html"><span class="token function">prevWordStart</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">from<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Start of the last word that begins before <a href="prev-word-start.html">from</a>; <code class="lang-kotlin">0</code> when there is none.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="844694348%2FFunctions%2F2086038527" anchor-label="startOfBlock" id="844694348%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="start-of-block.html"><span>start</span><wbr><span>Of</span><wbr><span><span>Block</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="844694348%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="start-of-block.html"><span class="token function">startOfBlock</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">block<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Linear index of the first character of block <a href="start-of-block.html">block</a>; the ordinal is clamped.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-84472219%2FFunctions%2F2086038527" anchor-label="startOfSymbol" id="-84472219%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="start-of-symbol.html"><span>start</span><wbr><span>Of</span><wbr><span><span>Symbol</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-84472219%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="start-of-symbol.html"><span class="token function">startOfSymbol</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">symbol<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Linear index in front of symbol <a href="start-of-symbol.html">symbol</a>; the ordinal is clamped.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1607878707%2FFunctions%2F2086038527" anchor-label="startOfWord" id="1607878707%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="start-of-word.html"><span>start</span><wbr><span>Of</span><wbr><span><span>Word</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1607878707%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="start-of-word.html"><span class="token function">startOfWord</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">word<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Linear index of the first character of word <a href="start-of-word.html">word</a>; the ordinal is clamped.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="417394072%2FFunctions%2F2086038527" anchor-label="styledRuns" id="417394072%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="styled-runs.html"><span>styled</span><wbr><span><span>Runs</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="417394072%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="styled-runs.html"><span class="token function">styledRuns</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">a<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">b<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="-styled-run/index.html">DocumentTextIndex.StyledRun</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Splits the selection <code class="lang-kotlin">[a, b)</code> (order-independent, clamped) into <a href="-styled-run/index.html">StyledRun</a>s so a copy can carry the per-part font (family, size, weight, slant). Separator characters that fall between parts become runs with a <code class="lang-kotlin">null</code> <a href="-styled-run/font.html">StyledRun.font</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="696729048%2FFunctions%2F2086038527" anchor-label="substring" id="696729048%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="substring.html"><span><span>substring</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="696729048%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="substring.html"><span class="token function">substring</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">a<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">b<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">The plain text between <a href="substring.html">a</a> and <a href="substring.html">b</a> (order-independent), clamped to the document bounds. Includes the separators that fall inside the range.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1927642640%2FFunctions%2F2086038527" anchor-label="wordRangeAt" id="-1927642640%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="word-range-at.html"><span>word</span><wbr><span>Range</span><wbr><span><span>At</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1927642640%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="word-range-at.html"><span class="token function">wordRangeAt</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">index<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.ranges/-int-range/index.html">IntRange</a></div><div class="brief "><p class="paragraph">The half-open range of the letters-and-digits word around <a href="word-range-at.html">index</a>, for double-click selection. Returns <code class="lang-kotlin">index..index</code> when <a href="word-range-at.html">index</a> does not sit on a word character.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <div class="footer--container">
+            <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+            <div class="footer--content">
+                <div>
+                    <span>Generated by </span>
+                    <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                        Dokka
+                    </a>
+                    <div>© 2026 Copyright</div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>DocumentImageRenderer</title>
+<link href="../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../../";</script>
+    <script>document.documentElement.classList.replace("no-js", "js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+      if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      } else {
+        const savedDarkMode = JSON.parse(storage)
+        if (savedDarkMode === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      }
+    </script>
+<script type="text/javascript" src="../../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../../styles/style.css" rel="Stylesheet">
+<link href="../../../../styles/main.css" rel="Stylesheet">
+<link href="../../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../../scripts/safe-local-storage_blocking.js"></script>
+<script type="text/javascript" src="../../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../../ui-kit/ui-kit.min.js" defer></script></head>
+<body>
+<div class="root">
+    <header class="navigation theme-dark" id="navigation-wrapper" role="banner">
+<a class="library-name--link" href="../../../../index.html" tabindex="1">
+                    simplay
+            </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">1.0-SNAPSHOT
+        </div>
+        <div class="navigation-controls">
+        <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
+                <button class="platform-tag platform-selector jvm-like" data-active="" aria-pressed="true" data-filter=":ui:swing/main">jvm</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox" aria-label="Target filter">
+                    <div class="dropdown--header"><span>Target filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close target filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":ui:swing/main" data-filter=":ui:swing/main">
+                                <span class="checkbox--icon"></span>
+                                jvm
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </ul>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button" type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </header>
+    <div id="container">
+        <nav id="leftColumn" class="sidebar" data-item-type="SECTION" data-item-config="{&quot;defaultSize&quot;: 280, &quot;minSize&quot;: 200, &quot;maxSize&quot;: 400}">
+            <a class="toc--skip-link" href="#main">Skip to content</a>
+            <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list" data-role="dropdown-listbox" aria-label="Table of contents">
+                    <div class="dropdown--header">
+                            <span>
+                                    simplay
+                            </span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                    <div class="sidebar--inner" id="sideMenu"></div>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </nav>
+        <div id="resizer" class="resizer" data-item-type="BAR"></div>
+        <div id="main" data-item-type="SECTION" role="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="swing::org.pcsoft.framework.simplay.swing/DocumentImageRenderer///PointingToDeclaration//1661789208">
+  <div class="breadcrumbs"><a href="../../index.html">swing</a><span class="delimiter">/</span><a href="../index.html">org.pcsoft.framework.simplay.swing</a><span class="delimiter">/</span><span class="current">DocumentImageRenderer</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Document</span><wbr><span>Image</span><wbr><span><span>Renderer</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">DocumentImageRenderer</a></div><p class="paragraph">Public renderer that paints one fixed <a href="../../../../engine/org.pcsoft.framework.simplay.engine.model/-document/index.html">Document</a> - whole, or a single page - onto an AWT <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/image/BufferedImage.html">BufferedImage</a> (or a caller-supplied <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/Graphics2D.html">Graphics2D</a>). The Swing counterpart of the <code class="lang-kotlin">fx</code> module's <code class="lang-kotlin">CanvasDocumentRenderer</code>.</p><p class="paragraph">The document is bound at creation through the <a href="-companion/of.html">of</a> factory, so measuring and the whole layout (sizes, page origins, page-break positions) are computed once, up front:</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">val renderer = DocumentImageRenderer.of(document) {<br>    unitScale = 1.5<br>    pageGap = 16.0<br>    lineBreakerStrategy = NoWrapLineBreakerStrategy<br>}<br>val image = renderer.renderDocument()<br>val firstPageSize = renderer.pageImageSizes[0]</code></pre><span class="copy-tooltip"><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div><span class="copy-icon"></span></span></div><p class="paragraph">Pages are stacked vertically, one <a href="../-image-render-configuration/page-gap.html">ImageRenderConfiguration.pageGap</a> apart, and every page boundary is marked with a dashed line drawn in the middle of the gap. Every layout coordinate and the resulting image size are multiplied by <a href="../-image-render-configuration/unit-scale.html">ImageRenderConfiguration.unitScale</a>.</p><p class="paragraph">The instance is immutable and single-document; it is not thread-safe. The produced images are <code class="lang-kotlin">TYPE_INT_ARGB</code> with a transparent background.</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="TYPE">
+        <h2 class="tableheader">Types</h2>
+        <div class="table"><a data-name="1796024987%2FClasslikes%2F1661789208" anchor-label="Companion" id="1796024987%2FClasslikes%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-companion/index.html"><span><span>Companion</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1796024987%2FClasslikes%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-companion/index.html">Companion</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-716669739%2FClasslikes%2F1661789208" anchor-label="PageImageSizes" id="-716669739%2FClasslikes%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-page-image-sizes/index.html"><span>Page</span><wbr><span>Image</span><wbr><span><span>Sizes</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-716669739%2FClasslikes%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">inner </span><span class="token keyword">class </span><a href="-page-image-sizes/index.html">PageImageSizes</a></div><div class="brief "><p class="paragraph">Index-addressable view of the per-page image sizes. Obtained from <a href="page-image-sizes.html">DocumentImageRenderer.pageImageSizes</a>, used as <code class="lang-kotlin">pageImageSizes[pageIndex]</code>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="tableheader">Properties</h2>
+        <div class="table"><a data-name="741012563%2FProperties%2F1661789208" anchor-label="documentImageSize" id="741012563%2FProperties%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="document-image-size.html"><span>document</span><wbr><span>Image</span><wbr><span><span>Size</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="741012563%2FProperties%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="document-image-size.html">documentImageSize</a><span class="token operator">: </span><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/Dimension.html">Dimension</a></div><div class="brief "><p class="paragraph">The image size <a href="render-document.html">renderDocument</a> needs, already scaled by <a href="../-image-render-configuration/unit-scale.html">ImageRenderConfiguration.unitScale</a> and rounded up. An empty document yields <code class="lang-kotlin">0 x 0</code>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-132034156%2FProperties%2F1661789208" anchor-label="pageCount" id="-132034156%2FProperties%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="page-count.html"><span>page</span><wbr><span><span>Count</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-132034156%2FProperties%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="page-count.html">pageCount</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">The number of pages the bound document measures to, after flow continuation and growth.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2087887712%2FProperties%2F1661789208" anchor-label="pageImageSizes" id="2087887712%2FProperties%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="page-image-sizes.html"><span>page</span><wbr><span>Image</span><wbr><span><span>Sizes</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2087887712%2FProperties%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="page-image-sizes.html">pageImageSizes</a><span class="token operator">: </span><a href="-page-image-sizes/index.html">DocumentImageRenderer.PageImageSizes</a></div><div class="brief "><p class="paragraph">The per-page image sizes, addressed by page index: <code class="lang-kotlin">renderer.pageImageSizes[pageIndex]</code>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="tableheader">Functions</h2>
+        <div class="table"><a data-name="1310094475%2FFunctions%2F1661789208" anchor-label="renderDocument" id="1310094475%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="render-document.html"><span>render</span><wbr><span><span>Document</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1310094475%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="render-document.html"><span class="token function">renderDocument</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/image/BufferedImage.html">BufferedImage</a></div><div class="brief "><p class="paragraph">Draws every page of the bound document onto a new <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/image/BufferedImage.html">BufferedImage</a> of exactly the required size (<a href="document-image-size.html">documentImageSize</a>).</p></div><div class="symbol monospace"><span class="token keyword">fun </span><a href="render-document.html"><span class="token function">renderDocument</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">g<span class="token operator">: </span><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/Graphics2D.html">Graphics2D</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Draws every page of the bound document onto <a href="render-document.html">g</a>. <a href="render-document.html">g</a> is scaled by <a href="../-image-render-configuration/unit-scale.html">ImageRenderConfiguration.unitScale</a> internally; the caller only positions the origin.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1828240828%2FFunctions%2F1661789208" anchor-label="renderPage" id="1828240828%2FFunctions%2F1661789208" data-filterable-set=":ui:swing/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:swing/main" data-filterable-set=":ui:swing/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="render-page.html"><span>render</span><wbr><span><span>Page</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1828240828%2FFunctions%2F1661789208"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:swing/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="render-page.html"><span class="token function">renderPage</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">pageIndex<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/image/BufferedImage.html">BufferedImage</a></div><div class="brief "><p class="paragraph">Draws exactly the page at <a href="render-page.html">pageIndex</a> onto a new <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/image/BufferedImage.html">BufferedImage</a>, with its top at the image origin.</p></div><div class="symbol monospace"><span class="token keyword">fun </span><a href="render-page.html"><span class="token function">renderPage</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">pageIndex<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">g<span class="token operator">: </span><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.desktop/java/awt/Graphics2D.html">Graphics2D</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Draws exactly the page at <a href="render-page.html">pageIndex</a> onto <a href="render-page.html">g</a>, with its top at the current origin. <a href="render-page.html">g</a> is scaled by <a href="../-image-render-configuration/unit-scale.html">ImageRenderConfiguration.unitScale</a> internally.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <div class="footer--container">
+            <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+            <div class="footer--content">
+                <div>
+                    <span>Generated by </span>
+                    <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                        Dokka
+                    </a>
+                    <div>© 2026 Copyright</div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
