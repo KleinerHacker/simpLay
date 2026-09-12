@@ -75,6 +75,8 @@ internal class PaperSheetEditor(
             KeyEvent.VK_RIGHT -> if (shortcut) caret.moveWordRight(shift) else caret.moveHorizontal(1, shift)
             KeyEvent.VK_UP -> caret.moveVertical(-1, shift)
             KeyEvent.VK_DOWN -> caret.moveVertical(1, shift)
+            KeyEvent.VK_PAGE_UP -> caret.movePage(-1, shift)
+            KeyEvent.VK_PAGE_DOWN -> caret.movePage(1, shift)
             KeyEvent.VK_HOME -> if (shortcut) caret.moveDocStart(shift) else caret.moveLineStart(shift)
             KeyEvent.VK_END -> if (shortcut) caret.moveDocEnd(shift) else caret.moveLineEnd(shift)
             KeyEvent.VK_BACK_SPACE -> if (editable) backspace() else return

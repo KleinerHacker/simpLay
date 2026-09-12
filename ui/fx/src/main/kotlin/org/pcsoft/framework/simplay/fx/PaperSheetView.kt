@@ -536,6 +536,8 @@ class PaperSheetView : Control() {
         fun moveToPrevBlock()
         fun moveToNextSymbol()
         fun moveToPrevSymbol()
+        fun moveToNextPage()
+        fun moveToPrevPage()
     }
 
     private var caretCommands: CaretCommands? = null

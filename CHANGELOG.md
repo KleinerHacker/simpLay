@@ -36,6 +36,10 @@ excluded.
   reloaded from outside, but is left untouched by an edit.
   `FloatingOverlayEvent` now reports
   `pageDeactivated` so a registered overlay can react to a page's override.
+- `ui/fx` and `ui/swing`: `Page Up` / `Page Down` move the caret to the
+  previous / next navigable page, keeping its line and column instead of a
+  linear offset, optionally with `Shift` to extend the selection. The caret
+  model gained the matching `moveToNextPage()` / `moveToPrevPage()` commands.
 
 ### Changed
 

@@ -75,4 +75,18 @@ internal object TestDocuments {
             FlowPage(layout = layout, blocks = listOf(TextBlock.of("Page two content here.", body))),
         ),
     )
+
+    /**
+     * A three-raw-page document for the Page-Up / Page-Down tests: the first two pages have five
+     * single-line paragraphs each (equal line counts, for the relative-line and wish-x checks), the
+     * third only two (fewer lines, for the last-line clamping check). Every paragraph is short enough
+     * to never wrap at [layout]'s width.
+     */
+    val variableLinePages: Document = Document(
+        pages = listOf(
+            FlowPage(layout = layout, blocks = (1..5).map { TextBlock.of("Page one line $it.", body) }),
+            FlowPage(layout = layout, blocks = (1..5).map { TextBlock.of("Page two line $it.", body) }),
+            FlowPage(layout = layout, blocks = (1..2).map { TextBlock.of("Page three line $it.", body) }),
+        ),
+    )
 }

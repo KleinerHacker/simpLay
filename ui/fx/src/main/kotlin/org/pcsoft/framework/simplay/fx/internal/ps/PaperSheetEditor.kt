@@ -79,6 +79,8 @@ internal class PaperSheetEditor(
             KeyCode.RIGHT -> if (shortcut) caret.moveWordRight(shift) else caret.moveHorizontal(1, shift)
             KeyCode.UP -> caret.moveVertical(-1, shift)
             KeyCode.DOWN -> caret.moveVertical(1, shift)
+            KeyCode.PAGE_UP -> caret.movePage(-1, shift)
+            KeyCode.PAGE_DOWN -> caret.movePage(1, shift)
             KeyCode.HOME -> if (shortcut) caret.moveDocStart(shift) else caret.moveLineStart(shift)
             KeyCode.END -> if (shortcut) caret.moveDocEnd(shift) else caret.moveLineEnd(shift)
             KeyCode.BACK_SPACE -> if (editable) backspace() else return

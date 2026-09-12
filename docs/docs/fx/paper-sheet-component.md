@@ -172,7 +172,9 @@ and moves it; in the other modes every move command is a no-op:
   ordinal and offset is clamped into range.
 * **Relative structural commands** from the current position:
   `moveToNextWord()` / `moveToPrevWord()` and the block / symbol siblings; they
-  stop at the document bounds.
+  stop at the document bounds. `moveToNextPage()` / `moveToPrevPage()` jump a
+  whole page, keeping the caret's line ordinal on the target page (clamped to
+  its last line) instead of a linear offset.
 
 A command issued before the view has rendered once is applied as soon as its skin
 is attached.
@@ -193,6 +195,7 @@ with any caret-navigation key to extend the selection instead of moving.
 | `Up` / `Down` | Move caret one line | `EDITABLE` |
 | `Home` / `End` | Move caret to line start / end | `EDITABLE` |
 | `Ctrl+Home` / `Ctrl+End` | Move caret to document start / end | `EDITABLE` |
+| `Page Up` / `Page Down` | Move caret one page, keeping its line and column | `EDITABLE` |
 | `Backspace` | Delete the character before the caret, or the selection | `EDITABLE` |
 | `Delete` | Delete the character after the caret, or the selection | `EDITABLE` |
 | Printable key | Insert the character at the caret | `EDITABLE` |

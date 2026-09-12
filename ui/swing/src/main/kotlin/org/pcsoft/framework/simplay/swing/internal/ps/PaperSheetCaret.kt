@@ -275,6 +275,15 @@ internal class PaperSheetCaret(
     private fun navigableLines(idx: DocumentTextIndex): List<MeasuredLine> =
         idx.segments.filter { isPageNavigable(it.page.raw.id) }.map { it.line }.distinct()
 
+    /** The navigable measured-page indices, in reading order: every page whose effective [PageMode]
+     * allows the caret to enter it. */
+    private fun navigablePageIndices(idx: DocumentTextIndex): List<Int> =
+        idx.segments.filter { isPageNavigable(it.page.raw.id) }.map { it.pageIndex }.distinct().sorted()
+
+    /** The measured lines of page [pageIndex], in reading order. */
+    private fun linesOfPage(idx: DocumentTextIndex, pageIndex: Int): List<MeasuredLine> =
+        idx.segments.filter { it.pageIndex == pageIndex }.map { it.line }.distinct()
+
     private fun currentSeg(): DocumentTextIndex.Segment? {
         val idx = textIndex() ?: return null
         if (idx.segments.isEmpty()) return null
@@ -370,6 +379,53 @@ internal class PaperSheetCaret(
         }
     }
 
+    /**
+     * Moves the caret to the previous ([delta] `< 0`) or next ([delta] `> 0`) navigable page, at the
+     * same line ordinal it held on the source page (clamped to the target page's last line) and the
+     * same wish-x a vertical move would keep. Stops - does not wrap - at the first/last navigable
+     * page, so repeated calls reach every navigable page in order.
+     */
+    fun movePage(delta: Int, extend: Boolean) {
+        val idx = textIndex() ?: return
+        val seg = currentSeg() ?: return
+        val pages = navigablePageIndices(idx).ifEmpty { idx.segments.map { it.pageIndex }.distinct().sorted() }
+        val pi = pages.indexOf(seg.pageIndex).takeIf { it >= 0 } ?: nearestNavigablePage(pages, seg, delta)
+        val target = pi + delta
+        if (pi < 0 || target !in pages.indices) return
+        if (desiredX == null) desiredX = geom(position)?.xContent ?: 0.0
+        val dx = desiredX!!
+
+        val sourceLines = linesOfPage(idx, seg.pageIndex)
+        val lineOrdinal = sourceLines.indexOf(seg.line).let { if (it >= 0) it else 0 }
+
+        val targetLines = linesOfPage(idx, pages[target])
+        if (targetLines.isEmpty()) return
+        val targetLine = targetLines[lineOrdinal.coerceIn(0, targetLines.lastIndex)]
+
+        val lineSegs = idx.segments.filter { it.line === targetLine }
+        if (lineSegs.isEmpty()) return
+        val partSeg = lineSegs.minByOrNull { s ->
+            val b = s.part.bounds
+            when {
+                dx < b.x -> b.x - dx
+                dx > b.x + b.width -> dx - b.x - b.width
+                else -> 0.0
+            }
+        } ?: return
+        val off = hitTest(partSeg.part, partSeg.font, dx, measurer).coerceIn(0, partSeg.part.text.length)
+        setCaret(partSeg.start + off, extend, keepDesiredX = true)
+    }
+
+    /**
+     * The [pages] index a page move starts from when the caret sits on a page it may not enter: the
+     * last navigable page before it for a forward move, the first one after it for a backward move;
+     * `-1` when there is none.
+     */
+    private fun nearestNavigablePage(pages: List<Int>, seg: DocumentTextIndex.Segment, delta: Int): Int {
+        val current = seg.pageIndex
+        return if (delta >= 0) pages.indexOfLast { it < current } else pages.indexOfFirst { it > current }
+    }
+
     //endregion
 
     //region CaretModel.Commands (public model commands)
@@ -394,6 +450,8 @@ internal class PaperSheetCaret(
     override fun moveToPrevBlock() = go(textIndex()?.prevBlockStart(position) ?: position)
     override fun moveToNextSymbol() = go(textIndex()?.nextSymbolStart(position) ?: position)
     override fun moveToPrevSymbol() = go(textIndex()?.prevSymbolStart(position) ?: position)
+    override fun moveToNextPage() = movePage(1, extend = false)
+    override fun moveToPrevPage() = movePage(-1, extend = false)
 
     //endregion
 

@@ -115,7 +115,9 @@ view:
   `moveIntoBlock` / `moveToStartOfBlock` / `moveToEndOfBlock` and the `Word` /
   `Symbol` siblings.
 * Relative structural commands from the current position: `moveToNextWord` /
-  `moveToPrevWord` and the `Block` / `Symbol` siblings.
+  `moveToPrevWord` and the `Block` / `Symbol` siblings. `moveToNextPage` /
+  `moveToPrevPage` jump a whole page, keeping the caret's line ordinal on the
+  target page (clamped to its last line) instead of a linear offset.
 
 A command issued before the component has its UI delegate is applied once the
 delegate is attached.
@@ -130,6 +132,7 @@ delegate is attached.
 | `Ctrl+V` | Paste plain text at the caret / over the selection (editable). |
 | `Ctrl+D` | Duplicate the selection, or the caret line when the selection is empty (editable). |
 | arrows, `Home`, `End`, `Ctrl+Home`, `Ctrl+End`, `Ctrl+Left`, `Ctrl+Right` | Caret navigation, optionally with `Shift` to extend the selection (editable). |
+| `Page Up` / `Page Down` | Move the caret one page, keeping its line and column, optionally with `Shift` to extend the selection (editable). |
 | `Backspace`, `Delete` | Delete backward / forward, or the selection (editable). |
 | typing | Insert the character at the caret, replacing the selection (editable). |
 
