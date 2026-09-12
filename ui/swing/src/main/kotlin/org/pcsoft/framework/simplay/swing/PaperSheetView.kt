@@ -370,6 +370,66 @@ open class PaperSheetView : JComponent() {
 
     //endregion
 
+    //region Scroll
+
+    /**
+     * Sink for the scroll commands, implemented and registered by the UI delegate. Unlike
+     * [CaretModel.Commands], never gated by [anyCaret] or [mode]: scrolling is a pure viewport
+     * operation, available in every [PaperSheetMode] including [PaperSheetMode.STATIC].
+     */
+    internal interface ScrollCommands {
+        fun scrollToPage(page: Int)
+        fun scrollToBlock(block: Int)
+        fun scrollToWord(word: Int)
+        fun scrollToSymbol(symbol: Int)
+    }
+
+    private var scrollCommands: ScrollCommands? = null
+    private var pendingScrollCommand: (ScrollCommands.() -> Unit)? = null
+
+    internal fun registerScrollCommands(commands: ScrollCommands) {
+        scrollCommands = commands
+        pendingScrollCommand?.let { pending ->
+            pendingScrollCommand = null
+            commands.pending()
+        }
+    }
+
+    internal fun unregisterScrollCommands(commands: ScrollCommands) {
+        if (scrollCommands === commands) scrollCommands = null
+    }
+
+    private fun requestScroll(block: ScrollCommands.() -> Unit) {
+        val commands = scrollCommands
+        if (commands != null) commands.block() else pendingScrollCommand = block
+    }
+
+    /**
+     * Scrolls the viewport so page [page]'s top edge aligns with the viewport top; clamped into
+     * range, a no-op without a document. Works in every [mode], unlike the caret commands.
+     */
+    fun scrollToPage(page: Int) = requestScroll { scrollToPage(page) }
+
+    /**
+     * Scrolls the viewport to the top line of block (paragraph) [block]; clamped into range, a no-op
+     * without a document. Works in every [mode], unlike the caret commands.
+     */
+    fun scrollToBlock(block: Int) = requestScroll { scrollToBlock(block) }
+
+    /**
+     * Scrolls the viewport to the top line of word [word]; clamped into range, a no-op without a
+     * document. Works in every [mode], unlike the caret commands.
+     */
+    fun scrollToWord(word: Int) = requestScroll { scrollToWord(word) }
+
+    /**
+     * Scrolls the viewport to the top line of symbol (character) [symbol]; clamped into range, a
+     * no-op without a document. Works in every [mode], unlike the caret commands.
+     */
+    fun scrollToSymbol(symbol: Int) = requestScroll { scrollToSymbol(symbol) }
+
+    //endregion
+
     //region Hover (read-only)
 
     var hoveredParagraph: Int = -1

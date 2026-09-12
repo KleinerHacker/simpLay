@@ -122,6 +122,22 @@ view:
 A command issued before the component has its UI delegate is applied once the
 delegate is attached.
 
+## Scrolling
+
+Four commands scroll the viewport directly, addressing the document the same way
+the caret model's structural commands do - but, unlike the caret model, they work
+in **every** `PaperSheetMode`, including `STATIC` and `SELECTABLE`, since scrolling
+never touches the caret or the selection:
+
+* `scrollToPage(page)` - the page's top edge aligns with the viewport top.
+* `scrollToBlock(block)` - the top line of block (paragraph) `block`.
+* `scrollToWord(word)` - the top line containing word `word`.
+* `scrollToSymbol(symbol)` - the top line containing symbol (character) `symbol`.
+
+Every ordinal and page index is clamped into range. A command issued before the
+component has its UI delegate is applied once the delegate is attached, exactly
+like the caret model's commands.
+
 ## Keyboard
 
 | Shortcut | Action |

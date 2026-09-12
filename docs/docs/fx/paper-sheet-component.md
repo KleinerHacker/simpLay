@@ -179,6 +179,22 @@ and moves it; in the other modes every move command is a no-op:
 A command issued before the view has rendered once is applied as soon as its skin
 is attached.
 
+## Scrolling
+
+Four commands scroll the viewport directly, addressing the document the same way
+the caret model's structural commands do - but, unlike the caret model, they work
+in **every** `PaperSheetMode`, including `STATIC` and `SELECTABLE`, since scrolling
+never touches the caret or the selection:
+
+* `scrollToPage(page)` - the page's top edge aligns with the viewport top.
+* `scrollToBlock(block)` - the top line of block (paragraph) `block`.
+* `scrollToWord(word)` - the top line containing word `word`.
+* `scrollToSymbol(symbol)` - the top line containing symbol (character) `symbol`.
+
+Every ordinal and page index is clamped into range. A command issued before the
+view has rendered once is applied as soon as its skin is attached, exactly like
+the caret model's commands.
+
 ## Shortcuts
 
 `Ctrl` is the shortcut key on Windows and Linux, `Cmd` on macOS. Hold `Shift`

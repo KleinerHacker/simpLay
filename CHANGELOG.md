@@ -40,6 +40,11 @@ excluded.
   previous / next navigable page, keeping its line and column instead of a
   linear offset, optionally with `Shift` to extend the selection. The caret
   model gained the matching `moveToNextPage()` / `moveToPrevPage()` commands.
+- `ui/fx` and `ui/swing`: `PaperSheetView` gained four scroll commands -
+  `scrollToPage(page)`, `scrollToBlock(block)`, `scrollToWord(word)` and
+  `scrollToSymbol(symbol)` - that move the viewport to a page, paragraph, word
+  or character. Unlike the caret commands, they work in every `PaperSheetMode`,
+  including `STATIC` and `SELECTABLE`, and never touch the caret or selection.
 
 ### Changed
 
