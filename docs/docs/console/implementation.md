@@ -8,8 +8,8 @@ used on every target the `engine` supports.
 
 ```kotlin
 dependencies {
-    implementation("org.pcsoft.framework:simplay-engine:<version>")
-    implementation("org.pcsoft.framework:simplay-console:<version>")
+    implementation("org.pcsoft.framework:simplay-engine:0.3.0")
+    implementation("org.pcsoft.framework:simplay-console:0.3.0")
 }
 ```
 

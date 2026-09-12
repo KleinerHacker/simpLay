@@ -7,8 +7,8 @@ The `export/jvm-pdf` module exports the output of a running simulation from the
 
 ```kotlin
 dependencies {
-    implementation("org.pcsoft.framework:simplay-engine:<version>")
-    implementation("org.pcsoft.framework:simplay-jvm-pdf:<version>")
+    implementation("org.pcsoft.framework:simplay-engine:0.3.0")
+    implementation("org.pcsoft.framework:simplay-jvm-pdf:0.3.0")
 }
 ```
 

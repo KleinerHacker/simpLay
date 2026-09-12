@@ -1,9 +1,9 @@
 # simpLay
 
 simpLay is a Kotlin framework for building simulations. The core is a Kotlin
-Multiplatform engine; a Kotlin Multiplatform module adds console output and
-dedicated JVM modules add integrations for JavaFX, Swing, PDF export and
-printing.
+Multiplatform engine; dedicated JVM modules add integrations for JavaFX and
+Swing. A Kotlin Multiplatform module for console output and dedicated JVM
+modules for PDF export and printing are planned.
 
 This documentation covers how to consume and interact with the public API of the
 framework. For checkout, build and contribution instructions see the project
@@ -13,9 +13,10 @@ framework. For checkout, build and contribution instructions see the project
 
 `simpLay` provides a platform-independent simulation core (`engine`) and two
 groups of integration modules: user-interface bindings under `ui/`
-(`ui/common`, `ui/fx`, `ui/swing`, `ui/console`) and output-format bindings under
-`export/` (`export/jvm-pdf`, `export/jvm-print`). Every module is published as a
-separate artifact and can be added independently.
+(`ui/common`, `ui/fx`, `ui/swing`, plus the planned `ui/console`) and
+output-format bindings under `export/` (the planned `export/jvm-pdf` and
+`export/jvm-print`). Every module is published as a separate artifact and can
+be added independently.
 
 ## AI disclosure
 

@@ -7,8 +7,8 @@ interface.
 
 ```kotlin
 dependencies {
-    implementation("org.pcsoft.framework:simplay-engine:<version>")
-    implementation("org.pcsoft.framework:simplay-fx:<version>")
+    implementation("org.pcsoft.framework:simplay-engine:0.3.0")
+    implementation("org.pcsoft.framework:simplay-fx:0.3.0")
 }
 ```
 

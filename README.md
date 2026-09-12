@@ -59,8 +59,8 @@ development use `./gradlew publishToMavenLocal`.
 
 ```kotlin
 dependencies {
-    implementation("org.pcsoft.framework:simplay-engine:<version>")
-    implementation("org.pcsoft.framework:simplay-fx:<version>")
+    implementation("org.pcsoft.framework:simplay-engine:0.3.0")
+    implementation("org.pcsoft.framework:simplay-fx:0.3.0")
 }
 ```
 
@@ -105,15 +105,22 @@ Build tasks relevant for consumers and maintainers:
   shared by `ui/fx` and `ui/swing`
 * [x] JavaFX integration (`ui/fx`): `CanvasDocumentRenderer` (whole-document and
   single-page canvas rendering) and `PaperSheetView` - a scrollable, zoomable
-  paper-sheet control with mouse text selection, in-place editing, FXML-compatible
-  floating overlays and JavaFX CSS styling, plus `FxFontProbe` (font availability
-  and fingerprint checks against the JavaFX text stack) - plus the `ui/fx` user
-  documentation
+  paper-sheet control with four interaction levels (`PaperSheetMode.STATIC` /
+  `SELECTABLE` / `NAVIGABLE` / `EDITABLE`, overridable per page through
+  `pageModes`), mouse text selection, in-place editing with insert/overwrite
+  `caretMode`, `Page Up` / `Page Down` and `scrollTo*` navigation, `Ctrl+A`
+  select-all, `onType` and `onMouseEvent` events, automatic page-number
+  drawing, FXML-compatible floating overlays and JavaFX CSS styling, plus
+  `FxFontProbe` (font availability and fingerprint checks against the JavaFX
+  text stack) - plus the `ui/fx` user documentation
 * [ ] PDF export integration (`export/jvm-pdf`)
 * [ ] Printing integration (`export/jvm-print`)
 * [x] Swing integration (`ui/swing`): `DocumentImageRenderer` (whole-document and
   single-page `BufferedImage` rendering) and `PaperSheetView` - a scrollable,
-  zoomable paper-sheet `JComponent` with mouse text selection, in-place editing,
-  floating overlays and Look-and-Feel styling, plus `SwingFontProbe` (font
-  availability and fingerprint checks against the AWT text stack) - plus the
-  `ui/swing` user documentation
+  zoomable paper-sheet `JComponent` with the same four interaction levels,
+  per-page `pageModes` overrides, mouse text selection, in-place editing with
+  insert/overwrite `caretMode`, `Page Up` / `Page Down` and `scrollTo*`
+  navigation, `Ctrl+A` select-all, `onType` and `onMouseEvent` events,
+  automatic page-number drawing, floating overlays and Look-and-Feel styling,
+  plus `SwingFontProbe` (font availability and fingerprint checks against the
+  AWT text stack) - plus the `ui/swing` user documentation

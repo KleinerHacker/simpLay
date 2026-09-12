@@ -7,8 +7,8 @@ core to a printer.
 
 ```kotlin
 dependencies {
-    implementation("org.pcsoft.framework:simplay-engine:<version>")
-    implementation("org.pcsoft.framework:simplay-jvm-print:<version>")
+    implementation("org.pcsoft.framework:simplay-engine:0.3.0")
+    implementation("org.pcsoft.framework:simplay-jvm-print:0.3.0")
 }
 ```
 

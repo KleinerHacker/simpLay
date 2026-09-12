@@ -12,6 +12,8 @@ excluded.
 
 ## [UNRELEASED]
 
+## [0.3.0]
+
 ### Added
 
 - `engine`: page numbering. `Document.numbering: PageNumbering` (default off)
