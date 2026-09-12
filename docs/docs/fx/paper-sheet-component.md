@@ -195,6 +195,17 @@ Every ordinal and page index is clamped into range. A command issued before the
 view has rendered once is applied as soon as its skin is attached, exactly like
 the caret model's commands.
 
+## Insert / overwrite typing mode
+
+`caretMode` (`CaretMode`, `INSERT` by default) switches whether typing inserts
+characters at the caret or overwrites the one already there, up to the end of
+the current line (falling back to a plain insert at the line end). It is
+toggled by the `Insert` key but also freely readable and settable from
+outside; `CaretMode.OVERWRITE` is shown with a filled block cursor - the width
+of the character about to be overwritten - instead of the thin line, and
+reflected as the `:overwrite` CSS pseudo-class (see [Styling](styling.md)),
+independent of and combinable with the mode pseudo-classes.
+
 ## Shortcuts
 
 `Ctrl` is the shortcut key on Windows and Linux, `Cmd` on macOS. Hold `Shift`
@@ -214,6 +225,7 @@ with any caret-navigation key to extend the selection instead of moving.
 | `Page Up` / `Page Down` | Move caret one page, keeping its line and column | `EDITABLE` |
 | `Backspace` | Delete the character before the caret, or the selection | `EDITABLE` |
 | `Delete` | Delete the character after the caret, or the selection | `EDITABLE` |
+| `Insert` | Toggle insert / overwrite typing mode (overwrite shows a block cursor) | `EDITABLE` |
 | Printable key | Insert the character at the caret | `EDITABLE` |
 
 Dragging with the mouse inside an existing selection box moves the selected text;

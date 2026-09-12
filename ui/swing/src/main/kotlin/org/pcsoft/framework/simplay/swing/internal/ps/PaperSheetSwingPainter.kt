@@ -29,11 +29,25 @@ import org.pcsoft.framework.simplay.swing.internal.SwingFontMeasureCalculator
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 import org.pcsoft.framework.simplay.uicommon.segmentSpanX
 
+/** How the caret is painted: a thin line before its character, or a filled block over it. */
+internal enum class CaretShape {
+    LINE,
+    BLOCK,
+}
+
 /**
  * The caret rectangle to paint on a page, in that page's content-area coordinates. Swing counterpart
- * of the `fx` module's `CaretPaint`.
+ * of the `fx` module's `CaretPaint`. [position] is the caret's linear text index, used by
+ * [CaretShape.BLOCK] to measure the character about to be overwritten.
  */
-internal class CaretPaint(val pageIndex: Int, val x: Double, val y: Double, val height: Double)
+internal class CaretPaint(
+    val pageIndex: Int,
+    val x: Double,
+    val y: Double,
+    val height: Double,
+    val position: Int,
+    val shape: CaretShape,
+)
 
 /**
  * The pure viewport painting of `BasicPaperSheetUI`: given the measured document, the pre-computed
@@ -127,7 +141,10 @@ internal class PaperSheetSwingPainter {
                     numberingStyle = measured.raw.numbering.textStyle,
                 )
                 if (caret != null && caretOpacity > 0.0 && caret.pageIndex == i && !disabled) {
-                    drawCaretOnPage(g, page, caret, originX, originY, caretOpacity.coerceIn(0.0, 1.0), style.caretColor)
+                    drawCaretOnPage(
+                        g, page, caret, originX, originY, caretOpacity.coerceIn(0.0, 1.0), style.caretColor,
+                        index, fonts,
+                    )
                     caretDrawCount = 1
                 }
             }
@@ -226,6 +243,11 @@ internal class PaperSheetSwingPainter {
         g.paint = savedPaint
     }
 
+    /**
+     * Draws [caret]: a thin stroked line for [CaretShape.LINE], or a filled block the width of the
+     * character at [CaretPaint.position] for [CaretShape.BLOCK] (falling back to the line when that
+     * character can't be measured, e.g. the caret sits at the very end of its line).
+     */
     private fun drawCaretOnPage(
         g: Graphics2D,
         page: MeasuredPage,
@@ -234,20 +256,39 @@ internal class PaperSheetSwingPainter {
         originY: Double,
         alpha: Double,
         caretColor: Color,
+        index: DocumentTextIndex?,
+        fonts: SwingFontMeasureCalculator,
     ) {
         val contentArea = page.contentArea
         val x = originX + contentArea.x + caret.x
         val yTop = originY + contentArea.y + caret.y
+        val blockWidth = if (caret.shape == CaretShape.BLOCK) blockWidthAt(index, caret.position, fonts) else null
         val savedPaint = g.paint
         val savedStroke = g.stroke
         val savedComposite = g.composite
         g.composite = java.awt.AlphaComposite.getInstance(java.awt.AlphaComposite.SRC_OVER, alpha.toFloat())
         g.paint = caretColor
-        g.stroke = BasicStroke(PaperSheetStyle.CARET_WIDTH)
-        g.draw(Line2D.Double(x, yTop, x, yTop + caret.height))
+        if (blockWidth != null) {
+            g.fill(Rectangle2D.Double(x, yTop, blockWidth, caret.height))
+        } else {
+            g.stroke = BasicStroke(PaperSheetStyle.CARET_WIDTH)
+            g.draw(Line2D.Double(x, yTop, x, yTop + caret.height))
+        }
         g.composite = savedComposite
         g.paint = savedPaint
         g.stroke = savedStroke
+    }
+
+    /** Width of the character at [ci], or `null` when there is none there (e.g. end of the line). */
+    private fun blockWidthAt(index: DocumentTextIndex?, ci: Int, fonts: SwingFontMeasureCalculator): Double? {
+        val idx = index ?: return null
+        if (idx.segments.isEmpty()) return null
+        val c = ci.coerceIn(0, idx.length)
+        val seg = idx.segments.lastOrNull { it.start <= c && c <= it.end }
+            ?: idx.segments.firstOrNull { it.start >= c }
+            ?: idx.segments.last()
+        val (x0, x1) = segmentSpanX(seg, c, c + 1, fonts)
+        return (x1 - x0).takeIf { it > 0.0 }
     }
 
     private companion object {

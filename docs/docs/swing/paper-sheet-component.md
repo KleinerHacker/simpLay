@@ -138,6 +138,15 @@ Every ordinal and page index is clamped into range. A command issued before the
 component has its UI delegate is applied once the delegate is attached, exactly
 like the caret model's commands.
 
+## Insert / overwrite typing mode
+
+`caretMode` (`CaretMode`, `INSERT` by default) switches whether typing inserts
+characters at the caret or overwrites the one already there, up to the end of
+the current line (falling back to a plain insert at the line end). It is
+toggled by the `Insert` key but also freely readable and settable from
+outside; `CaretMode.OVERWRITE` is shown with a filled block cursor - the width
+of the character about to be overwritten - instead of the thin line.
+
 ## Keyboard
 
 | Shortcut | Action |
@@ -150,6 +159,7 @@ like the caret model's commands.
 | arrows, `Home`, `End`, `Ctrl+Home`, `Ctrl+End`, `Ctrl+Left`, `Ctrl+Right` | Caret navigation, optionally with `Shift` to extend the selection (editable). |
 | `Page Up` / `Page Down` | Move the caret one page, keeping its line and column, optionally with `Shift` to extend the selection (editable). |
 | `Backspace`, `Delete` | Delete backward / forward, or the selection (editable). |
+| `Insert` | Toggle insert / overwrite typing mode (overwrite shows a block cursor) (editable). |
 | typing | Insert the character at the caret, replacing the selection (editable). |
 
 Dragging an existing selection with the mouse moves it; holding the copy

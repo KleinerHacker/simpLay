@@ -26,10 +26,11 @@ import org.pcsoft.framework.simplay.uicommon.EditableRegions
 
 /**
  * The editable-mode input controller of a [PaperSheetView]: the keyboard shortcuts (character
- * typing, `Backspace` / `Delete`, `Ctrl+C` / `Ctrl+V` / `Ctrl+X` / `Ctrl+D`, the caret-navigation
- * keys) and the text mutations they trigger, plus drag-and-drop of the selection. Every mutation
- * runs through [DocumentEditor] and replaces [PaperSheetView.document] with the rebuilt document;
- * [PaperSheetCaret.onEditApplied] then restores the caret.
+ * typing, `Backspace` / `Delete`, `Insert` (insert/overwrite typing mode), `Ctrl+C` / `Ctrl+V` /
+ * `Ctrl+X` / `Ctrl+D`, the caret-navigation keys) and the text mutations they trigger, plus
+ * drag-and-drop of the selection. Every mutation runs through [DocumentEditor] and replaces
+ * [PaperSheetView.document] with the rebuilt document; [PaperSheetCaret.onEditApplied] then restores
+ * the caret.
  *
  * A per-view helper the skin creates once and routes key events and selection drops to. The text
  * index is read through [textIndex]; navigation keys are delegated to [caret], clipboard text to
@@ -85,6 +86,7 @@ internal class PaperSheetEditor(
             KeyCode.END -> if (shortcut) caret.moveDocEnd(shift) else caret.moveLineEnd(shift)
             KeyCode.BACK_SPACE -> if (editable) backspace() else return
             KeyCode.DELETE -> if (editable) deleteForward() else return
+            KeyCode.INSERT -> if (editable) caret.toggleCaretMode() else return
             KeyCode.V -> if (shortcut && editable) paste() else return
             KeyCode.X -> if (shortcut && editable) cut() else return
             KeyCode.D -> if (shortcut && editable) duplicate() else return
@@ -130,14 +132,27 @@ internal class PaperSheetEditor(
         view.requestLayout()
     }
 
-    /** Inserts [text] at the caret, replacing the selection if there is one. */
+    /**
+     * Inserts [text] at the caret, replacing the selection if there is one. Without a selection and in
+     * [PaperSheetCaret.isOverwriteMode], replaces up to `text.length` characters starting at the caret
+     * instead, never crossing past the end of the caret's current line - at the end of the line this
+     * falls back to a plain insert, exactly like insert mode.
+     */
     fun typeText(text: String) {
         if (!editable || text.isEmpty()) return
         if (!selection.isEmpty) {
             applyEdit(selection.start, selection.end) { i, d -> DocumentEditor.replace(i, d, selection.start, selection.end, text) }
-        } else {
-            applyEdit(caret.position, caret.position) { i, d -> DocumentEditor.insert(i, d, caret.position, text) }
+            return
         }
+        if (caret.isOverwriteMode) {
+            val lineEnd = caret.currentLineBounds()?.second ?: caret.position
+            val overwriteEnd = (caret.position + text.length).coerceIn(caret.position, lineEnd)
+            if (overwriteEnd > caret.position) {
+                applyEdit(caret.position, overwriteEnd) { i, d -> DocumentEditor.replace(i, d, caret.position, overwriteEnd, text) }
+                return
+            }
+        }
+        applyEdit(caret.position, caret.position) { i, d -> DocumentEditor.insert(i, d, caret.position, text) }
     }
 
     private fun backspace() {

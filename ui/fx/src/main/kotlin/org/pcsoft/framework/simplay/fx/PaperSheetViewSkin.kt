@@ -230,6 +230,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
             caret.onModeChanged()
         }
         registerChangeListener(control.smoothCaretBlinkProperty) { caret.restartBlink() }
+        registerChangeListener(control.caretModeProperty) { caret.restartBlink() }
         registerChangeListener(control.focusedProperty()) { caret.restartBlink() }
 
         registerChangeListener(control.pageModesProperty) {

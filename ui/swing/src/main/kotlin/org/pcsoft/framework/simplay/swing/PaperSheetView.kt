@@ -20,6 +20,7 @@ import javax.swing.JComponent
 import javax.swing.UIManager
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetStyle
+import org.pcsoft.framework.simplay.uicommon.CaretMode
 import org.pcsoft.framework.simplay.uicommon.PageMode
 
 /**
@@ -297,6 +298,22 @@ open class PaperSheetView : JComponent() {
 
     //endregion
 
+    //region Caret mode
+
+    /**
+     * Whether typing inserts characters at the caret or overwrites the one already there; toggled by
+     * the `Insert` key, but also freely readable and settable from outside. Defaults to
+     * [CaretMode.INSERT].
+     */
+    var caretMode: CaretMode = CaretMode.INSERT
+        set(value) {
+            val old = field
+            field = value
+            firePropertyChange(PROP_CARET_MODE, old, value)
+        }
+
+    //endregion
+
     //region Content size (read-only)
 
     var contentSize: Dimension = Dimension(0, 0)
@@ -518,6 +535,7 @@ open class PaperSheetView : JComponent() {
         const val PROP_DEACTIVATED_SHEET_BACKGROUND = "deactivatedSheetBackground"
         const val PROP_DEACTIVATED_OVERLAY_COLOR = "deactivatedOverlayColor"
         const val PROP_SMOOTH_CARET_BLINK = "smoothCaretBlink"
+        const val PROP_CARET_MODE = "caretMode"
         const val PROP_CONTENT_SIZE = "contentSize"
         const val PROP_HOVERED_PARAGRAPH = "hoveredParagraph"
         const val PROP_HOVERED_PAGE = "hoveredPage"

@@ -18,14 +18,17 @@ import org.pcsoft.framework.simplay.swing.BasicPaperSheetUI
 import org.pcsoft.framework.simplay.swing.PaperSheetMode
 import org.pcsoft.framework.simplay.swing.PaperSheetView
 import org.pcsoft.framework.simplay.swing.TestDocuments
+import org.pcsoft.framework.simplay.uicommon.CaretMode
 import org.pcsoft.framework.simplay.uicommon.PageMode
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
- * Tests for [PaperSheetCaret.movePage], the `Page Up` / `Page Down` navigation, over
- * [TestDocuments.variableLinePages]: a document whose first two pages have five single-line
- * paragraphs each and whose third page has only two.
+ * Tests for [PaperSheetCaret.movePage] (`Page Up` / `Page Down` navigation) and
+ * [PaperSheetCaret.toggleCaretMode] (the `Insert` insert/overwrite typing-mode toggle and its block
+ * cursor), over [TestDocuments.variableLinePages]: a document whose first two pages have five
+ * single-line paragraphs each and whose third page has only two.
  */
 class PaperSheetCaretTest {
 
@@ -51,6 +54,14 @@ class PaperSheetCaretTest {
     private fun Fixture.blockStart(block: Int): Int {
         view.caretModel.moveToStartOfBlock(block)
         return ui.caretIndexForTest
+    }
+
+    /** The document's whole plain text, via a select-all / read / clear round trip. */
+    private fun Fixture.text(): String {
+        view.selectionModel.selectAll()
+        val t = view.selectionModel.text
+        view.selectionModel.clearSelection()
+        return t
     }
 
     /**
@@ -191,5 +202,93 @@ class PaperSheetCaretTest {
         fx.view.caretModel.moveToPrevPage()
 
         assertEquals(targetStart, fx.ui.caretIndexForTest)
+    }
+
+    /** `Insert` toggles [PaperSheetView.caretMode] from [CaretMode.INSERT] to [CaretMode.OVERWRITE] and back. */
+    @Test
+    fun insertKeyTogglesCaretModeInsertOverwriteInsert() {
+        val fx = fixture()
+        assertEquals(CaretMode.INSERT, fx.view.caretMode)
+
+        fx.ui.pressKeyForTest(KeyEvent.VK_INSERT)
+        assertEquals(CaretMode.OVERWRITE, fx.view.caretMode)
+
+        fx.ui.pressKeyForTest(KeyEvent.VK_INSERT)
+        assertEquals(CaretMode.INSERT, fx.view.caretMode)
+    }
+
+    /** [PaperSheetView.caretMode] is a plain external property: readable and settable without a key press. */
+    @Test
+    fun caretModeIsDirectlyReadableAndWritable() {
+        val fx = fixture()
+
+        fx.view.caretMode = CaretMode.OVERWRITE
+        assertEquals(CaretMode.OVERWRITE, fx.view.caretMode)
+
+        fx.view.caretMode = CaretMode.INSERT
+        assertEquals(CaretMode.INSERT, fx.view.caretMode)
+    }
+
+    /** In [CaretMode.OVERWRITE], typing replaces the character at the caret instead of inserting. */
+    @Test
+    fun overwriteReplacesCharacterAtCaretInsteadOfInserting() {
+        val fx = fixture()
+        val pos = fx.blockStart(0) + 5
+        fx.view.caretMode = CaretMode.OVERWRITE
+        fx.view.caretModel.moveTo(pos)
+        val before = fx.text()
+
+        fx.ui.typeTextForTest("X")
+
+        val after = fx.text()
+        assertEquals(before.length, after.length, "overwrite must replace, not grow, the text")
+        assertEquals('X', after[pos])
+        assertEquals(pos + 1, fx.ui.caretIndexForTest)
+    }
+
+    /** In [CaretMode.OVERWRITE], typing at the end of a line falls back to a plain insert. */
+    @Test
+    fun overwriteAtEndOfLineFallsBackToInsert() {
+        val fx = fixture()
+        fx.view.caretMode = CaretMode.OVERWRITE
+        fx.view.caretModel.moveToEndOfBlock(0)
+        val before = fx.text()
+
+        fx.ui.typeTextForTest("X")
+
+        val after = fx.text()
+        assertEquals(before.length + 1, after.length)
+    }
+
+    /** The painted/public caret bounds widen to a block in [CaretMode.OVERWRITE] and shrink back. */
+    @Test
+    fun blockCursorWidensInOverwriteAndShrinksBackInInsert() {
+        val fx = fixture()
+        fx.view.caretModel.moveTo(fx.blockStart(0) + 2)
+        val insertWidth = fx.ui.caretBoundsForTest()!!.width
+
+        fx.ui.pressKeyForTest(KeyEvent.VK_INSERT)
+        val overwriteWidth = fx.ui.caretBoundsForTest()!!.width
+
+        fx.ui.pressKeyForTest(KeyEvent.VK_INSERT)
+        val insertWidthAgain = fx.ui.caretBoundsForTest()!!.width
+
+        assertTrue(
+            overwriteWidth > insertWidth,
+            "block width ($overwriteWidth) should exceed the thin line width ($insertWidth)",
+        )
+        assertEquals(insertWidth, insertWidthAgain)
+    }
+
+    /** `Insert` does not toggle [PaperSheetView.caretMode] in a non-editable mode. */
+    @Test
+    fun insertKeyIsNoOpInNonEditableMode() {
+        val fx = fixture()
+        fx.view.mode = PaperSheetMode.NAVIGABLE
+        assertEquals(CaretMode.INSERT, fx.view.caretMode)
+
+        fx.ui.pressKeyForTest(KeyEvent.VK_INSERT)
+
+        assertEquals(CaretMode.INSERT, fx.view.caretMode)
     }
 }

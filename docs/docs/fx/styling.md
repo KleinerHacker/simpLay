@@ -11,6 +11,8 @@ properties, and a default user-agent stylesheet ships with the module.
 * `:static`, `:selectable`, `:navigable`, `:editable` - exactly one of them is
   active, matching the current `PaperSheetMode`.
 * `:focused` - the inherited JavaFX `Node` pseudo-class, working as usual.
+* `:overwrite` - active while `caretMode` is `CaretMode.OVERWRITE`; independent
+  of and combinable with the mode pseudo-classes (e.g. `:editable:overwrite`).
 
 ## Properties
 

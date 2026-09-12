@@ -107,12 +107,27 @@ internal class PaperSheetCaret(
         return Geom(seg.pageIndex, x0, seg.line.lineBox.y, seg.line.lineBox.height)
     }
 
+    /** Width of the character at [ci] (for the public bounds of an overwrite-mode block caret), or
+     * `null` when there is none there (e.g. the caret sits at the very end of its line). */
+    private fun blockWidth(ci: Int): Double? {
+        val idx = textIndex() ?: return null
+        if (idx.segments.isEmpty()) return null
+        val c = ci.coerceIn(0, idx.length)
+        val seg = idx.segments.lastOrNull { it.start <= c && c <= it.end }
+            ?: idx.segments.firstOrNull { it.start >= c }
+            ?: idx.segments.last()
+        val (x0, x1) = segmentSpanX(seg, c, c + 1, measurer)
+        return (x1 - x0).takeIf { it > 0.0 }
+    }
+
     /** The caret rectangle to paint (in page content-area coordinates), or `null` when hidden. */
     fun caretPaint(): CaretPaint? {
         val preview = dropPreview
         if (preview == null && !caretActive) return null
-        val g = geom(preview ?: position) ?: return null
-        return CaretPaint(g.pageIndex, g.xContent, g.yContent, g.height)
+        val ci = preview ?: position
+        val g = geom(ci) ?: return null
+        val shape = if (preview == null && view.caretMode == CaretMode.OVERWRITE) CaretShape.BLOCK else CaretShape.LINE
+        return CaretPaint(g.pageIndex, g.xContent, g.yContent, g.height, ci, shape)
     }
 
     /** The caret rectangle in viewport pixels, or `null` when there is no caret geometry. */
@@ -125,7 +140,12 @@ internal class PaperSheetCaret(
         val contentArea = doc.pages[g.pageIndex].contentArea
         val absX = outer + contentArea.x + g.xContent
         val absYTop = outer + pageTops()[g.pageIndex] + contentArea.y + g.yContent
-        return BoundingBox(absX * zoom, absYTop * zoom - scrollOffset(), CARET_WIDTH_PX, g.height * zoom)
+        val widthPx = if (view.caretMode == CaretMode.OVERWRITE) {
+            blockWidth(position)?.times(zoom) ?: CARET_WIDTH_PX
+        } else {
+            CARET_WIDTH_PX
+        }
+        return BoundingBox(absX * zoom, absYTop * zoom - scrollOffset(), widthPx, g.height * zoom)
     }
 
     /** Opacity `0..1` the caret is painted with right now, honouring mode, focus, blink phase and fade. */
@@ -223,6 +243,18 @@ internal class PaperSheetCaret(
     fun setDropPreview(index: Int?) {
         dropPreview = index
         requestRedraw()
+    }
+
+    //endregion
+
+    //region Caret mode
+
+    /** Whether typing currently overwrites the character at the caret instead of inserting. */
+    val isOverwriteMode: Boolean get() = view.caretMode == CaretMode.OVERWRITE
+
+    /** Toggles between insert and overwrite typing mode (the `Insert` key). */
+    fun toggleCaretMode() {
+        view.caretMode = view.caretMode.toggled()
     }
 
     //endregion

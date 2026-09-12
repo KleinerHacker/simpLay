@@ -231,7 +231,9 @@ open class BasicPaperSheetUI : PaperSheetUI() {
                     caret.onModeChanged()
                     redraw()
                 }
-                PaperSheetView.PROP_SMOOTH_CARET_BLINK -> caret.restartBlink()
+                PaperSheetView.PROP_SMOOTH_CARET_BLINK,
+                PaperSheetView.PROP_CARET_MODE,
+                -> caret.restartBlink()
                 PaperSheetView.PROP_SHEET_BACKGROUND,
                 PaperSheetView.PROP_SHEET_BORDER_COLOR,
                 PaperSheetView.PROP_SHEET_BORDER_WIDTH,

@@ -27,6 +27,12 @@ import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
 import org.pcsoft.framework.simplay.uicommon.segmentSpanX
 
+/** How the caret is painted: a thin line before its character, or a filled block over it. */
+internal enum class CaretShape {
+    LINE,
+    BLOCK,
+}
+
 /**
  * The caret rectangle to paint on a page, in that page's content-area coordinates.
  *
@@ -34,8 +40,18 @@ import org.pcsoft.framework.simplay.uicommon.segmentSpanX
  * @property x left edge of the caret relative to the content-area left edge.
  * @property y top edge of the caret relative to the content-area top edge.
  * @property height caret height (the line height).
+ * @property position the caret's linear text index; used by [CaretShape.BLOCK] to measure the
+ *   character about to be overwritten.
+ * @property shape [CaretShape.LINE] or [CaretShape.BLOCK] (overwrite mode).
  */
-internal class CaretPaint(val pageIndex: Int, val x: Double, val y: Double, val height: Double)
+internal class CaretPaint(
+    val pageIndex: Int,
+    val x: Double,
+    val y: Double,
+    val height: Double,
+    val position: Int,
+    val shape: CaretShape,
+)
 
 /**
  * The visual values a [PaperSheetCanvasPainter.paint] pass draws the sheet chrome, the selection
@@ -167,7 +183,10 @@ internal class PaperSheetCanvasPainter(private val canvas: Canvas) {
                     numberingStyle = measured.raw.numbering.textStyle,
                 )
                 if (caret != null && caretOpacity > 0.0 && caret.pageIndex == i && !disabled) {
-                    drawCaretOnPage(gc, page, caret, originX, originY, caretOpacity.coerceIn(0.0, 1.0), style.caretColor)
+                    drawCaretOnPage(
+                        gc, page, caret, originX, originY, caretOpacity.coerceIn(0.0, 1.0), style.caretColor,
+                        index, fonts,
+                    )
                     caretDrawCount = 1
                 }
             }
@@ -261,6 +280,11 @@ internal class PaperSheetCanvasPainter(private val canvas: Canvas) {
         gc.restore()
     }
 
+    /**
+     * Draws [caret]: a thin stroked line for [CaretShape.LINE], or a filled block the width of the
+     * character at [CaretPaint.position] for [CaretShape.BLOCK] (falling back to the line when that
+     * character can't be measured, e.g. the caret sits at the very end of its line).
+     */
     private fun drawCaretOnPage(
         gc: GraphicsContext,
         page: MeasuredPage,
@@ -269,16 +293,36 @@ internal class PaperSheetCanvasPainter(private val canvas: Canvas) {
         originY: Double,
         alpha: Double,
         caretColor: Color,
+        index: DocumentTextIndex?,
+        fonts: FxFontMeasureCalculator,
     ) {
         val contentArea = page.contentArea
         val x = originX + contentArea.x + caret.x
         val yTop = originY + contentArea.y + caret.y
+        val blockWidth = if (caret.shape == CaretShape.BLOCK) blockWidthAt(index, caret.position, fonts) else null
         gc.save()
         gc.globalAlpha = alpha
-        gc.stroke = caretColor
-        gc.lineWidth = CARET_WIDTH
-        gc.strokeLine(x, yTop, x, yTop + caret.height)
+        if (blockWidth != null) {
+            gc.fill = caretColor
+            gc.fillRect(x, yTop, blockWidth, caret.height)
+        } else {
+            gc.stroke = caretColor
+            gc.lineWidth = CARET_WIDTH
+            gc.strokeLine(x, yTop, x, yTop + caret.height)
+        }
         gc.restore()
+    }
+
+    /** Width of the character at [ci], or `null` when there is none there (e.g. end of the line). */
+    private fun blockWidthAt(index: DocumentTextIndex?, ci: Int, fonts: FxFontMeasureCalculator): Double? {
+        val idx = index ?: return null
+        if (idx.segments.isEmpty()) return null
+        val c = ci.coerceIn(0, idx.length)
+        val seg = idx.segments.lastOrNull { it.start <= c && c <= it.end }
+            ?: idx.segments.firstOrNull { it.start >= c }
+            ?: idx.segments.last()
+        val (x0, x1) = segmentSpanX(seg, c, c + 1, fonts)
+        return (x1 - x0).takeIf { it > 0.0 }
     }
 
     internal companion object {
