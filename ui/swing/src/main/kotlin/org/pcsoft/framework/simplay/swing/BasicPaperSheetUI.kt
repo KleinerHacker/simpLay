@@ -31,6 +31,7 @@ import java.awt.event.MouseWheelEvent
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JScrollBar
+import kotlin.math.roundToInt
 import org.pcsoft.framework.simplay.engine.RenderConfiguration
 import org.pcsoft.framework.simplay.engine.measure
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
@@ -40,6 +41,7 @@ import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetCaret
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetEditor
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetHoverTracker
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetOverlays
+import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetScroll
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetSelection
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetStyle
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetSwingPainter
@@ -56,11 +58,12 @@ import org.pcsoft.framework.simplay.uicommon.hitTest
  * The per-view text concerns live in their own helpers this delegate creates and forwards events to:
  * [PaperSheetSelection] (anchor/focus selection, geometry, the [TextSelectionModel.Commands] sink),
  * [PaperSheetCaret] (caret position, blink, geometry, navigation moves - in
- * [PaperSheetMode.EDITABLE]), [PaperSheetEditor] (the keyboard shortcuts and the
- * [org.pcsoft.framework.simplay.uicommon.DocumentEditor] mutations they trigger, plus drag-and-drop
- * of the selection), [PaperSheetHoverTracker] (the hovered paragraph / sheet) and
- * [PaperSheetOverlays] (the registered [FloatingOverlay]s and the overlay layer on top of the
- * viewport).
+ * [PaperSheetMode.EDITABLE]), [PaperSheetScroll] (the [PaperSheetView.ScrollCommands] sink, scrolling
+ * the viewport to a page, block, word or symbol regardless of [PaperSheetMode]), [PaperSheetEditor]
+ * (the keyboard shortcuts and the [org.pcsoft.framework.simplay.uicommon.DocumentEditor] mutations
+ * they trigger, plus drag-and-drop of the selection), [PaperSheetHoverTracker] (the hovered paragraph
+ * / sheet) and [PaperSheetOverlays] (the registered [FloatingOverlay]s and the overlay layer on top of
+ * the viewport).
  *
  * Each page's effective [PageMode] ([PaperSheetView.effectivePageMode]) decides whether it is
  * excluded from layout entirely ([PageMode.laidOut]) or drawn specially ([PageMode.paintedDisabled]);
@@ -74,6 +77,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     private lateinit var painter: PaperSheetSwingPainter
     private lateinit var selection: PaperSheetSelection
     private lateinit var caret: PaperSheetCaret
+    private lateinit var scroll: PaperSheetScroll
     private lateinit var editor: PaperSheetEditor
     private lateinit var hover: PaperSheetHoverTracker
     private lateinit var overlays: PaperSheetOverlays
@@ -147,6 +151,20 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             requestRedraw = ::redraw,
             scrollCaretIntoView = ::scrollCaretIntoView,
         )
+        // Clamped against a freshly computed maximum (not the possibly still-default `scrollBar`
+        // maximum), since this may run before the first `relayoutViewport` pass has ever set it from
+        // real content.
+        scroll = PaperSheetScroll(
+            view = view,
+            textIndex = { index },
+            measuredDocument = { measured },
+            pageTops = { pageTops },
+            scrollTo = { y ->
+                val total = (contentHeightUnscaled + 2.0 * view.outerMargin) * view.zoom
+                val maxValue = (total - viewportHeight()).coerceAtLeast(0.0)
+                scrollBar.value = y.coerceIn(0.0, maxValue).roundToInt()
+            },
+        )
         editor = PaperSheetEditor(
             view = view,
             selection = selection,
@@ -173,6 +191,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
 
         view.registerSelectionCommands(selection)
         view.registerCaretCommands(caret)
+        view.registerScrollCommands(scroll)
         installListeners()
         remeasure()
     }
@@ -187,6 +206,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         view.removeComponentListener(componentListener)
         view.unregisterSelectionCommands(selection)
         view.unregisterCaretCommands(caret)
+        view.unregisterScrollCommands(scroll)
         caret.dispose()
         overlays.dispose()
         c.remove(scrollBar)
@@ -211,7 +231,9 @@ open class BasicPaperSheetUI : PaperSheetUI() {
                     caret.onModeChanged()
                     redraw()
                 }
-                PaperSheetView.PROP_SMOOTH_CARET_BLINK -> caret.restartBlink()
+                PaperSheetView.PROP_SMOOTH_CARET_BLINK,
+                PaperSheetView.PROP_CARET_MODE,
+                -> caret.restartBlink()
                 PaperSheetView.PROP_SHEET_BACKGROUND,
                 PaperSheetView.PROP_SHEET_BORDER_COLOR,
                 PaperSheetView.PROP_SHEET_BORDER_WIDTH,

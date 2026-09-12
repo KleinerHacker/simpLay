@@ -40,6 +40,7 @@ import javafx.scene.paint.Color
 import javafx.scene.paint.Paint
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetStyleableProperties
+import org.pcsoft.framework.simplay.uicommon.CaretMode
 import org.pcsoft.framework.simplay.uicommon.PageMode
 
 /**
@@ -76,8 +77,9 @@ import org.pcsoft.framework.simplay.uicommon.PageMode
  * The sheet chrome, the drop shadow, the selection highlight, the caret and the two layout values are
  * styleable through the standard JavaFX CSS mechanism. The style class is `paper-sheet-view`, and
  * exactly one of the pseudo-classes `:static`, `:selectable`, `:navigable` and `:editable` is active,
- * matching the current [mode] (the inherited `:focused` pseudo-class works as usual);
- * [getUserAgentStylesheet] ships the default look. The
+ * matching the current [mode] (the inherited `:focused` pseudo-class works as usual); `:overwrite` is
+ * active whenever [caretMode] is [CaretMode.OVERWRITE], independently of and combinable with the mode
+ * pseudo-classes (e.g. `:editable:overwrite`); [getUserAgentStylesheet] ships the default look. The
  * `-fx-` properties are `-fx-sheet-background`, `-fx-sheet-border-color`, `-fx-sheet-border-width`,
  * `-fx-shadow-color`, `-fx-shadow-offset`, `-fx-selection-color`, `-fx-caret-color`,
  * `-fx-deactivated-sheet-background`, `-fx-deactivated-overlay-color`, `-fx-outer-margin` and
@@ -516,6 +518,22 @@ class PaperSheetView : Control() {
         get() = smoothCaretBlinkProperty.get()
         set(value) = smoothCaretBlinkProperty.set(value)
 
+    /** The [caretMode] property, for binding and change listeners. */
+    @get:JvmName("caretModeProperty")
+    val caretModeProperty: ObjectProperty<CaretMode> =
+        SimpleObjectProperty(this, "caretMode", CaretMode.INSERT)
+
+    /**
+     * Whether typing inserts characters at the caret or overwrites the one already there; toggled by
+     * the `Insert` key, but also freely readable and settable from outside. Reflected as the
+     * `:overwrite` CSS pseudo-class while [CaretMode.OVERWRITE].
+     */
+    var caretMode: CaretMode
+        get() = caretModeProperty.get()
+        set(value) {
+            caretModeProperty.set(value)
+        }
+
     /** Sink for the [caretModel] commands, implemented and registered by the skin. */
     internal interface CaretCommands {
         fun moveTo(index: Int)
@@ -536,6 +554,8 @@ class PaperSheetView : Control() {
         fun moveToPrevBlock()
         fun moveToNextSymbol()
         fun moveToPrevSymbol()
+        fun moveToNextPage()
+        fun moveToPrevPage()
     }
 
     private var caretCommands: CaretCommands? = null
@@ -558,6 +578,66 @@ class PaperSheetView : Control() {
         val commands = caretCommands
         if (commands != null) commands.block() else pendingCaretCommand = block
     }
+
+    //endregion
+
+    //region Scroll
+
+    /**
+     * Sink for the scroll commands, implemented and registered by the skin. Unlike [CaretCommands],
+     * never gated by [anyCaret] or [mode]: scrolling is a pure viewport operation, available in every
+     * [PaperSheetMode] including [PaperSheetMode.STATIC].
+     */
+    internal interface ScrollCommands {
+        fun scrollToPage(page: Int)
+        fun scrollToBlock(block: Int)
+        fun scrollToWord(word: Int)
+        fun scrollToSymbol(symbol: Int)
+    }
+
+    private var scrollCommands: ScrollCommands? = null
+    private var pendingScrollCommand: (ScrollCommands.() -> Unit)? = null
+
+    internal fun registerScrollCommands(commands: ScrollCommands) {
+        scrollCommands = commands
+        pendingScrollCommand?.let { pending ->
+            pendingScrollCommand = null
+            commands.pending()
+        }
+    }
+
+    internal fun unregisterScrollCommands(commands: ScrollCommands) {
+        if (scrollCommands === commands) scrollCommands = null
+    }
+
+    private fun requestScroll(block: ScrollCommands.() -> Unit) {
+        val commands = scrollCommands
+        if (commands != null) commands.block() else pendingScrollCommand = block
+    }
+
+    /**
+     * Scrolls the viewport so page [page]'s top edge aligns with the viewport top; clamped into
+     * range, a no-op without a document. Works in every [mode], unlike the caret commands.
+     */
+    fun scrollToPage(page: Int) = requestScroll { scrollToPage(page) }
+
+    /**
+     * Scrolls the viewport to the top line of block (paragraph) [block]; clamped into range, a no-op
+     * without a document. Works in every [mode], unlike the caret commands.
+     */
+    fun scrollToBlock(block: Int) = requestScroll { scrollToBlock(block) }
+
+    /**
+     * Scrolls the viewport to the top line of word [word]; clamped into range, a no-op without a
+     * document. Works in every [mode], unlike the caret commands.
+     */
+    fun scrollToWord(word: Int) = requestScroll { scrollToWord(word) }
+
+    /**
+     * Scrolls the viewport to the top line of symbol (character) [symbol]; clamped into range, a
+     * no-op without a document. Works in every [mode], unlike the caret commands.
+     */
+    fun scrollToSymbol(symbol: Int) = requestScroll { scrollToSymbol(symbol) }
 
     //endregion
 
@@ -629,6 +709,10 @@ class PaperSheetView : Control() {
 
         applyMode(mode)
         modeProperty.addListener { _, _, value -> applyMode(value) }
+
+        caretModeProperty.addListener { _, _, value ->
+            pseudoClassStateChanged(OVERWRITE_PSEUDO_CLASS, value == CaretMode.OVERWRITE)
+        }
     }
 
     private fun applyMode(value: PaperSheetMode) {
@@ -657,6 +741,9 @@ class PaperSheetView : Control() {
         /** The pseudo-class activated for each [PaperSheetMode]; exactly one is active at a time. */
         private val MODE_PSEUDO_CLASSES: Map<PaperSheetMode, PseudoClass> =
             PaperSheetMode.entries.associateWith { PseudoClass.getPseudoClass(it.name.lowercase()) }
+
+        /** The pseudo-class active while [caretMode] is [CaretMode.OVERWRITE]. */
+        private val OVERWRITE_PSEUDO_CLASS: PseudoClass = PseudoClass.getPseudoClass("overwrite")
 
         private val USER_AGENT_STYLESHEET: String =
             PaperSheetView::class.java.getResource("paper-sheet-view.css")!!.toExternalForm()

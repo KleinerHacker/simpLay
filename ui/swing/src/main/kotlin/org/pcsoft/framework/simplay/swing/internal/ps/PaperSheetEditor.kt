@@ -25,11 +25,11 @@ import org.pcsoft.framework.simplay.uicommon.EditableRegions
 
 /**
  * The editable-mode input controller of a [PaperSheetView]: the keyboard shortcuts (character
- * typing, `Backspace` / `Delete`, `Ctrl+C` / `Ctrl+V` / `Ctrl+X` / `Ctrl+D`, the caret-navigation
- * keys) and the text mutations they trigger, plus drag-and-drop of the selection. Every mutation
- * runs through [DocumentEditor] and replaces [PaperSheetView.document] with the rebuilt document;
- * [PaperSheetCaret.onEditApplied] then restores the caret. The Swing counterpart of the `fx` module's
- * `PaperSheetEditor`.
+ * typing, `Backspace` / `Delete`, `Insert` (insert/overwrite typing mode), `Ctrl+C` / `Ctrl+V` /
+ * `Ctrl+X` / `Ctrl+D`, the caret-navigation keys) and the text mutations they trigger, plus
+ * drag-and-drop of the selection. Every mutation runs through [DocumentEditor] and replaces
+ * [PaperSheetView.document] with the rebuilt document; [PaperSheetCaret.onEditApplied] then restores
+ * the caret. The Swing counterpart of the `fx` module's `PaperSheetEditor`.
  *
  * A per-view helper the delegate creates once and routes key events and selection drops to. The
  * caret-navigation keys need [PaperSheetMode.supportsCaret], every mutating key needs
@@ -75,10 +75,13 @@ internal class PaperSheetEditor(
             KeyEvent.VK_RIGHT -> if (shortcut) caret.moveWordRight(shift) else caret.moveHorizontal(1, shift)
             KeyEvent.VK_UP -> caret.moveVertical(-1, shift)
             KeyEvent.VK_DOWN -> caret.moveVertical(1, shift)
+            KeyEvent.VK_PAGE_UP -> caret.movePage(-1, shift)
+            KeyEvent.VK_PAGE_DOWN -> caret.movePage(1, shift)
             KeyEvent.VK_HOME -> if (shortcut) caret.moveDocStart(shift) else caret.moveLineStart(shift)
             KeyEvent.VK_END -> if (shortcut) caret.moveDocEnd(shift) else caret.moveLineEnd(shift)
             KeyEvent.VK_BACK_SPACE -> if (editable) backspace() else return
             KeyEvent.VK_DELETE -> if (editable) deleteForward() else return
+            KeyEvent.VK_INSERT -> if (editable) caret.toggleCaretMode() else return
             KeyEvent.VK_V -> if (shortcut && editable) paste() else return
             KeyEvent.VK_X -> if (shortcut && editable) cut() else return
             KeyEvent.VK_D -> if (shortcut && editable) duplicate() else return
@@ -122,14 +125,27 @@ internal class PaperSheetEditor(
         caret.onEditApplied(result.caretIndex)
     }
 
-    /** Inserts [text] at the caret, replacing the selection if there is one. */
+    /**
+     * Inserts [text] at the caret, replacing the selection if there is one. Without a selection and in
+     * [PaperSheetCaret.isOverwriteMode], replaces up to `text.length` characters starting at the caret
+     * instead, never crossing past the end of the caret's current line - at the end of the line this
+     * falls back to a plain insert, exactly like insert mode.
+     */
     fun typeText(text: String) {
         if (!editable || text.isEmpty()) return
         if (!selection.isEmpty) {
             applyEdit(selection.start, selection.end) { i, d -> DocumentEditor.replace(i, d, selection.start, selection.end, text) }
-        } else {
-            applyEdit(caret.position, caret.position) { i, d -> DocumentEditor.insert(i, d, caret.position, text) }
+            return
         }
+        if (caret.isOverwriteMode) {
+            val lineEnd = caret.currentLineBounds()?.second ?: caret.position
+            val overwriteEnd = (caret.position + text.length).coerceIn(caret.position, lineEnd)
+            if (overwriteEnd > caret.position) {
+                applyEdit(caret.position, overwriteEnd) { i, d -> DocumentEditor.replace(i, d, caret.position, overwriteEnd, text) }
+                return
+            }
+        }
+        applyEdit(caret.position, caret.position) { i, d -> DocumentEditor.insert(i, d, caret.position, text) }
     }
 
     private fun backspace() {

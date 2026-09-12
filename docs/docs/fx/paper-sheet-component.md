@@ -172,10 +172,39 @@ and moves it; in the other modes every move command is a no-op:
   ordinal and offset is clamped into range.
 * **Relative structural commands** from the current position:
   `moveToNextWord()` / `moveToPrevWord()` and the block / symbol siblings; they
-  stop at the document bounds.
+  stop at the document bounds. `moveToNextPage()` / `moveToPrevPage()` jump a
+  whole page, keeping the caret's line ordinal on the target page (clamped to
+  its last line) instead of a linear offset.
 
 A command issued before the view has rendered once is applied as soon as its skin
 is attached.
+
+## Scrolling
+
+Four commands scroll the viewport directly, addressing the document the same way
+the caret model's structural commands do - but, unlike the caret model, they work
+in **every** `PaperSheetMode`, including `STATIC` and `SELECTABLE`, since scrolling
+never touches the caret or the selection:
+
+* `scrollToPage(page)` - the page's top edge aligns with the viewport top.
+* `scrollToBlock(block)` - the top line of block (paragraph) `block`.
+* `scrollToWord(word)` - the top line containing word `word`.
+* `scrollToSymbol(symbol)` - the top line containing symbol (character) `symbol`.
+
+Every ordinal and page index is clamped into range. A command issued before the
+view has rendered once is applied as soon as its skin is attached, exactly like
+the caret model's commands.
+
+## Insert / overwrite typing mode
+
+`caretMode` (`CaretMode`, `INSERT` by default) switches whether typing inserts
+characters at the caret or overwrites the one already there, up to the end of
+the current line (falling back to a plain insert at the line end). It is
+toggled by the `Insert` key but also freely readable and settable from
+outside; `CaretMode.OVERWRITE` is shown with a filled block cursor - the width
+of the character about to be overwritten - instead of the thin line, and
+reflected as the `:overwrite` CSS pseudo-class (see [Styling](styling.md)),
+independent of and combinable with the mode pseudo-classes.
 
 ## Shortcuts
 
@@ -193,8 +222,10 @@ with any caret-navigation key to extend the selection instead of moving.
 | `Up` / `Down` | Move caret one line | `EDITABLE` |
 | `Home` / `End` | Move caret to line start / end | `EDITABLE` |
 | `Ctrl+Home` / `Ctrl+End` | Move caret to document start / end | `EDITABLE` |
+| `Page Up` / `Page Down` | Move caret one page, keeping its line and column | `EDITABLE` |
 | `Backspace` | Delete the character before the caret, or the selection | `EDITABLE` |
 | `Delete` | Delete the character after the caret, or the selection | `EDITABLE` |
+| `Insert` | Toggle insert / overwrite typing mode (overwrite shows a block cursor) | `EDITABLE` |
 | Printable key | Insert the character at the caret | `EDITABLE` |
 
 Dragging with the mouse inside an existing selection box moves the selected text;

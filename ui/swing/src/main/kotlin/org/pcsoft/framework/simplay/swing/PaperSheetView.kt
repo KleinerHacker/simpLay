@@ -20,6 +20,7 @@ import javax.swing.JComponent
 import javax.swing.UIManager
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetStyle
+import org.pcsoft.framework.simplay.uicommon.CaretMode
 import org.pcsoft.framework.simplay.uicommon.PageMode
 
 /**
@@ -297,6 +298,22 @@ open class PaperSheetView : JComponent() {
 
     //endregion
 
+    //region Caret mode
+
+    /**
+     * Whether typing inserts characters at the caret or overwrites the one already there; toggled by
+     * the `Insert` key, but also freely readable and settable from outside. Defaults to
+     * [CaretMode.INSERT].
+     */
+    var caretMode: CaretMode = CaretMode.INSERT
+        set(value) {
+            val old = field
+            field = value
+            firePropertyChange(PROP_CARET_MODE, old, value)
+        }
+
+    //endregion
+
     //region Content size (read-only)
 
     var contentSize: Dimension = Dimension(0, 0)
@@ -367,6 +384,66 @@ open class PaperSheetView : JComponent() {
         val commands = caretCommands
         if (commands != null) commands.block() else pendingCaretCommand = block
     }
+
+    //endregion
+
+    //region Scroll
+
+    /**
+     * Sink for the scroll commands, implemented and registered by the UI delegate. Unlike
+     * [CaretModel.Commands], never gated by [anyCaret] or [mode]: scrolling is a pure viewport
+     * operation, available in every [PaperSheetMode] including [PaperSheetMode.STATIC].
+     */
+    internal interface ScrollCommands {
+        fun scrollToPage(page: Int)
+        fun scrollToBlock(block: Int)
+        fun scrollToWord(word: Int)
+        fun scrollToSymbol(symbol: Int)
+    }
+
+    private var scrollCommands: ScrollCommands? = null
+    private var pendingScrollCommand: (ScrollCommands.() -> Unit)? = null
+
+    internal fun registerScrollCommands(commands: ScrollCommands) {
+        scrollCommands = commands
+        pendingScrollCommand?.let { pending ->
+            pendingScrollCommand = null
+            commands.pending()
+        }
+    }
+
+    internal fun unregisterScrollCommands(commands: ScrollCommands) {
+        if (scrollCommands === commands) scrollCommands = null
+    }
+
+    private fun requestScroll(block: ScrollCommands.() -> Unit) {
+        val commands = scrollCommands
+        if (commands != null) commands.block() else pendingScrollCommand = block
+    }
+
+    /**
+     * Scrolls the viewport so page [page]'s top edge aligns with the viewport top; clamped into
+     * range, a no-op without a document. Works in every [mode], unlike the caret commands.
+     */
+    fun scrollToPage(page: Int) = requestScroll { scrollToPage(page) }
+
+    /**
+     * Scrolls the viewport to the top line of block (paragraph) [block]; clamped into range, a no-op
+     * without a document. Works in every [mode], unlike the caret commands.
+     */
+    fun scrollToBlock(block: Int) = requestScroll { scrollToBlock(block) }
+
+    /**
+     * Scrolls the viewport to the top line of word [word]; clamped into range, a no-op without a
+     * document. Works in every [mode], unlike the caret commands.
+     */
+    fun scrollToWord(word: Int) = requestScroll { scrollToWord(word) }
+
+    /**
+     * Scrolls the viewport to the top line of symbol (character) [symbol]; clamped into range, a
+     * no-op without a document. Works in every [mode], unlike the caret commands.
+     */
+    fun scrollToSymbol(symbol: Int) = requestScroll { scrollToSymbol(symbol) }
 
     //endregion
 
@@ -458,6 +535,7 @@ open class PaperSheetView : JComponent() {
         const val PROP_DEACTIVATED_SHEET_BACKGROUND = "deactivatedSheetBackground"
         const val PROP_DEACTIVATED_OVERLAY_COLOR = "deactivatedOverlayColor"
         const val PROP_SMOOTH_CARET_BLINK = "smoothCaretBlink"
+        const val PROP_CARET_MODE = "caretMode"
         const val PROP_CONTENT_SIZE = "contentSize"
         const val PROP_HOVERED_PARAGRAPH = "hoveredParagraph"
         const val PROP_HOVERED_PAGE = "hoveredPage"

@@ -37,6 +37,7 @@ import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetCaret
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetEditor
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetHoverTracker
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetOverlays
+import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetScroll
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetSelection
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetStyle
 
@@ -52,6 +53,8 @@ import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetStyle
  *   [PaperSheetView.SelectionCommands] sink;
  * * [PaperSheetCaret] - the caret position, blink, geometry and navigation moves (in
  *   [PaperSheetMode.EDITABLE]);
+ * * [PaperSheetScroll] - the [PaperSheetView.ScrollCommands] sink, scrolling the viewport to a page,
+ *   block, word or symbol regardless of [PaperSheetMode];
  * * [PaperSheetEditor] - the keyboard shortcuts (typing, `Backspace` / `Delete`, `Ctrl+C` / `V` /
  *   `X` / `D`, caret navigation) and the [org.pcsoft.framework.simplay.uicommon.DocumentEditor]
  *   mutations they trigger, plus drag-and-drop of the selection;
@@ -120,6 +123,23 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         scrollOffset = ::scrollOffset,
         requestRedraw = ::redraw,
         scrollCaretIntoView = ::scrollCaretIntoView,
+    )
+
+    /**
+     * Scrolls the viewport to an absolute page / block / word / symbol position. Clamped against a
+     * freshly computed maximum (not the possibly still-default [scrollBar] `max`), since this may run
+     * before the first [layoutChildren] pass has ever set it from real content.
+     */
+    private val scroll = PaperSheetScroll(
+        view = control,
+        textIndex = { index },
+        measuredDocument = { measured },
+        pageTops = { pageTops },
+        scrollTo = { y ->
+            val maxValue = ((contentHeightUnscaled + 2.0 * skinnable.outerMargin) * skinnable.zoom - canvas.height)
+                .coerceAtLeast(0.0)
+            scrollBar.value = y.coerceIn(0.0, maxValue)
+        },
     )
 
     /** The keyboard shortcuts, the text mutations they trigger and the selection drop. */
@@ -199,6 +219,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         remeasure()
         skinnable.registerSelectionCommands(selection)
         skinnable.registerCaretCommands(caret)
+        skinnable.registerScrollCommands(scroll)
 
         registerChangeListener(control.documentProperty) { remeasure(); control.requestLayout() }
         registerChangeListener(control.outerMarginProperty) { relayout() }
@@ -209,6 +230,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
             caret.onModeChanged()
         }
         registerChangeListener(control.smoothCaretBlinkProperty) { caret.restartBlink() }
+        registerChangeListener(control.caretModeProperty) { caret.restartBlink() }
         registerChangeListener(control.focusedProperty()) { caret.restartBlink() }
 
         registerChangeListener(control.pageModesProperty) {
@@ -341,6 +363,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         skinnable?.removeEventHandler(KeyEvent.KEY_TYPED, keyTypedHandler)
         skinnable?.unregisterSelectionCommands(selection)
         skinnable?.unregisterCaretCommands(caret)
+        skinnable?.unregisterScrollCommands(scroll)
         super.dispose()
     }
 

@@ -115,10 +115,37 @@ view:
   `moveIntoBlock` / `moveToStartOfBlock` / `moveToEndOfBlock` and the `Word` /
   `Symbol` siblings.
 * Relative structural commands from the current position: `moveToNextWord` /
-  `moveToPrevWord` and the `Block` / `Symbol` siblings.
+  `moveToPrevWord` and the `Block` / `Symbol` siblings. `moveToNextPage` /
+  `moveToPrevPage` jump a whole page, keeping the caret's line ordinal on the
+  target page (clamped to its last line) instead of a linear offset.
 
 A command issued before the component has its UI delegate is applied once the
 delegate is attached.
+
+## Scrolling
+
+Four commands scroll the viewport directly, addressing the document the same way
+the caret model's structural commands do - but, unlike the caret model, they work
+in **every** `PaperSheetMode`, including `STATIC` and `SELECTABLE`, since scrolling
+never touches the caret or the selection:
+
+* `scrollToPage(page)` - the page's top edge aligns with the viewport top.
+* `scrollToBlock(block)` - the top line of block (paragraph) `block`.
+* `scrollToWord(word)` - the top line containing word `word`.
+* `scrollToSymbol(symbol)` - the top line containing symbol (character) `symbol`.
+
+Every ordinal and page index is clamped into range. A command issued before the
+component has its UI delegate is applied once the delegate is attached, exactly
+like the caret model's commands.
+
+## Insert / overwrite typing mode
+
+`caretMode` (`CaretMode`, `INSERT` by default) switches whether typing inserts
+characters at the caret or overwrites the one already there, up to the end of
+the current line (falling back to a plain insert at the line end). It is
+toggled by the `Insert` key but also freely readable and settable from
+outside; `CaretMode.OVERWRITE` is shown with a filled block cursor - the width
+of the character about to be overwritten - instead of the thin line.
 
 ## Keyboard
 
@@ -130,7 +157,9 @@ delegate is attached.
 | `Ctrl+V` | Paste plain text at the caret / over the selection (editable). |
 | `Ctrl+D` | Duplicate the selection, or the caret line when the selection is empty (editable). |
 | arrows, `Home`, `End`, `Ctrl+Home`, `Ctrl+End`, `Ctrl+Left`, `Ctrl+Right` | Caret navigation, optionally with `Shift` to extend the selection (editable). |
+| `Page Up` / `Page Down` | Move the caret one page, keeping its line and column, optionally with `Shift` to extend the selection (editable). |
 | `Backspace`, `Delete` | Delete backward / forward, or the selection (editable). |
+| `Insert` | Toggle insert / overwrite typing mode (overwrite shows a block cursor) (editable). |
 | typing | Insert the character at the caret, replacing the selection (editable). |
 
 Dragging an existing selection with the mouse moves it; holding the copy

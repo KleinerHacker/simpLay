@@ -100,6 +100,8 @@ class ModelsTest {
             override fun moveToPrevBlock() {}
             override fun moveToNextSymbol() {}
             override fun moveToPrevSymbol() {}
+            override fun moveToNextPage() {}
+            override fun moveToPrevPage() {}
         }
         val model = CaretModel { block -> sink.block() }
         model.moveTo(42)

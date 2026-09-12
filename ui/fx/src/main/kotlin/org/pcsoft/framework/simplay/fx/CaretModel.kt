@@ -189,5 +189,17 @@ class CaretModel internal constructor(private val view: PaperSheetView) {
     /** Moves the caret to the previous symbol; stays put at the document start. */
     fun moveToPrevSymbol() = view.requestCaret { moveToPrevSymbol() }
 
+    /**
+     * Moves the caret to the next navigable page, at the same line ordinal it held on the source
+     * page (clamped to the target page's last line); stays put on the last navigable page.
+     */
+    fun moveToNextPage() = view.requestCaret { moveToNextPage() }
+
+    /**
+     * Moves the caret to the previous navigable page, at the same line ordinal it held on the source
+     * page (clamped to the target page's last line); stays put on the first navigable page.
+     */
+    fun moveToPrevPage() = view.requestCaret { moveToPrevPage() }
+
     //endregion
 }

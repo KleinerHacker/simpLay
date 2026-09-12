@@ -69,4 +69,19 @@ object PaperSheetTestFixtures {
                 FlowPage(layout = layout, blocks = listOf(TextBlock.of("Page two content here.", style))),
             ),
         )
+
+    /**
+     * A three-raw-page document for the Page-Up / Page-Down tests: the first two pages have five
+     * single-line paragraphs each (equal line counts, for the relative-line and wish-x checks), the
+     * third only two (fewer lines, for the last-line clamping check). Every paragraph is short enough
+     * to never wrap at [layout]'s width.
+     */
+    fun variableLinePagesDocument(): Document =
+        Document(
+            pages = listOf(
+                FlowPage(layout = layout, blocks = (1..5).map { TextBlock.of("Page one line $it.", style) }),
+                FlowPage(layout = layout, blocks = (1..5).map { TextBlock.of("Page two line $it.", style) }),
+                FlowPage(layout = layout, blocks = (1..2).map { TextBlock.of("Page three line $it.", style) }),
+            ),
+        )
 }

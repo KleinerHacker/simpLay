@@ -53,6 +53,8 @@ class CaretModel internal constructor(private val dispatch: (Commands.() -> Unit
         fun moveToPrevBlock()
         fun moveToNextSymbol()
         fun moveToPrevSymbol()
+        fun moveToNextPage()
+        fun moveToPrevPage()
     }
 
     private val pcs = PropertyChangeSupport(this)
@@ -164,6 +166,18 @@ class CaretModel internal constructor(private val dispatch: (Commands.() -> Unit
 
     /** Moves the caret to the previous symbol; stays put at the document start. */
     fun moveToPrevSymbol() = dispatch { moveToPrevSymbol() }
+
+    /**
+     * Moves the caret to the next navigable page, at the same line ordinal it held on the source
+     * page (clamped to the target page's last line); stays put on the last navigable page.
+     */
+    fun moveToNextPage() = dispatch { moveToNextPage() }
+
+    /**
+     * Moves the caret to the previous navigable page, at the same line ordinal it held on the source
+     * page (clamped to the target page's last line); stays put on the first navigable page.
+     */
+    fun moveToPrevPage() = dispatch { moveToPrevPage() }
 
     companion object {
         const val PROP_POSITION = "position"

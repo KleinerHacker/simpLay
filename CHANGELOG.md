@@ -36,6 +36,23 @@ excluded.
   reloaded from outside, but is left untouched by an edit.
   `FloatingOverlayEvent` now reports
   `pageDeactivated` so a registered overlay can react to a page's override.
+- `ui/fx` and `ui/swing`: `Page Up` / `Page Down` move the caret to the
+  previous / next navigable page, keeping its line and column instead of a
+  linear offset, optionally with `Shift` to extend the selection. The caret
+  model gained the matching `moveToNextPage()` / `moveToPrevPage()` commands.
+- `ui/fx` and `ui/swing`: `PaperSheetView` gained four scroll commands -
+  `scrollToPage(page)`, `scrollToBlock(block)`, `scrollToWord(word)` and
+  `scrollToSymbol(symbol)` - that move the viewport to a page, paragraph, word
+  or character. Unlike the caret commands, they work in every `PaperSheetMode`,
+  including `STATIC` and `SELECTABLE`, and never touch the caret or selection.
+- `ui/common`, `ui/fx` and `ui/swing`: `PaperSheetView` gained a `caretMode`
+  property (`CaretMode.INSERT` / `CaretMode.OVERWRITE`), toggled by the
+  `Insert` key and also freely readable and settable from outside. In
+  `OVERWRITE`, typing replaces the character at the caret instead of inserting
+  before it (never crossing past the end of the current line) and the caret is
+  shown as a filled block the width of the character about to be overwritten,
+  instead of the usual thin line; in `fx` this is also reflected as the new
+  `:overwrite` CSS pseudo-class.
 
 ### Changed
 
