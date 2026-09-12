@@ -109,7 +109,10 @@ view:
 `caretModel` is a `CaretModel`; in the other modes every move command is a no-op:
 
 * Read-only state: `position`, `bounds` (`Rectangle`, `null` without a caret),
-  `isVisible` (blink phase), `blockCount`, `wordCount`, `symbolCount`.
+  `isVisible` (blink phase), `blockCount`, `wordCount`, `symbolCount`, and
+  `currentTextPart` / `currentTextBlock` / `currentPage` / `currentCharacter`
+  - the raw text part, block, page and character the caret currently sits in
+  or next to (`null` without a document).
 * Linear commands: `moveTo(index)`, `moveToStart()`, `moveToEnd()`.
 * Absolute structural commands, addressing a zero-based ordinal:
   `moveIntoBlock` / `moveToStartOfBlock` / `moveToEndOfBlock` and the `Word` /
@@ -121,6 +124,19 @@ view:
 
 A command issued before the component has its UI delegate is applied once the
 delegate is attached.
+
+## Type and mouse events
+
+`onType` (a `PaperSheetTypeListener`) fires right after a character was typed
+into an editable view; the event (`PaperSheetTypeEvent`) carries the typed
+`character` plus the raw `textPart`, `textBlock` and `page` it landed in.
+
+`onMouseEvent` (a `PaperSheetMouseListener`) fires while the mouse hovers
+(`PaperSheetMouseEvent.Kind.HOVER`, on every pointer move) or clicks
+(`PaperSheetMouseEvent.Kind.CLICK`) over the view; the event carries the raw
+`textPart`, `textBlock` and `page` under the pointer - `textPart` and
+`textBlock` are `null` over an empty area of a page, and all three are `null`
+outside every page.
 
 ## Scrolling
 

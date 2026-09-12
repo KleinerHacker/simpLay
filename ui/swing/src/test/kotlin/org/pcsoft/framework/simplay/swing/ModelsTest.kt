@@ -16,7 +16,13 @@ import java.awt.Rectangle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import org.pcsoft.framework.simplay.engine.model.Font
+import org.pcsoft.framework.simplay.engine.model.FlowPage
+import org.pcsoft.framework.simplay.engine.model.TextBlock
+import org.pcsoft.framework.simplay.engine.model.TextStyle
+import org.pcsoft.framework.simplay.engine.model.TextWord
 
 /**
  * Tests for the observable [TextSelectionModel] and [CaretModel] plus their command dispatch.
@@ -66,12 +72,39 @@ class ModelsTest {
         val model = CaretModel { }
         var positionEvents = 0
         model.addPropertyChangeListener(CaretModel.PROP_POSITION) { positionEvents++ }
-        model.update(9, Rectangle(0, 0, 2, 10), true)
+        model.update(9, Rectangle(0, 0, 2, 10), true, null, null, null, null)
         model.updateCounts(3, 12, 4)
         assertEquals(9, model.position)
         assertTrue(model.isVisible)
         assertEquals(3, model.blockCount)
         assertEquals(1, positionEvents)
+    }
+
+    /**
+     * Verifies that [CaretModel.update] also publishes the current text part, block, page and
+     * character, and notifies a listener registered on [CaretModel.PROP_CURRENT_CHARACTER].
+     */
+    @Test
+    fun caretModelPublishesCurrentStructuralElements() {
+        val style = TextStyle(font = Font(family = "SansSerif", size = 12.0))
+        val block = TextBlock.of("hello", style)
+        val page = FlowPage(layout = TestDocuments.layout, blocks = listOf(block))
+        val part = TextWord("hello")
+
+        val model = CaretModel { }
+        var characterEvents = 0
+        model.addPropertyChangeListener(CaretModel.PROP_CURRENT_CHARACTER) { characterEvents++ }
+        model.update(0, null, false, part, block, page, 'h')
+
+        assertEquals(part, model.currentTextPart)
+        assertEquals(block, model.currentTextBlock)
+        assertEquals(page, model.currentPage)
+        assertEquals('h', model.currentCharacter)
+        assertEquals(1, characterEvents)
+
+        model.update(5, null, false, null, null, null, null)
+        assertNull(model.currentTextPart)
+        assertNull(model.currentCharacter)
     }
 
     /**

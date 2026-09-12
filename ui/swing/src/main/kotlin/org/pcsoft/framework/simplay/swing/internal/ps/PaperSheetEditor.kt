@@ -17,6 +17,7 @@ import java.awt.datatransfer.DataFlavor
 import java.awt.event.KeyEvent
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.swing.PaperSheetMode
+import org.pcsoft.framework.simplay.swing.PaperSheetTypeEvent
 import org.pcsoft.framework.simplay.swing.PaperSheetView
 import org.pcsoft.framework.simplay.swing.asPageMode
 import org.pcsoft.framework.simplay.uicommon.DocumentEditor
@@ -121,38 +122,45 @@ internal class PaperSheetEditor(
 
     //region Mutations
 
-    private fun applyEdit(lo: Int, hi: Int, op: (DocumentTextIndex, Document) -> DocumentEditor.Result) {
-        if (!editable) return
-        val idx = textIndex() ?: return
-        val doc = view.document ?: return
-        if (!regionsAllow(idx, doc, lo, hi)) return
+    private fun applyEdit(lo: Int, hi: Int, op: (DocumentTextIndex, Document) -> DocumentEditor.Result): Boolean {
+        if (!editable) return false
+        val idx = textIndex() ?: return false
+        val doc = view.document ?: return false
+        if (!regionsAllow(idx, doc, lo, hi)) return false
         val result = op(idx, doc)
         markInternalEdit()
         view.document = result.document
         caret.onEditApplied(result.caretIndex)
+        return true
     }
 
     /**
      * Inserts [text] at the caret, replacing the selection if there is one. Without a selection and in
      * [PaperSheetCaret.isOverwriteMode], replaces up to `text.length` characters starting at the caret
      * instead, never crossing past the end of the caret's current line - at the end of the line this
-     * falls back to a plain insert, exactly like insert mode.
+     * falls back to a plain insert, exactly like insert mode. Fires [PaperSheetView.onType] with the
+     * document structure the caret landed in when [text] is a single character.
      */
     fun typeText(text: String) {
         if (!editable || text.isEmpty()) return
-        if (!selection.isEmpty) {
+        val applied = if (!selection.isEmpty) {
             applyEdit(selection.start, selection.end) { i, d -> DocumentEditor.replace(i, d, selection.start, selection.end, text) }
-            return
-        }
-        if (caret.isOverwriteMode) {
+        } else {
             val lineEnd = caret.currentLineBounds()?.second ?: caret.position
             val overwriteEnd = (caret.position + text.length).coerceIn(caret.position, lineEnd)
-            if (overwriteEnd > caret.position) {
+            if (caret.isOverwriteMode && overwriteEnd > caret.position) {
                 applyEdit(caret.position, overwriteEnd) { i, d -> DocumentEditor.replace(i, d, caret.position, overwriteEnd, text) }
-                return
+            } else {
+                applyEdit(caret.position, caret.position) { i, d -> DocumentEditor.insert(i, d, caret.position, text) }
             }
         }
-        applyEdit(caret.position, caret.position) { i, d -> DocumentEditor.insert(i, d, caret.position, text) }
+        if (applied && text.length == 1) fireTypeEvent(text[0])
+    }
+
+    private fun fireTypeEvent(character: Char) {
+        val listener = view.onType ?: return
+        val seg = caret.currentSeg() ?: return
+        listener.handle(PaperSheetTypeEvent(view, character, seg.part.raw, seg.block.raw, seg.page.raw))
     }
 
     private fun backspace() {

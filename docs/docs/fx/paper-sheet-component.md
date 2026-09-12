@@ -164,7 +164,10 @@ and moves it; in the other modes every move command is a no-op:
 
 * **State** (read-only): `position` (offset in the linear text), `bounds`
   (viewport rectangle, `null` without a caret), `isVisible` (blink phase),
-  and `blockCount` / `wordCount` / `symbolCount` of the current document.
+  `blockCount` / `wordCount` / `symbolCount` of the current document, and
+  `currentTextPart` / `currentTextBlock` / `currentPage` / `currentCharacter`
+  - the raw text part, block, page and character the caret currently sits in
+  or next to (`null` without a document).
 * **Linear commands**: `moveTo(index)`, `moveToStart()`, `moveToEnd()`.
 * **Absolute structural commands**, addressing a zero-based ordinal:
   `moveIntoBlock(block, index)`, `moveToStartOfBlock(block)`,
@@ -178,6 +181,19 @@ and moves it; in the other modes every move command is a no-op:
 
 A command issued before the view has rendered once is applied as soon as its skin
 is attached.
+
+## Type and mouse events
+
+`onType` (an `EventHandler<PaperSheetTypeEvent>`) fires right after a
+character was typed into an editable view; the event carries the typed
+`character` plus the raw `textPart`, `textBlock` and `page` it landed in.
+
+`onMouseEvent` (an `EventHandler<PaperSheetMouseEvent>`) fires while the mouse
+hovers (`PaperSheetMouseEvent.HOVER`, on every pointer move) or clicks
+(`PaperSheetMouseEvent.CLICK`) over the view; the event carries the raw
+`textPart`, `textBlock` and `page` under the pointer - `textPart` and
+`textBlock` are `null` over an empty area of a page, and all three are `null`
+outside every page.
 
 ## Scrolling
 

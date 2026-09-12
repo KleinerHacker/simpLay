@@ -158,16 +158,22 @@ internal class PaperSheetCaret(
         else -> 1.0
     }
 
-    /** Writes the caret position, bounds, blink state and structural counts onto [CaretModel]. */
+    /** Writes the caret position, bounds, blink state, structural counts and current structural
+     * elements onto [CaretModel]. */
     fun publish() {
         val idx = textIndex()
         val model = view.caretModel
         model.updateCounts(idx?.blockCount ?: 0, idx?.wordCount ?: 0, idx?.symbolCount ?: 0)
         val active = caretActive || dropPreview != null
+        val seg = currentSeg()
         model.update(
             position.coerceIn(0, idx?.length ?: 0),
             if (active) viewportBounds() else null,
             active && currentOpacity() > 0.05,
+            seg?.part?.raw,
+            seg?.block?.raw,
+            seg?.page?.raw,
+            idx?.text?.getOrNull(position),
         )
     }
 
@@ -321,7 +327,10 @@ internal class PaperSheetCaret(
     private fun linesOfPage(idx: DocumentTextIndex, pageIndex: Int): List<MeasuredLine> =
         idx.segments.filter { it.pageIndex == pageIndex }.map { it.line }.distinct()
 
-    private fun currentSeg(): DocumentTextIndex.Segment? {
+    /** The segment the caret currently sits in or next to, or `null` without a document. Also reused
+     * by [PaperSheetEditor] (to report the part/block/page of a just-typed character) and
+     * [PaperSheetHoverTracker]. */
+    internal fun currentSeg(): DocumentTextIndex.Segment? {
         val idx = textIndex() ?: return null
         if (idx.segments.isEmpty()) return null
         return idx.segments.lastOrNull { it.start <= position && position <= it.end }

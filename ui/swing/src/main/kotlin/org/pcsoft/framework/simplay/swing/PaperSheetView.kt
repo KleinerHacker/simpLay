@@ -477,6 +477,16 @@ open class PaperSheetView : JComponent() {
 
     //endregion
 
+    //region Events
+
+    /** Listener invoked right after a character was typed into an editable view. */
+    var onType: PaperSheetTypeListener? = null
+
+    /** Listener invoked while the mouse hovers or clicks over the view. */
+    var onMouseEvent: PaperSheetMouseListener? = null
+
+    //endregion
+
     //region Floating overlays
 
     private val floatingOverlaysList = ArrayList<FloatingOverlay>()

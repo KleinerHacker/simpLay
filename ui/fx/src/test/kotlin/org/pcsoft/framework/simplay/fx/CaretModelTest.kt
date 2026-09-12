@@ -178,4 +178,34 @@ class CaretModelTest : JavaFxTestBase() {
 
         assertEquals(paragraphLength, view.caretModel.position)
     }
+
+    /**
+     * At the document start the model reports the first character of the paragraph plus the raw
+     * text part, block and page the caret sits in.
+     */
+    @Test
+    fun currentStructuralElementsReportTheStartOfTheDocument() {
+        val model = view(mode = PaperSheetMode.SELECTABLE).caretModel
+
+        assertEquals('T', model.currentCharacter)
+        assertEquals("The", model.currentTextPart?.text)
+        assertEquals(PaperSheetTestFixtures.PARAGRAPH, model.currentTextBlock?.toString())
+        assertTrue(model.currentPage != null)
+    }
+
+    /**
+     * Moving the caret into the middle of a word updates the current character, part, block and page
+     * to match the new position.
+     */
+    @Test
+    fun currentStructuralElementsFollowTheCaret() {
+        val model = view(mode = PaperSheetMode.EDITABLE).caretModel
+
+        onFxThread { model.moveTo(5) }
+
+        assertEquals('u', model.currentCharacter)
+        assertEquals("quick", model.currentTextPart?.text)
+        assertEquals(PaperSheetTestFixtures.PARAGRAPH, model.currentTextBlock?.toString())
+        assertTrue(model.currentPage != null)
+    }
 }

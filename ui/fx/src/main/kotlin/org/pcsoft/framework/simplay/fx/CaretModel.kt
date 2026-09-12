@@ -19,6 +19,9 @@ import javafx.beans.property.ReadOnlyIntegerWrapper
 import javafx.beans.property.ReadOnlyObjectProperty
 import javafx.beans.property.ReadOnlyObjectWrapper
 import javafx.geometry.Bounds
+import org.pcsoft.framework.simplay.engine.model.Page
+import org.pcsoft.framework.simplay.engine.model.TextBlock
+import org.pcsoft.framework.simplay.engine.model.TextPart
 
 /**
  * The observable caret state of a [PaperSheetView] plus the commands to move it. One instance lives
@@ -29,7 +32,9 @@ import javafx.geometry.Bounds
  * rectangle in viewport pixels while the view is in [PaperSheetMode.EDITABLE] (else `null`) and
  * [isVisible] follows the blink phase. [blockCount], [wordCount] and [symbolCount] report how many
  * of each structural element the current document has, so a caller can pick a valid ordinal for the
- * structural move commands.
+ * structural move commands. [currentTextPart], [currentTextBlock] and [currentPage] report the raw
+ * model elements the caret currently sits in or next to, and [currentCharacter] the character right
+ * at [position]; all four are `null` without a document or once [position] is past the last character.
  *
  * The commands come in three groups: linear ([moveTo], [moveToStart], [moveToEnd]); absolute
  * structural, addressing a zero-based ordinal ([moveIntoBlock] / [moveToStartOfBlock] /
@@ -105,15 +110,68 @@ class CaretModel internal constructor(private val view: PaperSheetView) {
     /** Number of addressable symbols (single non-word characters) in the current document. */
     val symbolCount: Int get() = symbolCountWrapper.get()
 
+    private val currentTextPartWrapper = ReadOnlyObjectWrapper<TextPart?>(this, "currentTextPart", null)
+
+    /** The [currentTextPart] property. */
+    @get:JvmName("currentTextPartProperty")
+    val currentTextPartProperty: ReadOnlyObjectProperty<TextPart?>
+        get() = currentTextPartWrapper.readOnlyProperty
+
+    /** The raw text part the caret currently sits in or next to, or `null` without a document. */
+    val currentTextPart: TextPart? get() = currentTextPartWrapper.get()
+
+    private val currentTextBlockWrapper = ReadOnlyObjectWrapper<TextBlock?>(this, "currentTextBlock", null)
+
+    /** The [currentTextBlock] property. */
+    @get:JvmName("currentTextBlockProperty")
+    val currentTextBlockProperty: ReadOnlyObjectProperty<TextBlock?>
+        get() = currentTextBlockWrapper.readOnlyProperty
+
+    /** The raw block the caret currently sits in, or `null` without a document. */
+    val currentTextBlock: TextBlock? get() = currentTextBlockWrapper.get()
+
+    private val currentPageWrapper = ReadOnlyObjectWrapper<Page?>(this, "currentPage", null)
+
+    /** The [currentPage] property. */
+    @get:JvmName("currentPageProperty")
+    val currentPageProperty: ReadOnlyObjectProperty<Page?>
+        get() = currentPageWrapper.readOnlyProperty
+
+    /** The raw page the caret currently sits on, or `null` without a document. */
+    val currentPage: Page? get() = currentPageWrapper.get()
+
+    private val currentCharacterWrapper = ReadOnlyObjectWrapper<Char?>(this, "currentCharacter", null)
+
+    /** The [currentCharacter] property. */
+    @get:JvmName("currentCharacterProperty")
+    val currentCharacterProperty: ReadOnlyObjectProperty<Char?>
+        get() = currentCharacterWrapper.readOnlyProperty
+
+    /** The character right at [position], or `null` at the end of the document or without one. */
+    val currentCharacter: Char? get() = currentCharacterWrapper.get()
+
     //endregion
 
     //region Skin-only writer
 
-    /** Replaces the caret position, bounds and blink state in one step. Called by the skin only. */
-    internal fun update(position: Int, bounds: Bounds?, visible: Boolean) {
+    /** Replaces the caret position, bounds, blink state and current structural elements in one step.
+     * Called by the skin only. */
+    internal fun update(
+        position: Int,
+        bounds: Bounds?,
+        visible: Boolean,
+        textPart: TextPart?,
+        textBlock: TextBlock?,
+        page: Page?,
+        character: Char?,
+    ) {
         positionWrapper.set(position)
         boundsWrapper.set(bounds)
         visibleWrapper.set(visible)
+        currentTextPartWrapper.set(textPart)
+        currentTextBlockWrapper.set(textBlock)
+        currentPageWrapper.set(page)
+        currentCharacterWrapper.set(character)
     }
 
     /** Replaces the structural element counts. Called by the skin after every re-measure. */

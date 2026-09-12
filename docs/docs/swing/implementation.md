@@ -78,10 +78,19 @@ caret keys (`Home`, `End`, `Ctrl+Home`, `Ctrl+End`, arrows, `Ctrl+Left` /
 `Ctrl+Right`, `Backspace`, `Delete`, each optionally with `Shift`). An edit
 replaces `document` with a new instance. The caret is exposed through
 `caretModel`, a `CaretModel` with the read-only `position` / `bounds` / blink
-state, the `blockCount` / `wordCount` / `symbolCount` of the document and the
-linear, absolute-structural and relative-structural move commands. Setting
-`smoothCaretBlink = true` (off by default) fades the caret instead of blinking
-it hard on and off.
+state, the `blockCount` / `wordCount` / `symbolCount` of the document, the
+`currentTextPart` / `currentTextBlock` / `currentPage` / `currentCharacter` the
+caret currently sits in or next to, and the linear, absolute-structural and
+relative-structural move commands. Setting `smoothCaretBlink = true` (off by
+default) fades the caret instead of blinking it hard on and off.
+
+`onType` fires a `PaperSheetTypeEvent` (through a `PaperSheetTypeListener`)
+right after a character was typed into an editable view, carrying the
+character plus the raw text part, block and page it landed in. `onMouseEvent`
+fires a `PaperSheetMouseEvent` (through a `PaperSheetMouseListener`) while the
+mouse hovers or clicks over the view, carrying the raw text part, block and
+page under the pointer - `null` over an empty area of a page, or outright for
+part and block outside every page.
 
 `PaperSheetView` also accepts floating overlays through `floatingOverlays`: a
 `FloatingOverlay` component the view shows, positions and hides on its own while

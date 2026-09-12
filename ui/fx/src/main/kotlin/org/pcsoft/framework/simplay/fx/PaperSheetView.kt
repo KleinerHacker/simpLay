@@ -32,6 +32,7 @@ import javafx.css.SimpleStyleableObjectProperty
 import javafx.css.Styleable
 import javafx.css.StyleableDoubleProperty
 import javafx.css.StyleableObjectProperty
+import javafx.event.EventHandler
 import javafx.geometry.Bounds
 import javafx.geometry.Dimension2D
 import javafx.scene.control.Control
@@ -696,6 +697,30 @@ class PaperSheetView : Control() {
         hoveredPageWrapper.set(index)
         hoveredPageBoundsWrapper.set(bounds)
     }
+
+    //endregion
+
+    //region Events
+
+    /** The [onType] property, for binding and change listeners. */
+    @get:JvmName("onTypeProperty")
+    val onTypeProperty: ObjectProperty<EventHandler<PaperSheetTypeEvent>?> =
+        SimpleObjectProperty(this, "onType", null)
+
+    /** Handler invoked right after a character was typed into an editable view. */
+    var onType: EventHandler<PaperSheetTypeEvent>?
+        get() = onTypeProperty.get()
+        set(value) = onTypeProperty.set(value)
+
+    /** The [onMouseEvent] property, for binding and change listeners. */
+    @get:JvmName("onMouseEventProperty")
+    val onMouseEventProperty: ObjectProperty<EventHandler<PaperSheetMouseEvent>?> =
+        SimpleObjectProperty(this, "onMouseEvent", null)
+
+    /** Handler invoked while the mouse hovers or clicks over the view. */
+    var onMouseEvent: EventHandler<PaperSheetMouseEvent>?
+        get() = onMouseEventProperty.get()
+        set(value) = onMouseEventProperty.set(value)
 
     //endregion
 

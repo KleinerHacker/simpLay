@@ -36,6 +36,9 @@ import org.pcsoft.framework.simplay.engine.RenderConfiguration
 import org.pcsoft.framework.simplay.engine.measure
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.engine.measure.MeasuredPage
+import org.pcsoft.framework.simplay.engine.model.Page
+import org.pcsoft.framework.simplay.engine.model.TextBlock
+import org.pcsoft.framework.simplay.engine.model.TextPart
 import org.pcsoft.framework.simplay.swing.internal.SwingFontMeasureCalculator
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetCaret
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetEditor
@@ -255,6 +258,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
                 view.cursor = cursorFor(e.x.toDouble(), e.y.toDouble())
                 hover.update(e.x.toDouble(), e.y.toDouble())
                 overlays.refresh()
+                fireMouseEvent(PaperSheetMouseEvent.Kind.HOVER, e.x.toDouble(), e.y.toDouble())
             }
             override fun mouseExited(e: MouseEvent) {
                 view.cursor = Cursor.getDefaultCursor()
@@ -554,6 +558,45 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         return partSegment.start + offset
     }
 
+    /**
+     * The raw part / block / page under viewport point ([px], [py]), or `null` for whichever of them
+     * has no hit there - the part and block are `null` over an empty area of a page, all three are
+     * `null` outside every page. Feeds [fireMouseEvent].
+     */
+    private fun resolveMouseHit(px: Double, py: Double): Triple<TextPart?, TextBlock?, Page?> {
+        val doc = measured?.takeIf { it.pages.isNotEmpty() } ?: return Triple(null, null, null)
+        val zoom = view.zoom
+        val outer = view.outerMargin
+        val cx = px / zoom
+        val cy = (py + scrollOffset()) / zoom
+        val (pageIndex, bandDistance) = nearestPage(cy)
+        if (bandDistance > 0.0) return Triple(null, null, null)
+        val page = doc.pages[pageIndex]
+        val contentArea = page.contentArea
+        val localX = cx - outer - contentArea.x
+        val localY = cy - (outer + pageTops[pageIndex]) - contentArea.y
+        val block = page.blocks.firstOrNull { b ->
+            val bounds = b.bounds
+            localX >= bounds.x && localX <= bounds.x + bounds.width && localY >= bounds.y && localY <= bounds.y + bounds.height
+        } ?: return Triple(null, null, page.raw)
+        val part = index?.segments?.filter { it.pageIndex == pageIndex && it.block === block }
+            ?.minByOrNull { seg ->
+                val bounds = seg.part.bounds
+                when {
+                    localX < bounds.x -> bounds.x - localX
+                    localX > bounds.x + bounds.width -> localX - bounds.x - bounds.width
+                    else -> 0.0
+                }
+            }?.part?.raw
+        return Triple(part, block.raw, page.raw)
+    }
+
+    private fun fireMouseEvent(kind: PaperSheetMouseEvent.Kind, px: Double, py: Double) {
+        val listener = view.onMouseEvent ?: return
+        val (part, block, page) = resolveMouseHit(px, py)
+        listener.handle(PaperSheetMouseEvent(view, kind, part, block, page))
+    }
+
     //endregion
 
     //region input
@@ -607,6 +650,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     }
 
     private fun onMouseClicked(event: MouseEvent) {
+        fireMouseEvent(PaperSheetMouseEvent.Kind.CLICK, event.x.toDouble(), event.y.toDouble())
         if (event.clickCount != 2) return
         val doc = measured?.takeIf { it.pages.isNotEmpty() } ?: return
         val hitPageMode = pageMode(doc.pages[nearestPage((event.y + scrollOffset()) / view.zoom).first])
@@ -649,6 +693,10 @@ open class BasicPaperSheetUI : PaperSheetUI() {
 
     internal fun dragSelectionToForTest(x: Double, y: Double, copy: Boolean) =
         editor.dropSelection(hitIndexAt(x, y), copy)
+
+    /** Fires a [PaperSheetMouseEvent] of [kind] at a viewport point, as the real listeners do; for tests. */
+    internal fun fireMouseEventForTest(kind: PaperSheetMouseEvent.Kind, x: Double, y: Double) =
+        fireMouseEvent(kind, x, y)
 
     internal fun hoverAtForTest(x: Double, y: Double) {
         hover.update(x, y)

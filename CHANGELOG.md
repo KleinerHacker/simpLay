@@ -56,6 +56,17 @@ excluded.
 - `ui/fx` and `ui/swing`: `Ctrl+A` (`Cmd+A` on macOS) selects the whole
   document text in `PaperSheetView`, in every mode that supports selection
   (`SELECTABLE`, `NAVIGABLE`, `EDITABLE`).
+- `ui/fx` and `ui/swing`: `CaretModel` gained `currentTextPart`,
+  `currentTextBlock`, `currentPage` and `currentCharacter`, reporting the raw
+  text part, block, page and character the caret currently sits in or next
+  to (`null` without a document).
+- `ui/fx` and `ui/swing`: `PaperSheetView` gained an `onType` event, fired
+  right after a character was typed into an editable view with the typed
+  character plus the raw text part, block and page it landed in
+  (`PaperSheetTypeEvent`), and an `onMouseEvent` event, fired while the mouse
+  hovers or clicks over the view with the raw text part, block and page under
+  the pointer (`PaperSheetMouseEvent`) - `null` for the part and block over an
+  empty area of a page, and for all three outside every page.
 
 ### Changed
 

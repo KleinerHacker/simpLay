@@ -15,6 +15,9 @@ package org.pcsoft.framework.simplay.swing
 import java.awt.Rectangle
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
+import org.pcsoft.framework.simplay.engine.model.Page
+import org.pcsoft.framework.simplay.engine.model.TextBlock
+import org.pcsoft.framework.simplay.engine.model.TextPart
 
 /**
  * The observable caret state of a [PaperSheetView] plus the commands to move it. One instance lives
@@ -25,7 +28,10 @@ import java.beans.PropertyChangeSupport
  * the document's linear text (the same axis [TextSelectionModel] uses), [bounds] is the caret
  * rectangle in viewport pixels while the view is in [PaperSheetMode.EDITABLE] (else `null`) and
  * [isVisible] follows the blink phase. [blockCount], [wordCount] and [symbolCount] report how many
- * of each structural element the current document has.
+ * of each structural element the current document has. [currentTextPart], [currentTextBlock] and
+ * [currentPage] report the raw model elements the caret currently sits in or next to, and
+ * [currentCharacter] the character right at [position]; all four are `null` without a document or
+ * once [position] is past the last character.
  *
  * The commands come in three groups: linear ([moveTo], [moveToStart], [moveToEnd]); absolute
  * structural, addressing a zero-based ordinal; and relative structural from the current position. A
@@ -77,6 +83,22 @@ class CaretModel internal constructor(private val dispatch: (Commands.() -> Unit
     var symbolCount: Int = 0
         private set
 
+    /** The raw text part the caret currently sits in or next to, or `null` without a document. */
+    var currentTextPart: TextPart? = null
+        private set
+
+    /** The raw block the caret currently sits in, or `null` without a document. */
+    var currentTextBlock: TextBlock? = null
+        private set
+
+    /** The raw page the caret currently sits on, or `null` without a document. */
+    var currentPage: Page? = null
+        private set
+
+    /** The character right at [position], or `null` at the end of the document or without one. */
+    var currentCharacter: Char? = null
+        private set
+
     fun addPropertyChangeListener(listener: PropertyChangeListener) = pcs.addPropertyChangeListener(listener)
 
     fun addPropertyChangeListener(propertyName: String, listener: PropertyChangeListener) =
@@ -87,17 +109,38 @@ class CaretModel internal constructor(private val dispatch: (Commands.() -> Unit
     fun removePropertyChangeListener(propertyName: String, listener: PropertyChangeListener) =
         pcs.removePropertyChangeListener(propertyName, listener)
 
-    /** Replaces the caret position, bounds and blink state in one step. Called by the UI only. */
-    internal fun update(position: Int, bounds: Rectangle?, visible: Boolean) {
+    /** Replaces the caret position, bounds, blink state and current structural elements in one step.
+     * Called by the UI only. */
+    internal fun update(
+        position: Int,
+        bounds: Rectangle?,
+        visible: Boolean,
+        textPart: TextPart?,
+        textBlock: TextBlock?,
+        page: Page?,
+        character: Char?,
+    ) {
         val oldPos = this.position
         val oldBounds = this.bounds
         val oldVisible = this.isVisible
+        val oldTextPart = this.currentTextPart
+        val oldTextBlock = this.currentTextBlock
+        val oldPage = this.currentPage
+        val oldCharacter = this.currentCharacter
         this.position = position
         this.bounds = bounds
         this.isVisible = visible
+        this.currentTextPart = textPart
+        this.currentTextBlock = textBlock
+        this.currentPage = page
+        this.currentCharacter = character
         pcs.firePropertyChange(PROP_POSITION, oldPos, position)
         pcs.firePropertyChange(PROP_BOUNDS, oldBounds, bounds)
         pcs.firePropertyChange(PROP_VISIBLE, oldVisible, visible)
+        pcs.firePropertyChange(PROP_CURRENT_TEXT_PART, oldTextPart, textPart)
+        pcs.firePropertyChange(PROP_CURRENT_TEXT_BLOCK, oldTextBlock, textBlock)
+        pcs.firePropertyChange(PROP_CURRENT_PAGE, oldPage, page)
+        pcs.firePropertyChange(PROP_CURRENT_CHARACTER, oldCharacter, character)
     }
 
     /** Replaces the structural element counts. Called by the UI after every re-measure. */
@@ -186,5 +229,9 @@ class CaretModel internal constructor(private val dispatch: (Commands.() -> Unit
         const val PROP_BLOCK_COUNT = "blockCount"
         const val PROP_WORD_COUNT = "wordCount"
         const val PROP_SYMBOL_COUNT = "symbolCount"
+        const val PROP_CURRENT_TEXT_PART = "currentTextPart"
+        const val PROP_CURRENT_TEXT_BLOCK = "currentTextBlock"
+        const val PROP_CURRENT_PAGE = "currentPage"
+        const val PROP_CURRENT_CHARACTER = "currentCharacter"
     }
 }
