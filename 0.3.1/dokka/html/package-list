@@ -1,0 +1,15 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+
+module:engine
+org.pcsoft.framework.simplay.engine
+org.pcsoft.framework.simplay.engine.geometry
+org.pcsoft.framework.simplay.engine.measure
+org.pcsoft.framework.simplay.engine.model
+module:common
+org.pcsoft.framework.simplay.uicommon
+module:fx
+org.pcsoft.framework.simplay.fx
+module:swing
+org.pcsoft.framework.simplay.swing
+org.pcsoft.framework.simplay.swing.internal.ps

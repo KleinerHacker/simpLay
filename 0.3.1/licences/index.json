@@ -1,0 +1,84 @@
+{
+    "dependencies": [
+        {
+            "moduleName": "org.jetbrains.kotlin:kotlin-stdlib",
+            "moduleUrl": "https://kotlinlang.org/",
+            "moduleVersion": "2.4.10",
+            "moduleLicense": "Apache-2.0",
+            "moduleLicenseUrl": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        },
+        {
+            "moduleName": "org.jetbrains.kotlinx:kotlinx-serialization-bom",
+            "moduleUrl": "https://github.com/Kotlin/kotlinx.serialization",
+            "moduleVersion": "1.11.0",
+            "moduleLicense": "Apache-2.0",
+            "moduleLicenseUrl": "https://www.apache.org/licenses/LICENSE-2.0.txt"
+        },
+        {
+            "moduleName": "org.jetbrains.kotlinx:kotlinx-serialization-core",
+            "moduleUrl": "https://github.com/Kotlin/kotlinx.serialization",
+            "moduleVersion": "1.11.0",
+            "moduleLicense": "Apache-2.0",
+            "moduleLicenseUrl": "https://www.apache.org/licenses/LICENSE-2.0.txt"
+        },
+        {
+            "moduleName": "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm",
+            "moduleUrl": "https://github.com/Kotlin/kotlinx.serialization",
+            "moduleVersion": "1.11.0",
+            "moduleLicense": "Apache-2.0",
+            "moduleLicenseUrl": "https://www.apache.org/licenses/LICENSE-2.0.txt"
+        },
+        {
+            "moduleName": "org.jetbrains.kotlinx:kotlinx-serialization-json",
+            "moduleUrl": "https://github.com/Kotlin/kotlinx.serialization",
+            "moduleVersion": "1.11.0",
+            "moduleLicense": "Apache-2.0",
+            "moduleLicenseUrl": "https://www.apache.org/licenses/LICENSE-2.0.txt"
+        },
+        {
+            "moduleName": "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm",
+            "moduleUrl": "https://github.com/Kotlin/kotlinx.serialization",
+            "moduleVersion": "1.11.0",
+            "moduleLicense": "Apache-2.0",
+            "moduleLicenseUrl": "https://www.apache.org/licenses/LICENSE-2.0.txt"
+        },
+        {
+            "moduleName": "org.jetbrains:annotations",
+            "moduleUrl": "http://www.jetbrains.org",
+            "moduleVersion": "13.0",
+            "moduleLicense": "The Apache Software License, Version 2.0",
+            "moduleLicenseUrl": "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        },
+        {
+            "moduleName": "org.openjfx:javafx-base",
+            "moduleUrl": "https://openjdk.java.net/projects/openjfx/",
+            "moduleVersion": "25",
+            "moduleLicense": "GPLv2+CE",
+            "moduleLicenseUrl": "https://openjdk.java.net/legal/gplv2+ce.html"
+        },
+        {
+            "moduleName": "org.openjfx:javafx-controls",
+            "moduleUrl": "https://openjdk.java.net/projects/openjfx/",
+            "moduleVersion": "25",
+            "moduleLicense": "GPLv2+CE",
+            "moduleLicenseUrl": "https://openjdk.java.net/legal/gplv2+ce.html"
+        },
+        {
+            "moduleName": "org.openjfx:javafx-fxml",
+            "moduleUrl": "https://openjdk.java.net/projects/openjfx/",
+            "moduleVersion": "25",
+            "moduleLicense": "GPLv2+CE",
+            "moduleLicenseUrl": "https://openjdk.java.net/legal/gplv2+ce.html"
+        },
+        {
+            "moduleName": "org.openjfx:javafx-graphics",
+            "moduleUrl": "https://openjdk.java.net/projects/openjfx/",
+            "moduleVersion": "25",
+            "moduleLicense": "GPLv2+CE",
+            "moduleLicenseUrl": "https://openjdk.java.net/legal/gplv2+ce.html"
+        }
+    ],
+    "importedModules": [
+        
+    ]
+}
