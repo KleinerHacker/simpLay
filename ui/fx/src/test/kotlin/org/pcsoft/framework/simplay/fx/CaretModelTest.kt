@@ -208,4 +208,73 @@ class CaretModelTest : JavaFxTestBase() {
         assertEquals(PaperSheetTestFixtures.PARAGRAPH, model.currentTextBlock?.toString())
         assertTrue(model.currentPage != null)
     }
+
+    private fun anchorView(mode: PaperSheetMode = PaperSheetMode.NAVIGABLE): PaperSheetView = onFxThread {
+        val view = PaperSheetView()
+        view.mode = mode
+        val stage = Stage()
+        stage.scene = Scene(view, 320.0, 260.0)
+        stage.show()
+        view.document = PaperSheetTestFixtures.anchorDocument()
+        view.applyCss()
+        view.layout()
+        view
+    }
+
+    /**
+     * The model reports [CaretModel.anchorCount] and [CaretModel.anchorIds] for the two `${...}`
+     * anchors of the fixture document, in document order.
+     */
+    @Test
+    fun anchorCountAndIdsReportBothAnchors() {
+        val model = anchorView(PaperSheetMode.SELECTABLE).caretModel
+
+        assertEquals(2, model.anchorCount)
+        assertEquals(listOf("chapterOne", "chapterTwo"), model.anchorIds)
+    }
+
+    /**
+     * `moveToAnchor` places the caret directly on the anchor identified by its `id`, and
+     * [CaretModel.currentAnchorId] then reports that same id.
+     */
+    @Test
+    fun moveToAnchorJumpsDirectlyToTheNamedAnchor() {
+        val model = anchorView().caretModel
+
+        onFxThread { model.moveToAnchor("chapterTwo") }
+
+        assertEquals("chapterTwo", model.currentAnchorId)
+    }
+
+    /**
+     * `moveToAnchor` with an unknown id is a no-op: the caret stays where it was.
+     */
+    @Test
+    fun moveToAnchorWithUnknownIdIsANoOp() {
+        val model = anchorView().caretModel
+
+        onFxThread { model.moveToStart() }
+        onFxThread { model.moveToAnchor("doesNotExist") }
+
+        assertEquals(0, model.position)
+    }
+
+    /**
+     * `moveToNextAnchor` and `moveToPrevAnchor` step between the two anchors of the fixture document
+     * and back.
+     */
+    @Test
+    fun nextAndPrevAnchorNavigationAreInverse() {
+        val model = anchorView().caretModel
+
+        onFxThread { model.moveToStart() }
+        onFxThread { model.moveToNextAnchor() }
+        assertEquals("chapterOne", model.currentAnchorId)
+
+        onFxThread { model.moveToNextAnchor() }
+        assertEquals("chapterTwo", model.currentAnchorId)
+
+        onFxThread { model.moveToPrevAnchor() }
+        assertEquals("chapterOne", model.currentAnchorId)
+    }
 }

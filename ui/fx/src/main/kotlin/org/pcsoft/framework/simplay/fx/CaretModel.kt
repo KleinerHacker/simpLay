@@ -20,6 +20,7 @@ import javafx.beans.property.ReadOnlyObjectProperty
 import javafx.beans.property.ReadOnlyObjectWrapper
 import javafx.geometry.Bounds
 import org.pcsoft.framework.simplay.engine.model.Page
+import org.pcsoft.framework.simplay.engine.model.TextAnchor
 import org.pcsoft.framework.simplay.engine.model.TextBlock
 import org.pcsoft.framework.simplay.engine.model.TextPart
 
@@ -110,6 +111,37 @@ class CaretModel internal constructor(private val view: PaperSheetView) {
     /** Number of addressable symbols (single non-word characters) in the current document. */
     val symbolCount: Int get() = symbolCountWrapper.get()
 
+    private val anchorCountWrapper = ReadOnlyIntegerWrapper(this, "anchorCount", 0)
+
+    /** The [anchorCount] property. */
+    @get:JvmName("anchorCountProperty")
+    val anchorCountProperty: ReadOnlyIntegerProperty
+        get() = anchorCountWrapper.readOnlyProperty
+
+    /** Number of addressable [TextAnchor]s in the current document. */
+    val anchorCount: Int get() = anchorCountWrapper.get()
+
+    private val anchorIdsWrapper =
+        ReadOnlyObjectWrapper<List<String>>(this, "anchorIds", emptyList())
+
+    /** The [anchorIds] property. */
+    @get:JvmName("anchorIdsProperty")
+    val anchorIdsProperty: ReadOnlyObjectProperty<List<String>>
+        get() = anchorIdsWrapper.readOnlyProperty
+
+    /** The ids of every [TextAnchor] in the current document, in document order. */
+    val anchorIds: List<String> get() = anchorIdsWrapper.get()
+
+    private val currentAnchorIdWrapper = ReadOnlyObjectWrapper<String?>(this, "currentAnchorId", null)
+
+    /** The [currentAnchorId] property. */
+    @get:JvmName("currentAnchorIdProperty")
+    val currentAnchorIdProperty: ReadOnlyObjectProperty<String?>
+        get() = currentAnchorIdWrapper.readOnlyProperty
+
+    /** The `id` of the [TextAnchor] the caret currently sits on, or `null` when it does not. */
+    val currentAnchorId: String? get() = currentAnchorIdWrapper.get()
+
     private val currentTextPartWrapper = ReadOnlyObjectWrapper<TextPart?>(this, "currentTextPart", null)
 
     /** The [currentTextPart] property. */
@@ -172,13 +204,16 @@ class CaretModel internal constructor(private val view: PaperSheetView) {
         currentTextBlockWrapper.set(textBlock)
         currentPageWrapper.set(page)
         currentCharacterWrapper.set(character)
+        currentAnchorIdWrapper.set((textPart as? TextAnchor)?.id)
     }
 
     /** Replaces the structural element counts. Called by the skin after every re-measure. */
-    internal fun updateCounts(blocks: Int, words: Int, symbols: Int) {
+    internal fun updateCounts(blocks: Int, words: Int, symbols: Int, anchors: Int, anchorIds: List<String>) {
         blockCountWrapper.set(blocks)
         wordCountWrapper.set(words)
         symbolCountWrapper.set(symbols)
+        anchorCountWrapper.set(anchors)
+        anchorIdsWrapper.set(anchorIds)
     }
 
     //endregion
@@ -246,6 +281,15 @@ class CaretModel internal constructor(private val view: PaperSheetView) {
 
     /** Moves the caret to the previous symbol; stays put at the document start. */
     fun moveToPrevSymbol() = view.requestCaret { moveToPrevSymbol() }
+
+    /** Moves the caret directly to the [TextAnchor] identified by [id]; a no-op for an unknown id. */
+    fun moveToAnchor(id: String) = view.requestCaret { moveToAnchor(id) }
+
+    /** Moves the caret to the next anchor; stays put at the document end. */
+    fun moveToNextAnchor() = view.requestCaret { moveToNextAnchor() }
+
+    /** Moves the caret to the previous anchor; stays put at the document start. */
+    fun moveToPrevAnchor() = view.requestCaret { moveToPrevAnchor() }
 
     /**
      * Moves the caret to the next navigable page, at the same line ordinal it held on the source

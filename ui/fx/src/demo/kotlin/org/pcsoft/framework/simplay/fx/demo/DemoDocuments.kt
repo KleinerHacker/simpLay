@@ -135,12 +135,34 @@ object DemoDocuments {
         numbering = PageNumbering(position = PageNumberPosition.BOTTOM_CENTER),
     )
 
+    /**
+     * A multi-page document carrying three named `${...}` navigation anchors - `intro`, `middle` and
+     * `outro` - one on each of its three pages, for the anchor navigation demo controls.
+     */
+    val anchors: Document = Document(
+        pages = listOf(
+            FlowPage(
+                layout = a4,
+                blocks = buildList {
+                    add(TextBlock.of("Anchors", heading))
+                    add(TextBlock.of("This is the \${intro} section.", body))
+                    repeat(8) { add(TextBlock.of(lorem, body)) }
+                    add(TextBlock.of("This is the \${middle} section.", body))
+                    repeat(8) { add(TextBlock.of(lorem, body)) }
+                    add(TextBlock.of("This is the \${outro} section.", body))
+                },
+            ),
+        ),
+        numbering = PageNumbering(position = PageNumberPosition.BOTTOM_CENTER),
+    )
+
     /** All samples with a display name, in menu order. */
     val all: List<Pair<String, Document>> = listOf(
         "Short" to short,
         "Multi-page" to multiPage,
         "Mixed" to mixed,
         "Four pages" to fourPages,
+        "Anchors" to anchors,
         "Novella (~150 pages)" to novella,
     )
 }

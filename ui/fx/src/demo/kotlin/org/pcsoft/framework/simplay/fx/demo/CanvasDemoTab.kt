@@ -24,6 +24,7 @@ import javafx.scene.control.SpinnerValueFactory
 import javafx.scene.control.ToolBar
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.Pane
+import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.text.Font as FxFont
 import org.pcsoft.framework.simplay.engine.CharacterLineBreakerStrategy
@@ -97,21 +98,24 @@ class CanvasDemoTab : BorderPane() {
     private val canvasHolder = Pane()
 
     init {
-        top = ToolBar(
-            Label("Document:"), sampleBox,
-            Label("Font:"), fontFamilyBox,
-            Label("Page number:"), pageNumberBox,
-            Separator(),
-            Label("Unit scale:"), unitScaleSpinner,
-            Label("Page gap:"), pageGapSpinner,
-            Separator(),
-            Label("Line break:"), lineBreakBox,
-            Label("Word break:"), wordBreakBox,
-            Separator(),
-            Label("Mode:"), modeBox,
-            Label("Page:"), pageIndexSpinner,
-            Separator(),
-            sizeLabel,
+        top = VBox(
+            ToolBar(
+                Label("Document:"), sampleBox,
+                Label("Font:"), fontFamilyBox,
+                Label("Page number:"), pageNumberBox,
+                Separator(),
+                Label("Unit scale:"), unitScaleSpinner,
+                Label("Page gap:"), pageGapSpinner,
+            ),
+            ToolBar(
+                Label("Line break:"), lineBreakBox,
+                Label("Word break:"), wordBreakBox,
+                Separator(),
+                Label("Mode:"), modeBox,
+                Label("Page:"), pageIndexSpinner,
+                Separator(),
+                sizeLabel,
+            ),
         )
         center = ScrollPane(canvasHolder).apply { padding = Insets(12.0) }
 

@@ -25,11 +25,17 @@ data class TextBlock private constructor(
     val style: TextStyle,
 ) : PlatformSerializable {
     /**
-     * Rejoins the parts by concatenating [TextPart.text] in order. Lossless: whitespace runs are
-     * stored as explicit [TextWhitespace] parts, so no character is invented or dropped.
+     * Rejoins the parts by concatenating [TextPart.text] in order, except a [TextAnchor] which is
+     * rendered back as its `${id}` marker. Lossless: whitespace runs are stored as explicit
+     * [TextWhitespace] parts and anchors as their marker, so no character is invented or dropped.
      */
     override fun toString(): String = buildString {
-        parts.forEach { part -> append(part.text) }
+        parts.forEach { part ->
+            when (part) {
+                is TextAnchor -> append("\${").append(part.id).append('}')
+                else -> append(part.text)
+            }
+        }
     }
 
     /**
@@ -61,6 +67,11 @@ data class TextBlock private constructor(
  * length of the run; a run splits at a change of kind (e.g. a space directly followed by a tab
  * yields two [TextWhitespace] parts). Any other whitespace character is taken as
  * [WhitespaceKind.SPACE].
+ *
+ * A `${name}` marker - `$` immediately followed by `{`, a non-empty [name] and a closing `}` -
+ * becomes a [TextAnchor] with that `id`, instead of being tokenized as symbols/word. A `$` that is
+ * not followed by a well-formed `{name}` (missing `{`, missing closing `}` or an empty name) is
+ * rejected.
  */
 private fun tokenize(text: String): List<TextPart> {
     val parts = mutableListOf<TextPart>()
@@ -84,8 +95,22 @@ private fun tokenize(text: String): List<TextPart> {
         whitespaceKind = null
     }
 
-    for (ch in text) {
+    var i = 0
+    while (i < text.length) {
+        val ch = text[i]
         when {
+            ch == '$' -> {
+                val close = if (i + 1 < text.length && text[i + 1] == '{') text.indexOf('}', i + 2) else -1
+                require(close != -1) {
+                    "Invalid anchor syntax at index $i: expected '\${name}', got '${text.substring(i, minOf(i + 20, text.length))}'"
+                }
+                val name = text.substring(i + 2, close)
+                require(name.isNotEmpty()) { "Invalid anchor syntax at index $i: anchor name must not be empty" }
+                flushWord()
+                flushWhitespace()
+                parts += TextAnchor(name)
+                i = close + 1
+            }
             ch.isWhitespace() -> {
                 flushWord()
                 val kind = when (ch) {
@@ -96,15 +121,18 @@ private fun tokenize(text: String): List<TextPart> {
                 if (whitespaceKind != null && whitespaceKind != kind) flushWhitespace()
                 whitespaceKind = kind
                 whitespaceCount++
+                i++
             }
             ch.isLetterOrDigit() -> {
                 flushWhitespace()
                 word.append(ch)
+                i++
             }
             else -> {
                 flushWord()
                 flushWhitespace()
                 parts += TextSymbol(ch)
+                i++
             }
         }
     }

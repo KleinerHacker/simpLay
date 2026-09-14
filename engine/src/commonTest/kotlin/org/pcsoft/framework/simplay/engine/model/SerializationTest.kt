@@ -164,4 +164,36 @@ class SerializationTest {
         assertTrue(decoded.parts.any { it is TextWhitespace && it.kind == WhitespaceKind.TAB })
         assertEquals("one \t two", decoded.toString())
     }
+
+    /**
+     * Verifies that a [TextAnchor] part survives a JSON encode/decode round trip as part of a
+     * tokenized [TextBlock], keeping its polymorphic [TextPart] identity and `${id}` marker.
+     */
+    @Test
+    fun roundTripsTextAnchorViaJson() {
+        val block = TextBlock.of("go to \${chapterOne} now", style)
+
+        val encoded = json.encodeToString(TextBlock.serializer(), block)
+        val decoded = json.decodeFromString(TextBlock.serializer(), encoded)
+
+        assertEquals(block, decoded)
+        assertTrue(decoded.parts.any { it is TextAnchor && it.id == "chapterOne" })
+        assertEquals("go to \${chapterOne} now", decoded.toString())
+    }
+
+    /**
+     * Verifies that a [TextAnchor] part survives an XML encode/decode round trip as part of a
+     * tokenized [TextBlock], keeping its polymorphic [TextPart] identity and `${id}` marker.
+     */
+    @Test
+    fun roundTripsTextAnchorViaXml() {
+        val block = TextBlock.of("go to \${chapterOne} now", style)
+
+        val encoded = xml.encodeToString(TextBlock.serializer(), block)
+        val decoded = xml.decodeFromString(TextBlock.serializer(), encoded)
+
+        assertEquals(block, decoded)
+        assertTrue(decoded.parts.any { it is TextAnchor && it.id == "chapterOne" })
+        assertEquals("go to \${chapterOne} now", decoded.toString())
+    }
 }

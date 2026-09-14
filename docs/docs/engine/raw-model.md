@@ -45,7 +45,7 @@ val page = FlowPage(layout = layout, blocks = emptyList())
 ## Text blocks and parts
 
 A `TextBlock` is a run of styled text. It holds an ordered list of `TextPart` and
-one `TextStyle`. `TextPart` is a sealed type with three realisations:
+one `TextStyle`. `TextPart` is a sealed type with four realisations:
 
 * `TextWord` - a maximal run of letters and/or digits.
 * `TextSymbol` - a single non-letter, non-digit, non-whitespace character. Its
@@ -55,9 +55,31 @@ one `TextStyle`. `TextPart` is a sealed type with three realisations:
   (`SPACE`, `TAB`, `LINE_BREAK`). It stores only that kind and the run length
   `count`; its `text` is derived from both. A run never mixes kinds, so a space
   followed by a tab yields two parts.
+* `TextAnchor` - an invisible, zero-width navigation marker carrying an `id`.
+  Written as `${id}` in plain text (e.g. `${chapterOne}`); see
+  [Navigation anchors](#navigation-anchors) below.
 
 A `TextWhitespace` is not addressable on its own: it produces no glyph in the
 layout and no caret-selectable segment, but it keeps the original spacing.
+
+### Navigation anchors
+
+A `TextAnchor` marks a position in the text purely for navigation: it is never
+painted and never counted as a word, symbol or character, but it still occupies
+a caret-addressable, scroll-targetable position so a caller can jump straight to
+it by its `id`:
+
+```kotlin
+val block = TextBlock.of("See \${chapterOne} for details.", style)
+// parts: TextWord("See"), TextWhitespace(SPACE), TextAnchor("chapterOne"),
+//        TextWhitespace(SPACE), TextWord("for"), ...
+```
+
+`id` must be unique within a document; a `ui/fx` or `ui/swing` `PaperSheetView`'s
+`CaretModel.moveToAnchor(id)` and `PaperSheetView.scrollToAnchor(id)` resolve the
+last anchor with that `id` when it is duplicated. See
+[Paper sheet component](../fx/paper-sheet-component.md#navigation-anchors) (or
+the `swing` equivalent) for the UI-facing API.
 
 ### Building a block
 

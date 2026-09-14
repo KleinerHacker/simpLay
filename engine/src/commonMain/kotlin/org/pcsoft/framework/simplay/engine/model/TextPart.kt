@@ -84,3 +84,27 @@ data class TextWhitespace(val kind: WhitespaceKind, val count: Int = 1) : TextPa
     override val text: String
         get() = kind.char.toString().repeat(count)
 }
+
+/**
+ * An invisible, zero-width navigation marker identified by [id].
+ *
+ * A [TextAnchor] carries no visible glyph - it is never painted and never contributes to
+ * `charCount`/`wordCount`/`symbolCount` - but it still occupies a caret-addressable and
+ * scroll-targetable position (a zero-width `MeasuredTextPart`/segment), so callers can jump the
+ * caret or the viewport directly to it via its [id]. The [id] must be unique within a document;
+ * behaviour for a duplicate [id] is defined by the consumer resolving it (e.g. `DocumentTextIndex`).
+ *
+ * Written with the `${id}` syntax by [TextBlock.Companion.of] (see [TextBlock.toString] for the
+ * inverse), e.g. `${myAnchor}` tokenizes to `TextAnchor("myAnchor")`.
+ */
+@Serializable
+@SerialName("anchor")
+data class TextAnchor(val id: String) : TextPart {
+
+    init {
+        require(id.isNotEmpty()) { "An anchor needs a non-empty id" }
+    }
+
+    /** Always empty: a [TextAnchor] has no visible representation. */
+    override val text: String get() = ""
+}

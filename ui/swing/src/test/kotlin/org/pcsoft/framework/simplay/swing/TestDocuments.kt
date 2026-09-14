@@ -89,4 +89,29 @@ internal object TestDocuments {
             FlowPage(layout = layout, blocks = (1..2).map { TextBlock.of("Page three line $it.", body) }),
         ),
     )
+
+    /** A single-paragraph document carrying two `${...}` navigation anchors, for the anchor tests. */
+    val anchors: Document = Document(
+        pages = listOf(
+            FlowPage(
+                layout = layout,
+                blocks = listOf(TextBlock.of("Go to \${chapterOne} now and \${chapterTwo} later.", body)),
+            ),
+        ),
+    )
+
+    /** A [long]-sized document with one anchor near the start and one near the end, for the
+     * `scrollToAnchor` viewport tests. */
+    val longWithAnchors: Document = Document(
+        pages = listOf(
+            FlowPage(
+                layout = layout,
+                blocks = buildList {
+                    add(TextBlock.of("Start \${introAnchor} here.", body))
+                    repeat(120) { add(TextBlock.of(lorem, body)) }
+                    add(TextBlock.of("End \${outroAnchor} here.", body))
+                },
+            ),
+        ),
+    )
 }

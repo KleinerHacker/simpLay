@@ -13,6 +13,7 @@
 package org.pcsoft.framework.simplay.engine
 
 import org.pcsoft.framework.simplay.engine.measure.MeasuredFont
+import org.pcsoft.framework.simplay.engine.model.TextAnchor
 import org.pcsoft.framework.simplay.engine.model.TextPart
 import org.pcsoft.framework.simplay.engine.model.TextWhitespace
 import org.pcsoft.framework.simplay.engine.model.TextWord
@@ -117,6 +118,11 @@ object GreedyWordLineBreakerStrategy : LineBreakerStrategy {
                 continue
             }
 
+            if (part is TextAnchor) {
+                acc.add(part, 0.0, 0.0, 0.0, 0.0)
+                continue
+            }
+
             val metrics = measurer.measure(font.raw, part.text)
             val space = if (acc.isEmpty || !pendingSpace) 0.0 else spaceWidth
             pendingSpace = false
@@ -204,6 +210,11 @@ object CharacterLineBreakerStrategy : LineBreakerStrategy {
                 continue
             }
 
+            if (part is TextAnchor) {
+                acc.add(part, 0.0, 0.0, 0.0, 0.0)
+                continue
+            }
+
             var text = part.text
             var firstChunk = true
             while (text.isNotEmpty()) {
@@ -267,6 +278,11 @@ object NoWrapLineBreakerStrategy : LineBreakerStrategy {
         for (part in parts) {
             if (part is TextWhitespace) {
                 pendingSpace = true
+                continue
+            }
+
+            if (part is TextAnchor) {
+                acc.add(part, 0.0, 0.0, 0.0, 0.0)
                 continue
             }
 

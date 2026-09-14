@@ -53,6 +53,12 @@ internal class PaperSheetScroll(
 
     override fun scrollToSymbol(symbol: Int) = scrollToLinear(textIndex()?.startOfSymbol(symbol))
 
+    override fun scrollToAnchor(id: String) {
+        val idx = textIndex() ?: return
+        if (id !in idx.anchorsById) return
+        scrollToLinear(idx.startOfAnchor(id))
+    }
+
     /** Scrolls so the line owning linear text index [linearIndex] is at the viewport top. */
     private fun scrollToLinear(linearIndex: Int?) {
         val idx = textIndex() ?: return

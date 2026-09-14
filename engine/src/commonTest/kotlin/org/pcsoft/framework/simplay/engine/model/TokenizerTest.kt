@@ -14,6 +14,7 @@ package org.pcsoft.framework.simplay.engine.model
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class TokenizerTest {
 
@@ -242,5 +243,63 @@ class TokenizerTest {
         assertEquals("   ", TextWhitespace(WhitespaceKind.SPACE, 3).text)
         assertEquals("\t\t", TextWhitespace(WhitespaceKind.TAB, 2).text)
         assertEquals("\n", TextWhitespace(WhitespaceKind.LINE_BREAK).text)
+    }
+
+    /**
+     * Verifies that a `${name}` marker between words tokenizes to a [TextAnchor] carrying that name
+     * as its [TextAnchor.id], with the surrounding whitespace preserved on both sides.
+     */
+    @Test
+    fun tokenizeAnchorMarkerBetweenWords() {
+        assertEquals(
+            listOf(
+                TextWord("go"),
+                TextWhitespace(WhitespaceKind.SPACE),
+                TextAnchor("chapterOne"),
+                TextWhitespace(WhitespaceKind.SPACE),
+                TextWord("now")
+            ),
+            parts("go \${chapterOne} now"),
+        )
+    }
+
+    /**
+     * Verifies that an anchor marker directly adjacent to a word (no whitespace) produces no
+     * [TextWhitespace] part, matching the no-space rule for other parts.
+     */
+    @Test
+    fun tokenizeAnchorMarkerDirectlyAdjacentToWord() {
+        assertEquals(
+            listOf(
+                TextWord("go"),
+                TextAnchor("chapterOne")
+            ),
+            parts("go\${chapterOne}"),
+        )
+    }
+
+    /**
+     * Verifies that a `$` not followed by a well-formed `{name}` marker (no opening brace) is
+     * rejected instead of being silently tokenized as a plain symbol.
+     */
+    @Test
+    fun tokenizeRejectsDollarWithoutOpeningBrace() {
+        assertFailsWith<IllegalArgumentException> { parts("price: \$5") }
+    }
+
+    /**
+     * Verifies that a `${name}` marker missing its closing brace is rejected.
+     */
+    @Test
+    fun tokenizeRejectsAnchorMarkerWithoutClosingBrace() {
+        assertFailsWith<IllegalArgumentException> { parts("go \${chapterOne now") }
+    }
+
+    /**
+     * Verifies that an empty `${}` marker (no name) is rejected.
+     */
+    @Test
+    fun tokenizeRejectsAnchorMarkerWithEmptyName() {
+        assertFailsWith<IllegalArgumentException> { parts("go \${} now") }
     }
 }

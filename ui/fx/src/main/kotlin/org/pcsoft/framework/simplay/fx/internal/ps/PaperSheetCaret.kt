@@ -163,7 +163,13 @@ internal class PaperSheetCaret(
     fun publish() {
         val idx = textIndex()
         val model = view.caretModel
-        model.updateCounts(idx?.blockCount ?: 0, idx?.wordCount ?: 0, idx?.symbolCount ?: 0)
+        model.updateCounts(
+            idx?.blockCount ?: 0,
+            idx?.wordCount ?: 0,
+            idx?.symbolCount ?: 0,
+            idx?.anchorCount ?: 0,
+            idx?.anchorsById?.keys?.toList() ?: emptyList(),
+        )
         val active = caretActive || dropPreview != null
         val seg = currentSeg()
         model.update(
@@ -496,6 +502,13 @@ internal class PaperSheetCaret(
     override fun moveToPrevBlock() = go(textIndex()?.prevBlockStart(position) ?: position)
     override fun moveToNextSymbol() = go(textIndex()?.nextSymbolStart(position) ?: position)
     override fun moveToPrevSymbol() = go(textIndex()?.prevSymbolStart(position) ?: position)
+    override fun moveToAnchor(id: String) {
+        val idx = textIndex() ?: return
+        if (id !in idx.anchorsById) return
+        go(idx.startOfAnchor(id))
+    }
+    override fun moveToNextAnchor() = go(textIndex()?.nextAnchorStart(position) ?: position)
+    override fun moveToPrevAnchor() = go(textIndex()?.prevAnchorStart(position) ?: position)
     override fun moveToNextPage() = movePage(1, extend = false)
     override fun moveToPrevPage() = movePage(-1, extend = false)
 

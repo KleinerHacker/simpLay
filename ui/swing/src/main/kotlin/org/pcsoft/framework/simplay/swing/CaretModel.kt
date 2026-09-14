@@ -16,6 +16,7 @@ import java.awt.Rectangle
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import org.pcsoft.framework.simplay.engine.model.Page
+import org.pcsoft.framework.simplay.engine.model.TextAnchor
 import org.pcsoft.framework.simplay.engine.model.TextBlock
 import org.pcsoft.framework.simplay.engine.model.TextPart
 
@@ -27,11 +28,12 @@ import org.pcsoft.framework.simplay.engine.model.TextPart
  * All state is read-only; the view's UI is the only writer. The [position] is the caret offset in
  * the document's linear text (the same axis [TextSelectionModel] uses), [bounds] is the caret
  * rectangle in viewport pixels while the view is in [PaperSheetMode.EDITABLE] (else `null`) and
- * [isVisible] follows the blink phase. [blockCount], [wordCount] and [symbolCount] report how many
- * of each structural element the current document has. [currentTextPart], [currentTextBlock] and
- * [currentPage] report the raw model elements the caret currently sits in or next to, and
- * [currentCharacter] the character right at [position]; all four are `null` without a document or
- * once [position] is past the last character.
+ * [isVisible] follows the blink phase. [blockCount], [wordCount], [symbolCount] and [anchorCount]
+ * report how many of each structural element the current document has, and [anchorIds] the ids of
+ * every [TextAnchor] in document order. [currentTextPart], [currentTextBlock] and [currentPage]
+ * report the raw model elements the caret currently sits in or next to, [currentAnchorId] the `id`
+ * of the [TextAnchor] it sits on (or `null`), and [currentCharacter] the character right at
+ * [position]; all are `null`/empty without a document or once [position] is past the last character.
  *
  * The commands come in three groups: linear ([moveTo], [moveToStart], [moveToEnd]); absolute
  * structural, addressing a zero-based ordinal; and relative structural from the current position. A
@@ -59,6 +61,9 @@ class CaretModel internal constructor(private val dispatch: (Commands.() -> Unit
         fun moveToPrevBlock()
         fun moveToNextSymbol()
         fun moveToPrevSymbol()
+        fun moveToAnchor(id: String)
+        fun moveToNextAnchor()
+        fun moveToPrevAnchor()
         fun moveToNextPage()
         fun moveToPrevPage()
     }
@@ -83,6 +88,14 @@ class CaretModel internal constructor(private val dispatch: (Commands.() -> Unit
     var symbolCount: Int = 0
         private set
 
+    /** Number of addressable [TextAnchor]s in the current document. */
+    var anchorCount: Int = 0
+        private set
+
+    /** The ids of every [TextAnchor] in the current document, in document order. */
+    var anchorIds: List<String> = emptyList()
+        private set
+
     /** The raw text part the caret currently sits in or next to, or `null` without a document. */
     var currentTextPart: TextPart? = null
         private set
@@ -93,6 +106,10 @@ class CaretModel internal constructor(private val dispatch: (Commands.() -> Unit
 
     /** The raw page the caret currently sits on, or `null` without a document. */
     var currentPage: Page? = null
+        private set
+
+    /** The `id` of the [TextAnchor] the caret currently sits on, or `null` when it does not. */
+    var currentAnchorId: String? = null
         private set
 
     /** The character right at [position], or `null` at the end of the document or without one. */
@@ -127,6 +144,7 @@ class CaretModel internal constructor(private val dispatch: (Commands.() -> Unit
         val oldTextBlock = this.currentTextBlock
         val oldPage = this.currentPage
         val oldCharacter = this.currentCharacter
+        val oldAnchorId = this.currentAnchorId
         this.position = position
         this.bounds = bounds
         this.isVisible = visible
@@ -134,6 +152,7 @@ class CaretModel internal constructor(private val dispatch: (Commands.() -> Unit
         this.currentTextBlock = textBlock
         this.currentPage = page
         this.currentCharacter = character
+        this.currentAnchorId = (textPart as? TextAnchor)?.id
         pcs.firePropertyChange(PROP_POSITION, oldPos, position)
         pcs.firePropertyChange(PROP_BOUNDS, oldBounds, bounds)
         pcs.firePropertyChange(PROP_VISIBLE, oldVisible, visible)
@@ -141,19 +160,26 @@ class CaretModel internal constructor(private val dispatch: (Commands.() -> Unit
         pcs.firePropertyChange(PROP_CURRENT_TEXT_BLOCK, oldTextBlock, textBlock)
         pcs.firePropertyChange(PROP_CURRENT_PAGE, oldPage, page)
         pcs.firePropertyChange(PROP_CURRENT_CHARACTER, oldCharacter, character)
+        pcs.firePropertyChange(PROP_CURRENT_ANCHOR_ID, oldAnchorId, currentAnchorId)
     }
 
     /** Replaces the structural element counts. Called by the UI after every re-measure. */
-    internal fun updateCounts(blocks: Int, words: Int, symbols: Int) {
+    internal fun updateCounts(blocks: Int, words: Int, symbols: Int, anchors: Int, anchorIds: List<String>) {
         val oldBlocks = blockCount
         val oldWords = wordCount
         val oldSymbols = symbolCount
+        val oldAnchors = anchorCount
+        val oldAnchorIds = this.anchorIds
         blockCount = blocks
         wordCount = words
         symbolCount = symbols
+        anchorCount = anchors
+        this.anchorIds = anchorIds
         pcs.firePropertyChange(PROP_BLOCK_COUNT, oldBlocks, blocks)
         pcs.firePropertyChange(PROP_WORD_COUNT, oldWords, words)
         pcs.firePropertyChange(PROP_SYMBOL_COUNT, oldSymbols, symbols)
+        pcs.firePropertyChange(PROP_ANCHOR_COUNT, oldAnchors, anchors)
+        pcs.firePropertyChange(PROP_ANCHOR_IDS, oldAnchorIds, anchorIds)
     }
 
     /** Moves the caret to [index] in the linear document text; the index is clamped into range. */
@@ -210,6 +236,15 @@ class CaretModel internal constructor(private val dispatch: (Commands.() -> Unit
     /** Moves the caret to the previous symbol; stays put at the document start. */
     fun moveToPrevSymbol() = dispatch { moveToPrevSymbol() }
 
+    /** Moves the caret directly to the [TextAnchor] identified by [id]; a no-op for an unknown id. */
+    fun moveToAnchor(id: String) = dispatch { moveToAnchor(id) }
+
+    /** Moves the caret to the next anchor; stays put at the document end. */
+    fun moveToNextAnchor() = dispatch { moveToNextAnchor() }
+
+    /** Moves the caret to the previous anchor; stays put at the document start. */
+    fun moveToPrevAnchor() = dispatch { moveToPrevAnchor() }
+
     /**
      * Moves the caret to the next navigable page, at the same line ordinal it held on the source
      * page (clamped to the target page's last line); stays put on the last navigable page.
@@ -229,9 +264,12 @@ class CaretModel internal constructor(private val dispatch: (Commands.() -> Unit
         const val PROP_BLOCK_COUNT = "blockCount"
         const val PROP_WORD_COUNT = "wordCount"
         const val PROP_SYMBOL_COUNT = "symbolCount"
+        const val PROP_ANCHOR_COUNT = "anchorCount"
+        const val PROP_ANCHOR_IDS = "anchorIds"
         const val PROP_CURRENT_TEXT_PART = "currentTextPart"
         const val PROP_CURRENT_TEXT_BLOCK = "currentTextBlock"
         const val PROP_CURRENT_PAGE = "currentPage"
+        const val PROP_CURRENT_ANCHOR_ID = "currentAnchorId"
         const val PROP_CURRENT_CHARACTER = "currentCharacter"
     }
 }

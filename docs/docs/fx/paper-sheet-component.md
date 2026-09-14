@@ -164,10 +164,12 @@ and moves it; in the other modes every move command is a no-op:
 
 * **State** (read-only): `position` (offset in the linear text), `bounds`
   (viewport rectangle, `null` without a caret), `isVisible` (blink phase),
-  `blockCount` / `wordCount` / `symbolCount` of the current document, and
-  `currentTextPart` / `currentTextBlock` / `currentPage` / `currentCharacter`
-  - the raw text part, block, page and character the caret currently sits in
-  or next to (`null` without a document).
+  `blockCount` / `wordCount` / `symbolCount` / `anchorCount` of the current
+  document, `anchorIds` (every `TextAnchor.id`, in document order), and
+  `currentTextPart` / `currentTextBlock` / `currentPage` / `currentAnchorId` /
+  `currentCharacter` - the raw text part, block, page, anchor id and character
+  the caret currently sits in or next to (`null` without a document, or when
+  the caret does not sit on an anchor).
 * **Linear commands**: `moveTo(index)`, `moveToStart()`, `moveToEnd()`.
 * **Absolute structural commands**, addressing a zero-based ordinal:
   `moveIntoBlock(block, index)`, `moveToStartOfBlock(block)`,
@@ -178,6 +180,10 @@ and moves it; in the other modes every move command is a no-op:
   stop at the document bounds. `moveToNextPage()` / `moveToPrevPage()` jump a
   whole page, keeping the caret's line ordinal on the target page (clamped to
   its last line) instead of a linear offset.
+* **Anchor commands**: `moveToAnchor(id)` jumps directly to the `TextAnchor`
+  named `id` (a no-op for an unknown `id`); `moveToNextAnchor()` /
+  `moveToPrevAnchor()` step to the next / previous anchor from the current
+  position, like the word/symbol siblings.
 
 A command issued before the view has rendered once is applied as soon as its skin
 is attached.
@@ -206,10 +212,28 @@ never touches the caret or the selection:
 * `scrollToBlock(block)` - the top line of block (paragraph) `block`.
 * `scrollToWord(word)` - the top line containing word `word`.
 * `scrollToSymbol(symbol)` - the top line containing symbol (character) `symbol`.
+* `scrollToAnchor(id)` - the top line containing the `TextAnchor` named `id` (a
+  no-op for an unknown `id`); see [Navigation anchors](#navigation-anchors).
 
 Every ordinal and page index is clamped into range. A command issued before the
 view has rendered once is applied as soon as its skin is attached, exactly like
 the caret model's commands.
+
+## Navigation anchors
+
+A `TextAnchor` (see the `engine` module's
+[Navigation anchors](../engine/raw-model.md#navigation-anchors)) is an invisible,
+zero-width marker written as `${id}` in plain text. `CaretModel.moveToAnchor(id)`
+and `PaperSheetView.scrollToAnchor(id)` jump directly to it by that `id`:
+
+```kotlin
+view.caretModel.moveToAnchor("chapterOne") // places the caret on the anchor
+view.scrollToAnchor("chapterOne")          // scrolls it into view, caret untouched
+```
+
+Both resolve the last anchor with a given `id` when it is duplicated, and are a
+no-op for an unknown `id`. `CaretModel.anchorIds` lists every anchor `id` of the
+current document, in document order, for building a jump-to-anchor UI.
 
 ## Insert / overwrite typing mode
 

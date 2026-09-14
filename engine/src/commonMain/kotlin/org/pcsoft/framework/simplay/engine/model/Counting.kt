@@ -22,8 +22,12 @@ fun TextBlock.wordCount(): Int = parts.count { it is TextWord }
 /** Number of [TextSymbol] parts in this block. */
 fun TextBlock.symbolCount(): Int = parts.count { it is TextSymbol }
 
+/** Number of [TextAnchor] parts in this block. */
+fun TextBlock.anchorCount(): Int = parts.count { it is TextAnchor }
+
 /** Total number of characters across all non-whitespace parts of this block; [TextWhitespace] runs
- * are not counted (as before whitespace was preserved as its own part). */
+ * are not counted (as before whitespace was preserved as its own part). A [TextAnchor] never
+ * contributes since its [TextPart.text] is always empty. */
 fun TextBlock.charCount(): Int = parts.filterNot { it is TextWhitespace }.sumOf { it.text.length }
 
 /** Sum of [wordCount] over all blocks of this page. */
@@ -31,6 +35,9 @@ fun Page.wordCount(): Int = blocks.sumOf { it.wordCount() }
 
 /** Sum of [symbolCount] over all blocks of this page. */
 fun Page.symbolCount(): Int = blocks.sumOf { it.symbolCount() }
+
+/** Sum of [anchorCount] over all blocks of this page. */
+fun Page.anchorCount(): Int = blocks.sumOf { it.anchorCount() }
 
 /** Sum of [charCount] over all blocks of this page. */
 fun Page.charCount(): Int = blocks.sumOf { it.charCount() }
@@ -40,6 +47,9 @@ fun Document.wordCount(): Int = pages.sumOf { it.wordCount() }
 
 /** Sum of [symbolCount] over all pages of this document. */
 fun Document.symbolCount(): Int = pages.sumOf { it.symbolCount() }
+
+/** Sum of [anchorCount] over all pages of this document. */
+fun Document.anchorCount(): Int = pages.sumOf { it.anchorCount() }
 
 /** Sum of [charCount] over all pages of this document. */
 fun Document.charCount(): Int = pages.sumOf { it.charCount() }

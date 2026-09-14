@@ -24,6 +24,7 @@ import javafx.scene.control.ToolBar
 import javafx.scene.input.Clipboard
 import javafx.scene.input.ClipboardContent
 import javafx.scene.layout.BorderPane
+import javafx.scene.layout.VBox
 import javafx.scene.text.Font as FxFont
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
@@ -118,6 +119,15 @@ class PaperSheetDemoTab : BorderPane() {
     private val goStartButton = Button("Go to start").apply { setOnAction { view.caretModel.moveToStart() } }
     private val goEndButton = Button("Go to end").apply { setOnAction { view.caretModel.moveToEnd() } }
 
+    private val anchorBox = ComboBox<String>()
+    private val goAnchorButton = Button("Go to anchor").apply {
+        setOnAction {
+            val id = anchorBox.value ?: return@setOnAction
+            view.caretModel.moveToAnchor(id)
+            view.scrollToAnchor(id)
+        }
+    }
+
     private val zoomLabel = Label()
     private val selectionLabel = Label()
     private val overlayLabel = Label()
@@ -149,32 +159,42 @@ class PaperSheetDemoTab : BorderPane() {
     }
 
     init {
-        top = ToolBar(
-            *buildList {
-                addAll(listOf(Label("Mode:"), modeBox, smoothCaretBox))
-                add(Separator())
-                addAll(listOf(Label("Document:"), sampleBox))
-                addAll(listOf(Label("Font:"), fontFamilyBox))
-                addAll(listOf(Label("Page number:"), pageNumberBox))
-                addAll(listOf(Label("Stylesheet:"), stylesheetBox))
-                add(Separator())
-                add(Label("Page mode:"))
-                addAll(pageModeBoxes)
-                add(pageModeLabel)
-                add(Separator())
-                addAll(listOf(Label("Outer margin:"), outerMarginSpinner))
-                addAll(listOf(Label("Page gap:"), pageGapSpinner))
-                add(Separator())
-                addAll(listOf(Label("Min zoom:"), minZoomSpinner))
-                addAll(listOf(Label("Max zoom:"), maxZoomSpinner))
-                addAll(listOf(Label("Zoom:"), zoomSpinner, zoomLabel))
-                add(Separator())
-                addAll(listOf(selectAllButton, clearButton, selectionLabel))
-                add(Separator())
-                addAll(listOf(goStartButton, goEndButton, caretLabel))
-                add(Separator())
-                addAll(listOf(overlayLabel, documentLabel))
-            }.toTypedArray(),
+        top = VBox(
+            ToolBar(
+                *buildList {
+                    addAll(listOf(Label("Mode:"), modeBox, smoothCaretBox))
+                    add(Separator())
+                    addAll(listOf(Label("Document:"), sampleBox))
+                    addAll(listOf(Label("Font:"), fontFamilyBox))
+                    addAll(listOf(Label("Page number:"), pageNumberBox))
+                    addAll(listOf(Label("Stylesheet:"), stylesheetBox))
+                }.toTypedArray(),
+            ),
+            ToolBar(
+                *buildList {
+                    add(Label("Page mode:"))
+                    addAll(pageModeBoxes)
+                    add(pageModeLabel)
+                    add(Separator())
+                    addAll(listOf(Label("Outer margin:"), outerMarginSpinner))
+                    addAll(listOf(Label("Page gap:"), pageGapSpinner))
+                    add(Separator())
+                    addAll(listOf(Label("Min zoom:"), minZoomSpinner))
+                    addAll(listOf(Label("Max zoom:"), maxZoomSpinner))
+                    addAll(listOf(Label("Zoom:"), zoomSpinner, zoomLabel))
+                }.toTypedArray(),
+            ),
+            ToolBar(
+                *buildList {
+                    addAll(listOf(selectAllButton, clearButton, selectionLabel))
+                    add(Separator())
+                    addAll(listOf(goStartButton, goEndButton, caretLabel))
+                    add(Separator())
+                    addAll(listOf(Label("Anchor:"), anchorBox, goAnchorButton))
+                    add(Separator())
+                    addAll(listOf(overlayLabel, documentLabel))
+                }.toTypedArray(),
+            ),
         )
         center = view
 
@@ -207,6 +227,7 @@ class PaperSheetDemoTab : BorderPane() {
         view.hoveredPageProperty.addListener { _, _, _ -> updateOverlayLabel() }
         view.caretModel.positionProperty.addListener { _, _, _ -> updateCaretLabel() }
         view.documentProperty.addListener { _, _, _ -> updateDocumentLabel() }
+        view.caretModel.anchorIdsProperty.addListener { _, _, ids -> updateAnchorBox(ids) }
         // `pageModes` is reset by the view itself whenever the document is reloaded from outside
         // (e.g. a new sample, not an edit); the demo's own boxes and label just follow that reset.
         view.pageModesProperty.addListener { _, _, modes -> if (modes.isEmpty()) resetPageModeBoxes() }
@@ -218,6 +239,7 @@ class PaperSheetDemoTab : BorderPane() {
         updateOverlayLabel()
         updateCaretLabel()
         updateDocumentLabel()
+        updateAnchorBox(view.caretModel.anchorIds)
     }
 
     /** Seeds [pageNumberBox] from the currently selected sample's own numbering position. */
@@ -289,6 +311,13 @@ class PaperSheetDemoTab : BorderPane() {
         val chars = doc?.pages?.sumOf { page -> page.blocks.sumOf { it.toString().length } } ?: 0
         val pages = doc?.pages?.size ?: 0
         documentLabel.text = "Document: $chars chars in $pages page(s)"
+    }
+
+    /** Refreshes [anchorBox]'s items from the current document's anchors, keeping the selection when possible. */
+    private fun updateAnchorBox(ids: List<String>) {
+        val kept = anchorBox.value.takeIf { it in ids }
+        anchorBox.items.setAll(ids)
+        anchorBox.value = kept ?: ids.firstOrNull()
     }
 
     private fun updatePageModeLabel() {

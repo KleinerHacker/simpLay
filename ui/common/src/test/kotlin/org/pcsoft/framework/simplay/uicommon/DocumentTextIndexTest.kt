@@ -123,4 +123,62 @@ class DocumentTextIndexTest {
         val index = DocumentTextIndex(measure("The first paragraph.X"))
         assertEquals("The first paragraph.X", index.text)
     }
+
+    /**
+     * Verifies that a `${name}` anchor marker produces exactly one zero-length entry in
+     * [DocumentTextIndex.anchorRanges], counted by [DocumentTextIndex.anchorCount].
+     */
+    @Test
+    fun anchorMarkerProducesZeroLengthAnchorRange() {
+        val index = DocumentTextIndex(measure("go to \${chapterOne} now"))
+        assertEquals(1, index.anchorCount)
+        assertEquals(index.anchorRanges.first().first, index.anchorRanges.first().last)
+    }
+
+    /**
+     * Verifies that [DocumentTextIndex.startOfAnchor] and [DocumentTextIndex.endOfAnchor] resolve an
+     * anchor's `id` to the same linear position, matching its position in the visible surrounding
+     * text (right after the leading `"go to "`).
+     */
+    @Test
+    fun startAndEndOfAnchorResolveIdToLinearPosition() {
+        val index = DocumentTextIndex(measure("go to \${chapterOne} now"))
+        val position = index.startOfAnchor("chapterOne")
+        assertEquals("go to ".length, position)
+        assertEquals(position, index.endOfAnchor("chapterOne"))
+    }
+
+    /**
+     * Verifies that resolving an unknown anchor `id` falls back to [DocumentTextIndex.length],
+     * consistent with the "not found" sentinel used elsewhere in the class.
+     */
+    @Test
+    fun startOfAnchorFallsBackToLengthForUnknownId() {
+        val index = DocumentTextIndex(measure("go to \${chapterOne} now"))
+        assertEquals(index.length, index.startOfAnchor("doesNotExist"))
+    }
+
+    /**
+     * Verifies that when two anchors share the same `id`, [DocumentTextIndex.anchorsById] resolves to
+     * the position of the last one in document order.
+     */
+    @Test
+    fun duplicateAnchorIdResolvesToLastOccurrence() {
+        val index = DocumentTextIndex(measure("first \${dup} second \${dup} third"))
+        val expected = "first ".length + " second ".length
+        assertEquals(expected, index.startOfAnchor("dup"))
+    }
+
+    /**
+     * Verifies that [DocumentTextIndex.nextAnchorStart] and [DocumentTextIndex.prevAnchorStart] step
+     * to the neighboring anchor position around the current one.
+     */
+    @Test
+    fun nextAndPrevAnchorStartStepBetweenAnchors() {
+        val index = DocumentTextIndex(measure("a \${one} b \${two} c"))
+        val onePos = index.startOfAnchor("one")
+        val twoPos = index.startOfAnchor("two")
+        assertEquals(twoPos, index.nextAnchorStart(onePos))
+        assertEquals(onePos, index.prevAnchorStart(twoPos))
+    }
 }

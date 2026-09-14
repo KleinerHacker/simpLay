@@ -23,6 +23,7 @@ import javax.swing.JComboBox
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JSlider
+import org.pcsoft.framework.simplay.swing.CaretModel
 import org.pcsoft.framework.simplay.swing.FloatingOverlay
 import org.pcsoft.framework.simplay.swing.FloatingOverlayListener
 import org.pcsoft.framework.simplay.swing.FloatingOverlayTrigger
@@ -75,23 +76,49 @@ class PaperSheetDemoPanel : JPanel(BorderLayout()) {
         }
     private val pageModeLabel = JLabel()
 
+    private val anchorBox = JComboBox<String>()
+    private val goAnchorButton = JButton("Go to anchor").apply {
+        isFocusable = false
+        addActionListener {
+            val id = anchorBox.selectedItem as String? ?: return@addActionListener
+            view.caretModel.moveToAnchor(id)
+            view.scrollToAnchor(id)
+        }
+    }
+
     init {
         addSelectionCopyOverlay()
         addParagraphHoverOverlay()
 
-        val bar = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
-            add(JLabel("Mode:"))
-            add(mode)
-            add(JLabel("Sample:"))
-            add(sample)
-            add(JLabel("Page number:"))
-            add(pageNumber)
-            add(JLabel("Zoom:"))
-            add(zoom)
-            add(selectionInfo)
-            add(JLabel("Page mode:"))
-            pageModeBoxes.forEach { add(JLabel(it.name)); add(it) }
-            add(pageModeLabel)
+        val bar = JPanel().apply {
+            layout = javax.swing.BoxLayout(this, javax.swing.BoxLayout.Y_AXIS)
+            add(
+                JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                    add(JLabel("Mode:"))
+                    add(mode)
+                    add(JLabel("Sample:"))
+                    add(sample)
+                    add(JLabel("Page number:"))
+                    add(pageNumber)
+                    add(JLabel("Zoom:"))
+                    add(zoom)
+                    add(selectionInfo)
+                },
+            )
+            add(
+                JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                    add(JLabel("Page mode:"))
+                    pageModeBoxes.forEach { add(JLabel(it.name)); add(it) }
+                    add(pageModeLabel)
+                },
+            )
+            add(
+                JPanel(FlowLayout(FlowLayout.LEFT)).apply {
+                    add(JLabel("Anchor:"))
+                    add(anchorBox)
+                    add(goAnchorButton)
+                },
+            )
         }
         add(bar, BorderLayout.NORTH)
         add(view, BorderLayout.CENTER)
@@ -114,9 +141,19 @@ class PaperSheetDemoPanel : JPanel(BorderLayout()) {
         view.addPropertyChangeListener(PaperSheetView.PROP_PAGE_MODES) {
             if (view.pageModes.isEmpty()) resetPageModeBoxes()
         }
+        view.caretModel.addPropertyChangeListener(CaretModel.PROP_ANCHOR_IDS) { updateAnchorBox() }
 
         selectPageNumberFromSample()
         applySample()
+        updateAnchorBox()
+    }
+
+    /** Refreshes [anchorBox]'s items from the current document's anchors, keeping the selection when possible. */
+    private fun updateAnchorBox() {
+        val ids = view.caretModel.anchorIds
+        val kept = (anchorBox.selectedItem as String?).takeIf { it in ids }
+        anchorBox.model = javax.swing.DefaultComboBoxModel(ids.toTypedArray())
+        anchorBox.selectedItem = kept ?: ids.firstOrNull()
     }
 
     /** Seeds [pageNumber] from the currently selected sample's own numbering position. */

@@ -59,8 +59,8 @@ development use `./gradlew publishToMavenLocal`.
 
 ```kotlin
 dependencies {
-    implementation("org.pcsoft.framework:simplay-engine:0.3.0")
-    implementation("org.pcsoft.framework:simplay-fx:0.3.0")
+    implementation("org.pcsoft.framework:simplay-engine:0.3.1")
+    implementation("org.pcsoft.framework:simplay-fx:0.3.1")
 }
 ```
 
@@ -96,6 +96,9 @@ Build tasks relevant for consumers and maintainers:
       start number, per-page exclusion by stable `Page.id` and the counting mode
       (`CONTINUOUS` / `SKIP_EXCLUDED`); `MeasuredDocument.planPageNumbers` lays out the labels,
       drawn by `ui/fx` and `ui/swing`
+    * [x] Navigation anchors: `TextAnchor`, an invisible, zero-width `TextPart`
+      identified by an `id`, written as `${id}` in plain text and resolved by
+      `ui/fx` / `ui/swing`'s `CaretModel.moveToAnchor` / `PaperSheetView.scrollToAnchor`
     * [ ] End-to-end layout and persistence tests
     * [ ] Engine user documentation (MkDocs, KDoc alignment)
 * [ ] Console output integration (`ui/console`)
@@ -108,7 +111,8 @@ Build tasks relevant for consumers and maintainers:
   paper-sheet control with four interaction levels (`PaperSheetMode.STATIC` /
   `SELECTABLE` / `NAVIGABLE` / `EDITABLE`, overridable per page through
   `pageModes`), mouse text selection, in-place editing with insert/overwrite
-  `caretMode`, `Page Up` / `Page Down` and `scrollTo*` navigation, `Ctrl+A`
+  `caretMode`, `Page Up` / `Page Down`, `scrollTo*` navigation and direct
+  navigation-anchor jumps (`moveToAnchor` / `scrollToAnchor`), `Ctrl+A`
   select-all, `onType` and `onMouseEvent` events, automatic page-number
   drawing, FXML-compatible floating overlays and JavaFX CSS styling, plus
   `FxFontProbe` (font availability and fingerprint checks against the JavaFX
@@ -119,8 +123,9 @@ Build tasks relevant for consumers and maintainers:
   single-page `BufferedImage` rendering) and `PaperSheetView` - a scrollable,
   zoomable paper-sheet `JComponent` with the same four interaction levels,
   per-page `pageModes` overrides, mouse text selection, in-place editing with
-  insert/overwrite `caretMode`, `Page Up` / `Page Down` and `scrollTo*`
-  navigation, `Ctrl+A` select-all, `onType` and `onMouseEvent` events,
+  insert/overwrite `caretMode`, `Page Up` / `Page Down`, `scrollTo*`
+  navigation and direct navigation-anchor jumps (`moveToAnchor` /
+  `scrollToAnchor`), `Ctrl+A` select-all, `onType` and `onMouseEvent` events,
   automatic page-number drawing, floating overlays and Look-and-Feel styling,
   plus `SwingFontProbe` (font availability and fingerprint checks against the
   AWT text stack) - plus the `ui/swing` user documentation

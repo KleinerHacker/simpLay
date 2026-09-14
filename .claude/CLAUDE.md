@@ -1,6 +1,7 @@
 # Global Rules
 
 * NEVER EVER save memories!
+* In case of running tasks: ALWAYS run tasks with FULL QUALIFIED PATH
 
 ## Limiting search
 

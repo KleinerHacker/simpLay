@@ -555,6 +555,9 @@ class PaperSheetView : Control() {
         fun moveToPrevBlock()
         fun moveToNextSymbol()
         fun moveToPrevSymbol()
+        fun moveToAnchor(id: String)
+        fun moveToNextAnchor()
+        fun moveToPrevAnchor()
         fun moveToNextPage()
         fun moveToPrevPage()
     }
@@ -594,6 +597,7 @@ class PaperSheetView : Control() {
         fun scrollToBlock(block: Int)
         fun scrollToWord(word: Int)
         fun scrollToSymbol(symbol: Int)
+        fun scrollToAnchor(id: String)
     }
 
     private var scrollCommands: ScrollCommands? = null
@@ -639,6 +643,12 @@ class PaperSheetView : Control() {
      * no-op without a document. Works in every [mode], unlike the caret commands.
      */
     fun scrollToSymbol(symbol: Int) = requestScroll { scrollToSymbol(symbol) }
+
+    /**
+     * Scrolls the viewport to the top line of the anchor identified by [id]; a no-op for an unknown
+     * id or without a document. Works in every [mode], unlike the caret commands.
+     */
+    fun scrollToAnchor(id: String) = requestScroll { scrollToAnchor(id) }
 
     //endregion
 

@@ -106,6 +106,36 @@ class ScrollCommandsTest {
         assertTrue(last > 0)
     }
 
+    /** `scrollToAnchor` reaches further down for the later of two anchors, and moves the viewport at all. */
+    @Test
+    fun scrollToAnchorProducesNonDecreasingPositions() {
+        val view = PaperSheetView().apply { document = TestDocuments.longWithAnchors }
+        val ui = ui(view)
+        paint(ui)
+
+        view.scrollToAnchor("introAnchor")
+        val first = ui.verticalScrollBarForTest.value
+        view.scrollToAnchor("outroAnchor")
+        val last = ui.verticalScrollBarForTest.value
+
+        assertTrue(first <= last, "the intro anchor ($first) should not scroll further than the outro anchor ($last)")
+        assertTrue(last > 0)
+    }
+
+    /** `scrollToAnchor` with an unknown id is a no-op instead of throwing. */
+    @Test
+    fun scrollToAnchorWithUnknownIdIsANoOp() {
+        val view = PaperSheetView().apply { document = TestDocuments.longWithAnchors }
+        val ui = ui(view)
+        paint(ui)
+
+        view.scrollToAnchor("outroAnchor")
+        val expected = ui.verticalScrollBarForTest.value
+        view.scrollToAnchor("doesNotExist")
+
+        assertEquals(expected, ui.verticalScrollBarForTest.value)
+    }
+
     /** An out-of-range page index clamps to the last navigable page instead of throwing. */
     @Test
     fun outOfRangePageClampsInsteadOfThrowing() {
@@ -164,6 +194,7 @@ class ScrollCommandsTest {
         view.scrollToBlock(0)
         view.scrollToWord(0)
         view.scrollToSymbol(0)
+        view.scrollToAnchor("anything")
 
         assertEquals(0, ui.verticalScrollBarForTest.value)
     }

@@ -113,4 +113,17 @@ class TextBlockTest {
         val text = "  \t\tone \t   two.\tthree\t \tfour  "
         assertEquals(text, TextBlock.of(text, style).toString())
     }
+
+    /**
+     * Verifies that [TextBlock.Companion.of] tokenizes a `${name}` marker into a [TextAnchor] and
+     * that [toString] reproduces the marker verbatim, keeping the round trip lossless.
+     */
+    @Test
+    fun roundTripsAnchorMarker() {
+        val text = "go to \${chapterOne} now"
+        val block = TextBlock.of(text, style)
+
+        assertTrue(block.parts.any { it is TextAnchor && it.id == "chapterOne" })
+        assertEquals(text, block.toString())
+    }
 }

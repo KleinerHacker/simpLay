@@ -101,6 +101,52 @@ class ScrollCommandsTest : JavaFxTestBase() {
         assertTrue(last > 0.0)
     }
 
+    /** `scrollToAnchor` reaches further down for the later of two anchors, and moves the viewport at all. */
+    @Test
+    fun scrollToAnchorProducesNonDecreasingPositions() {
+        val view = onFxThread {
+            val v = PaperSheetView()
+            val stage = Stage()
+            stage.scene = Scene(v, 320.0, 260.0)
+            stage.show()
+            v.document = PaperSheetTestFixtures.flowDocumentWithAnchors(40)
+            v.applyCss()
+            v.layout()
+            v
+        }
+        val skin = view.skin as PaperSheetViewSkin
+
+        onFxThread { view.scrollToAnchor("introAnchor") }
+        val first = skin.verticalScrollBar.value
+        onFxThread { view.scrollToAnchor("outroAnchor") }
+        val last = skin.verticalScrollBar.value
+
+        assertTrue(first <= last, "the intro anchor ($first) should not scroll further than the outro anchor ($last)")
+        assertTrue(last > 0.0)
+    }
+
+    /** `scrollToAnchor` with an unknown id is a no-op instead of throwing. */
+    @Test
+    fun scrollToAnchorWithUnknownIdIsANoOp() {
+        val view = onFxThread {
+            val v = PaperSheetView()
+            val stage = Stage()
+            stage.scene = Scene(v, 320.0, 260.0)
+            stage.show()
+            v.document = PaperSheetTestFixtures.flowDocumentWithAnchors(40)
+            v.applyCss()
+            v.layout()
+            v
+        }
+        val skin = view.skin as PaperSheetViewSkin
+
+        onFxThread { view.scrollToAnchor("outroAnchor") }
+        val expected = skin.verticalScrollBar.value
+        onFxThread { view.scrollToAnchor("doesNotExist") }
+
+        assertEquals(expected, skin.verticalScrollBar.value)
+    }
+
     /**
      * A scroll command issued before the view has a skin is buffered and applied once the skin is
      * attached, exactly like the [CaretModel] commands.
@@ -182,6 +228,7 @@ class ScrollCommandsTest : JavaFxTestBase() {
             view.scrollToBlock(0)
             view.scrollToWord(0)
             view.scrollToSymbol(0)
+            view.scrollToAnchor("anything")
         }
 
         val skin = view.skin as PaperSheetViewSkin

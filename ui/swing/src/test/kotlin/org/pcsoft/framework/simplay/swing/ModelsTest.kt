@@ -73,10 +73,12 @@ class ModelsTest {
         var positionEvents = 0
         model.addPropertyChangeListener(CaretModel.PROP_POSITION) { positionEvents++ }
         model.update(9, Rectangle(0, 0, 2, 10), true, null, null, null, null)
-        model.updateCounts(3, 12, 4)
+        model.updateCounts(3, 12, 4, 2, listOf("intro", "outro"))
         assertEquals(9, model.position)
         assertTrue(model.isVisible)
         assertEquals(3, model.blockCount)
+        assertEquals(2, model.anchorCount)
+        assertEquals(listOf("intro", "outro"), model.anchorIds)
         assertEquals(1, positionEvents)
     }
 
@@ -133,11 +135,51 @@ class ModelsTest {
             override fun moveToPrevBlock() {}
             override fun moveToNextSymbol() {}
             override fun moveToPrevSymbol() {}
+            override fun moveToAnchor(id: String) {}
+            override fun moveToNextAnchor() {}
+            override fun moveToPrevAnchor() {}
             override fun moveToNextPage() {}
             override fun moveToPrevPage() {}
         }
         val model = CaretModel { block -> sink.block() }
         model.moveTo(42)
         assertEquals(42, moved)
+    }
+
+    /**
+     * Verifies that [CaretModel.moveToAnchor] is forwarded to the registered
+     * [CaretModel.Commands] sink with the requested anchor `id`.
+     */
+    @Test
+    fun caretModelMoveToAnchorReachesTheSink() {
+        var requestedId: String? = null
+        val sink = object : CaretModel.Commands {
+            override fun moveTo(index: Int) {}
+            override fun moveToStart() {}
+            override fun moveToEnd() {}
+            override fun moveIntoBlock(block: Int, index: Int) {}
+            override fun moveToStartOfBlock(block: Int) {}
+            override fun moveToEndOfBlock(block: Int) {}
+            override fun moveIntoWord(word: Int, index: Int) {}
+            override fun moveToStartOfWord(word: Int) {}
+            override fun moveToEndOfWord(word: Int) {}
+            override fun moveToSymbol(symbol: Int) {}
+            override fun moveToStartOfSymbol(symbol: Int) {}
+            override fun moveToEndOfSymbol(symbol: Int) {}
+            override fun moveToNextWord() {}
+            override fun moveToPrevWord() {}
+            override fun moveToNextBlock() {}
+            override fun moveToPrevBlock() {}
+            override fun moveToNextSymbol() {}
+            override fun moveToPrevSymbol() {}
+            override fun moveToAnchor(id: String) { requestedId = id }
+            override fun moveToNextAnchor() {}
+            override fun moveToPrevAnchor() {}
+            override fun moveToNextPage() {}
+            override fun moveToPrevPage() {}
+        }
+        val model = CaretModel { block -> sink.block() }
+        model.moveToAnchor("chapterOne")
+        assertEquals("chapterOne", requestedId)
     }
 }

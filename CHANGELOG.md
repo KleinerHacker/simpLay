@@ -12,6 +12,21 @@ excluded.
 
 ## [UNRELEASED]
 
+## [0.3.1]
+
+### Added
+
+- `engine`: `TextAnchor`, a new `TextPart` that marks an invisible, zero-width
+  navigation point identified by an `id`. Written with the `${id}` syntax
+  (e.g. `${chapterOne}`) when a `TextBlock` is built from plain text via
+  `TextBlock.Companion.of`; never rendered and never counted as a word,
+  symbol or character.
+- `ui/fx` and `ui/swing`: `CaretModel` gained `anchorCount`, `anchorIds`,
+  `currentAnchorId`, `moveToAnchor(id)`, `moveToNextAnchor()` and
+  `moveToPrevAnchor()` to navigate the caret directly to a named `TextAnchor`.
+  `PaperSheetView` gained `scrollToAnchor(id)` to scroll the viewport to a
+  named anchor without moving the caret.
+
 ## [0.3.0]
 
 ### Added

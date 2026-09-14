@@ -34,10 +34,10 @@ class PaperSheetCaretTest {
 
     private data class Fixture(val view: PaperSheetView, val ui: BasicPaperSheetUI)
 
-    private fun fixture(): Fixture {
+    private fun fixture(document: org.pcsoft.framework.simplay.engine.model.Document = TestDocuments.variableLinePages): Fixture {
         val view = PaperSheetView().apply {
             mode = PaperSheetMode.EDITABLE
-            document = TestDocuments.variableLinePages
+            this.document = document
         }
         val ui = view.getPaperSheetUI() as BasicPaperSheetUI
         val image = BufferedImage(500, 1200, BufferedImage.TYPE_INT_ARGB)
@@ -290,5 +290,39 @@ class PaperSheetCaretTest {
         fx.ui.pressKeyForTest(KeyEvent.VK_INSERT)
 
         assertEquals(CaretMode.INSERT, fx.view.caretMode)
+    }
+
+    /**
+     * [org.pcsoft.framework.simplay.swing.CaretModel.moveToAnchor] places the caret exactly on the
+     * zero-width position of the anchor identified by its `id`.
+     */
+    @Test
+    fun caretModelMoveToAnchorJumpsToTheNamedAnchor() {
+        val fx = fixture(TestDocuments.anchors)
+        val expected = "Go to ".length
+
+        fx.view.caretModel.moveToAnchor("chapterOne")
+
+        assertEquals(expected, fx.ui.caretIndexForTest)
+        assertEquals("chapterOne", fx.view.caretModel.currentAnchorId)
+    }
+
+    /**
+     * [org.pcsoft.framework.simplay.swing.CaretModel.moveToNextAnchor] and `moveToPrevAnchor` step
+     * between the two anchors of [TestDocuments.anchors] and back.
+     */
+    @Test
+    fun caretModelNextAndPrevAnchorStepBetweenAnchors() {
+        val fx = fixture(TestDocuments.anchors)
+        fx.view.caretModel.moveToStart()
+
+        fx.view.caretModel.moveToNextAnchor()
+        assertEquals("chapterOne", fx.view.caretModel.currentAnchorId)
+
+        fx.view.caretModel.moveToNextAnchor()
+        assertEquals("chapterTwo", fx.view.caretModel.currentAnchorId)
+
+        fx.view.caretModel.moveToPrevAnchor()
+        assertEquals("chapterOne", fx.view.caretModel.currentAnchorId)
     }
 }

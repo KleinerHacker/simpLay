@@ -18,6 +18,7 @@ import org.pcsoft.framework.simplay.engine.measure.MeasuredPage
 import org.pcsoft.framework.simplay.engine.measure.MeasuredTextBlock
 import org.pcsoft.framework.simplay.engine.measure.MeasuredTextPart
 import org.pcsoft.framework.simplay.engine.model.Font
+import org.pcsoft.framework.simplay.engine.model.TextAnchor
 import org.pcsoft.framework.simplay.engine.model.TextBlock
 import org.pcsoft.framework.simplay.engine.model.TextPart
 import org.pcsoft.framework.simplay.engine.model.TextSymbol
@@ -97,6 +98,15 @@ class DocumentTextIndex(measured: MeasuredDocument) {
     /** One `[start, end)` linear-text range per measured symbol part, in document order. */
     val symbolRanges: List<IntRange>
 
+    /** One zero-length `start..start` linear-text position per [TextAnchor], in document order. */
+    val anchorRanges: List<IntRange>
+
+    /**
+     * Linear-text start position of each [TextAnchor], keyed by [TextAnchor.id]. When several
+     * anchors share an `id` the last one in document order wins, matching [Map.put] semantics.
+     */
+    val anchorsById: Map<String, Int>
+
     init {
         val builder = StringBuilder()
         val collected = ArrayList<Segment>()
@@ -141,15 +151,23 @@ class DocumentTextIndex(measured: MeasuredDocument) {
 
         val words = ArrayList<IntRange>()
         val symbols = ArrayList<IntRange>()
+        val anchors = ArrayList<IntRange>()
+        val anchorIds = LinkedHashMap<String, Int>()
         for (segment in collected) {
-            when (segment.part.raw) {
+            when (val raw = segment.part.raw) {
                 is TextWord -> words += segment.start until segment.end
                 is TextSymbol -> symbols += segment.start until segment.end
+                is TextAnchor -> {
+                    anchors += segment.start..segment.start
+                    anchorIds[raw.id] = segment.start
+                }
                 is TextWhitespace -> Unit
             }
         }
         wordRanges = words
         symbolRanges = symbols
+        anchorRanges = anchors
+        anchorsById = anchorIds
     }
 
     /** The total character count of [text]. */
@@ -163,6 +181,9 @@ class DocumentTextIndex(measured: MeasuredDocument) {
 
     /** Number of addressable symbols. */
     val symbolCount: Int get() = symbolRanges.size
+
+    /** Number of addressable anchors. */
+    val anchorCount: Int get() = anchorRanges.size
 
     /** Clamps [index] to the valid `0..length` range. */
     fun clamp(index: Int): Int = index.coerceIn(0, length)
@@ -286,6 +307,18 @@ class DocumentTextIndex(measured: MeasuredDocument) {
 
     /** Position of the last symbol that starts before [from]; `0` when there is none. */
     fun prevSymbolStart(from: Int): Int = symbolRanges.lastOrNull { it.first < from }?.first ?: 0
+
+    /** Linear index of the anchor identified by [id]; [length] when no such anchor exists. */
+    fun startOfAnchor(id: String): Int = anchorsById[id] ?: length
+
+    /** Linear index of the anchor identified by [id]; identical to [startOfAnchor] since an anchor is zero-width. */
+    fun endOfAnchor(id: String): Int = startOfAnchor(id)
+
+    /** Position of the first anchor that starts after [from]; [length] when there is none. */
+    fun nextAnchorStart(from: Int): Int = anchorRanges.firstOrNull { it.first > from }?.first ?: length
+
+    /** Position of the last anchor that starts before [from]; `0` when there is none. */
+    fun prevAnchorStart(from: Int): Int = anchorRanges.lastOrNull { it.first < from }?.first ?: 0
 
     /**
      * Index of the raw page (into `measured.raw.pages`, i.e. `Document.pages`) that owns the

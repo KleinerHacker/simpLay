@@ -84,4 +84,31 @@ object PaperSheetTestFixtures {
                 FlowPage(layout = layout, blocks = (1..2).map { TextBlock.of("Page three line $it.", style) }),
             ),
         )
+
+    /** A single-paragraph document carrying two `${...}` navigation anchors, for the anchor tests. */
+    fun anchorDocument(): Document =
+        Document(
+            pages = listOf(
+                FlowPage(
+                    layout = layout,
+                    blocks = listOf(TextBlock.of("Go to \${chapterOne} now and \${chapterTwo} later.", style)),
+                ),
+            ),
+        )
+
+    /** [flowDocument] of [paragraphs] paragraphs with one anchor near the start and one near the end,
+     * for the `scrollToAnchor` viewport tests. */
+    fun flowDocumentWithAnchors(paragraphs: Int): Document =
+        Document(
+            pages = listOf(
+                FlowPage(
+                    layout = layout,
+                    blocks = buildList {
+                        add(TextBlock.of("Start \${introAnchor} here.", style))
+                        repeat(paragraphs) { add(TextBlock.of(PARAGRAPH, style)) }
+                        add(TextBlock.of("End \${outroAnchor} here.", style))
+                    },
+                ),
+            ),
+        )
 }
