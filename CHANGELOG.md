@@ -12,6 +12,8 @@ excluded.
 
 ## [UNRELEASED]
 
+## [0.4.0]
+
 ### Fixed
 
 - `engine`: `GreedyWordLineBreakerStrategy` and `BalancedLineBreakerStrategy` now
