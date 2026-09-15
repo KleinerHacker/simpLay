@@ -22,13 +22,15 @@ import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.Font
 import org.pcsoft.framework.simplay.engine.model.PageLayout
+import org.pcsoft.framework.simplay.engine.model.TextAnchor
 import org.pcsoft.framework.simplay.engine.model.TextBlock
 import org.pcsoft.framework.simplay.engine.model.TextStyle
 
 /**
  * Tests for [DocumentEditor]: insertion, deletion and replacement on the linear text axis of a
- * [DocumentTextIndex], the merge of two blocks a delete joined across their boundary and the
- * sanitisation of pasted line breaks. Measuring uses [StubFontMeasureCalculator].
+ * [DocumentTextIndex], the merge of two blocks a delete joined across their boundary, the
+ * sanitisation of pasted line breaks and the preservation of [TextAnchor]s across an edit.
+ * Measuring uses [StubFontMeasureCalculator].
  */
 class DocumentEditorTest {
 
@@ -44,6 +46,11 @@ class DocumentEditorTest {
 
     private fun index(document: Document): DocumentTextIndex =
         DocumentTextIndex(document.measure(StubFontMeasureCalculator()))
+
+    private fun anchorIds(document: Document): List<String> =
+        document.pages.flatMap { page -> page.blocks.flatMap { block -> block.parts } }
+            .filterIsInstance<TextAnchor>()
+            .map { it.id }
 
     /**
      * Verifies that [DocumentEditor.insert] adds the text at the given linear index and reports the
@@ -139,5 +146,49 @@ class DocumentEditorTest {
         caret = afterZ.caretIndex
         assertEquals("The first paragraph.XYZ", idx.text)
         assertEquals("The first paragraph.XYZ".length, caret)
+    }
+
+    /**
+     * Regression test for the reported anchor-loss bug: a block that starts with a zero-width
+     * [TextAnchor] and otherwise has no visible text must keep that anchor after typing at the caret
+     * position right after it (linear index 0, since the anchor contributes no characters).
+     */
+    @Test
+    fun typingAtBlockStartPreservesLeadingAnchor() {
+        val document = document("\${start}")
+        val idx = index(document)
+        val result = DocumentEditor.insert(idx, document, at = 0, text = "abc")
+        assertEquals(listOf("start"), anchorIds(result.document))
+        assertEquals("abc", index(result.document).text)
+    }
+
+    /**
+     * Verifies that an anchor sitting in the middle of a block stays at the same relative text
+     * position after an insert earlier in that block shifts the visible text around it.
+     */
+    @Test
+    fun anchorInBlockMiddleStaysAtRelativePositionAfterInsert() {
+        val document = document("head\${mark}tail")
+        val idx = index(document)
+        val result = DocumentEditor.insert(idx, document, at = 2, text = "XY")
+        assertEquals(listOf("mark"), anchorIds(result.document))
+        val resultIdx = index(result.document)
+        assertEquals("heXYadtail", resultIdx.text)
+        assertEquals("heXYad".length, resultIdx.startOfAnchor("mark"))
+    }
+
+    /**
+     * Verifies that an anchor sitting inside a deleted range is not lost but collapses to the splice
+     * position, matching the behaviour of the surrounding text it was embedded in.
+     */
+    @Test
+    fun anchorInsideDeletedRangeCollapsesToSplicePosition() {
+        val document = document("one\${cursor}two")
+        val idx = index(document)
+        val result = DocumentEditor.delete(idx, document, from = 1, to = 5)
+        assertEquals(listOf("cursor"), anchorIds(result.document))
+        val resultIdx = index(result.document)
+        assertEquals("oo", resultIdx.text)
+        assertEquals(1, resultIdx.startOfAnchor("cursor"))
     }
 }

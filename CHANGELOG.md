@@ -12,6 +12,13 @@ excluded.
 
 ## [UNRELEASED]
 
+### Fixed
+
+- `ui/common`: editing a `TextBlock` that carries a `TextAnchor` (e.g. typing
+  right next to it) no longer drops the anchor. `DocumentEditor` now keeps the
+  anchor at its correct position within the edited block instead of losing it
+  during retokenization.
+
 ## [0.3.1]
 
 ### Added
