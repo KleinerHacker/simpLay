@@ -19,6 +19,7 @@ import javafx.scene.Scene
 import javafx.scene.control.Label
 import javafx.stage.Stage
 import org.junit.jupiter.api.Test
+import org.pcsoft.framework.simplay.uicommon.PageMode
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -274,5 +275,131 @@ class FloatingOverlayTest : JavaFxTestBase() {
         onFxThread { view.selectionModel.clearSelection() }
         assertEquals(1, hidden.size)
         assertEquals(FloatingOverlayTrigger.SELECTION, hidden.first().triggerKind)
+    }
+
+    /**
+     * A `PAGE_HOVER` overlay's `onShown` event reports `pageDeactivated = true` while hovering a page
+     * whose own [PageMode] is more restrictive than the view-wide mode.
+     */
+    @Test
+    fun floatingOverlayEventReportsPageDeactivatedTrue() {
+        val shown = ArrayList<FloatingOverlayEvent>()
+        val overlay = FloatingOverlay().apply {
+            trigger = FloatingOverlayTrigger.PAGE_HOVER
+            content = Label("Page")
+            onShown = EventHandler { shown.add(it) }
+        }
+        val skin = onFxThread {
+            val view = PaperSheetView()
+            view.floatingOverlays.add(overlay)
+            val stage = Stage()
+            stage.scene = Scene(view, 400.0, 700.0)
+            stage.show()
+            view.document = PaperSheetTestFixtures.twoPageDocument()
+            view.setPageMode(1, PageMode.NAVIGABLE)
+            view.applyCss()
+            view.layout()
+            view.skin as PaperSheetViewSkin
+        }
+
+        onFxThread { skin.hoverAtForTest(60.0, 336.0) }
+
+        assertTrue(overlay.isActive)
+        assertEquals(1, shown.size)
+        assertTrue(shown.first().pageDeactivated)
+    }
+
+    /**
+     * The same `PAGE_HOVER` overlay reports `pageDeactivated = false` while hovering the first page,
+     * which has no own [PageMode], even though the second page has one.
+     */
+    @Test
+    fun floatingOverlayEventReportsPageDeactivatedFalse() {
+        val shown = ArrayList<FloatingOverlayEvent>()
+        val overlay = FloatingOverlay().apply {
+            trigger = FloatingOverlayTrigger.PAGE_HOVER
+            content = Label("Page")
+            onShown = EventHandler { shown.add(it) }
+        }
+        val skin = onFxThread {
+            val view = PaperSheetView()
+            view.floatingOverlays.add(overlay)
+            val stage = Stage()
+            stage.scene = Scene(view, 400.0, 700.0)
+            stage.show()
+            view.document = PaperSheetTestFixtures.twoPageDocument()
+            view.setPageMode(1, PageMode.NAVIGABLE)
+            view.applyCss()
+            view.layout()
+            view.skin as PaperSheetViewSkin
+        }
+
+        onFxThread { skin.hoverAtForTest(60.0, 60.0) }
+
+        assertTrue(overlay.isActive)
+        assertEquals(1, shown.size)
+        assertFalse(shown.first().pageDeactivated)
+    }
+
+    /**
+     * A `PAGE_HOVER` overlay stays hidden while the hovered page is locked by
+     * [PageMode.DISABLED], and appears again on the first page, which has no own mode.
+     */
+    @Test
+    fun overlayIsSuppressedOnADisabledPage() {
+        val overlay = FloatingOverlay().apply {
+            trigger = FloatingOverlayTrigger.PAGE_HOVER
+            content = Label("Page")
+        }
+        val skin = onFxThread {
+            val view = PaperSheetView()
+            view.floatingOverlays.add(overlay)
+            val stage = Stage()
+            stage.scene = Scene(view, 400.0, 700.0)
+            stage.show()
+            view.document = PaperSheetTestFixtures.twoPageDocument()
+            view.setPageMode(1, PageMode.DISABLED)
+            view.applyCss()
+            view.layout()
+            view.skin as PaperSheetViewSkin
+        }
+
+        onFxThread { skin.hoverAtForTest(60.0, 336.0) }
+        assertFalse(overlay.isActive)
+
+        onFxThread { skin.hoverAtForTest(60.0, 60.0) }
+        assertTrue(overlay.isActive)
+    }
+
+    /**
+     * In [PaperSheetMode.STATIC] no overlay is shown at all, and an overlay that was visible before
+     * the mode switch is detached again.
+     */
+    @Test
+    fun noOverlayIsShownInStaticMode() {
+        val overlay = FloatingOverlay().apply {
+            trigger = FloatingOverlayTrigger.PAGE_HOVER
+            content = Label("Page")
+        }
+        val skin = onFxThread {
+            val view = PaperSheetView()
+            view.floatingOverlays.add(overlay)
+            val stage = Stage()
+            stage.scene = Scene(view, 400.0, 700.0)
+            stage.show()
+            view.document = PaperSheetTestFixtures.twoPageDocument()
+            view.applyCss()
+            view.layout()
+            view.skin as PaperSheetViewSkin
+        }
+
+        onFxThread { skin.hoverAtForTest(60.0, 60.0) }
+        assertTrue(overlay.isActive)
+
+        onFxThread {
+            skin.skinnable.mode = PaperSheetMode.STATIC
+            skin.hoverAtForTest(60.0, 60.0)
+        }
+        assertFalse(overlay.isActive)
     }
 }

@@ -10,8 +10,6 @@ name: git and GitHub
     * Create: add with `git add` after creation
 * Commits, pushes, pulls or any other actions communicating with the Git server MUST NEVER be invoked.
     * Should it be required, the user MUST be asked
-* Exceptions:
-    * NEVER add plans or plan status
 
 ## Target Environment
 

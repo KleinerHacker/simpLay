@@ -106,6 +106,16 @@ and a resize clears the canvas. `CanvasDocumentRenderer` therefore sizes the
 canvas once, up front, from `documentCanvasSize` and does no tiling. A document
 taller than the platform limit is out of scope for this renderer.
 
+## Page numbers
+
+When the bound document has `document.numbering` configured (anything other than
+`PageNumbering.OFF`), every `renderDocument` / `renderPage` call also draws the
+page numbers, resolved through `MeasuredDocument.planPageNumbers` from the engine (see
+[engine - Rendering: Page numbering](../engine/rendering.md#page-numbering)) and
+drawn with `numbering.textStyle` through the same `FxFontMeasureCalculator` used
+for the document text. No extra call or configuration is needed on the renderer
+itself - the numbering lives on the document.
+
 ## Next
 
 * [Paper sheet component](paper-sheet-component.md) - the scrollable, zoomable

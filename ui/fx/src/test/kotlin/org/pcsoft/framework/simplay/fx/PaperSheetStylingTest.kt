@@ -17,7 +17,9 @@ import javafx.scene.Scene
 import javafx.scene.paint.Color
 import javafx.stage.Stage
 import org.junit.jupiter.api.Test
+import org.pcsoft.framework.simplay.uicommon.PageMode
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -38,7 +40,7 @@ class PaperSheetStylingTest : JavaFxTestBase() {
     private fun fixture(
         inlineStyle: String? = null,
         stylesheet: String? = null,
-        mode: PaperSheetMode = PaperSheetMode.READONLY,
+        mode: PaperSheetMode = PaperSheetMode.SELECTABLE,
         configure: PaperSheetView.() -> Unit = {},
     ): Fixture = onFxThread {
         val view = PaperSheetView()
@@ -117,29 +119,39 @@ class PaperSheetStylingTest : JavaFxTestBase() {
     }
 
     /**
-     * The `:readonly` pseudo-class is active in [PaperSheetMode.READONLY] and gone in
-     * [PaperSheetMode.EDITABLE], so a `.paper-sheet-view:readonly` rule wins only while read-only.
+     * Every [PaperSheetMode] activates its own lower-case pseudo-class and deactivates the other
+     * three, so a `.paper-sheet-view:<mode>` rule wins exactly while that mode is set.
      */
     @Test
-    fun readonlyPseudoClassTogglesWithMode() {
+    fun modePseudoClassTogglesWithMode() {
         val sheet = stylesheetFile(
             """
             .paper-sheet-view { -fx-sheet-border-width: 2; }
-            .paper-sheet-view:readonly { -fx-sheet-border-width: 9; }
+            .paper-sheet-view:static { -fx-sheet-border-width: 6; }
+            .paper-sheet-view:selectable { -fx-sheet-border-width: 7; }
+            .paper-sheet-view:navigable { -fx-sheet-border-width: 8; }
+            .paper-sheet-view:editable { -fx-sheet-border-width: 9; }
             """.trimIndent(),
         )
-        val (view, _) = fixture(stylesheet = sheet, mode = PaperSheetMode.READONLY)
+        val expectedWidth = mapOf(
+            PaperSheetMode.STATIC to 6.0,
+            PaperSheetMode.SELECTABLE to 7.0,
+            PaperSheetMode.NAVIGABLE to 8.0,
+            PaperSheetMode.EDITABLE to 9.0,
+        )
+        val (view, _) = fixture(stylesheet = sheet, mode = PaperSheetMode.STATIC)
 
-        assertTrue(view.pseudoClassStates.any { it.pseudoClassName == "readonly" })
-        assertEquals(9.0, view.sheetBorderWidth)
+        for ((mode, width) in expectedWidth) {
+            onFxThread {
+                view.mode = mode
+                view.applyCss()
+            }
 
-        onFxThread {
-            view.mode = PaperSheetMode.EDITABLE
-            view.applyCss()
+            val active = view.pseudoClassStates.map { it.pseudoClassName }
+            assertTrue(mode.name.lowercase() in active)
+            assertEquals(1, active.count { name -> PaperSheetMode.entries.any { it.name.lowercase() == name } })
+            assertEquals(width, view.sheetBorderWidth)
         }
-
-        assertTrue(view.pseudoClassStates.none { it.pseudoClassName == "readonly" })
-        assertEquals(2.0, view.sheetBorderWidth)
     }
 
     /**
@@ -166,4 +178,84 @@ class PaperSheetStylingTest : JavaFxTestBase() {
 
         assertEquals(1, delta)
     }
+
+    //region Page deactivation
+
+    /**
+     * Builds a shown, editable [PaperSheetView] over [PaperSheetTestFixtures.twoPageDocument], for the
+     * page-deactivation styling tests (the plain [fixture] always overwrites `document`).
+     */
+    private fun deactivationFixture(): Fixture = onFxThread {
+        val view = PaperSheetView()
+        view.mode = PaperSheetMode.EDITABLE
+        val stage = Stage()
+        stage.scene = Scene(view, 320.0, 500.0)
+        stage.show()
+        view.document = PaperSheetTestFixtures.twoPageDocument()
+        view.applyCss()
+        view.layout()
+        Fixture(view, view.skin as PaperSheetViewSkin)
+    }
+
+    /**
+     * A `DISABLED` second page is still drawn (part of [PaperSheetViewSkin.renderedPageIndices]) but
+     * with the deactivated fill instead of the normal sheet background, and the caret does not render
+     * even while it sits inside that page.
+     */
+    @Test
+    fun disabledPageIsPaintedWithOverlayAndNoCaret() {
+        val (view, skin) = deactivationFixture()
+
+        onFxThread {
+            view.caretModel.moveToStartOfBlock(1)
+            view.setPageMode(1, PageMode.DISABLED)
+            view.layout()
+        }
+
+        assertTrue(skin.renderedPageIndices.contains(1), "the DISABLED page is still drawn")
+        assertEquals(0, skin.caretDrawCount, "no caret should be drawn on a DISABLED page")
+    }
+
+    /**
+     * A `HIDDEN` second page is excluded from layout entirely: it is missing from
+     * [PaperSheetViewSkin.renderedPageIndices] and no longer contributes to [PaperSheetView.contentSize].
+     */
+    @Test
+    fun hiddenPageIsExcludedFromLayoutAndNotPainted() {
+        val heightWithBothPages = deactivationFixture().view.contentSize.height
+
+        val (view, skin) = deactivationFixture()
+        onFxThread {
+            view.setPageMode(1, PageMode.HIDDEN)
+            view.layout()
+        }
+
+        assertFalse(skin.renderedPageIndices.contains(1), "the HIDDEN page must not be painted")
+        assertTrue(
+            view.contentSize.height < heightWithBothPages,
+            "hiding a page should shrink the content height (${view.contentSize.height} vs $heightWithBothPages)",
+        )
+    }
+
+    /**
+     * A `NAVIGABLE` second page is painted exactly like a normal one: no deactivated fill, and it still
+     * counts in the rendered pages even though every mutation on it is rejected.
+     */
+    @Test
+    fun navigablePageIsPaintedNormallyButNotEditable() {
+        val (view, skin) = deactivationFixture()
+
+        onFxThread {
+            view.caretModel.moveIntoBlock(1, 2)
+            view.setPageMode(1, PageMode.NAVIGABLE)
+            view.layout()
+        }
+
+        assertTrue(skin.renderedPageIndices.contains(1))
+        val before = view.document
+        onFxThread { skin.typeTextForTest("Z") }
+        assertEquals(before, view.document, "NAVIGABLE must reject the mutation")
+    }
+
+    //endregion
 }

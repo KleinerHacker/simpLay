@@ -13,6 +13,7 @@
 package org.pcsoft.framework.simplay.fx
 
 import javafx.event.EventHandler
+import javafx.event.EventType
 import javafx.geometry.Bounds
 import javafx.geometry.Dimension2D
 import javafx.geometry.Orientation
@@ -27,14 +28,20 @@ import javafx.scene.input.ScrollEvent
 import org.pcsoft.framework.simplay.engine.RenderConfiguration
 import org.pcsoft.framework.simplay.engine.measure
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
+import org.pcsoft.framework.simplay.engine.measure.MeasuredPage
+import org.pcsoft.framework.simplay.engine.model.Page
+import org.pcsoft.framework.simplay.engine.model.TextBlock
+import org.pcsoft.framework.simplay.engine.model.TextPart
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
+import org.pcsoft.framework.simplay.uicommon.PageMode
 import org.pcsoft.framework.simplay.uicommon.hitTest
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetCanvasPainter
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetCaret
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetEditor
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetHoverTracker
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetOverlays
+import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetScroll
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetSelection
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetStyle
 
@@ -50,6 +57,8 @@ import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetStyle
  *   [PaperSheetView.SelectionCommands] sink;
  * * [PaperSheetCaret] - the caret position, blink, geometry and navigation moves (in
  *   [PaperSheetMode.EDITABLE]);
+ * * [PaperSheetScroll] - the [PaperSheetView.ScrollCommands] sink, scrolling the viewport to a page,
+ *   block, word or symbol regardless of [PaperSheetMode];
  * * [PaperSheetEditor] - the keyboard shortcuts (typing, `Backspace` / `Delete`, `Ctrl+C` / `V` /
  *   `X` / `D`, caret navigation) and the [org.pcsoft.framework.simplay.uicommon.DocumentEditor]
  *   mutations they trigger, plus drag-and-drop of the selection;
@@ -59,7 +68,10 @@ import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetStyle
  *
  * The sheet chrome, the selection highlight and the caret are painted with the values from the
  * styleable [PaperSheetView] properties (`-fx-sheet-background` and friends); a change to any of them
- * triggers a repaint.
+ * triggers a repaint. Each page's effective [PageMode] ([PaperSheetView.effectivePageMode]) decides
+ * whether it is excluded from layout entirely ([PageMode.laidOut]) or drawn specially
+ * ([PageMode.paintedDisabled]); both are re-evaluated on every relayout / redraw, so a change to
+ * [PaperSheetView.mode] or [PaperSheetView.pageModes] takes effect immediately.
  */
 internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheetView>(control) {
 
@@ -90,6 +102,9 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     /** `true` while the mouse drags an existing selection to a new drop position. */
     private var draggingSelection = false
 
+    /** `true` while the next `document` change comes from [editor] rather than from outside. */
+    private var internalEdit = false
+
     /** The text selection: anchor/focus, geometry, styled runs and the model command sink. */
     private val selection = PaperSheetSelection(
         view = control,
@@ -111,6 +126,24 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         pageTops = { pageTops },
         scrollOffset = ::scrollOffset,
         requestRedraw = ::redraw,
+        scrollCaretIntoView = ::scrollCaretIntoView,
+    )
+
+    /**
+     * Scrolls the viewport to an absolute page / block / word / symbol position. Clamped against a
+     * freshly computed maximum (not the possibly still-default [scrollBar] `max`), since this may run
+     * before the first [layoutChildren] pass has ever set it from real content.
+     */
+    private val scroll = PaperSheetScroll(
+        view = control,
+        textIndex = { index },
+        measuredDocument = { measured },
+        pageTops = { pageTops },
+        scrollTo = { y ->
+            val maxValue = ((contentHeightUnscaled + 2.0 * skinnable.outerMargin) * skinnable.zoom - canvas.height)
+                .coerceAtLeast(0.0)
+            scrollBar.value = y.coerceIn(0.0, maxValue)
+        },
     )
 
     /** The keyboard shortcuts, the text mutations they trigger and the selection drop. */
@@ -120,6 +153,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         caret = caret,
         textIndex = { index },
         requestRedraw = ::redraw,
+        markInternalEdit = { internalEdit = true },
     )
 
     /** Tracks the paragraph and sheet under the mouse for the hover overlay triggers. */
@@ -137,6 +171,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         selection = selection,
         caret = caret,
         hover = hover,
+        textIndex = { index },
     )
 
     private val keyHandler = EventHandler<KeyEvent> { editor.onKeyPressed(it) }
@@ -165,7 +200,18 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     /** The current viewport height in pixels; for tests. */
     internal val viewportHeight: Double get() = canvas.height
 
+    /** The painted canvas; for tests that snapshot pixels. */
+    internal val canvasForTest: Canvas get() = canvas
+
     private val mode: PaperSheetMode get() = skinnable.mode
+
+    private fun pageMode(page: MeasuredPage): PageMode = skinnable.effectivePageMode(page.raw.id)
+
+    /** Whether [page] is excluded from layout entirely by its effective [PageMode]. */
+    private fun isPageHidden(page: MeasuredPage): Boolean = !pageMode(page).laidOut
+
+    /** Whether [page] is drawn specially by its effective [PageMode]. */
+    private fun isPageDisabled(page: MeasuredPage): Boolean = pageMode(page).paintedDisabled
 
     //endregion
 
@@ -177,14 +223,25 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         remeasure()
         skinnable.registerSelectionCommands(selection)
         skinnable.registerCaretCommands(caret)
+        skinnable.registerScrollCommands(scroll)
 
         registerChangeListener(control.documentProperty) { remeasure(); control.requestLayout() }
         registerChangeListener(control.outerMarginProperty) { relayout() }
         registerChangeListener(control.pageGapProperty) { relayout() }
         registerChangeListener(control.zoomProperty) { relayout() }
-        registerChangeListener(control.modeProperty) { caret.onModeChanged() }
+        registerChangeListener(control.modeProperty) {
+            if (!control.anySelection) selection.clearSelection()
+            caret.onModeChanged()
+        }
         registerChangeListener(control.smoothCaretBlinkProperty) { caret.restartBlink() }
+        registerChangeListener(control.caretModeProperty) { caret.restartBlink() }
         registerChangeListener(control.focusedProperty()) { caret.restartBlink() }
+
+        registerChangeListener(control.pageModesProperty) {
+            if (!control.anySelection) selection.clearSelection()
+            caret.onModeChanged()
+            relayout()
+        }
 
         registerChangeListener(control.sheetBackgroundProperty) { redraw() }
         registerChangeListener(control.sheetBorderColorProperty) { redraw() }
@@ -193,6 +250,8 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         registerChangeListener(control.shadowOffsetProperty) { redraw() }
         registerChangeListener(control.selectionColorProperty) { redraw() }
         registerChangeListener(control.caretColorProperty) { redraw() }
+        registerChangeListener(control.deactivatedSheetBackgroundProperty) { redraw() }
+        registerChangeListener(control.deactivatedOverlayColorProperty) { redraw() }
 
         scrollBar.valueProperty().addListener { _, _, _ -> redraw() }
 
@@ -205,6 +264,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
             canvas.cursor = cursorFor(it.x, it.y)
             hover.update(it.x, it.y)
             overlays.refresh()
+            fireMouseEvent(PaperSheetMouseEvent.HOVER, it.x, it.y)
         }
         canvas.addEventHandler(MouseEvent.MOUSE_EXITED) {
             canvas.cursor = Cursor.DEFAULT
@@ -220,6 +280,12 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     //region Measuring / layout
 
     private fun remeasure() {
+        val reload = !internalEdit
+        internalEdit = false
+        // A page override is tied to a specific page instance; once the document is reloaded from
+        // outside (as opposed to replaced by an edit), none of the previous overrides can still be
+        // meaningful, so the default state - every page following the global mode - is restored.
+        if (reload) skinnable.pageModes = emptyMap()
         val document = skinnable.document
         measured = document?.measure(measurer, renderConfig)
         index = measured?.let { DocumentTextIndex(it) }
@@ -227,7 +293,8 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         hover.clear()
         computeLayoutMetrics()
         selection.publish()
-        caret.onDocumentRemeasured()
+        caret.onDocumentRemeasured(reload)
+        if (reload) scrollBar.value = 0.0
     }
 
     private fun relayout() {
@@ -250,11 +317,13 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         var y = 0.0
         doc.pages.forEachIndexed { i, page ->
             pageTops[i] = y
-            y += page.effectiveSize.height
-            if (i != doc.pages.lastIndex) y += gap
+            if (!isPageHidden(page)) {
+                y += page.effectiveSize.height
+                if (i != doc.pages.lastIndex) y += gap
+            }
         }
         contentHeightUnscaled = y
-        contentWidthUnscaled = doc.pages.maxOf { it.effectiveSize.width }
+        contentWidthUnscaled = doc.pages.filterNot(::isPageHidden).maxOfOrNull { it.effectiveSize.width } ?: 0.0
         skinnable.updateContentSize(
             Dimension2D(contentWidthUnscaled + 2.0 * outer, contentHeightUnscaled + 2.0 * outer),
         )
@@ -299,6 +368,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         skinnable?.removeEventHandler(KeyEvent.KEY_TYPED, keyTypedHandler)
         skinnable?.unregisterSelectionCommands(selection)
         skinnable?.unregisterCaretCommands(caret)
+        skinnable?.unregisterScrollCommands(scroll)
         super.dispose()
     }
 
@@ -308,6 +378,26 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     private fun scrollOffset(): Double = scrollBar.value.coerceIn(0.0, scrollBar.max)
 
+    /**
+     * Scrolls the viewport by the smallest amount that brings the caret back into it, leaving
+     * [CARET_SCROLL_PADDING] of slack above and below; does nothing while there is nothing to scroll
+     * or the caret has no geometry.
+     */
+    private fun scrollCaretIntoView() {
+        if (scrollBar.max <= 0.0) return
+        val viewportHeight = canvas.height
+        if (viewportHeight <= 0.0) return
+        val bounds = caret.viewportBounds() ?: return
+        val top = bounds.minY - CARET_SCROLL_PADDING
+        val bottom = bounds.maxY + CARET_SCROLL_PADDING
+        val delta = when {
+            top < 0.0 -> top
+            bottom > viewportHeight -> bottom - viewportHeight
+            else -> return
+        }
+        scrollBar.value = (scrollBar.value + delta).coerceIn(0.0, scrollBar.max)
+    }
+
     private fun currentStyle(): PaperSheetStyle = PaperSheetStyle(
         sheetBackground = skinnable.sheetBackground,
         sheetBorderColor = skinnable.sheetBorderColor,
@@ -316,6 +406,8 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         shadowOffset = skinnable.shadowOffset,
         selectionColor = skinnable.selectionColor,
         caretColor = skinnable.caretColor,
+        deactivatedSheetBackground = skinnable.deactivatedSheetBackground,
+        deactivatedOverlayColor = skinnable.deactivatedOverlayColor,
     )
 
     private fun redraw() {
@@ -332,6 +424,8 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
             style = currentStyle(),
             caret = caret.caretPaint(),
             caretOpacity = caret.currentOpacity(),
+            isHidden = ::isPageHidden,
+            isDisabled = ::isPageDisabled,
         )
         renderedPageIndices = painter.renderedPageIndices
         sheetChromeDrawCount = painter.sheetChromeDrawCount
@@ -347,7 +441,8 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     /**
      * The page whose vertical band is closest to [cyUnscaled] (0 distance when inside it), with the
-     * signed distance; used for hit-testing, the pointer shape and the hover tracker.
+     * signed distance; used for hit-testing, the pointer shape and the hover tracker. Pages excluded
+     * from layout by their effective [PageMode] are skipped.
      */
     private fun nearestPage(cyUnscaled: Double): Pair<Int, Double> {
         val doc = measured!!
@@ -355,6 +450,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         var pageIndex = 0
         var bestDist = Double.MAX_VALUE
         doc.pages.forEachIndexed { i, page ->
+            if (isPageHidden(page)) return@forEachIndexed
             val top = outer + pageTops[i]
             val bottom = top + page.effectiveSize.height
             val dist = when {
@@ -370,8 +466,13 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         return pageIndex to bestDist
     }
 
-    /** The pointer shape at a viewport point: a text cursor over a page content area, else default. */
+    /**
+     * The pointer shape at a viewport point: a text cursor over a page content area, else default.
+     * No page currently supporting selection, or a page whose own effective [PageMode] does not
+     * support selection, always keeps the default arrow.
+     */
     private fun cursorFor(px: Double, py: Double): Cursor {
+        if (!skinnable.anySelection) return Cursor.DEFAULT
         val doc = measured ?: return Cursor.DEFAULT
         if (doc.pages.isEmpty()) return Cursor.DEFAULT
         val zoom = skinnable.zoom
@@ -380,6 +481,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         val cy = (py + scrollOffset()) / zoom
         val (pageIndex, bandDistance) = nearestPage(cy)
         if (bandDistance > 0.0) return Cursor.DEFAULT
+        if (!pageMode(doc.pages[pageIndex]).supportsSelection) return Cursor.DEFAULT
         val contentArea = doc.pages[pageIndex].contentArea
         val localX = cx - outer - contentArea.x
         val localY = cy - (outer + pageTops[pageIndex]) - contentArea.y
@@ -430,6 +532,47 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         return partSegment.start + offset
     }
 
+    /**
+     * The raw part / block / page under viewport point ([px], [py]), or `null` for whichever of them
+     * has no hit there - the part and block are `null` over an empty area of a page, all three are
+     * `null` outside every page. Feeds [fireMouseEvent].
+     */
+    private fun resolveMouseHit(px: Double, py: Double): Triple<TextPart?, TextBlock?, Page?> {
+        val doc = measured?.takeIf { it.pages.isNotEmpty() } ?: return Triple(null, null, null)
+        val zoom = skinnable.zoom
+        val outer = skinnable.outerMargin
+        val cx = px / zoom
+        val cy = (py + scrollOffset()) / zoom
+        val (pageIndex, bandDistance) = nearestPage(cy)
+        if (bandDistance > 0.0) return Triple(null, null, null)
+        val page = doc.pages[pageIndex]
+        val contentArea = page.contentArea
+        val localX = cx - outer - contentArea.x
+        val localY = cy - (outer + pageTops[pageIndex]) - contentArea.y
+        val block = page.blocks.firstOrNull { b ->
+            val bounds = b.bounds
+            localX >= bounds.x && localX <= bounds.x + bounds.width && localY >= bounds.y && localY <= bounds.y + bounds.height
+        } ?: return Triple(null, null, page.raw)
+        val part = index?.segments?.firstOrNull { it.pageIndex == pageIndex && it.block === block }
+            ?.let { firstSeg ->
+                index!!.segments.filter { it.pageIndex == pageIndex && it.block === block }.minByOrNull { seg ->
+                    val bounds = seg.part.bounds
+                    when {
+                        localX < bounds.x -> bounds.x - localX
+                        localX > bounds.x + bounds.width -> localX - bounds.x - bounds.width
+                        else -> 0.0
+                    }
+                } ?: firstSeg
+            }?.part?.raw
+        return Triple(part, block.raw, page.raw)
+    }
+
+    private fun fireMouseEvent(type: EventType<PaperSheetMouseEvent>, px: Double, py: Double) {
+        val handler = skinnable.onMouseEvent ?: return
+        val (part, block, page) = resolveMouseHit(px, py)
+        handler.handle(PaperSheetMouseEvent(part, block, page, type))
+    }
+
     //endregion
 
     //region Input
@@ -441,10 +584,14 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     }
 
     private fun onMousePressed(event: MouseEvent) {
-        skinnable.requestFocus()
+        val doc = measured
+        val hitPageMode = doc?.pages?.takeIf { it.isNotEmpty() }
+            ?.let { pageMode(it[nearestPage((event.y + scrollOffset()) / skinnable.zoom).first]) }
+        if (hitPageMode?.supportsSelection != true) return
+        if (skinnable.anyFocus) skinnable.requestFocus()
         caret.clearShiftAnchor()
         val i = hitIndexAt(event.x, event.y)
-        if (mode == PaperSheetMode.EDITABLE && !selection.isEmpty && selection.contains(event.x, event.y)) {
+        if (hitPageMode.supportsEditing && !selection.isEmpty && selection.contains(event.x, event.y)) {
             draggingSelection = true
             dragging = false
             caret.setDropPreview(i)
@@ -453,7 +600,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         }
         selection.beginAt(i)
         dragging = true
-        if (mode == PaperSheetMode.EDITABLE) {
+        if (hitPageMode.supportsCaret) {
             caret.placeCaret(i)
         } else {
             redraw()
@@ -487,9 +634,13 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     }
 
     private fun onMouseClicked(event: MouseEvent) {
+        fireMouseEvent(PaperSheetMouseEvent.CLICK, event.x, event.y)
         if (event.clickCount != 2) return
+        val doc = measured?.takeIf { it.pages.isNotEmpty() } ?: return
+        val hitPageMode = pageMode(doc.pages[nearestPage((event.y + scrollOffset()) / skinnable.zoom).first])
+        if (!hitPageMode.supportsSelection) return
         selection.selectWordAt(hitIndexAt(event.x, event.y))
-        if (mode == PaperSheetMode.EDITABLE) caret.placeCaret(selection.end)
+        if (hitPageMode.supportsCaret) caret.placeCaret(selection.end)
         redraw()
         event.consume()
     }
@@ -559,12 +710,19 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     internal fun dragSelectionToForTest(x: Double, y: Double, copy: Boolean) =
         editor.dropSelection(hitIndexAt(x, y), copy)
 
+    /** Fires a [PaperSheetMouseEvent] of [type] at a viewport point, as the real handlers do; for tests. */
+    internal fun fireMouseEventForTest(type: EventType<PaperSheetMouseEvent>, x: Double, y: Double) =
+        fireMouseEvent(type, x, y)
+
     //endregion
 
     private companion object {
 
         const val DEFAULT_SCROLLBAR_WIDTH = 14.0
         const val LINE_SCROLL_STEP = 40.0
+
+        /** Slack kept above and below the caret when scrolling it back into the viewport. */
+        const val CARET_SCROLL_PADDING = 8.0
         const val PREF_MIN = 240.0
         const val PREF_MAX = 2000.0
     }

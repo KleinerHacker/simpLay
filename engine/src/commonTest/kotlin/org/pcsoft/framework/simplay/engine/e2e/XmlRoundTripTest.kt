@@ -71,4 +71,17 @@ class XmlRoundTripTest {
             restored.pages.flatMap { it.blocks }.map { it.toString() },
         )
     }
+
+    /**
+     * Use case: a document with a non-default [org.pcsoft.framework.simplay.engine.model.PageNumbering]
+     * survives the XML round-trip unchanged.
+     */
+    @Test
+    fun xmlRoundTripPreservesPageNumbering() {
+        val numbered = E2ETestData.numberedSampleDocument()
+        val text = xml.encodeToString(Document.serializer(), numbered)
+        val restored = xml.decodeFromString(Document.serializer(), text)
+
+        assertEquals(numbered, restored)
+    }
 }

@@ -12,6 +12,11 @@
 
 package org.pcsoft.framework.simplay.engine
 
+import org.pcsoft.framework.simplay.engine.strategy.GreedyWordLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.LineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.NoOpWordBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.WordBreakerStrategy
+
 /**
  * Mutable, renderer-agnostic configuration that every concrete renderer needs before it can measure
  * a [org.pcsoft.framework.simplay.engine.model.Document]: the [lineBreakerStrategy] and the

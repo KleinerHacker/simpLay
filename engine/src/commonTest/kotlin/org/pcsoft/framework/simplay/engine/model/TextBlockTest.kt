@@ -48,12 +48,12 @@ class TextBlockTest {
     }
 
     /**
-     * Verifies that runs of multiple whitespace characters are normalized to single spaces on the
-     * round trip.
+     * Verifies that a run of multiple whitespace characters is preserved verbatim on the round trip
+     * instead of being normalized to a single space.
      */
     @Test
-    fun normalizesMultipleWhitespace() {
-        assertEquals("a b c", TextBlock.of("a   b \t c", style).toString())
+    fun preservesMultipleWhitespaceVerbatim() {
+        assertEquals("a   b \t c", TextBlock.of("a   b \t c", style).toString())
     }
 
     /**
@@ -91,5 +91,53 @@ class TextBlockTest {
         assertEquals(block.parts, restyled.parts)
         assertEquals(TextAlignment.CENTER, restyled.style.alignment)
         assertEquals(TextAlignment.LEFT, block.style.alignment)
+    }
+
+    /**
+     * Verifies the exact bug scenario reported for the caret drift: a word directly following a
+     * symbol without any original whitespace between them (`"paragraph.X"`) round trips through
+     * [TextBlock.Companion.of] and [toString] without an invented space at the symbol/word boundary.
+     */
+    @Test
+    fun toStringRoundTripsExactOriginalTextIncludingSymbolWordBoundary() {
+        assertEquals("paragraph.X", TextBlock.of("paragraph.X", style).toString())
+    }
+
+    /**
+     * Verifies that alternating runs of several spaces and several tabs - at the start, between
+     * words, directly after a symbol and at the end - are reproduced character for character by
+     * [toString], with no run normalized, merged or dropped.
+     */
+    @Test
+    fun toStringRoundTripsAlternatingSpaceAndTabRuns() {
+        val text = "  \t\tone \t   two.\tthree\t \tfour  "
+        assertEquals(text, TextBlock.of(text, style).toString())
+    }
+
+    /**
+     * Verifies that [TextBlock.Companion.of] tokenizes a `${name}` marker into a [TextAnchor] and
+     * that [toString] reproduces the marker verbatim, keeping the round trip lossless.
+     */
+    @Test
+    fun roundTripsAnchorMarker() {
+        val text = "go to \${chapterOne} now"
+        val block = TextBlock.of(text, style)
+
+        assertTrue(block.parts.any { it is TextAnchor && it.id == "chapterOne" })
+        assertEquals(text, block.toString())
+    }
+
+    /**
+     * Verifies that a line break round trips through [TextBlock.Companion.of] and [toString] as a
+     * plain `\n`, with no space invented around it - a [TextWord] right after a [TextBreak] gets no
+     * leading space, just as one right after a symbol does not.
+     */
+    @Test
+    fun breakRendersAsNewlineWithoutExtraSpace() {
+        val text = "first line\nsecond line"
+        val block = TextBlock.of(text, style)
+
+        assertTrue(block.parts.any { it is TextBreak })
+        assertEquals(text, block.toString())
     }
 }

@@ -14,8 +14,10 @@ package org.pcsoft.framework.simplay.swing
 
 import java.awt.Cursor
 import java.awt.image.BufferedImage
+import org.pcsoft.framework.simplay.uicommon.PageMode
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -91,6 +93,40 @@ class BasicPaperSheetUITest {
     }
 
     /**
+     * Verifies that a page locked by [PageMode.DISABLED] keeps the default arrow pointer over its
+     * text content area instead of showing the text cursor.
+     */
+    @Test
+    fun pointerStaysDefaultOverADisabledPage() {
+        val view = PaperSheetView().apply {
+            document = TestDocuments.short
+        }
+        val ui = ui(view)
+        paint(ui)
+        view.setPageMode(0, PageMode.DISABLED)
+        paint(ui)
+        assertEquals(Cursor.DEFAULT_CURSOR, ui.cursorAtForTest(80.0, 80.0).type)
+    }
+
+    /**
+     * Verifies that [PaperSheetMode.STATIC] keeps the default arrow pointer even over a page's text
+     * content area, and that the view refuses focus and a programmatic `selectAll` in that mode.
+     */
+    @Test
+    fun staticModeKeepsDefaultCursorAndRefusesSelection() {
+        val view = PaperSheetView().apply {
+            document = TestDocuments.short
+            mode = PaperSheetMode.STATIC
+        }
+        val ui = ui(view)
+        paint(ui)
+        view.selectionModel.selectAll()
+        assertEquals(Cursor.DEFAULT_CURSOR, ui.cursorAtForTest(80.0, 80.0).type)
+        assertFalse(view.isFocusable)
+        assertTrue(view.selectionModel.isEmpty)
+    }
+
+    /**
      * Verifies that the internal vertical scroll bar becomes enabled once the scaled content is
      * taller than the viewport.
      */
@@ -112,4 +148,76 @@ class BasicPaperSheetUITest {
         paint(ui)
         assertEquals(0, ui.sheetChromeDrawCountForTest)
     }
+
+    //region Page deactivation
+
+    /**
+     * A `DISABLED` second page is still drawn (part of [BasicPaperSheetUI.renderedPageIndicesForTest])
+     * but with the deactivated fill instead of the normal sheet background, and the caret does not
+     * render even while it sits inside that page.
+     */
+    @Test
+    fun disabledPageIsPaintedWithOverlayAndNoCaret() {
+        val view = PaperSheetView().apply {
+            mode = PaperSheetMode.EDITABLE
+            document = TestDocuments.twoPage
+        }
+        val ui = ui(view)
+        paint(ui, height = 800)
+        view.caretModel.moveToStartOfBlock(1)
+        view.setPageMode(1, PageMode.DISABLED)
+        paint(ui, height = 800)
+
+        assertTrue(ui.renderedPageIndicesForTest.contains(1), "the DISABLED page is still drawn")
+        assertEquals(0, ui.caretDrawCountForTest, "no caret should be drawn on a DISABLED page")
+    }
+
+    /**
+     * A `HIDDEN` second page is excluded from layout entirely: it is missing from
+     * [BasicPaperSheetUI.renderedPageIndicesForTest] and no longer contributes to
+     * [PaperSheetView.contentSize].
+     */
+    @Test
+    fun hiddenPageIsExcludedFromLayoutAndNotPainted() {
+        val viewBoth = PaperSheetView().apply { document = TestDocuments.twoPage }
+        paint(ui(viewBoth), height = 800)
+        val heightWithBothPages = viewBoth.contentSize.height
+
+        val view = PaperSheetView().apply { document = TestDocuments.twoPage }
+        val ui = ui(view)
+        paint(ui, height = 800)
+        view.setPageMode(1, PageMode.HIDDEN)
+        paint(ui, height = 800)
+
+        assertFalse(ui.renderedPageIndicesForTest.contains(1), "the HIDDEN page must not be painted")
+        assertTrue(
+            view.contentSize.height < heightWithBothPages,
+            "hiding a page should shrink the content height (${view.contentSize.height} vs $heightWithBothPages)",
+        )
+    }
+
+    /**
+     * A `NAVIGABLE` second page is painted exactly like a normal one, and it still counts in the
+     * rendered pages even though every mutation on it is rejected. The caret is placed strictly
+     * inside the blocked block, because an insertion point on its boundary is allowed by contract.
+     */
+    @Test
+    fun navigablePageIsPaintedNormallyButNotEditable() {
+        val view = PaperSheetView().apply {
+            mode = PaperSheetMode.EDITABLE
+            document = TestDocuments.twoPage
+        }
+        val ui = ui(view)
+        paint(ui, height = 800)
+        view.caretModel.moveIntoBlock(1, 2)
+        view.setPageMode(1, PageMode.NAVIGABLE)
+        paint(ui, height = 800)
+
+        assertTrue(ui.renderedPageIndicesForTest.contains(1))
+        val before = view.document
+        ui.typeTextForTest("Z")
+        assertEquals(before, view.document, "NAVIGABLE must reject the mutation")
+    }
+
+    //endregion
 }

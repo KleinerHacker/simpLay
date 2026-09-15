@@ -17,6 +17,7 @@ import kotlin.test.assertEquals
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.TextBlock
+import org.pcsoft.framework.simplay.engine.strategy.NoWrapLineBreakerStrategy
 
 /**
  * Verifies that the [LineBreakerStrategy] set on the [SimpLayEngine.Builder] is the one that is

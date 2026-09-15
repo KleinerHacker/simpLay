@@ -16,6 +16,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import org.pcsoft.framework.simplay.engine.model.TextSymbol
+import org.pcsoft.framework.simplay.engine.strategy.GreedyWordLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.NoOpWordBreakerStrategy
 
 /**
  * Verifies that the greedy line breaker attaches a [TextSymbol] without a leading space and still

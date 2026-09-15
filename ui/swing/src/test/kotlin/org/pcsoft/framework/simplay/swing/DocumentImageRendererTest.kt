@@ -12,9 +12,11 @@
 
 package org.pcsoft.framework.simplay.swing
 
+import java.awt.Color
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -77,5 +79,46 @@ class DocumentImageRendererTest {
         assertFailsWith<IllegalArgumentException> {
             DocumentImageRenderer.of(TestDocuments.short) { unitScale = 0.0 }
         }
+    }
+
+    /**
+     * Verifies that top-center page numbering paints a dark pixel near its planned anchor in the top
+     * margin band, which the plain (unnumbered) document never draws there.
+     */
+    @Test
+    fun renderPagePaintsPageNumberAtExpectedEdge() {
+        val plainImage = DocumentImageRenderer.of(TestDocuments.short).renderPage(0)
+        val numberedImage = DocumentImageRenderer.of(TestDocuments.numberedShort()).renderPage(0)
+
+        val expectedX = TestDocuments.layout.size.width / 2.0
+        val expectedY = TestDocuments.layout.margins.top / 2.0
+
+        assertFalse(
+            hasDarkPixelNear(plainImage, expectedX, expectedY),
+            "unnumbered document should not paint anything near the numbering anchor",
+        )
+        assertTrue(
+            hasDarkPixelNear(numberedImage, expectedX, expectedY),
+            "numbered document should paint the page number near its planned anchor",
+        )
+    }
+
+    /**
+     * Scans a small box around ([cx], [cy]) on [image] for a pixel darker than mid-gray, the
+     * signature of drawn black text over the image's transparent/white background.
+     */
+    private fun hasDarkPixelNear(image: java.awt.image.BufferedImage, cx: Double, cy: Double): Boolean {
+        for (dx in -10..10) {
+            for (dy in -7..7) {
+                val x = (cx + dx).toInt()
+                val y = (cy + dy).toInt()
+                if (x < 0 || y < 0 || x >= image.width || y >= image.height) continue
+                val color = Color(image.getRGB(x, y), true)
+                val alpha = color.alpha / 255.0
+                val brightness = (color.red + color.green + color.blue) / (3.0 * 255.0)
+                if (alpha > 0.1 && brightness < 0.5) return true
+            }
+        }
+        return false
     }
 }

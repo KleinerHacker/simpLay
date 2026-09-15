@@ -20,6 +20,8 @@ import javax.swing.JComponent
 import javax.swing.UIManager
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetStyle
+import org.pcsoft.framework.simplay.uicommon.CaretMode
+import org.pcsoft.framework.simplay.uicommon.PageMode
 
 /**
  * A scrollable and zoomable Swing component that renders a [Document] as physical-looking sheets -
@@ -27,10 +29,20 @@ import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetStyle
  * copied to the system clipboard with `Ctrl+C` (`Cmd+C` on macOS) as styled HTML, RTF and plain
  * text. The Swing counterpart of the `fx` module's `PaperSheetView`.
  *
- * The [mode] switches between [PaperSheetMode.READONLY] (no caret) and [PaperSheetMode.EDITABLE],
- * which adds a blinking caret, character insertion / removal, clipboard cut / copy / paste, line
- * duplication, drag-and-drop of the selection and the standard caret-navigation keys. Editing
- * replaces [document] with a new instance; the previous document is not mutated.
+ * The [mode] picks one of four interaction levels: [PaperSheetMode.STATIC] (a plain picture - no
+ * selection, no caret, the default arrow cursor and no keyboard focus), [PaperSheetMode.SELECTABLE]
+ * (selecting and copying, no caret), [PaperSheetMode.NAVIGABLE] (adds a blinking caret and the
+ * standard caret-navigation keys, still without mutating the document) and [PaperSheetMode.EDITABLE]
+ * (adds character insertion / removal, clipboard cut / copy / paste, line duplication and
+ * drag-and-drop of the selection). Editing replaces [document] with a new instance; the previous
+ * document is not mutated.
+ *
+ * [pageModes] (keyed by the stable [org.pcsoft.framework.simplay.engine.model.Page.id]) overrides
+ * [mode] for individual pages: a page absent from the map, or mapped to `null`, follows [mode]; a page
+ * mapped to a [PageMode] uses that mode instead, independent of [mode]. Purely transient view state,
+ * never persisted in [document] and reset to empty whenever [document] is reloaded from outside - an
+ * edit (which also replaces [document] with a new instance) leaves it untouched, since the page ids
+ * it is keyed by do not change. Use [setPageMode] to override a page by its current index.
  *
  * Layout is controlled by [outerMargin] (space around the sheet stack) and [pageGap] (space between
  * two sheets). [zoom] scales the whole view and is always kept within `[minZoom, maxZoom]`. The
@@ -78,12 +90,62 @@ open class PaperSheetView : JComponent() {
 
     //region Mode
 
-    var mode: PaperSheetMode = PaperSheetMode.READONLY
+    /** How much interaction the view offers; defaults to [PaperSheetMode.SELECTABLE]. */
+    var mode: PaperSheetMode = PaperSheetMode.SELECTABLE
         set(value) {
             val old = field
             field = value
+            isFocusable = anyFocus
             firePropertyChange(PROP_MODE, old, value)
         }
+
+    //endregion
+
+    //region Page mode
+
+    /**
+     * Per-page [PageMode] overrides, keyed by the stable
+     * [org.pcsoft.framework.simplay.engine.model.Page.id]. A page absent from the map follows [mode].
+     * Purely transient view state, never persisted in [document]; reset to empty whenever [document]
+     * is reloaded from outside (not by an edit). Ids no longer present in [document] are simply ignored.
+     */
+    var pageModes: Map<String, PageMode> = emptyMap()
+        set(value) {
+            val old = field
+            field = value
+            isFocusable = anyFocus
+            firePropertyChange(PROP_PAGE_MODES, old, value)
+        }
+
+    /**
+     * Overrides (or clears, for `mode == null`) the [PageMode] of the page currently at [index] of
+     * [document]. Resolves [index] against the current [document] into that page's stable id
+     * immediately, so the override stays attached to the same page even as later edits shift page
+     * indices. A no-op without a [document] or for an out-of-range [index].
+     */
+    fun setPageMode(index: Int, mode: PageMode?) {
+        val id = document?.pages?.getOrNull(index)?.id ?: return
+        pageModes = if (mode != null) pageModes + (id to mode) else pageModes - id
+    }
+
+    /** The effective [PageMode] of page [pageId]: its [pageModes] override, or [mode] otherwise. */
+    fun effectivePageMode(pageId: String): PageMode = pageModes[pageId] ?: mode.asPageMode()
+
+    /** Whether any page (via [mode] or a [pageModes] override) currently supports selection. */
+    internal val anySelection: Boolean
+        get() = mode.supportsSelection || pageModes.values.any { it.supportsSelection }
+
+    /** Whether any page (via [mode] or a [pageModes] override) currently supports the caret. */
+    internal val anyCaret: Boolean
+        get() = mode.supportsCaret || pageModes.values.any { it.supportsCaret }
+
+    /** Whether any page (via [mode] or a [pageModes] override) currently supports editing. */
+    internal val anyEditing: Boolean
+        get() = mode.supportsEditing || pageModes.values.any { it.supportsEditing }
+
+    /** Whether the view should take keyboard focus: [mode] does, or a [pageModes] override needs it. */
+    internal val anyFocus: Boolean
+        get() = mode.supportsFocus || anySelection || anyCaret || anyEditing
 
     //endregion
 
@@ -207,6 +269,22 @@ open class PaperSheetView : JComponent() {
             firePropertyChange(PROP_CARET_COLOR, old, value)
         }
 
+    var deactivatedSheetBackground: Paint = PaperSheetStyle.DEFAULT_DEACTIVATED_SHEET_BACKGROUND
+        set(value) {
+            val old = field
+            field = value
+            markSet(PROP_DEACTIVATED_SHEET_BACKGROUND)
+            firePropertyChange(PROP_DEACTIVATED_SHEET_BACKGROUND, old, value)
+        }
+
+    var deactivatedOverlayColor: Paint = PaperSheetStyle.DEFAULT_DEACTIVATED_OVERLAY_COLOR
+        set(value) {
+            val old = field
+            field = value
+            markSet(PROP_DEACTIVATED_OVERLAY_COLOR)
+            firePropertyChange(PROP_DEACTIVATED_OVERLAY_COLOR, old, value)
+        }
+
     //endregion
 
     //region Caret blink
@@ -216,6 +294,22 @@ open class PaperSheetView : JComponent() {
             val old = field
             field = value
             firePropertyChange(PROP_SMOOTH_CARET_BLINK, old, value)
+        }
+
+    //endregion
+
+    //region Caret mode
+
+    /**
+     * Whether typing inserts characters at the caret or overwrites the one already there; toggled by
+     * the `Insert` key, but also freely readable and settable from outside. Defaults to
+     * [CaretMode.INSERT].
+     */
+    var caretMode: CaretMode = CaretMode.INSERT
+        set(value) {
+            val old = field
+            field = value
+            firePropertyChange(PROP_CARET_MODE, old, value)
         }
 
     //endregion
@@ -259,6 +353,7 @@ open class PaperSheetView : JComponent() {
     }
 
     private fun runSelectionCommand(block: TextSelectionModel.Commands.() -> Unit) {
+        if (!anySelection) return
         val commands = selectionCommands
         if (commands != null) commands.block() else pendingSelectionCommand = block
     }
@@ -285,9 +380,77 @@ open class PaperSheetView : JComponent() {
     }
 
     private fun runCaretCommand(block: CaretModel.Commands.() -> Unit) {
+        if (!anyCaret) return
         val commands = caretCommands
         if (commands != null) commands.block() else pendingCaretCommand = block
     }
+
+    //endregion
+
+    //region Scroll
+
+    /**
+     * Sink for the scroll commands, implemented and registered by the UI delegate. Unlike
+     * [CaretModel.Commands], never gated by [anyCaret] or [mode]: scrolling is a pure viewport
+     * operation, available in every [PaperSheetMode] including [PaperSheetMode.STATIC].
+     */
+    internal interface ScrollCommands {
+        fun scrollToPage(page: Int)
+        fun scrollToBlock(block: Int)
+        fun scrollToWord(word: Int)
+        fun scrollToSymbol(symbol: Int)
+        fun scrollToAnchor(id: String)
+    }
+
+    private var scrollCommands: ScrollCommands? = null
+    private var pendingScrollCommand: (ScrollCommands.() -> Unit)? = null
+
+    internal fun registerScrollCommands(commands: ScrollCommands) {
+        scrollCommands = commands
+        pendingScrollCommand?.let { pending ->
+            pendingScrollCommand = null
+            commands.pending()
+        }
+    }
+
+    internal fun unregisterScrollCommands(commands: ScrollCommands) {
+        if (scrollCommands === commands) scrollCommands = null
+    }
+
+    private fun requestScroll(block: ScrollCommands.() -> Unit) {
+        val commands = scrollCommands
+        if (commands != null) commands.block() else pendingScrollCommand = block
+    }
+
+    /**
+     * Scrolls the viewport so page [page]'s top edge aligns with the viewport top; clamped into
+     * range, a no-op without a document. Works in every [mode], unlike the caret commands.
+     */
+    fun scrollToPage(page: Int) = requestScroll { scrollToPage(page) }
+
+    /**
+     * Scrolls the viewport to the top line of block (paragraph) [block]; clamped into range, a no-op
+     * without a document. Works in every [mode], unlike the caret commands.
+     */
+    fun scrollToBlock(block: Int) = requestScroll { scrollToBlock(block) }
+
+    /**
+     * Scrolls the viewport to the top line of word [word]; clamped into range, a no-op without a
+     * document. Works in every [mode], unlike the caret commands.
+     */
+    fun scrollToWord(word: Int) = requestScroll { scrollToWord(word) }
+
+    /**
+     * Scrolls the viewport to the top line of symbol (character) [symbol]; clamped into range, a
+     * no-op without a document. Works in every [mode], unlike the caret commands.
+     */
+    fun scrollToSymbol(symbol: Int) = requestScroll { scrollToSymbol(symbol) }
+
+    /**
+     * Scrolls the viewport to the top line of the anchor identified by [id]; a no-op for an unknown
+     * id or without a document. Works in every [mode], unlike the caret commands.
+     */
+    fun scrollToAnchor(id: String) = requestScroll { scrollToAnchor(id) }
 
     //endregion
 
@@ -321,6 +484,16 @@ open class PaperSheetView : JComponent() {
 
     //endregion
 
+    //region Events
+
+    /** Listener invoked right after a character was typed into an editable view. */
+    var onType: PaperSheetTypeListener? = null
+
+    /** Listener invoked while the mouse hovers or clicks over the view. */
+    var onMouseEvent: PaperSheetMouseListener? = null
+
+    //endregion
+
     //region Floating overlays
 
     private val floatingOverlaysList = ArrayList<FloatingOverlay>()
@@ -337,7 +510,7 @@ open class PaperSheetView : JComponent() {
     //region UI wiring
 
     init {
-        isFocusable = true
+        isFocusable = anyFocus
         isOpaque = true
         PaperSheetLookAndFeel.applyTo(this)
         updateUI()
@@ -363,6 +536,7 @@ open class PaperSheetView : JComponent() {
 
         const val PROP_DOCUMENT = "document"
         const val PROP_MODE = "mode"
+        const val PROP_PAGE_MODES = "pageModes"
         const val PROP_OUTER_MARGIN = "outerMargin"
         const val PROP_PAGE_GAP = "pageGap"
         const val PROP_MIN_ZOOM = "minZoom"
@@ -375,7 +549,10 @@ open class PaperSheetView : JComponent() {
         const val PROP_SHADOW_OFFSET = "shadowOffset"
         const val PROP_SELECTION_COLOR = "selectionColor"
         const val PROP_CARET_COLOR = "caretColor"
+        const val PROP_DEACTIVATED_SHEET_BACKGROUND = "deactivatedSheetBackground"
+        const val PROP_DEACTIVATED_OVERLAY_COLOR = "deactivatedOverlayColor"
         const val PROP_SMOOTH_CARET_BLINK = "smoothCaretBlink"
+        const val PROP_CARET_MODE = "caretMode"
         const val PROP_CONTENT_SIZE = "contentSize"
         const val PROP_HOVERED_PARAGRAPH = "hoveredParagraph"
         const val PROP_HOVERED_PAGE = "hoveredPage"

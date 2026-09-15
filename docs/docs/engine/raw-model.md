@@ -9,11 +9,21 @@ optionally persist it, and hand it to `SimpLayEngine.measure(document)`.
 
 | Type | Purpose |
 |------|---------|
-| `Document` | Ordered list of `Page` objects. May be empty. |
-| `Page` | Sealed type; holds a `PageLayout` and a list of `TextBlock`. |
+| `Document` | Ordered list of `Page` objects, plus `numbering: PageNumbering`. May be empty. |
+| `Page` | Sealed type; holds a stable `id: String`, a `PageLayout` and a list of `TextBlock`. |
 | `FlowPage` | A page whose content flows onto additional pages when it does not fit. |
 | `SinglePage` | A page that is never continued; it grows in height instead. |
 | `PageLayout` | Physical page frame: outer `Size` plus inner `Margins`. |
+
+### Page identity
+
+Every `Page` carries an `id: String`, a random UUID (`kotlin.uuid.Uuid`) filled in
+by a field default when the page is constructed. It identifies a page
+independently of its position in `Document.pages`, so it survives edits that
+reorder or splice pages and flow overflow that turns one model page into several
+sheets - every overflow sheet of a `FlowPage` shares the same `id`. A document
+persisted before this field existed gets a fresh `id` per page on load, through
+the same default.
 
 `PageLayout` exposes the derived values `contentWidth` (`size.width - margins.left
 - margins.right`) and `contentHeight` (the vertical counterpart). All geometry
@@ -35,14 +45,65 @@ val page = FlowPage(layout = layout, blocks = emptyList())
 ## Text blocks and parts
 
 A `TextBlock` is a run of styled text. It holds an ordered list of `TextPart` and
-one `TextStyle`. `TextPart` is a sealed type with two realisations:
+one `TextStyle`. `TextPart` is a sealed type with five realisations:
 
 * `TextWord` - a maximal run of letters and/or digits.
 * `TextSymbol` - a single non-letter, non-digit, non-whitespace character. Its
   public constructor takes a `Char`; the character is also available through
   `symbol`.
+* `TextWhitespace` - a maximal run of whitespace of one `WhitespaceKind`
+  (`SPACE`, `TAB`). It stores only that kind and the run length `count`; its
+  `text` is derived from both. A run never mixes kinds, so a space followed by a
+  tab yields two parts.
+* `TextBreak` - an explicit line-break token; see
+  [Explicit line breaks](#explicit-line-breaks) below.
+* `TextAnchor` - an invisible, zero-width navigation marker carrying an `id`.
+  Written as `${id}` in plain text (e.g. `${chapterOne}`); see
+  [Navigation anchors](#navigation-anchors) below.
 
-Whitespace is never stored as a part.
+A `TextWhitespace` is not addressable on its own: it produces no glyph in the
+layout and no caret-selectable segment, but it keeps the original spacing.
+
+### Explicit line breaks
+
+Every `\n` (and every `\r\n`, merged into one) tokenises to its own `TextBreak`
+instead of joining a `TextWhitespace` run:
+
+```kotlin
+val block = TextBlock.of("first line\nsecond line", style)
+// parts: TextWord("first"), TextWhitespace(SPACE), TextWord("line"), TextBreak,
+//        TextWord("second"), TextWhitespace(SPACE), TextWord("line")
+```
+
+`TextBreak` is a `data object` - there is only one kind of break - with
+`text == "\n"`, so it still counts as one character in `charCount()` and
+round-trips through `toString()` like any other source character; `wordCount()`
+and `symbolCount()` ignore it. A blank line (two consecutive newlines) yields two
+consecutive `TextBreak` tokens. Every default `LineBreakerStrategy` consumes a
+`TextBreak` as a hard line separator - `GreedyWordLineBreakerStrategy` and
+`CharacterLineBreakerStrategy` start a new line at it, `NoWrapLineBreakerStrategy`
+ignores it since it never breaks a line in the first place - so it never reaches a
+`MeasuredTextPart`. See [`ExplicitBreakLineBreakerStrategy`](simplay-engine.md)
+for a strategy that breaks _only_ at `TextBreak` tokens.
+
+### Navigation anchors
+
+A `TextAnchor` marks a position in the text purely for navigation: it is never
+painted and never counted as a word, symbol or character, but it still occupies
+a caret-addressable, scroll-targetable position so a caller can jump straight to
+it by its `id`:
+
+```kotlin
+val block = TextBlock.of("See \${chapterOne} for details.", style)
+// parts: TextWord("See"), TextWhitespace(SPACE), TextAnchor("chapterOne"),
+//        TextWhitespace(SPACE), TextWord("for"), ...
+```
+
+`id` must be unique within a document; a `ui/fx` or `ui/swing` `PaperSheetView`'s
+`CaretModel.moveToAnchor(id)` and `PaperSheetView.scrollToAnchor(id)` resolve the
+last anchor with that `id` when it is duplicated. See
+[Paper sheet component](../fx/paper-sheet-component.md#navigation-anchors) (or
+the `swing` equivalent) for the UI-facing API.
 
 ### Building a block
 
@@ -59,15 +120,16 @@ val block = TextBlock.of("Hello, world!", style)
 // parts: TextWord("Hello"), TextSymbol(','), TextWord("world"), TextSymbol('!')
 ```
 
-### `toString()` normalisation
+### `toString()` round trip
 
-`TextBlock.toString()` rejoins the parts with a fixed whitespace rule:
+`TextBlock.toString()` rejoins the parts by concatenating their `text` in order.
+Because every whitespace run is kept as its own `TextWhitespace` part, the round
+trip is lossless - no character is invented or dropped:
 
-* one space before every `TextWord` except the first part of the block;
-* no space before a `TextSymbol`.
-
-So `TextBlock.of("Hello,   world !", style).toString()` yields `"Hello, world !"`.
-The rule normalises whitespace runs; it does not preserve the original spacing.
+```kotlin
+TextBlock.of("Hello,   world !", style).toString() // "Hello,   world !"
+TextBlock.of("paragraph.X", style).toString()      // "paragraph.X"
+```
 
 ## Style and font
 
@@ -98,6 +160,39 @@ or a `*FontProbe` in a UI module. See
 is `@Serializable` and `PlatformSerializable`, so it round-trips with the rest of
 the model; `encode()` / `FontFingerprint.decode(text)` give a one-line text form for
 storing it outside the model.
+
+## Page numbering
+
+`Document.numbering: PageNumbering` (default `PageNumbering.OFF`) configures the
+page numbers a renderer draws:
+
+| Field | Purpose |
+|-------|---------|
+| `position: PageNumberPosition` | Where the number sits, or `OFF` to draw nothing. |
+| `startNumber: Int` | The display value of the first counted sheet (default `1`). |
+| `excludedPageIds: Set<String>` | `Page.id`s that show no number, referenced by id, never by index. |
+| `counting: PageCountingMode` | How an excluded sheet affects the running counter; also the executable strategy - see below. |
+| `textStyle: TextStyle` | Font of the number; defaults to a small serif. |
+
+`PageNumberPosition` has eleven values: `OFF`, and every combination of `TOP_` /
+`BOTTOM_` with `LEFT`, `CENTER`, `RIGHT`, `INNER` and `OUTER`. `INNER` / `OUTER`
+alternate their horizontal side by sheet parity: an odd sheet is treated as a
+right-hand page (inner = left, outer = right), an even sheet as a left-hand page
+(inner = right, outer = left).
+
+`PageCountingMode` (package `org.pcsoft.framework.simplay.engine`) selects how
+`excludedPageIds` interact with the running counter, and is itself the
+`PageCountingStrategy` that carries the behaviour out - a persisted setting and
+its executable strategy are the same enum value, with no separate lookup step:
+
+* `CONTINUOUS` (default) - every sheet advances the counter, including an
+  excluded one; only its own label is suppressed.
+* `SKIP_EXCLUDED` - an excluded sheet shows no label and does not advance the
+  counter, so the following sheet gets the number the excluded one would have.
+
+The `planPageNumbers` extension function that lays out the label per sheet from a
+`PageNumbering` is engine, not model, logic; see
+[SimpLayEngine](simplay-engine.md#page-numbering).
 
 ## Counting extensions
 

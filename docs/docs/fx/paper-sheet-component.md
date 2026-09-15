@@ -1,4 +1,4 @@
-# fx - Paper sheet component
+﻿# fx - Paper sheet component
 
 `PaperSheetView` (package `org.pcsoft.framework.simplay.fx`) is a JavaFX
 `Control` that renders a [`Document`](../engine/raw-model.md) as physical-looking
@@ -6,8 +6,9 @@ sheets - each with a border and a drop shadow - stacked vertically in a
 scrollable, zoomable viewport. Only the pages currently in view are drawn (simple
 page virtualisation).
 
-Its [`mode`](#modes) switches between read-only viewing and full in-place
-editing. Text is always selectable with the mouse and copyable with `Ctrl+C`.
+Its [`mode`](#modes) picks one of four interaction levels, from a plain picture
+up to full in-place editing. From `SELECTABLE` upwards text is selectable with
+the mouse and copyable with `Ctrl+C`.
 
 ## Adding it to a scene
 
@@ -51,13 +52,14 @@ the property object and `getXxx()` / `setXxx()` (or `isXxx()`) for the value.
 | Property | Type | Access | Meaning |
 |----------|------|--------|---------|
 | `document` | `Document?` | read/write | The document to render; `null` shows an empty view. An edit replaces it with a new instance. |
-| `mode` | `PaperSheetMode` | read/write | `READONLY` (default) or `EDITABLE`; see [Modes](#modes). |
+| `mode` | `PaperSheetMode` | read/write | `STATIC`, `SELECTABLE` (default), `NAVIGABLE` or `EDITABLE`; see [Modes](#modes). |
+| `pageModes` | `Map<String, PageMode>` | read/write | Per-page `PageMode` overrides, keyed by stable `Page.id`; see [Per-page modes](#per-page-modes). Reset to empty when `document` is reloaded from outside, but not by an edit. |
 | `outerMargin` | `Double` | read/write, styleable | Space in layout units around the whole sheet stack. Default `24.0`. |
 | `pageGap` | `Double` | read/write, styleable | Vertical space in layout units between two sheets. Default `16.0`. |
 | `minZoom` | `Double` | read/write | Lower bound for `zoom`. Default `0.25`. |
 | `maxZoom` | `Double` | read/write | Upper bound for `zoom`. Default `4.0`. |
 | `zoom` | `Double` | read/write | Current scale factor for the whole view, always kept within `[minZoom, maxZoom]`; assigning outside the range, or narrowing the range, re-clamps it. Default `1.0`. |
-| `smoothCaretBlink` | `Boolean` | read/write | When `true`, the caret fades in and out instead of blinking hard. Off by default; only effective in `EDITABLE`. |
+| `smoothCaretBlink` | `Boolean` | read/write | When `true`, the caret fades in and out instead of blinking hard. Off by default; only effective in a mode with a caret. |
 | `contentSize` | `Dimension2D` | read-only | Unscaled size of the whole sheet stack including `outerMargin` on every side; `0 x 0` for a `null` document. |
 | `selectionModel` | `TextSelectionModel` | read-only | The selection state and commands; see [Selection and clipboard](#selection-and-clipboard). |
 | `caretModel` | `CaretModel` | read-only | The caret state and move commands; see [The caret model](#the-caret-model). |
@@ -76,22 +78,66 @@ The styling-only colour and shadow properties are listed on the
 
 | Mode | Behaviour |
 |------|-----------|
-| `READONLY` (default) | Selectable, copyable text, no caret. `document` is never mutated. |
-| `EDITABLE` | Everything `READONLY` offers plus a blinking caret, character insertion and removal, clipboard cut / copy / paste, line and selection duplication, drag-and-drop of the selection and the caret-navigation keys. An edit replaces `document` with a new instance; the previous instance is untouched. |
+| `STATIC` | The document behaves like an image: no selection, no caret, no editing, no floating overlays, the default arrow mouse cursor and no keyboard focus. Zooming, scrolling and the `hoveredParagraph` / `hoveredPage` readouts still work. |
+| `SELECTABLE` (default) | Selectable, copyable text, no caret. `document` is never mutated. |
+| `NAVIGABLE` | Everything `SELECTABLE` offers plus a blinking caret and the caret-navigation keys (`Home`, `End`, `Ctrl+Home`, `Ctrl+End`, arrows, `Ctrl+Left` / `Ctrl+Right`, each optionally with `Shift`). `document` is still never mutated. |
+| `EDITABLE` | Everything `NAVIGABLE` offers plus character insertion and removal, clipboard cut / copy / paste, line and selection duplication and drag-and-drop of the selection. An edit replaces `document` with a new instance; the previous instance is untouched. |
+
+Each mode is a strict superset of the one above it. The three capability flags
+can also be read off the enum constant directly:
 
 ```kotlin
 view.mode = PaperSheetMode.EDITABLE
+
+PaperSheetMode.NAVIGABLE.supportsSelection // true
+PaperSheetMode.NAVIGABLE.supportsCaret     // true
+PaperSheetMode.NAVIGABLE.supportsEditing   // false
+PaperSheetMode.NAVIGABLE.supportsFocus     // true
 ```
 
-Switching to `READONLY` returns the component to exactly its read-only behaviour.
+Switching down to a mode without selection drops the current selection.
+
+## Per-page modes
+
+Individual pages can override `mode` with their own `PageMode`, keyed by their
+stable `org.pcsoft.framework.simplay.engine.model.Page.id`. A page absent from
+`pageModes` simply follows `mode`; an overridden page uses its own `PageMode`
+instead, independently of `mode` - both more restrictive (a read-only page in
+an editable view) and more permissive (an editable page in a static view) are
+possible. `pageModes` is transient view state, never persisted in `document`,
+and is reset to empty automatically whenever `document` is reloaded from
+outside - an edit, which also replaces `document` with a new instance, leaves
+it untouched, since the page ids it is keyed by do not change:
+
+```kotlin
+view.setPageMode(0, PageMode.HIDDEN) // resolves index 0 against the current document
+```
+
+`PageMode` also doubles as the type of `mode` in spirit - it defines the same
+capability flags plus two layout-only ones:
+
+| Mode | Meaning |
+|------|---------|
+| `HIDDEN` | The page (and its flow overflow sheets) is removed entirely from layout, scroll area and hit-testing; the document itself is unchanged. |
+| `DISABLED` | The page is not editable and the caret skips over it. It is also drawn with the special disabled fill and hatch, shows no floating overlay and keeps the default arrow mouse cursor. |
+| `STATIC` | The page behaves like an image: no selection, no caret, no editing, no special drawing. |
+| `SELECTABLE` | Selectable, copyable text, no caret. The page is never mutated. |
+| `NAVIGABLE` | Everything `SELECTABLE` offers plus a caret that reaches and crosses the page; every mutation touching it is discarded. |
+| `EDITABLE` | Everything `NAVIGABLE` offers plus the document mutations. |
+
+`setPageMode(index, mode)` resolves `index` against the current `document`
+into an id immediately, so the override stays attached to that page even as
+later edits shift page indices; `mode = null` clears the override.
+`FloatingOverlayEvent.pageDeactivated` reports whether the triggering page
+currently has a `pageModes` override.
 
 ## Selection and clipboard
 
 The mouse always selects: drag to extend, double-click to take a word. The
-highlight also covers the whitespace between selected words. `Ctrl+C` copies the
-selection to the system clipboard as plain text plus styled HTML and RTF that
-carry the font (family, size, weight, slant), so a rich paste target keeps the
-text style.
+highlight also covers the whitespace between selected words. `Ctrl+A` selects
+the whole document text. `Ctrl+C` copies the selection to the system clipboard
+as plain text plus styled HTML and RTF that carry the font (family, size,
+weight, slant), so a rich paste target keeps the text style.
 
 `selectionModel` (`TextSelectionModel`) exposes the state and the commands:
 
@@ -113,11 +159,17 @@ val families = view.selectionModel.runs.map { it.fontFamily }.distinct()
 
 ## The caret model
 
-In `EDITABLE` mode `caretModel` (`CaretModel`) reports the caret and moves it:
+In `NAVIGABLE` and `EDITABLE` mode `caretModel` (`CaretModel`) reports the caret
+and moves it; in the other modes every move command is a no-op:
 
 * **State** (read-only): `position` (offset in the linear text), `bounds`
-  (viewport rectangle, `null` in read-only mode), `isVisible` (blink phase),
-  and `blockCount` / `wordCount` / `symbolCount` of the current document.
+  (viewport rectangle, `null` without a caret), `isVisible` (blink phase),
+  `blockCount` / `wordCount` / `symbolCount` / `anchorCount` of the current
+  document, `anchorIds` (every `TextAnchor.id`, in document order), and
+  `currentTextPart` / `currentTextBlock` / `currentPage` / `currentAnchorId` /
+  `currentCharacter` - the raw text part, block, page, anchor id and character
+  the caret currently sits in or next to (`null` without a document, or when
+  the caret does not sit on an anchor).
 * **Linear commands**: `moveTo(index)`, `moveToStart()`, `moveToEnd()`.
 * **Absolute structural commands**, addressing a zero-based ordinal:
   `moveIntoBlock(block, index)`, `moveToStartOfBlock(block)`,
@@ -125,10 +177,74 @@ In `EDITABLE` mode `caretModel` (`CaretModel`) reports the caret and moves it:
   ordinal and offset is clamped into range.
 * **Relative structural commands** from the current position:
   `moveToNextWord()` / `moveToPrevWord()` and the block / symbol siblings; they
-  stop at the document bounds.
+  stop at the document bounds. `moveToNextPage()` / `moveToPrevPage()` jump a
+  whole page, keeping the caret's line ordinal on the target page (clamped to
+  its last line) instead of a linear offset.
+* **Anchor commands**: `moveToAnchor(id)` jumps directly to the `TextAnchor`
+  named `id` (a no-op for an unknown `id`); `moveToNextAnchor()` /
+  `moveToPrevAnchor()` step to the next / previous anchor from the current
+  position, like the word/symbol siblings.
 
 A command issued before the view has rendered once is applied as soon as its skin
 is attached.
+
+## Type and mouse events
+
+`onType` (an `EventHandler<PaperSheetTypeEvent>`) fires right after a
+character was typed into an editable view; the event carries the typed
+`character` plus the raw `textPart`, `textBlock` and `page` it landed in.
+
+`onMouseEvent` (an `EventHandler<PaperSheetMouseEvent>`) fires while the mouse
+hovers (`PaperSheetMouseEvent.HOVER`, on every pointer move) or clicks
+(`PaperSheetMouseEvent.CLICK`) over the view; the event carries the raw
+`textPart`, `textBlock` and `page` under the pointer - `textPart` and
+`textBlock` are `null` over an empty area of a page, and all three are `null`
+outside every page.
+
+## Scrolling
+
+Four commands scroll the viewport directly, addressing the document the same way
+the caret model's structural commands do - but, unlike the caret model, they work
+in **every** `PaperSheetMode`, including `STATIC` and `SELECTABLE`, since scrolling
+never touches the caret or the selection:
+
+* `scrollToPage(page)` - the page's top edge aligns with the viewport top.
+* `scrollToBlock(block)` - the top line of block (paragraph) `block`.
+* `scrollToWord(word)` - the top line containing word `word`.
+* `scrollToSymbol(symbol)` - the top line containing symbol (character) `symbol`.
+* `scrollToAnchor(id)` - the top line containing the `TextAnchor` named `id` (a
+  no-op for an unknown `id`); see [Navigation anchors](#navigation-anchors).
+
+Every ordinal and page index is clamped into range. A command issued before the
+view has rendered once is applied as soon as its skin is attached, exactly like
+the caret model's commands.
+
+## Navigation anchors
+
+A `TextAnchor` (see the `engine` module's
+[Navigation anchors](../engine/raw-model.md#navigation-anchors)) is an invisible,
+zero-width marker written as `${id}` in plain text. `CaretModel.moveToAnchor(id)`
+and `PaperSheetView.scrollToAnchor(id)` jump directly to it by that `id`:
+
+```kotlin
+view.caretModel.moveToAnchor("chapterOne") // places the caret on the anchor
+view.scrollToAnchor("chapterOne")          // scrolls it into view, caret untouched
+```
+
+Both resolve the last anchor with a given `id` when it is duplicated, and are a
+no-op for an unknown `id`. `CaretModel.anchorIds` lists every anchor `id` of the
+current document, in document order, for building a jump-to-anchor UI.
+
+## Insert / overwrite typing mode
+
+`caretMode` (`CaretMode`, `INSERT` by default) switches whether typing inserts
+characters at the caret or overwrites the one already there, up to the end of
+the current line (falling back to a plain insert at the line end). It is
+toggled by the `Insert` key but also freely readable and settable from
+outside; `CaretMode.OVERWRITE` is shown with a filled block cursor - the width
+of the character about to be overwritten - instead of the thin line, and
+reflected as the `:overwrite` CSS pseudo-class (see [Styling](styling.md)),
+independent of and combinable with the mode pseudo-classes.
 
 ## Shortcuts
 
@@ -137,6 +253,7 @@ with any caret-navigation key to extend the selection instead of moving.
 
 | Key | Action | Mode |
 |-----|--------|------|
+| `Ctrl+A` | Select the whole document text | `SELECTABLE`, `NAVIGABLE`, `EDITABLE` |
 | `Ctrl+C` | Copy selection (plain text + styled HTML + RTF) | both |
 | `Ctrl+X` | Cut selection | `EDITABLE` |
 | `Ctrl+V` | Paste clipboard text at the caret | `EDITABLE` |
@@ -146,8 +263,10 @@ with any caret-navigation key to extend the selection instead of moving.
 | `Up` / `Down` | Move caret one line | `EDITABLE` |
 | `Home` / `End` | Move caret to line start / end | `EDITABLE` |
 | `Ctrl+Home` / `Ctrl+End` | Move caret to document start / end | `EDITABLE` |
+| `Page Up` / `Page Down` | Move caret one page, keeping its line and column | `EDITABLE` |
 | `Backspace` | Delete the character before the caret, or the selection | `EDITABLE` |
 | `Delete` | Delete the character after the caret, or the selection | `EDITABLE` |
+| `Insert` | Toggle insert / overwrite typing mode (overwrite shows a block cursor) | `EDITABLE` |
 | Printable key | Insert the character at the caret | `EDITABLE` |
 
 Dragging with the mouse inside an existing selection box moves the selected text;

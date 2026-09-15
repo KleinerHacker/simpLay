@@ -4,6 +4,12 @@ simpLay is a Kotlin framework for building simulations. The core is a Kotlin
 Multiplatform engine; the integration modules are grouped into user-interface
 bindings under `ui/`.
 
+## AI disclosure
+
+In accordance with EU transparency requirements, please note that this project -
+including its source code, tests, documentation and configuration - was created
+entirely with the assistance of artificial intelligence.
+
 ## Modules
 
 | Module             | Type                 | Artifact            | Purpose                                       |
@@ -53,8 +59,8 @@ development use `./gradlew publishToMavenLocal`.
 
 ```kotlin
 dependencies {
-    implementation("org.pcsoft.framework:simplay-engine:<version>")
-    implementation("org.pcsoft.framework:simplay-fx:<version>")
+    implementation("org.pcsoft.framework:simplay-engine:0.4.0")
+    implementation("org.pcsoft.framework:simplay-fx:0.4.0")
 }
 ```
 
@@ -82,26 +88,46 @@ Build tasks relevant for consumers and maintainers:
     * [x] Measure engine (`SimpLayEngine`): font-measuring callback, pluggable
       line breaking, alignment, `FlowPage` continuation, `SinglePage` growth,
       shared `RenderConfiguration`
+    * [x] Syllable-accurate hyphenation: `PatternWordBreakerStrategy` applies
+      Liang's algorithm over bundled hyph-utf8/TeX patterns (`de`, `en`)
     * [x] Font fingerprinting: `Document.withFontFingerprints`, per-font
       `MeasuredFont.fingerprintStatus` and `MeasuredDocument.fingerprintDeviations`
       to detect a missing or silently replaced font on reopen
+    * [x] Page numbering: `Document.numbering` (`PageNumbering`) configures
+      position (eleven anchors, including binding-aware `INNER` / `OUTER`),
+      start number, per-page exclusion by stable `Page.id` and the counting mode
+      (`CONTINUOUS` / `SKIP_EXCLUDED`); `MeasuredDocument.planPageNumbers` lays out the labels,
+      drawn by `ui/fx` and `ui/swing`
+    * [x] Navigation anchors: `TextAnchor`, an invisible, zero-width `TextPart`
+      identified by an `id`, written as `${id}` in plain text and resolved by
+      `ui/fx` / `ui/swing`'s `CaretModel.moveToAnchor` / `PaperSheetView.scrollToAnchor`
     * [ ] End-to-end layout and persistence tests
     * [ ] Engine user documentation (MkDocs, KDoc alignment)
 * [ ] Console output integration (`ui/console`)
 * [x] Toolkit-agnostic GUI building blocks (`ui/common`): linear document text
-  index, glyph hit test, selection span, document text editor and styled-text
-  clipboard serialisation, shared by `ui/fx` and `ui/swing`
+  index, glyph hit test, selection span, document text editor, styled-text
+  clipboard serialisation and per-page interaction modes (`PageMode`),
+  shared by `ui/fx` and `ui/swing`
 * [x] JavaFX integration (`ui/fx`): `CanvasDocumentRenderer` (whole-document and
   single-page canvas rendering) and `PaperSheetView` - a scrollable, zoomable
-  paper-sheet control with mouse text selection, in-place editing, FXML-compatible
-  floating overlays and JavaFX CSS styling, plus `FxFontProbe` (font availability
-  and fingerprint checks against the JavaFX text stack) - plus the `ui/fx` user
-  documentation
+  paper-sheet control with four interaction levels (`PaperSheetMode.STATIC` /
+  `SELECTABLE` / `NAVIGABLE` / `EDITABLE`, overridable per page through
+  `pageModes`), mouse text selection, in-place editing with insert/overwrite
+  `caretMode`, `Page Up` / `Page Down`, `scrollTo*` navigation and direct
+  navigation-anchor jumps (`moveToAnchor` / `scrollToAnchor`), `Ctrl+A`
+  select-all, `onType` and `onMouseEvent` events, automatic page-number
+  drawing, FXML-compatible floating overlays and JavaFX CSS styling, plus
+  `FxFontProbe` (font availability and fingerprint checks against the JavaFX
+  text stack) - plus the `ui/fx` user documentation
 * [ ] PDF export integration (`export/jvm-pdf`)
 * [ ] Printing integration (`export/jvm-print`)
 * [x] Swing integration (`ui/swing`): `DocumentImageRenderer` (whole-document and
   single-page `BufferedImage` rendering) and `PaperSheetView` - a scrollable,
-  zoomable paper-sheet `JComponent` with mouse text selection, in-place editing,
-  floating overlays and Look-and-Feel styling, plus `SwingFontProbe` (font
-  availability and fingerprint checks against the AWT text stack) - plus the
-  `ui/swing` user documentation
+  zoomable paper-sheet `JComponent` with the same four interaction levels,
+  per-page `pageModes` overrides, mouse text selection, in-place editing with
+  insert/overwrite `caretMode`, `Page Up` / `Page Down`, `scrollTo*`
+  navigation and direct navigation-anchor jumps (`moveToAnchor` /
+  `scrollToAnchor`), `Ctrl+A` select-all, `onType` and `onMouseEvent` events,
+  automatic page-number drawing, floating overlays and Look-and-Feel styling,
+  plus `SwingFontProbe` (font availability and fingerprint checks against the
+  AWT text stack) - plus the `ui/swing` user documentation

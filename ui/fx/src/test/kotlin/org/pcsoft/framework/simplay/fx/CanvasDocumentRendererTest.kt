@@ -14,11 +14,11 @@ package org.pcsoft.framework.simplay.fx
 
 import javafx.scene.canvas.Canvas
 import org.junit.jupiter.api.Test
-import org.pcsoft.framework.simplay.engine.NoWrapLineBreakerStrategy
 import org.pcsoft.framework.simplay.engine.measure
 import org.pcsoft.framework.simplay.engine.geometry.Margins
 import org.pcsoft.framework.simplay.engine.geometry.Size
 import org.pcsoft.framework.simplay.engine.model.*
+import org.pcsoft.framework.simplay.engine.strategy.NoWrapLineBreakerStrategy
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
 import org.pcsoft.framework.simplay.fx.internal.measureForCanvas
 import kotlin.test.assertEquals

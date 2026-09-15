@@ -21,6 +21,7 @@
     -fx-caret-color: #f0f0f0;
 }
 
-.paper-sheet-view:readonly {
+.paper-sheet-view:selectable,
+.paper-sheet-view:navigable {
     -fx-selection-color: rgba(180, 180, 180, 0.35);
 }

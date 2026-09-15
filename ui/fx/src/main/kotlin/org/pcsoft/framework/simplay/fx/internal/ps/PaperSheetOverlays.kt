@@ -24,6 +24,7 @@ import javafx.geometry.VPos
 import javafx.scene.Node
 import javafx.scene.layout.Pane
 import javafx.scene.shape.Rectangle
+import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 
 /**
  * The anchor box and context a satisfied [FloatingOverlayTrigger] hands to [PaperSheetOverlays]:
@@ -38,8 +39,12 @@ internal class TriggerGeometry(val bounds: Bounds, val index: Int, val text: Str
  * top of the viewport, watches [PaperSheetView.getFloatingOverlays], and on every [refresh] shows,
  * positions (anchor + offsets, clamped to the viewport edge) and hides each overlay's node according
  * to its [FloatingOverlay.trigger] - a text selection ([PaperSheetSelection]), the hovered paragraph
- * or sheet ([PaperSheetHoverTracker]) or, in [PaperSheetMode.EDITABLE], the caret ([PaperSheetCaret]).
- * [FloatingOverlay.onShown] / [FloatingOverlay.onHidden] fire on the show / hide transition only.
+ * or sheet ([PaperSheetHoverTracker]) or, in a mode with [PaperSheetMode.supportsCaret], the caret
+ * ([PaperSheetCaret]). [FloatingOverlay.onShown] / [FloatingOverlay.onHidden] fire on the show / hide
+ * transition only, and carry whether the page the trigger sits on is currently deactivated.
+ *
+ * No overlay is shown at all in [PaperSheetMode.STATIC], nor for a trigger sitting on a page whose
+ * effective mode paints it disabled.
  *
  * A per-view helper: [PaperSheetViewSkin] creates it, adds [layer] to its children, sizes it through
  * [layout] on every layout pass, calls [refresh] whenever the geometry may have changed and
@@ -50,6 +55,7 @@ internal class PaperSheetOverlays(
     private val selection: PaperSheetSelection,
     private val caret: PaperSheetCaret,
     private val hover: PaperSheetHoverTracker,
+    private val textIndex: () -> DocumentTextIndex?,
 ) {
 
     private val clipRect = Rectangle()
@@ -89,11 +95,20 @@ internal class PaperSheetOverlays(
     fun refresh() {
         val overlays = view.floatingOverlays
         if (overlays.isEmpty() && active.isEmpty()) return
+        if (view.mode == PaperSheetMode.STATIC) {
+            active.toList().forEach { detach(it, fireEvent = true) }
+            return
+        }
         for (overlay in overlays) {
             val geometry = geometryFor(overlay.trigger)
             val node = overlay.content
             if (geometry == null || node == null) {
                 if (overlay in active && overlay.autoHide) detach(overlay, fireEvent = true)
+                continue
+            }
+            val pageIndex = pageIndexForTrigger(overlay.trigger, geometry)
+            if (isPageDisabled(pageIndex)) {
+                detach(overlay, fireEvent = true)
                 continue
             }
             if (node !in layer.children) layer.children.add(node)
@@ -105,7 +120,9 @@ internal class PaperSheetOverlays(
                 continue
             }
             node.relocate(placed.first, placed.second)
-            overlay.updateActiveState(geometry.bounds, geometry.index, geometry.text, geometry.range)
+            overlay.updateActiveState(
+                geometry.bounds, geometry.index, geometry.text, geometry.range, isPageDeactivated(pageIndex),
+            )
             if (active.add(overlay)) overlay.fireShown(overlay.trigger)
         }
     }
@@ -124,7 +141,7 @@ internal class PaperSheetOverlays(
         FloatingOverlayTrigger.PARAGRAPH_HOVER -> hover.paragraphGeometry()
         FloatingOverlayTrigger.PAGE_HOVER -> hover.pageGeometry()
         FloatingOverlayTrigger.CARET -> {
-            if (view.mode != PaperSheetMode.EDITABLE) {
+            if (!view.anyCaret) {
                 null
             } else {
                 val bounds = caret.viewportBounds()
@@ -132,6 +149,26 @@ internal class PaperSheetOverlays(
                 else TriggerGeometry(bounds, caret.position, "", caret.position until caret.position)
             }
         }
+    }
+
+    /** The measured-page index the trigger [kind] sits on, or `-1` when it cannot be determined. */
+    private fun pageIndexForTrigger(kind: FloatingOverlayTrigger, geometry: TriggerGeometry): Int = when (kind) {
+        FloatingOverlayTrigger.SELECTION, FloatingOverlayTrigger.CARET -> textIndex()?.pageIndexAt(geometry.index) ?: -1
+        FloatingOverlayTrigger.PARAGRAPH_HOVER, FloatingOverlayTrigger.PAGE_HOVER -> view.hoveredPage
+    }
+
+    /** Whether the raw page at [pageIndex] currently has a [org.pcsoft.framework.simplay.uicommon.PageMode] override. */
+    private fun isPageDeactivated(pageIndex: Int): Boolean {
+        if (pageIndex < 0) return false
+        val id = view.document?.pages?.getOrNull(pageIndex)?.id ?: return false
+        return id in view.pageModes
+    }
+
+    /** Whether the raw page at [pageIndex] is painted disabled by its effective mode. */
+    private fun isPageDisabled(pageIndex: Int): Boolean {
+        if (pageIndex < 0) return false
+        val id = view.document?.pages?.getOrNull(pageIndex)?.id ?: return false
+        return view.effectivePageMode(id).paintedDisabled
     }
 
     private fun detach(overlay: FloatingOverlay, fireEvent: Boolean) {

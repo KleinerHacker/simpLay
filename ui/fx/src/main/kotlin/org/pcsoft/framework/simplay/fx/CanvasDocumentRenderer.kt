@@ -17,6 +17,7 @@ import javafx.scene.canvas.Canvas
 import javafx.scene.canvas.GraphicsContext
 import javafx.scene.paint.Color
 import org.pcsoft.framework.simplay.engine.measure
+import org.pcsoft.framework.simplay.engine.planPageNumbers
 import org.pcsoft.framework.simplay.engine.geometry.Size
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.engine.measure.MeasuredPage
@@ -96,6 +97,7 @@ class CanvasDocumentRenderer private constructor(
             gap = config.pageGap,
             fonts = measurer,
             pageSeparator = { g, gapTop, gapBottom, width -> drawSeparator(g, gapTop, gapBottom, width) },
+            numbering = measured.raw.numbering,
         )
         gc.restore()
         return target
@@ -119,7 +121,14 @@ class CanvasDocumentRenderer private constructor(
         gc.clearRect(0.0, 0.0, target.width, target.height)
         gc.save()
         gc.scale(config.unitScale, config.unitScale)
-        CanvasRenderer.renderPage(gc = gc, page = page, fonts = measurer)
+        val label = measured.planPageNumbers(measured.raw.numbering).getOrNull(pageIndex)
+        CanvasRenderer.renderPage(
+            gc = gc,
+            page = page,
+            fonts = measurer,
+            pageNumberLabel = label,
+            numberingStyle = measured.raw.numbering.textStyle,
+        )
         gc.restore()
         return target
     }

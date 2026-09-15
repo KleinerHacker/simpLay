@@ -19,6 +19,9 @@ import kotlin.test.assertSame
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.TextBlock
+import org.pcsoft.framework.simplay.engine.strategy.GreedyWordLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.NoOpWordBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.NoWrapLineBreakerStrategy
 
 /**
  * Tests for [RenderConfiguration] and the [createEngine] / [measure] extensions.

@@ -18,7 +18,12 @@ import org.pcsoft.framework.simplay.engine.measure.MeasuredPage
 import org.pcsoft.framework.simplay.engine.measure.MeasuredTextBlock
 import org.pcsoft.framework.simplay.engine.measure.MeasuredTextPart
 import org.pcsoft.framework.simplay.engine.model.Font
+import org.pcsoft.framework.simplay.engine.model.TextAnchor
+import org.pcsoft.framework.simplay.engine.model.TextBlock
+import org.pcsoft.framework.simplay.engine.model.TextBreak
+import org.pcsoft.framework.simplay.engine.model.TextPart
 import org.pcsoft.framework.simplay.engine.model.TextSymbol
+import org.pcsoft.framework.simplay.engine.model.TextWhitespace
 import org.pcsoft.framework.simplay.engine.model.TextWord
 
 /**
@@ -31,10 +36,13 @@ import org.pcsoft.framework.simplay.engine.model.TextWord
  * a selection highlight and to hit-test a pointer position.
  *
  * The separators inserted between parts mirror [org.pcsoft.framework.simplay.engine.model.TextBlock.toString]:
- * a single space before every [TextWord] that is not the first part of its line, a space between the
- * soft-wrapped lines of one block, and a line break between blocks and between pages. Separators are
- * part of [text] (so a copied range reads naturally) but never belong to a [Segment] range, so a
- * selection can only ever cover real glyphs.
+ * within one block the separator is the actual whitespace text of the
+ * [org.pcsoft.framework.simplay.engine.model.TextWhitespace] part (if any) originally tokenized
+ * between the two parts - `""` when there was none, e.g. a word directly after a symbol - and a line
+ * break separates blocks and pages. Separators are part of [text] (so a copied range reads
+ * naturally) but never belong to a [Segment] range, so a selection can only ever cover real glyphs.
+ * [TextWhitespace] itself is never addressable: it produces no [MeasuredTextPart] and so no
+ * [Segment], [wordRanges] entry or [symbolRanges] entry.
  *
  * On top of that flat axis the index also exposes the structural elements a caret can address:
  * [blockRanges] (one entry per raw block of the document, in document order), [wordRanges] and
@@ -91,27 +99,38 @@ class DocumentTextIndex(measured: MeasuredDocument) {
     /** One `[start, end)` linear-text range per measured symbol part, in document order. */
     val symbolRanges: List<IntRange>
 
+    /** One zero-length `start..start` linear-text position per [TextAnchor], in document order. */
+    val anchorRanges: List<IntRange>
+
+    /**
+     * Linear-text start position of each [TextAnchor], keyed by [TextAnchor.id]. When several
+     * anchors share an `id` the last one in document order wins, matching [Map.put] semantics.
+     */
+    val anchorsById: Map<String, Int>
+
     init {
         val builder = StringBuilder()
         val collected = ArrayList<Segment>()
         var first = true
         var prevPage: MeasuredPage? = null
         var prevBlock: MeasuredTextBlock? = null
-        var prevLine: MeasuredLine? = null
+        var rawCursor: RawPartCursor? = null
 
         measured.pages.forEachIndexed { pageIndex, page ->
             for (block in page.blocks) {
                 val font = block.style.font.raw
                 for (line in block.lines) {
                     line.parts.forEach { part ->
+                        if (block !== prevBlock) {
+                            rawCursor = RawPartCursor(block.raw)
+                        }
                         val separator = when {
                             first -> ""
                             page !== prevPage -> "\n"
                             block !== prevBlock -> "\n"
-                            line !== prevLine -> " "
-                            part.raw is TextWord -> " "
-                            else -> ""
+                            else -> rawCursor!!.consumeSeparator()
                         }
+                        rawCursor!!.consume(part.text)
                         builder.append(separator)
                         val start = builder.length
                         builder.append(part.text)
@@ -121,7 +140,6 @@ class DocumentTextIndex(measured: MeasuredDocument) {
                         first = false
                         prevPage = page
                         prevBlock = block
-                        prevLine = line
                     }
                 }
             }
@@ -134,14 +152,24 @@ class DocumentTextIndex(measured: MeasuredDocument) {
 
         val words = ArrayList<IntRange>()
         val symbols = ArrayList<IntRange>()
+        val anchors = ArrayList<IntRange>()
+        val anchorIds = LinkedHashMap<String, Int>()
         for (segment in collected) {
-            when (segment.part.raw) {
+            when (val raw = segment.part.raw) {
                 is TextWord -> words += segment.start until segment.end
                 is TextSymbol -> symbols += segment.start until segment.end
+                is TextAnchor -> {
+                    anchors += segment.start..segment.start
+                    anchorIds[raw.id] = segment.start
+                }
+                is TextWhitespace -> Unit
+                is TextBreak -> Unit
             }
         }
         wordRanges = words
         symbolRanges = symbols
+        anchorRanges = anchors
+        anchorsById = anchorIds
     }
 
     /** The total character count of [text]. */
@@ -155,6 +183,9 @@ class DocumentTextIndex(measured: MeasuredDocument) {
 
     /** Number of addressable symbols. */
     val symbolCount: Int get() = symbolRanges.size
+
+    /** Number of addressable anchors. */
+    val anchorCount: Int get() = anchorRanges.size
 
     /** Clamps [index] to the valid `0..length` range. */
     fun clamp(index: Int): Int = index.coerceIn(0, length)
@@ -279,6 +310,29 @@ class DocumentTextIndex(measured: MeasuredDocument) {
     /** Position of the last symbol that starts before [from]; `0` when there is none. */
     fun prevSymbolStart(from: Int): Int = symbolRanges.lastOrNull { it.first < from }?.first ?: 0
 
+    /** Linear index of the anchor identified by [id]; [length] when no such anchor exists. */
+    fun startOfAnchor(id: String): Int = anchorsById[id] ?: length
+
+    /** Linear index of the anchor identified by [id]; identical to [startOfAnchor] since an anchor is zero-width. */
+    fun endOfAnchor(id: String): Int = startOfAnchor(id)
+
+    /** Position of the first anchor that starts after [from]; [length] when there is none. */
+    fun nextAnchorStart(from: Int): Int = anchorRanges.firstOrNull { it.first > from }?.first ?: length
+
+    /** Position of the last anchor that starts before [from]; `0` when there is none. */
+    fun prevAnchorStart(from: Int): Int = anchorRanges.lastOrNull { it.first < from }?.first ?: 0
+
+    /**
+     * Index of the raw page (into `measured.raw.pages`, i.e. `Document.pages`) that owns the
+     * character at linear index [linearIndex]; `-1` when the document has no blocks.
+     */
+    fun pageIndexAt(linearIndex: Int): Int {
+        if (blockRanges.isEmpty()) return -1
+        val i = clamp(linearIndex)
+        val range = blockRanges.lastOrNull { it.start <= i } ?: blockRanges.first()
+        return range.pageIndex
+    }
+
     //endregion
 
     private companion object {
@@ -321,6 +375,58 @@ class DocumentTextIndex(measured: MeasuredDocument) {
                 i = j
             }
             return ranges
+        }
+    }
+}
+
+/**
+ * Walks the [TextPart]s of one raw [TextBlock] in tokenized order, in step with the
+ * [MeasuredTextPart]s the init block of [DocumentTextIndex] visits for that same block (in reading
+ * order, across all its lines). Used to find the real separator text - the [TextWhitespace] that was
+ * actually tokenized between two glyph parts, or `""` when there was none - instead of assuming one.
+ *
+ * A word split across lines by the line breaker (see
+ * [org.pcsoft.framework.simplay.engine.strategy.CharacterLineBreakerStrategy]) is offered to [consume] in
+ * several shorter fragments that together match one raw [TextWord]; the cursor tracks the unmatched
+ * remainder so [consumeSeparator] correctly returns `""` between those fragments.
+ */
+private class RawPartCursor(private val raw: TextBlock) {
+
+    private var index = 0
+    private var wordRemainder: String? = null
+
+    /**
+     * Returns the raw whitespace text immediately in front of the next token and advances past it;
+     * `""` when the next token follows directly (no [TextWhitespace] in between) or when still inside
+     * a word fragment left over from the previous [consume] call.
+     */
+    fun consumeSeparator(): String {
+        if (wordRemainder != null) return ""
+        val separator = StringBuilder()
+        while (index < raw.parts.size && raw.parts[index] is TextWhitespace) {
+            separator.append(raw.parts[index].text)
+            index++
+        }
+        return separator.toString()
+    }
+
+    /**
+     * Advances the cursor past [text], the glyph text of the part just placed. When [text] is
+     * shorter than the current raw token (a mid-word line split) the unmatched tail is kept as the
+     * remainder for the next fragment; otherwise the cursor moves to the next raw token.
+     */
+    fun consume(text: String) {
+        val remainder = wordRemainder
+        if (remainder != null) {
+            wordRemainder = if (text.length < remainder.length) remainder.substring(text.length) else null
+            if (wordRemainder == null) index++
+            return
+        }
+        val token = raw.parts.getOrNull(index) ?: return
+        if (text.length < token.text.length) {
+            wordRemainder = token.text.substring(text.length)
+        } else {
+            index++
         }
     }
 }

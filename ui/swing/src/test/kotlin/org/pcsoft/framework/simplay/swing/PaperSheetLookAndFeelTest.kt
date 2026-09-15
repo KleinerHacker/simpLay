@@ -57,12 +57,12 @@ class PaperSheetLookAndFeelTest {
     }
 
     /**
-     * Verifies that the read-only selection colour resolves to the dedicated
-     * `PaperSheetView.selectionColorReadonly` key and differs from the editable selection colour.
+     * Verifies that the non-editable selection colour resolves to the dedicated
+     * `PaperSheetView.selectionColorNonEditable` key and differs from the editable selection colour.
      */
     @Test
-    fun readonlySelectionColourComesFromItsOwnKey() {
-        val readonly = PaperSheetLookAndFeel.readonlySelectionColor()
-        assertNotEquals(UIManager.get(PaperSheetLookAndFeel.KEY_SELECTION_COLOR), readonly)
+    fun nonEditableSelectionColourComesFromItsOwnKey() {
+        val nonEditable = PaperSheetLookAndFeel.nonEditableSelectionColor()
+        assertNotEquals(UIManager.get(PaperSheetLookAndFeel.KEY_SELECTION_COLOR), nonEditable)
     }
 }

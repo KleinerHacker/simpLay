@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) KleinerHacker alias Pfeiffer C Soft 2026.
  * This work is licensed under the Apache License, Version 2.0.
  * You may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import javafx.scene.input.KeyCode
 import javafx.stage.Stage
 import org.junit.jupiter.api.Test
 import org.pcsoft.framework.simplay.engine.model.Document
+import org.pcsoft.framework.simplay.uicommon.PageMode
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -35,15 +36,16 @@ class PaperSheetEditingTest : JavaFxTestBase() {
 
     private data class Fixture(val view: PaperSheetView, val skin: PaperSheetViewSkin)
 
-    private fun fixture(paragraphs: Int = 1, normal: Boolean = true): Fixture = onFxThread {
+    private fun fixture(paragraphs: Int = 1, mode: PaperSheetMode = PaperSheetMode.EDITABLE): Fixture = onFxThread {
         val view = PaperSheetView()
-        if (normal) view.mode = PaperSheetMode.EDITABLE
+        view.mode = mode
         val stage = Stage()
         stage.scene = Scene(view, 320.0, 260.0)
         stage.show()
         view.document = PaperSheetTestFixtures.flowDocument(paragraphs)
         view.applyCss()
         view.layout()
+        view.requestFocus()
         Fixture(view, view.skin as PaperSheetViewSkin)
     }
 
@@ -58,12 +60,32 @@ class PaperSheetEditingTest : JavaFxTestBase() {
     }
 
     /**
-     * In read-only mode no caret is drawn and typing or pressing an editing key leaves the document
-     * untouched.
+     * Typing at the very start of the document rewrites [PaperSheetView.document] with the typed
+     * text spliced in at exactly that position: the model's plain text begins with the typed
+     * characters followed unbroken by the original content, proving the edit round-trips all the
+     * way back into the model instead of only advancing the on-screen caret.
      */
     @Test
-    fun readonlyModeShowsNoCaretAndRejectsInput() {
-        val (view, skin) = fixture(normal = false)
+    fun typedTextIsWrittenBackIntoDocumentAtCaretPosition() {
+        val (view, skin) = fixture(paragraphs = 1)
+        val originalText = view.document!!.plain()
+
+        onFxThread {
+            view.caretModel.moveToStart()
+            skin.typeTextForTest("HELLO")
+        }
+
+        val updatedText = view.document!!.plain()
+        assertEquals("HELLO$originalText", updatedText)
+    }
+
+    /**
+     * In [PaperSheetMode.SELECTABLE] no caret is drawn and typing or pressing an editing key leaves
+     * the document untouched.
+     */
+    @Test
+    fun selectableModeShowsNoCaretAndRejectsInput() {
+        val (view, skin) = fixture(mode = PaperSheetMode.SELECTABLE)
         val before = view.document
 
         onFxThread {
@@ -77,16 +99,74 @@ class PaperSheetEditingTest : JavaFxTestBase() {
     }
 
     /**
-     * Switching the mode to normal makes the skin draw exactly one caret stroke.
+     * Switching the mode to [PaperSheetMode.EDITABLE] makes the skin draw exactly one caret stroke.
      */
     @Test
-    fun switchingToNormalRendersCaret() {
-        val (view, skin) = fixture(normal = false)
+    fun switchingToEditableRendersCaret() {
+        val (view, skin) = fixture(mode = PaperSheetMode.SELECTABLE)
 
         onFxThread { view.mode = PaperSheetMode.EDITABLE }
 
         assertTrue(skin.caretRenderedForTest)
         assertEquals(1, skin.caretDrawCount)
+    }
+
+    /**
+     * In [PaperSheetMode.NAVIGABLE] the caret is drawn and moves with the navigation keys, but every
+     * mutating key is dropped and the document stays the same instance.
+     */
+    @Test
+    fun navigableModeShowsCaretButRejectsEdits() {
+        val (view, skin) = fixture(mode = PaperSheetMode.NAVIGABLE)
+        val before = view.document
+
+        onFxThread {
+            skin.pressKeyForTest(KeyCode.RIGHT)
+            skin.typeTextForTest("Z")
+            skin.pressKeyForTest(KeyCode.BACK_SPACE)
+            skin.pressKeyForTest(KeyCode.DELETE)
+        }
+
+        assertEquals(before, view.document)
+        assertTrue(skin.caretRenderedForTest)
+        assertEquals(1, view.caretModel.position)
+    }
+
+    /**
+     * In [PaperSheetMode.STATIC] the view is not focus-traversable, draws no caret, ignores every key
+     * and refuses even a programmatic `selectAll`, so the document is shown like a plain picture.
+     */
+    @Test
+    fun staticModeHasNoCaretNoSelectionAndNoFocus() {
+        val (view, skin) = fixture(mode = PaperSheetMode.STATIC)
+        val before = view.document
+
+        onFxThread {
+            skin.typeTextForTest("Z")
+            skin.pressKeyForTest(KeyCode.RIGHT)
+            view.selectionModel.selectAll()
+        }
+
+        assertEquals(before, view.document)
+        assertFalse(view.isFocusTraversable)
+        assertFalse(skin.caretRenderedForTest)
+        assertEquals(0, skin.caretDrawCount)
+        assertTrue(view.selectionModel.isEmpty)
+    }
+
+    /**
+     * Switching away from a selecting mode into [PaperSheetMode.STATIC] drops the selection that was
+     * made before the switch.
+     */
+    @Test
+    fun switchingToStaticClearsAnExistingSelection() {
+        val (view, _) = fixture(mode = PaperSheetMode.SELECTABLE)
+
+        onFxThread { view.selectionModel.selectAll() }
+        assertFalse(view.selectionModel.isEmpty)
+
+        onFxThread { view.mode = PaperSheetMode.STATIC }
+        assertTrue(view.selectionModel.isEmpty)
     }
 
     /**
@@ -386,7 +466,7 @@ class PaperSheetEditingTest : JavaFxTestBase() {
      */
     @Test
     fun smoothCaretBlinkDefaultsOffAndIsSettable() {
-        val (view, _) = fixture(normal = false)
+        val (view, _) = fixture(mode = PaperSheetMode.SELECTABLE)
 
         assertFalse(view.smoothCaretBlink)
 
@@ -396,18 +476,355 @@ class PaperSheetEditingTest : JavaFxTestBase() {
 
     /**
      * With the smooth blink enabled the caret is still rendered and starts fully opaque right after a
-     * caret move.
+     * caret move. The opacity is read from inside the FX-thread block: reading it afterwards from the
+     * test thread would race a real animation pulse of the smooth-blink [javafx.animation.Timeline] and
+     * observe a value that already drifted a tiny bit below `1.0`.
      */
     @Test
     fun smoothCaretBlinkKeepsCaretRenderedAtFullOpacityAfterMove() {
         val (view, skin) = fixture()
 
-        onFxThread {
+        val (rendered, opacity) = onFxThread {
             view.smoothCaretBlink = true
             view.caretModel.moveTo(4)
+            skin.caretRenderedForTest to skin.caretOpacityForTest()
         }
 
-        assertTrue(skin.caretRenderedForTest)
-        assertEquals(1.0, skin.caretOpacityForTest(), 1e-9)
+        assertTrue(rendered)
+        assertEquals(1.0, opacity, 1e-9)
     }
+
+    /**
+     * With the focus moved to another node of the same scene the editable view paints no caret: the
+     * caret opacity drops to zero so an unfocused sheet does not show a misleading caret.
+     */
+    @Test
+    fun unfocusedEditableViewHidesCaret() {
+        val (view, skin) = fixture()
+
+        onFxThread {
+            val scene = view.scene
+            val other = javafx.scene.control.Button("other")
+            scene.root = javafx.scene.layout.VBox()
+            scene.root = javafx.scene.layout.VBox(view, other)
+            other.requestFocus()
+        }
+
+        assertFalse(view.isFocused)
+        assertEquals(0.0, skin.caretOpacityForTest(), 1e-9)
+    }
+
+    /**
+     * Moving the caret to the end of a document taller than the viewport scrolls the view down so
+     * that the caret stays inside the visible area.
+     */
+    @Test
+    fun caretMoveScrollsTheViewportToTheCaret() {
+        val (view, skin) = fixture(paragraphs = 40)
+
+        onFxThread { view.caretModel.moveToEnd() }
+
+        assertTrue(skin.verticalScrollBar.value > 0.0)
+        val bounds = assertNotNull(skin.caretBoundsForTest())
+        assertTrue(bounds.minY >= 0.0)
+        assertTrue(bounds.maxY <= skin.viewportHeight)
+    }
+
+    /**
+     * Scrolling away from the caret and then moving it back to the document start scrolls the
+     * viewport back up so that the caret is visible again.
+     */
+    @Test
+    fun caretMoveScrollsBackUpToTheCaret() {
+        val (view, skin) = fixture(paragraphs = 40)
+
+        onFxThread { skin.verticalScrollBar.value = skin.verticalScrollBar.max }
+        onFxThread { view.caretModel.moveToStart() }
+
+        assertTrue(skin.verticalScrollBar.value < skin.verticalScrollBar.max)
+        val bounds = assertNotNull(skin.caretBoundsForTest())
+        assertTrue(bounds.minY >= 0.0)
+        assertTrue(bounds.maxY <= skin.viewportHeight)
+    }
+
+    /**
+     * Replacing the document from outside resets the caret to the document start and scrolls the
+     * viewport back to the top, no matter where the caret stood before.
+     */
+    @Test
+    fun replacingTheDocumentResetsCaretAndScroll() {
+        val (view, skin) = fixture(paragraphs = 40)
+
+        onFxThread { view.caretModel.moveToEnd() }
+        assertTrue(skin.caretIndexForTest > 0)
+        assertTrue(skin.verticalScrollBar.value > 0.0)
+
+        onFxThread { view.document = PaperSheetTestFixtures.flowDocument(40) }
+
+        assertEquals(0, skin.caretIndexForTest)
+        assertEquals(0.0, skin.verticalScrollBar.value, 1e-9)
+    }
+
+    /**
+     * Typing replaces the document instance as well, but is not treated as a reload: the caret stays
+     * behind the typed character instead of jumping back to the document start.
+     */
+    @Test
+    fun typingKeepsTheCaretDespiteTheDocumentChange() {
+        val (_, skin) = fixture()
+
+        onFxThread { skin.placeCaretAtForTest(60.0, 60.0) }
+        val before = skin.caretIndexForTest
+        onFxThread { skin.typeTextForTest("X") }
+
+        assertEquals(before + 1, skin.caretIndexForTest)
+    }
+
+    //region Page deactivation
+
+    /**
+     * Builds a shown, editable [PaperSheetView] over [PaperSheetTestFixtures.twoPageDocument] and
+     * returns it together with the linear index where the second raw page's single block starts.
+     */
+    private fun deactivationFixture(): Pair<Fixture, Int> = onFxThread {
+        val view = PaperSheetView()
+        view.mode = PaperSheetMode.EDITABLE
+        val stage = Stage()
+        stage.scene = Scene(view, 320.0, 500.0)
+        stage.show()
+        view.document = PaperSheetTestFixtures.twoPageDocument()
+        view.applyCss()
+        view.layout()
+        view.caretModel.moveToStartOfBlock(1)
+        val page2Start = (view.skin as PaperSheetViewSkin).caretIndexForTest
+        Fixture(view, view.skin as PaperSheetViewSkin) to page2Start
+    }
+
+    /** Gives the second raw page its own [mode], without moving the caret. */
+    private fun overrideSecondPage(view: PaperSheetView, mode: PageMode) {
+        view.setPageMode(1, mode)
+    }
+
+    /**
+     * With `DISABLED` on the second page, typing at a caret already sitting inside it leaves the
+     * document and the caret untouched.
+     */
+    @Test
+    fun insertInsideDisabledPageIsRejected() {
+        val (fixture, page2Start) = deactivationFixture()
+        val (view, skin) = fixture
+
+        onFxThread {
+            view.caretModel.moveTo(page2Start + 2)
+            overrideSecondPage(view, PageMode.DISABLED)
+        }
+        val before = view.document
+        val caretBefore = skin.caretIndexForTest
+
+        onFxThread { skin.typeTextForTest("Z") }
+
+        assertEquals(before, view.document)
+        assertEquals(caretBefore, skin.caretIndexForTest)
+    }
+
+    /**
+     * With `NAVIGABLE` on the second page, typing at a caret sitting inside it leaves the document
+     * untouched and the caret stays at its position.
+     */
+    @Test
+    fun insertInsideNavigablePageIsRejected() {
+        val (fixture, page2Start) = deactivationFixture()
+        val (view, skin) = fixture
+
+        onFxThread {
+            view.caretModel.moveTo(page2Start + 2)
+            overrideSecondPage(view, PageMode.NAVIGABLE)
+        }
+        val before = view.document
+        val caretBefore = skin.caretIndexForTest
+
+        onFxThread { skin.typeTextForTest("Z") }
+
+        assertEquals(before, view.document)
+        assertEquals(caretBefore, skin.caretIndexForTest)
+    }
+
+    /**
+     * A selection whose range touches a `DISABLED` page is discarded by `Backspace`: the document is
+     * unchanged.
+     */
+    @Test
+    fun deleteRangeTouchingDisabledPageIsRejected() {
+        val (fixture, page2Start) = deactivationFixture()
+        val (view, skin) = fixture
+
+        onFxThread {
+            view.selectionModel.selectRange(page2Start - 2, page2Start + 2)
+            overrideSecondPage(view, PageMode.DISABLED)
+        }
+        val before = view.document
+
+        onFxThread { skin.pressKeyForTest(KeyCode.BACK_SPACE) }
+
+        assertEquals(before, view.document)
+    }
+
+    /**
+     * Typing on the first page, which has no own mode, keeps working normally for every
+     * [org.pcsoft.framework.simplay.uicommon.PageMode] of the second page.
+     */
+    @Test
+    fun typingOnActivePageStillWorks() {
+        for (mode in PageMode.entries) {
+            val (fixture, _) = deactivationFixture()
+            val (view, skin) = fixture
+
+            onFxThread {
+                view.caretModel.moveTo(2)
+                overrideSecondPage(view, mode)
+            }
+            val before = view.document!!.plain()
+
+            onFxThread { skin.typeTextForTest("Z") }
+
+            assertTrue(view.document!!.plain().contains("Z"), "typing should work in mode $mode")
+            assertTrue(view.document!!.plain().length > before.length, "document should grow in mode $mode")
+        }
+    }
+
+    /**
+     * In `DISABLED` mode, moving the caret forward into the deactivated page snaps it to the page's
+     * end instead of landing inside it.
+     */
+    @Test
+    fun caretSkipsDisabledPageForward() {
+        val (fixture, page2Start) = deactivationFixture()
+        val (view, skin) = fixture
+        val docLength = documentLength(view)
+
+        onFxThread {
+            view.caretModel.moveTo(page2Start - 1)
+            overrideSecondPage(view, PageMode.DISABLED)
+            view.caretModel.moveTo(page2Start + 2)
+        }
+
+        assertEquals(docLength, skin.caretIndexForTest)
+    }
+
+    /**
+     * In `DISABLED` mode, moving the caret backward from past the end of the deactivated page snaps
+     * it to the page's start instead of landing inside it.
+     */
+    @Test
+    fun caretSkipsDisabledPageBackward() {
+        val (fixture, page2Start) = deactivationFixture()
+        val (view, skin) = fixture
+        val docLength = documentLength(view)
+
+        onFxThread {
+            view.caretModel.moveTo(docLength)
+            overrideSecondPage(view, PageMode.DISABLED)
+            view.caretModel.moveTo(page2Start + 2)
+        }
+
+        assertEquals(page2Start, skin.caretIndexForTest)
+    }
+
+    /**
+     * In `NAVIGABLE` mode the caret enters and crosses the overridden page exactly like a normal one:
+     * no snap happens.
+     */
+    @Test
+    fun caretEntersNavigablePageNormally() {
+        val (fixture, page2Start) = deactivationFixture()
+        val (view, skin) = fixture
+
+        onFxThread {
+            view.caretModel.moveTo(page2Start - 1)
+            overrideSecondPage(view, PageMode.NAVIGABLE)
+            view.caretModel.moveTo(page2Start + 2)
+        }
+
+        assertEquals(page2Start + 2, skin.caretIndexForTest)
+    }
+
+    /**
+     * A `Shift` + navigation selection is allowed to span into a `DISABLED` page, and copying that
+     * selection still puts its full text on the clipboard.
+     */
+    @Test
+    fun shiftSelectionMaySpanDisabledPage() {
+        val (fixture, page2Start) = deactivationFixture()
+        val (view, skin) = fixture
+
+        onFxThread {
+            view.caretModel.moveTo(page2Start - 1)
+            overrideSecondPage(view, PageMode.DISABLED)
+            repeat(4) { skin.pressKeyForTest(KeyCode.RIGHT, shift = true) }
+        }
+
+        assertEquals(page2Start + 3, skin.caretIndexForTest)
+        assertEquals(4, view.selectionModel.length)
+
+        val clipboardText = onFxThread {
+            skin.pressKeyForTest(KeyCode.C, shortcut = true)
+            Clipboard.getSystemClipboard().string
+        }
+        assertEquals(view.selectedText, clipboardText)
+    }
+
+    /**
+     * [PaperSheetView.setPageMode] stores the resolved page id, not the index passed in: it still
+     * marks the same page after the document is replaced with an edit that leaves the page count
+     * unchanged.
+     */
+    @Test
+    fun setPageModeByIndexResolvesToId() {
+        val (fixture, _) = deactivationFixture()
+        val (view, _) = fixture
+        val expectedId = view.document!!.pages[1].id
+
+        onFxThread { view.setPageMode(1, PageMode.DISABLED) }
+
+        assertEquals(mapOf(expectedId to PageMode.DISABLED), view.pageModes)
+    }
+
+    /**
+     * An edit replaces [PaperSheetView.document] with a new instance, but that is not a reload from
+     * outside, so an existing [PaperSheetView.pageModes] override must survive it untouched.
+     */
+    @Test
+    fun editingDocumentDoesNotResetPageModes() {
+        val (fixture, _) = deactivationFixture()
+        val (view, skin) = fixture
+        val expectedId = view.document!!.pages[1].id
+        onFxThread { view.setPageMode(0, PageMode.DISABLED) }
+
+        onFxThread {
+            view.caretModel.moveTo(1)
+            skin.typeTextForTest("Z")
+        }
+
+        assertEquals(mapOf(view.document!!.pages[0].id to PageMode.DISABLED), view.pageModes)
+        assertEquals(expectedId, view.document!!.pages[1].id)
+    }
+
+    /**
+     * Replacing [PaperSheetView.document] with an entirely different document - a reload from outside,
+     * not an edit - drops every [PaperSheetView.pageModes] override because the previous page ids no
+     * longer apply.
+     */
+    @Test
+    fun reloadingDocumentResetsPageModes() {
+        val (fixture, _) = deactivationFixture()
+        val (view, _) = fixture
+        onFxThread { view.setPageMode(0, PageMode.DISABLED) }
+        assertTrue(view.pageModes.isNotEmpty())
+
+        onFxThread { view.document = PaperSheetTestFixtures.flowDocument(2) }
+
+        assertEquals(emptyMap(), view.pageModes)
+    }
+
+    //endregion
 }

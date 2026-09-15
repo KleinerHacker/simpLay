@@ -95,4 +95,25 @@ class CountingTest {
         assertEquals(1, document.symbolCount())
         assertEquals(5, document.charCount())
     }
+
+    /**
+     * Verifies that a [TextBreak] contributes one character to [charCount], the same as any other
+     * source character, unlike a [TextWhitespace] run which contributes none.
+     */
+    @Test
+    fun charCountIncludesTextBreak() {
+        val block = TextBlock.of("one\ntwo", style)
+        assertEquals("onetwo".length + 1, block.charCount())
+    }
+
+    /**
+     * Verifies that [TextBlock.wordCount] and [TextBlock.symbolCount] ignore a [TextBreak], counting
+     * only [TextWord] and [TextSymbol] parts respectively.
+     */
+    @Test
+    fun wordAndSymbolCountIgnoreTextBreak() {
+        val block = TextBlock.of("one\ntwo.", style)
+        assertEquals(2, block.wordCount())
+        assertEquals(1, block.symbolCount())
+    }
 }

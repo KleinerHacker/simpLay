@@ -17,6 +17,7 @@ import kotlinx.serialization.Serializable
 import org.pcsoft.framework.simplay.engine.PlatformSerializable
 import org.pcsoft.framework.simplay.engine.geometry.Margins
 import org.pcsoft.framework.simplay.engine.geometry.Size
+import kotlin.uuid.Uuid
 
 /**
  * The physical frame of a page: its [size] and its inner [margins].
@@ -37,6 +38,8 @@ data class PageLayout(val size: Size, val margins: Margins) : PlatformSerializab
  */
 @Serializable
 sealed interface Page : PlatformSerializable {
+    /** Stable identifier of this page, independent of its position in [Document.pages]. */
+    val id: String
     val layout: PageLayout
     val blocks: List<TextBlock>
 }
@@ -49,6 +52,7 @@ sealed interface Page : PlatformSerializable {
 data class FlowPage(
     override val layout: PageLayout,
     override val blocks: List<TextBlock> = emptyList(),
+    @SerialName("id") override val id: String = Uuid.random().toString(),
 ) : Page
 
 /**
@@ -59,4 +63,5 @@ data class FlowPage(
 data class SinglePage(
     override val layout: PageLayout,
     override val blocks: List<TextBlock> = emptyList(),
+    @SerialName("id") override val id: String = Uuid.random().toString(),
 ) : Page

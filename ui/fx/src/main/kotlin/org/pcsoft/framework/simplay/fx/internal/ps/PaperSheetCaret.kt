@@ -12,24 +12,21 @@
 
 package org.pcsoft.framework.simplay.fx.internal.ps
 
-import org.pcsoft.framework.simplay.fx.CaretModel
-import org.pcsoft.framework.simplay.fx.PaperSheetMode
-import org.pcsoft.framework.simplay.fx.PaperSheetView
-
 import javafx.animation.Interpolator
 import javafx.animation.KeyFrame
 import javafx.animation.KeyValue
 import javafx.animation.Timeline
 import javafx.beans.property.SimpleDoubleProperty
-import javafx.event.EventHandler
 import javafx.geometry.BoundingBox
 import javafx.geometry.Bounds
 import javafx.util.Duration
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
-import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
+import org.pcsoft.framework.simplay.engine.measure.MeasuredLine
+import org.pcsoft.framework.simplay.fx.CaretModel
+import org.pcsoft.framework.simplay.fx.PaperSheetView
+import org.pcsoft.framework.simplay.fx.asPageMode
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
-import org.pcsoft.framework.simplay.uicommon.hitTest
-import org.pcsoft.framework.simplay.uicommon.segmentSpanX
+import org.pcsoft.framework.simplay.uicommon.*
 
 /**
  * Everything the edit caret of a [PaperSheetView] needs: its [position] on the linear document text,
@@ -51,6 +48,7 @@ import org.pcsoft.framework.simplay.uicommon.segmentSpanX
  * @property pageTops unscaled top `y` of each page within the stack (without the outer margin).
  * @property scrollOffset the current vertical scroll offset in viewport pixels.
  * @property requestRedraw repaints the skin's canvas.
+ * @property scrollCaretIntoView scrolls the viewport so that the caret stays visible after a move.
  */
 internal class PaperSheetCaret(
     private val view: PaperSheetView,
@@ -61,6 +59,7 @@ internal class PaperSheetCaret(
     private val pageTops: () -> DoubleArray,
     private val scrollOffset: () -> Double,
     private val requestRedraw: () -> Unit,
+    private val scrollCaretIntoView: () -> Unit,
 ) : PaperSheetView.CaretCommands {
 
     /** Caret offset into the linear document text. */
@@ -89,7 +88,8 @@ internal class PaperSheetCaret(
         opacity.addListener { _, _, _ -> requestRedraw() }
     }
 
-    private val editable: Boolean get() = view.mode == PaperSheetMode.EDITABLE
+    /** Whether any page currently shows and navigates a caret at all. */
+    private val caretActive: Boolean get() = view.anyCaret
 
     //region Geometry / painting
 
@@ -107,12 +107,27 @@ internal class PaperSheetCaret(
         return Geom(seg.pageIndex, x0, seg.line.lineBox.y, seg.line.lineBox.height)
     }
 
+    /** Width of the character at [ci] (for the public bounds of an overwrite-mode block caret), or
+     * `null` when there is none there (e.g. the caret sits at the very end of its line). */
+    private fun blockWidth(ci: Int): Double? {
+        val idx = textIndex() ?: return null
+        if (idx.segments.isEmpty()) return null
+        val c = ci.coerceIn(0, idx.length)
+        val seg = idx.segments.lastOrNull { it.start <= c && c <= it.end }
+            ?: idx.segments.firstOrNull { it.start >= c }
+            ?: idx.segments.last()
+        val (x0, x1) = segmentSpanX(seg, c, c + 1, measurer)
+        return (x1 - x0).takeIf { it > 0.0 }
+    }
+
     /** The caret rectangle to paint (in page content-area coordinates), or `null` when hidden. */
     fun caretPaint(): CaretPaint? {
         val preview = dropPreview
-        if (preview == null && !editable) return null
-        val g = geom(preview ?: position) ?: return null
-        return CaretPaint(g.pageIndex, g.xContent, g.yContent, g.height)
+        if (preview == null && !caretActive) return null
+        val ci = preview ?: position
+        val g = geom(ci) ?: return null
+        val shape = if (preview == null && view.caretMode == CaretMode.OVERWRITE) CaretShape.BLOCK else CaretShape.LINE
+        return CaretPaint(g.pageIndex, g.xContent, g.yContent, g.height, ci, shape)
     }
 
     /** The caret rectangle in viewport pixels, or `null` when there is no caret geometry. */
@@ -125,28 +140,46 @@ internal class PaperSheetCaret(
         val contentArea = doc.pages[g.pageIndex].contentArea
         val absX = outer + contentArea.x + g.xContent
         val absYTop = outer + pageTops()[g.pageIndex] + contentArea.y + g.yContent
-        return BoundingBox(absX * zoom, absYTop * zoom - scrollOffset(), CARET_WIDTH_PX, g.height * zoom)
+        val widthPx = if (view.caretMode == CaretMode.OVERWRITE) {
+            blockWidth(position)?.times(zoom) ?: CARET_WIDTH_PX
+        } else {
+            CARET_WIDTH_PX
+        }
+        return BoundingBox(absX * zoom, absYTop * zoom - scrollOffset(), widthPx, g.height * zoom)
     }
 
-    /** Opacity `0..1` the caret is painted with right now, honouring mode, blink phase and fade. */
+    /** Opacity `0..1` the caret is painted with right now, honouring mode, focus, blink phase and fade. */
     fun currentOpacity(): Double = when {
         dropPreview != null -> 1.0
-        !editable -> 0.0
+        !caretActive -> 0.0
+        !view.isFocused -> 0.0
         !blinkOn -> 0.0
         view.smoothCaretBlink -> opacity.get().coerceIn(0.0, 1.0)
         else -> 1.0
     }
 
-    /** Writes the caret position, bounds, blink state and structural counts onto [CaretModel]. */
+    /** Writes the caret position, bounds, blink state, structural counts and current structural
+     * elements onto [CaretModel]. */
     fun publish() {
         val idx = textIndex()
         val model = view.caretModel
-        model.updateCounts(idx?.blockCount ?: 0, idx?.wordCount ?: 0, idx?.symbolCount ?: 0)
-        val active = editable || dropPreview != null
+        model.updateCounts(
+            idx?.blockCount ?: 0,
+            idx?.wordCount ?: 0,
+            idx?.symbolCount ?: 0,
+            idx?.anchorCount ?: 0,
+            idx?.anchorsById?.keys?.toList() ?: emptyList(),
+        )
+        val active = caretActive || dropPreview != null
+        val seg = currentSeg()
         model.update(
             position.coerceIn(0, idx?.length ?: 0),
             if (active) viewportBounds() else null,
             active && currentOpacity() > 0.05,
+            seg?.part?.raw,
+            seg?.block?.raw,
+            seg?.page?.raw,
+            idx?.text?.getOrNull(position),
         )
     }
 
@@ -170,9 +203,9 @@ internal class PaperSheetCaret(
     fun restartBlink() {
         blink.stop()
         blink = if (view.smoothCaretBlink) buildSmoothBlink() else buildHardBlink()
-        blinkOn = editable
+        blinkOn = caretActive && view.isFocused
         opacity.set(1.0)
-        if (blinkOn && view.isFocused) blink.playFromStart()
+        if (blinkOn) blink.playFromStart()
         requestRedraw()
     }
 
@@ -183,9 +216,13 @@ internal class PaperSheetCaret(
 
     //region Lifecycle from the skin
 
-    /** Re-clamps the caret after a re-measure and republishes; does not restart the blink. */
-    fun onDocumentRemeasured() {
-        position = position.coerceIn(0, textIndex()?.length ?: 0)
+    /**
+     * Re-clamps the caret after a re-measure and republishes; does not restart the blink. With
+     * [reload] - the document was replaced from outside instead of by an edit - the caret always
+     * falls back to the document start.
+     */
+    fun onDocumentRemeasured(reload: Boolean) {
+        position = if (reload) 0 else position.coerceIn(0, textIndex()?.length ?: 0)
         desiredX = null
         shiftAnchor = null
         publish()
@@ -206,6 +243,7 @@ internal class PaperSheetCaret(
         shiftAnchor = null
         desiredX = null
         restartBlink()
+        scrollCaretIntoView()
     }
 
     /** Forgets the `Shift` + navigation anchor (mouse press starts a fresh gesture). */
@@ -221,6 +259,18 @@ internal class PaperSheetCaret(
 
     //endregion
 
+    //region Caret mode
+
+    /** Whether typing currently overwrites the character at the caret instead of inserting. */
+    val isOverwriteMode: Boolean get() = view.caretMode == CaretMode.OVERWRITE
+
+    /** Toggles between insert and overwrite typing mode (the `Insert` key). */
+    fun toggleCaretMode() {
+        view.caretMode = view.caretMode.toggled()
+    }
+
+    //endregion
+
     //region Movement
 
     /** Moves the caret without touching the selection (a mouse click or press). */
@@ -230,6 +280,7 @@ internal class PaperSheetCaret(
         desiredX = null
         shiftAnchor = null
         restartBlink()
+        scrollCaretIntoView()
     }
 
     /**
@@ -239,7 +290,9 @@ internal class PaperSheetCaret(
      */
     fun setCaret(index: Int, extend: Boolean, keepDesiredX: Boolean = false) {
         val idx = textIndex() ?: return
-        val clamped = idx.clamp(index)
+        val rawClamped = idx.clamp(index)
+        // A `Shift` selection may span a page the caret may not enter; a plain move snaps out of it.
+        val clamped = if (extend) rawClamped else snapOutOfDeactivated(rawClamped, position)
         if (extend) {
             if (shiftAnchor == null) shiftAnchor = position
             selection.setAnchorFocus(idx.clamp(shiftAnchor ?: position), clamped)
@@ -250,9 +303,40 @@ internal class PaperSheetCaret(
         position = clamped
         if (!keepDesiredX) desiredX = null
         restartBlink()
+        scrollCaretIntoView()
     }
 
-    private fun currentSeg(): DocumentTextIndex.Segment? {
+    /**
+     * `target` when every page's effective [PageMode] supports the caret; otherwise `target` snapped
+     * out of a page it may not enter, in the direction of travel from `from`.
+     */
+    private fun snapOutOfDeactivated(target: Int, from: Int): Int {
+        val idx = textIndex() ?: return target
+        val doc = view.document ?: return target
+        val direction = if (target >= from) 1 else -1
+        return EditableRegions.of(idx, view.pageModes, view.mode.asPageMode(), doc).snapOutOfBlocked(target, direction)
+    }
+
+    /** Whether the caret may come to rest on the page with [pageId] under its effective [PageMode]. */
+    private fun isPageNavigable(pageId: String): Boolean = view.effectivePageMode(pageId).supportsCaret
+
+    /** The measured lines a vertical move may land on: every line whose page allows the caret. */
+    private fun navigableLines(idx: DocumentTextIndex): List<MeasuredLine> =
+        idx.segments.filter { isPageNavigable(it.page.raw.id) }.map { it.line }.distinct()
+
+    /** The navigable measured-page indices, in reading order: every page whose effective [PageMode]
+     * allows the caret to enter it. */
+    private fun navigablePageIndices(idx: DocumentTextIndex): List<Int> =
+        idx.segments.filter { isPageNavigable(it.page.raw.id) }.map { it.pageIndex }.distinct().sorted()
+
+    /** The measured lines of page [pageIndex], in reading order. */
+    private fun linesOfPage(idx: DocumentTextIndex, pageIndex: Int): List<MeasuredLine> =
+        idx.segments.filter { it.pageIndex == pageIndex }.map { it.line }.distinct()
+
+    /** The segment the caret currently sits in or next to, or `null` without a document. Also reused
+     * by [PaperSheetEditor] (to report the part/block/page of a just-typed character) and
+     * [PaperSheetHoverTracker]. */
+    internal fun currentSeg(): DocumentTextIndex.Segment? {
         val idx = textIndex() ?: return null
         if (idx.segments.isEmpty()) return null
         return idx.segments.lastOrNull { it.start <= position && position <= it.end }
@@ -306,8 +390,8 @@ internal class PaperSheetCaret(
     fun moveVertical(delta: Int, extend: Boolean) {
         val idx = textIndex() ?: return
         val seg = currentSeg() ?: return
-        val lines = idx.segments.map { it.line }.distinct()
-        val li = lines.indexOf(seg.line)
+        val lines = navigableLines(idx).ifEmpty { idx.segments.map { it.line }.distinct() }
+        val li = lines.indexOf(seg.line).takeIf { it >= 0 } ?: nearestNavigableLine(idx, lines, seg, delta)
         val target = li + delta
         if (li < 0 || target !in lines.indices) return
         if (desiredX == null) desiredX = geom(position)?.xContent ?: 0.0
@@ -325,6 +409,73 @@ internal class PaperSheetCaret(
         } ?: return
         val off = hitTest(partSeg.part, partSeg.font, dx, measurer).coerceIn(0, partSeg.part.text.length)
         setCaret(partSeg.start + off, extend, keepDesiredX = true)
+    }
+
+    /**
+     * The [lines] index a vertical move starts from when the caret sits on a page it may not enter:
+     * the last navigable line before it for a downward move, the first one after it for an upward
+     * move; `-1` when there is none.
+     */
+    private fun nearestNavigableLine(
+        idx: DocumentTextIndex,
+        lines: List<MeasuredLine>,
+        seg: DocumentTextIndex.Segment,
+        delta: Int,
+    ): Int {
+        val all = idx.segments.map { it.line }.distinct()
+        val current = all.indexOf(seg.line)
+        return if (delta >= 0) {
+            lines.indexOfLast { all.indexOf(it) < current }
+        } else {
+            lines.indexOfFirst { all.indexOf(it) > current }
+        }
+    }
+
+    /**
+     * Moves the caret to the previous ([delta] `< 0`) or next ([delta] `> 0`) navigable page, at the
+     * same line ordinal it held on the source page (clamped to the target page's last line) and the
+     * same wish-x a vertical move would keep. Stops - does not wrap - at the first/last navigable
+     * page, so repeated calls reach every navigable page in order.
+     */
+    fun movePage(delta: Int, extend: Boolean) {
+        val idx = textIndex() ?: return
+        val seg = currentSeg() ?: return
+        val pages = navigablePageIndices(idx).ifEmpty { idx.segments.map { it.pageIndex }.distinct().sorted() }
+        val pi = pages.indexOf(seg.pageIndex).takeIf { it >= 0 } ?: nearestNavigablePage(pages, seg, delta)
+        val target = pi + delta
+        if (pi < 0 || target !in pages.indices) return
+        if (desiredX == null) desiredX = geom(position)?.xContent ?: 0.0
+        val dx = desiredX!!
+
+        val sourceLines = linesOfPage(idx, seg.pageIndex)
+        val lineOrdinal = sourceLines.indexOf(seg.line).let { if (it >= 0) it else 0 }
+
+        val targetLines = linesOfPage(idx, pages[target])
+        if (targetLines.isEmpty()) return
+        val targetLine = targetLines[lineOrdinal.coerceIn(0, targetLines.lastIndex)]
+
+        val lineSegs = idx.segments.filter { it.line === targetLine }
+        if (lineSegs.isEmpty()) return
+        val partSeg = lineSegs.minByOrNull { s ->
+            val b = s.part.bounds
+            when {
+                dx < b.x -> b.x - dx
+                dx > b.x + b.width -> dx - b.x - b.width
+                else -> 0.0
+            }
+        } ?: return
+        val off = hitTest(partSeg.part, partSeg.font, dx, measurer).coerceIn(0, partSeg.part.text.length)
+        setCaret(partSeg.start + off, extend, keepDesiredX = true)
+    }
+
+    /**
+     * The [pages] index a page move starts from when the caret sits on a page it may not enter: the
+     * last navigable page before it for a forward move, the first one after it for a backward move;
+     * `-1` when there is none.
+     */
+    private fun nearestNavigablePage(pages: List<Int>, seg: DocumentTextIndex.Segment, delta: Int): Int {
+        val current = seg.pageIndex
+        return if (delta >= 0) pages.indexOfLast { it < current } else pages.indexOfFirst { it > current }
     }
 
     //endregion
@@ -351,6 +502,15 @@ internal class PaperSheetCaret(
     override fun moveToPrevBlock() = go(textIndex()?.prevBlockStart(position) ?: position)
     override fun moveToNextSymbol() = go(textIndex()?.nextSymbolStart(position) ?: position)
     override fun moveToPrevSymbol() = go(textIndex()?.prevSymbolStart(position) ?: position)
+    override fun moveToAnchor(id: String) {
+        val idx = textIndex() ?: return
+        if (id !in idx.anchorsById) return
+        go(idx.startOfAnchor(id))
+    }
+    override fun moveToNextAnchor() = go(textIndex()?.nextAnchorStart(position) ?: position)
+    override fun moveToPrevAnchor() = go(textIndex()?.prevAnchorStart(position) ?: position)
+    override fun moveToNextPage() = movePage(1, extend = false)
+    override fun moveToPrevPage() = movePage(-1, extend = false)
 
     //endregion
 

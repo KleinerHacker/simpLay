@@ -16,6 +16,7 @@ import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.Font
 import org.pcsoft.framework.simplay.engine.model.SinglePage
+import org.pcsoft.framework.simplay.engine.model.TextAnchor
 import org.pcsoft.framework.simplay.engine.model.TextBlock
 import org.pcsoft.framework.simplay.engine.model.TextStyle
 
@@ -30,6 +31,12 @@ import org.pcsoft.framework.simplay.engine.model.TextStyle
  * breaks are turned into spaces, so an edit never creates a new block; a delete can only reduce the
  * block count. Unaffected blocks and the page structure (page objects, their layout and type) are
  * kept.
+ *
+ * A [TextAnchor] is zero-width and so never appears in [DocumentTextIndex.text] itself; before
+ * retokenizing, each anchor's position is remapped through the splice the same way a block start is
+ * and written back into the rebuilt block's substring as its `${id}` marker (see
+ * [TextBlock.Companion.of]), so an anchor survives an edit to the block that carries it instead of
+ * being dropped by the retokenization.
  *
  * Every operation returns the new [Document] together with the caret index it should sit at in the
  * re-measured document.
@@ -122,8 +129,28 @@ object DocumentEditor {
             }
         }
 
+        // TextAnchors are zero-width, so they never occur in newText and would otherwise be dropped
+        // by TextBlock.of()'s retokenization. Their positions are remapped the same way a block
+        // start is - unaffected anchors keep their place, an anchor inside the spliced range
+        // collapses to the splice point - then reinserted as `${id}` markers before retokenizing.
+        val remappedAnchors = ArrayDeque(
+            index.segments
+                .mapNotNull { segment -> (segment.part.raw as? TextAnchor)?.let { it.id to segment.start } }
+                .map { (id, pos) -> id to remapStart(pos).coerceIn(0, newText.length) }
+        )
+
         val blocks = merged.map { slice ->
-            TextBlock.of(newText.substring(slice.start, slice.end), styleFor(document, slice.pageIndex, slice.blockIndex))
+            val sliceAnchors = ArrayList<Pair<String, Int>>()
+            while (remappedAnchors.isNotEmpty() && remappedAnchors.first().second in slice.start..slice.end) {
+                sliceAnchors += remappedAnchors.removeFirst()
+            }
+            val markedText = buildString {
+                append(newText, slice.start, slice.end)
+                sliceAnchors.sortedByDescending { it.second }.forEach { (id, pos) ->
+                    insert(pos - slice.start, "\${$id}")
+                }
+            }
+            TextBlock.of(markedText, styleFor(document, slice.pageIndex, slice.blockIndex))
         }
 
         val newPages = document.pages.mapIndexed { pageIndex, page ->

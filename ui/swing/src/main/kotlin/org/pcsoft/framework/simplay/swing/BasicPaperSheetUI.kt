@@ -31,18 +31,25 @@ import java.awt.event.MouseWheelEvent
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JScrollBar
+import kotlin.math.roundToInt
 import org.pcsoft.framework.simplay.engine.RenderConfiguration
 import org.pcsoft.framework.simplay.engine.measure
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
+import org.pcsoft.framework.simplay.engine.measure.MeasuredPage
+import org.pcsoft.framework.simplay.engine.model.Page
+import org.pcsoft.framework.simplay.engine.model.TextBlock
+import org.pcsoft.framework.simplay.engine.model.TextPart
 import org.pcsoft.framework.simplay.swing.internal.SwingFontMeasureCalculator
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetCaret
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetEditor
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetHoverTracker
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetOverlays
+import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetScroll
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetSelection
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetStyle
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetSwingPainter
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
+import org.pcsoft.framework.simplay.uicommon.PageMode
 import org.pcsoft.framework.simplay.uicommon.hitTest
 
 /**
@@ -54,11 +61,16 @@ import org.pcsoft.framework.simplay.uicommon.hitTest
  * The per-view text concerns live in their own helpers this delegate creates and forwards events to:
  * [PaperSheetSelection] (anchor/focus selection, geometry, the [TextSelectionModel.Commands] sink),
  * [PaperSheetCaret] (caret position, blink, geometry, navigation moves - in
- * [PaperSheetMode.EDITABLE]), [PaperSheetEditor] (the keyboard shortcuts and the
- * [org.pcsoft.framework.simplay.uicommon.DocumentEditor] mutations they trigger, plus drag-and-drop
- * of the selection), [PaperSheetHoverTracker] (the hovered paragraph / sheet) and
- * [PaperSheetOverlays] (the registered [FloatingOverlay]s and the overlay layer on top of the
- * viewport).
+ * [PaperSheetMode.EDITABLE]), [PaperSheetScroll] (the [PaperSheetView.ScrollCommands] sink, scrolling
+ * the viewport to a page, block, word or symbol regardless of [PaperSheetMode]), [PaperSheetEditor]
+ * (the keyboard shortcuts and the [org.pcsoft.framework.simplay.uicommon.DocumentEditor] mutations
+ * they trigger, plus drag-and-drop of the selection), [PaperSheetHoverTracker] (the hovered paragraph
+ * / sheet) and [PaperSheetOverlays] (the registered [FloatingOverlay]s and the overlay layer on top of
+ * the viewport).
+ *
+ * Each page's effective [PageMode] ([PaperSheetView.effectivePageMode]) decides whether it is
+ * excluded from layout entirely ([PageMode.laidOut]) or drawn specially ([PageMode.paintedDisabled]);
+ * both are re-evaluated on every relayout / redraw.
  */
 open class BasicPaperSheetUI : PaperSheetUI() {
 
@@ -68,6 +80,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     private lateinit var painter: PaperSheetSwingPainter
     private lateinit var selection: PaperSheetSelection
     private lateinit var caret: PaperSheetCaret
+    private lateinit var scroll: PaperSheetScroll
     private lateinit var editor: PaperSheetEditor
     private lateinit var hover: PaperSheetHoverTracker
     private lateinit var overlays: PaperSheetOverlays
@@ -85,6 +98,9 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     /** `true` while the mouse drags an existing selection to a new drop position. */
     private var draggingSelection = false
 
+    /** `true` while the next `document` change comes from [editor] rather than from outside. */
+    private var internalEdit = false
+
     private lateinit var propertyListener: PropertyChangeListener
     private lateinit var mouseListener: MouseAdapter
     private lateinit var keyListener: KeyAdapter
@@ -94,7 +110,19 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     private val shortcutMask: Int = runCatching { Toolkit.getDefaultToolkit().menuShortcutKeyMaskEx }
         .getOrDefault(java.awt.event.InputEvent.CTRL_DOWN_MASK)
 
-    private val editable: Boolean get() = view.mode == PaperSheetMode.EDITABLE
+    private val editable: Boolean get() = view.anyEditing
+
+    private val caretActive: Boolean get() = view.anyCaret
+
+    private val selectable: Boolean get() = view.anySelection
+
+    private fun pageMode(page: MeasuredPage): PageMode = view.effectivePageMode(page.raw.id)
+
+    /** Whether [page] is excluded from layout entirely by its effective [PageMode]. */
+    private fun isPageHidden(page: MeasuredPage): Boolean = !pageMode(page).laidOut
+
+    /** Whether [page] is drawn specially by its effective [PageMode]. */
+    private fun isPageDisabled(page: MeasuredPage): Boolean = pageMode(page).paintedDisabled
 
     //region install / uninstall
 
@@ -124,6 +152,21 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             pageTops = { pageTops },
             scrollOffset = ::scrollOffset,
             requestRedraw = ::redraw,
+            scrollCaretIntoView = ::scrollCaretIntoView,
+        )
+        // Clamped against a freshly computed maximum (not the possibly still-default `scrollBar`
+        // maximum), since this may run before the first `relayoutViewport` pass has ever set it from
+        // real content.
+        scroll = PaperSheetScroll(
+            view = view,
+            textIndex = { index },
+            measuredDocument = { measured },
+            pageTops = { pageTops },
+            scrollTo = { y ->
+                val total = (contentHeightUnscaled + 2.0 * view.outerMargin) * view.zoom
+                val maxValue = (total - viewportHeight()).coerceAtLeast(0.0)
+                scrollBar.value = y.coerceIn(0.0, maxValue).roundToInt()
+            },
         )
         editor = PaperSheetEditor(
             view = view,
@@ -131,6 +174,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             caret = caret,
             textIndex = { index },
             requestRedraw = ::redraw,
+            markInternalEdit = { internalEdit = true },
         )
         hover = PaperSheetHoverTracker(
             view = view,
@@ -139,7 +183,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             scrollOffset = ::scrollOffset,
             nearestPage = ::nearestPage,
         )
-        overlays = PaperSheetOverlays(view, selection, caret, hover)
+        overlays = PaperSheetOverlays(view, selection, caret, hover, textIndex = { index })
 
         scrollBar = JScrollBar(JScrollBar.VERTICAL, 0, 0, 0, 0).apply {
             addAdjustmentListener { redraw() }
@@ -150,6 +194,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
 
         view.registerSelectionCommands(selection)
         view.registerCaretCommands(caret)
+        view.registerScrollCommands(scroll)
         installListeners()
         remeasure()
     }
@@ -164,6 +209,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         view.removeComponentListener(componentListener)
         view.unregisterSelectionCommands(selection)
         view.unregisterCaretCommands(caret)
+        view.unregisterScrollCommands(scroll)
         caret.dispose()
         overlays.dispose()
         c.remove(scrollBar)
@@ -181,9 +227,16 @@ open class BasicPaperSheetUI : PaperSheetUI() {
                 PaperSheetView.PROP_ZOOM,
                 PaperSheetView.PROP_MIN_ZOOM,
                 PaperSheetView.PROP_MAX_ZOOM,
+                PaperSheetView.PROP_PAGE_MODES,
                 -> relayout()
-                PaperSheetView.PROP_MODE -> { caret.onModeChanged(); redraw() }
-                PaperSheetView.PROP_SMOOTH_CARET_BLINK -> caret.restartBlink()
+                PaperSheetView.PROP_MODE -> {
+                    if (!selectable) selection.clearSelection()
+                    caret.onModeChanged()
+                    redraw()
+                }
+                PaperSheetView.PROP_SMOOTH_CARET_BLINK,
+                PaperSheetView.PROP_CARET_MODE,
+                -> caret.restartBlink()
                 PaperSheetView.PROP_SHEET_BACKGROUND,
                 PaperSheetView.PROP_SHEET_BORDER_COLOR,
                 PaperSheetView.PROP_SHEET_BORDER_WIDTH,
@@ -191,6 +244,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
                 PaperSheetView.PROP_SHADOW_OFFSET,
                 PaperSheetView.PROP_SELECTION_COLOR,
                 PaperSheetView.PROP_CARET_COLOR,
+                PaperSheetView.PROP_DEACTIVATED_SHEET_BACKGROUND,
+                PaperSheetView.PROP_DEACTIVATED_OVERLAY_COLOR,
                 -> redraw()
             }
         }
@@ -203,6 +258,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
                 view.cursor = cursorFor(e.x.toDouble(), e.y.toDouble())
                 hover.update(e.x.toDouble(), e.y.toDouble())
                 overlays.refresh()
+                fireMouseEvent(PaperSheetMouseEvent.Kind.HOVER, e.x.toDouble(), e.y.toDouble())
             }
             override fun mouseExited(e: MouseEvent) {
                 view.cursor = Cursor.getDefaultCursor()
@@ -236,13 +292,20 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     //region measuring / layout
 
     private fun remeasure() {
+        val reload = !internalEdit
+        internalEdit = false
+        // A page override is tied to a specific page instance; once the document is reloaded from
+        // outside (as opposed to replaced by an edit), none of the previous overrides can still be
+        // meaningful, so the default state - every page following the global mode - is restored.
+        if (reload) view.pageModes = emptyMap()
         measured = view.document?.measure(measurer, renderConfig)
         index = measured?.let { DocumentTextIndex(it) }
         selection.onDocumentChanged(index)
         hover.clear()
         computeLayoutMetrics()
         selection.publish()
-        caret.onDocumentRemeasured()
+        caret.onDocumentRemeasured(reload)
+        if (reload) scrollBar.value = 0
         redraw()
     }
 
@@ -268,11 +331,13 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         var y = 0.0
         doc.pages.forEachIndexed { i, page ->
             pageTops[i] = y
-            y += page.effectiveSize.height
-            if (i != doc.pages.lastIndex) y += gap
+            if (!isPageHidden(page)) {
+                y += page.effectiveSize.height
+                if (i != doc.pages.lastIndex) y += gap
+            }
         }
         contentHeightUnscaled = y
-        contentWidthUnscaled = doc.pages.maxOf { it.effectiveSize.width }
+        contentWidthUnscaled = doc.pages.filterNot(::isPageHidden).maxOfOrNull { it.effectiveSize.width } ?: 0.0
         view.updateContentSize(
             Dimension((contentWidthUnscaled + 2.0 * outer).toInt(), (contentHeightUnscaled + 2.0 * outer).toInt()),
         )
@@ -306,12 +371,33 @@ open class BasicPaperSheetUI : PaperSheetUI() {
 
     private fun scrollOffset(): Double = scrollBar.value.toDouble()
 
+    /**
+     * Scrolls the viewport by the smallest amount that brings the caret back into it, leaving
+     * [CARET_SCROLL_PADDING] of slack above and below; does nothing while there is nothing to scroll
+     * or the caret has no geometry.
+     */
+    private fun scrollCaretIntoView() {
+        if (!scrollBar.isEnabled) return
+        val height = viewportHeight().toInt()
+        if (height <= 0) return
+        val bounds = caret.viewportBounds() ?: return
+        val top = bounds.y - CARET_SCROLL_PADDING
+        val bottom = bounds.y + bounds.height + CARET_SCROLL_PADDING
+        val delta = when {
+            top < 0 -> top
+            bottom > height -> bottom - height
+            else -> return
+        }
+        val maxValue = (scrollBar.maximum - scrollBar.visibleAmount).coerceAtLeast(0)
+        scrollBar.value = (scrollBar.value + delta).coerceIn(0, maxValue)
+    }
+
     private fun currentStyle(): PaperSheetStyle {
         val selectionColor = if (
-            view.mode == PaperSheetMode.READONLY &&
+            !editable &&
             PaperSheetView.PROP_SELECTION_COLOR !in view.styleSetByUser
         ) {
-            PaperSheetLookAndFeel.readonlySelectionColor()
+            PaperSheetLookAndFeel.nonEditableSelectionColor()
         } else {
             view.selectionColor
         }
@@ -323,6 +409,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             shadowOffset = view.shadowOffset,
             selectionColor = selectionColor,
             caretColor = view.caretColor,
+            deactivatedSheetBackground = view.deactivatedSheetBackground,
+            deactivatedOverlayColor = view.deactivatedOverlayColor,
         )
     }
 
@@ -360,6 +448,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
                 style = currentStyle(),
                 caret = caret.caretPaint(),
                 caretOpacity = caret.currentOpacity(),
+                isHidden = ::isPageHidden,
+                isDisabled = ::isPageDisabled,
             )
         } finally {
             g2.dispose()
@@ -382,6 +472,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         var pageIndex = 0
         var bestDist = Double.MAX_VALUE
         doc.pages.forEachIndexed { i, page ->
+            if (isPageHidden(page)) return@forEachIndexed
             val top = outer + pageTops[i]
             val bottom = top + page.effectiveSize.height
             val dist = when {
@@ -397,7 +488,13 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         return pageIndex to bestDist
     }
 
+    /**
+     * The pointer shape at a viewport point: a text cursor over a page content area, else default.
+     * No page currently supporting selection, or a page whose own effective [PageMode] does not
+     * support selection, always keeps the default arrow.
+     */
     private fun cursorFor(px: Double, py: Double): Cursor {
+        if (!selectable) return Cursor.getDefaultCursor()
         val doc = measured ?: return Cursor.getDefaultCursor()
         if (doc.pages.isEmpty()) return Cursor.getDefaultCursor()
         val zoom = view.zoom
@@ -406,6 +503,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         val cy = (py + scrollOffset()) / zoom
         val (pageIndex, bandDistance) = nearestPage(cy)
         if (bandDistance > 0.0) return Cursor.getDefaultCursor()
+        if (!pageMode(doc.pages[pageIndex]).supportsSelection) return Cursor.getDefaultCursor()
         val contentArea = doc.pages[pageIndex].contentArea
         val localX = cx - outer - contentArea.x
         val localY = cy - (outer + pageTops[pageIndex]) - contentArea.y
@@ -460,6 +558,45 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         return partSegment.start + offset
     }
 
+    /**
+     * The raw part / block / page under viewport point ([px], [py]), or `null` for whichever of them
+     * has no hit there - the part and block are `null` over an empty area of a page, all three are
+     * `null` outside every page. Feeds [fireMouseEvent].
+     */
+    private fun resolveMouseHit(px: Double, py: Double): Triple<TextPart?, TextBlock?, Page?> {
+        val doc = measured?.takeIf { it.pages.isNotEmpty() } ?: return Triple(null, null, null)
+        val zoom = view.zoom
+        val outer = view.outerMargin
+        val cx = px / zoom
+        val cy = (py + scrollOffset()) / zoom
+        val (pageIndex, bandDistance) = nearestPage(cy)
+        if (bandDistance > 0.0) return Triple(null, null, null)
+        val page = doc.pages[pageIndex]
+        val contentArea = page.contentArea
+        val localX = cx - outer - contentArea.x
+        val localY = cy - (outer + pageTops[pageIndex]) - contentArea.y
+        val block = page.blocks.firstOrNull { b ->
+            val bounds = b.bounds
+            localX >= bounds.x && localX <= bounds.x + bounds.width && localY >= bounds.y && localY <= bounds.y + bounds.height
+        } ?: return Triple(null, null, page.raw)
+        val part = index?.segments?.filter { it.pageIndex == pageIndex && it.block === block }
+            ?.minByOrNull { seg ->
+                val bounds = seg.part.bounds
+                when {
+                    localX < bounds.x -> bounds.x - localX
+                    localX > bounds.x + bounds.width -> localX - bounds.x - bounds.width
+                    else -> 0.0
+                }
+            }?.part?.raw
+        return Triple(part, block.raw, page.raw)
+    }
+
+    private fun fireMouseEvent(kind: PaperSheetMouseEvent.Kind, px: Double, py: Double) {
+        val listener = view.onMouseEvent ?: return
+        val (part, block, page) = resolveMouseHit(px, py)
+        listener.handle(PaperSheetMouseEvent(view, kind, part, block, page))
+    }
+
     //endregion
 
     //region input
@@ -472,10 +609,14 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     }
 
     private fun onMousePressed(event: MouseEvent) {
+        val doc = measured
+        val hitPageMode = doc?.pages?.takeIf { it.isNotEmpty() }
+            ?.let { pageMode(it[nearestPage((event.y + scrollOffset()) / view.zoom).first]) }
+        if (hitPageMode?.supportsSelection != true) return
         view.requestFocusInWindow()
         caret.clearShiftAnchor()
         val i = hitIndexAt(event.x.toDouble(), event.y.toDouble())
-        if (editable && !selection.isEmpty && selection.contains(event.x.toDouble(), event.y.toDouble())) {
+        if (hitPageMode.supportsEditing && !selection.isEmpty && selection.contains(event.x.toDouble(), event.y.toDouble())) {
             draggingSelection = true
             dragging = false
             caret.setDropPreview(i)
@@ -483,7 +624,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         }
         selection.beginAt(i)
         dragging = true
-        if (editable) caret.placeCaret(i) else redraw()
+        if (hitPageMode.supportsCaret) caret.placeCaret(i) else redraw()
     }
 
     private fun onMouseDragged(event: MouseEvent) {
@@ -509,9 +650,13 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     }
 
     private fun onMouseClicked(event: MouseEvent) {
+        fireMouseEvent(PaperSheetMouseEvent.Kind.CLICK, event.x.toDouble(), event.y.toDouble())
         if (event.clickCount != 2) return
+        val doc = measured?.takeIf { it.pages.isNotEmpty() } ?: return
+        val hitPageMode = pageMode(doc.pages[nearestPage((event.y + scrollOffset()) / view.zoom).first])
+        if (!hitPageMode.supportsSelection) return
         selection.selectWordAt(hitIndexAt(event.x.toDouble(), event.y.toDouble()))
-        if (editable) caret.placeCaret(selection.end)
+        if (hitPageMode.supportsCaret) caret.placeCaret(selection.end)
         redraw()
     }
 
@@ -549,6 +694,10 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     internal fun dragSelectionToForTest(x: Double, y: Double, copy: Boolean) =
         editor.dropSelection(hitIndexAt(x, y), copy)
 
+    /** Fires a [PaperSheetMouseEvent] of [kind] at a viewport point, as the real listeners do; for tests. */
+    internal fun fireMouseEventForTest(kind: PaperSheetMouseEvent.Kind, x: Double, y: Double) =
+        fireMouseEvent(kind, x, y)
+
     internal fun hoverAtForTest(x: Double, y: Double) {
         hover.update(x, y)
         overlays.refresh()
@@ -570,6 +719,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     internal val pageCountForTest: Int get() = measured?.pages?.size ?: 0
     internal val caretIndexForTest: Int get() = caret.position
     internal fun caretBoundsForTest(): Rectangle? = caret.viewportBounds()
+
+    internal fun caretOpacityForTest(): Double = caret.currentOpacity()
     internal val verticalScrollBarForTest: JScrollBar get() = scrollBar
 
     //endregion
@@ -578,6 +729,9 @@ open class BasicPaperSheetUI : PaperSheetUI() {
 
         private const val DEFAULT_SCROLLBAR_WIDTH = 14
         private const val LINE_SCROLL_STEP = 40
+
+        /** Slack kept above and below the caret when scrolling it back into the viewport. */
+        private const val CARET_SCROLL_PADDING = 8
         private const val PREF_MIN = 240.0
         private const val PREF_MAX = 2000.0
 

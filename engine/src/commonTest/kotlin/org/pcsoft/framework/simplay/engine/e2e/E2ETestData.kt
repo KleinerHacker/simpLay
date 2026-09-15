@@ -13,6 +13,7 @@
 package org.pcsoft.framework.simplay.engine.e2e
 
 import org.pcsoft.framework.simplay.engine.FontMeasureCalculator
+import org.pcsoft.framework.simplay.engine.PageCountingMode
 import org.pcsoft.framework.simplay.engine.SimpLayEngine
 import org.pcsoft.framework.simplay.engine.geometry.Margins
 import org.pcsoft.framework.simplay.engine.geometry.Size
@@ -24,6 +25,8 @@ import org.pcsoft.framework.simplay.engine.model.FontStyle
 import org.pcsoft.framework.simplay.engine.model.FontWeight
 import org.pcsoft.framework.simplay.engine.model.LineSpacing
 import org.pcsoft.framework.simplay.engine.model.PageLayout
+import org.pcsoft.framework.simplay.engine.model.PageNumbering
+import org.pcsoft.framework.simplay.engine.model.PageNumberPosition
 import org.pcsoft.framework.simplay.engine.model.SinglePage
 import org.pcsoft.framework.simplay.engine.model.TextAlignment
 import org.pcsoft.framework.simplay.engine.model.TextBlock
@@ -122,7 +125,7 @@ internal object E2ETestData {
                 layout = layout(width = 200.0, height = 300.0),
                 blocks = listOf(
                     TextBlock.of(
-                        "Hello, brave new world!",
+                        "Hello, brave new world!\nA second line follows.",
                         TextStyle(
                             font = Font(
                                 family = "Serif",
@@ -154,4 +157,20 @@ internal object E2ETestData {
             ),
         ),
     )
+
+    /**
+     * [rawSampleDocument] with a non-default [PageNumbering] configured: bottom-center position,
+     * a custom start number and its second page excluded from numbering.
+     */
+    fun numberedSampleDocument(): Document {
+        val base = rawSampleDocument()
+        return base.copy(
+            numbering = PageNumbering(
+                position = PageNumberPosition.BOTTOM_CENTER,
+                startNumber = 3,
+                excludedPageIds = setOf(base.pages[1].id),
+                counting = PageCountingMode.SKIP_EXCLUDED,
+            ),
+        )
+    }
 }

@@ -54,6 +54,12 @@ internal object PaperSheetStyleableProperties {
     /** Default caret colour; mirrors `PaperSheetCanvasPainter.CARET_COLOR`. */
     val DEFAULT_CARET_COLOR: Color = Color.rgb(20, 20, 20)
 
+    /** Default fill of a `DISABLED` sheet; mirrors `PaperSheetCanvasPainter.DEACTIVATED_SHEET_COLOR`. */
+    val DEFAULT_DEACTIVATED_SHEET_BACKGROUND: Paint = Color.gray(0.93)
+
+    /** Default hatch colour of a `DISABLED` sheet; mirrors `PaperSheetCanvasPainter.DEACTIVATED_OVERLAY_COLOR`. */
+    val DEFAULT_DEACTIVATED_OVERLAY_COLOR: Paint = Color.rgb(0, 0, 0, 0.12)
+
     val SHEET_BACKGROUND: CssMetaData<PaperSheetView, Paint> =
         object : CssMetaData<PaperSheetView, Paint>(
             "-fx-sheet-background", StyleConverter.getPaintConverter(), DEFAULT_SHEET_BACKGROUND,
@@ -117,6 +123,26 @@ internal object PaperSheetStyleableProperties {
                 styleable.caretColorProperty
         }
 
+    val DEACTIVATED_SHEET_BACKGROUND: CssMetaData<PaperSheetView, Paint> =
+        object : CssMetaData<PaperSheetView, Paint>(
+            "-fx-deactivated-sheet-background", StyleConverter.getPaintConverter(),
+            DEFAULT_DEACTIVATED_SHEET_BACKGROUND,
+        ) {
+            override fun isSettable(styleable: PaperSheetView) = !styleable.deactivatedSheetBackgroundProperty.isBound
+            override fun getStyleableProperty(styleable: PaperSheetView): StyleableProperty<Paint> =
+                styleable.deactivatedSheetBackgroundProperty
+        }
+
+    val DEACTIVATED_OVERLAY_COLOR: CssMetaData<PaperSheetView, Paint> =
+        object : CssMetaData<PaperSheetView, Paint>(
+            "-fx-deactivated-overlay-color", StyleConverter.getPaintConverter(),
+            DEFAULT_DEACTIVATED_OVERLAY_COLOR,
+        ) {
+            override fun isSettable(styleable: PaperSheetView) = !styleable.deactivatedOverlayColorProperty.isBound
+            override fun getStyleableProperty(styleable: PaperSheetView): StyleableProperty<Paint> =
+                styleable.deactivatedOverlayColorProperty
+        }
+
     val OUTER_MARGIN: CssMetaData<PaperSheetView, Number> =
         object : CssMetaData<PaperSheetView, Number>(
             "-fx-outer-margin", StyleConverter.getSizeConverter(), PaperSheetView.DEFAULT_OUTER_MARGIN,
@@ -145,6 +171,8 @@ internal object PaperSheetStyleableProperties {
         add(SHADOW_OFFSET)
         add(SELECTION_COLOR)
         add(CARET_COLOR)
+        add(DEACTIVATED_SHEET_BACKGROUND)
+        add(DEACTIVATED_OVERLAY_COLOR)
         add(OUTER_MARGIN)
         add(PAGE_GAP)
     }.let(java.util.Collections::unmodifiableList)

@@ -18,13 +18,16 @@ import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.Font
 import org.pcsoft.framework.simplay.engine.model.PageLayout
+import org.pcsoft.framework.simplay.engine.model.PageNumbering
+import org.pcsoft.framework.simplay.engine.model.PageNumberPosition
 import org.pcsoft.framework.simplay.engine.model.TextBlock
 import org.pcsoft.framework.simplay.engine.model.TextStyle
 
 /** Sample [Document]s shared by the `swing` module tests. All text is English. */
 internal object TestDocuments {
 
-    private val layout = PageLayout(
+    /** The page layout [short] and [long] use; exposed so tests can compute expected geometry. */
+    val layout = PageLayout(
         size = Size(width = 400.0, height = 300.0),
         margins = Margins(left = 30.0, top = 30.0, right = 30.0, bottom = 30.0),
     )
@@ -52,6 +55,61 @@ internal object TestDocuments {
                 blocks = buildList {
                     add(TextBlock.of("A Long Story", body))
                     repeat(120) { add(TextBlock.of(lorem, body)) }
+                },
+            ),
+        ),
+    )
+
+    /** [short] with page numbering turned on at [position] (top-center by default). */
+    fun numberedShort(position: PageNumberPosition = PageNumberPosition.TOP_CENTER): Document =
+        short.copy(numbering = PageNumbering(position = position))
+
+    /**
+     * A two-raw-page document, each page a single [FlowPage] with distinct text and a distinct stable
+     * id, for the page-deactivation tests. Each page's content is short and fits on one sheet, so page
+     * two starts right at the first block boundary.
+     */
+    val twoPage: Document = Document(
+        pages = listOf(
+            FlowPage(layout = layout, blocks = listOf(TextBlock.of("Page one content here.", body))),
+            FlowPage(layout = layout, blocks = listOf(TextBlock.of("Page two content here.", body))),
+        ),
+    )
+
+    /**
+     * A three-raw-page document for the Page-Up / Page-Down tests: the first two pages have five
+     * single-line paragraphs each (equal line counts, for the relative-line and wish-x checks), the
+     * third only two (fewer lines, for the last-line clamping check). Every paragraph is short enough
+     * to never wrap at [layout]'s width.
+     */
+    val variableLinePages: Document = Document(
+        pages = listOf(
+            FlowPage(layout = layout, blocks = (1..5).map { TextBlock.of("Page one line $it.", body) }),
+            FlowPage(layout = layout, blocks = (1..5).map { TextBlock.of("Page two line $it.", body) }),
+            FlowPage(layout = layout, blocks = (1..2).map { TextBlock.of("Page three line $it.", body) }),
+        ),
+    )
+
+    /** A single-paragraph document carrying two `${...}` navigation anchors, for the anchor tests. */
+    val anchors: Document = Document(
+        pages = listOf(
+            FlowPage(
+                layout = layout,
+                blocks = listOf(TextBlock.of("Go to \${chapterOne} now and \${chapterTwo} later.", body)),
+            ),
+        ),
+    )
+
+    /** A [long]-sized document with one anchor near the start and one near the end, for the
+     * `scrollToAnchor` viewport tests. */
+    val longWithAnchors: Document = Document(
+        pages = listOf(
+            FlowPage(
+                layout = layout,
+                blocks = buildList {
+                    add(TextBlock.of("Start \${introAnchor} here.", body))
+                    repeat(120) { add(TextBlock.of(lorem, body)) }
+                    add(TextBlock.of("End \${outroAnchor} here.", body))
                 },
             ),
         ),

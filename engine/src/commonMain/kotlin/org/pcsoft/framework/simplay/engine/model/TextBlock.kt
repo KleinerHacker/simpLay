@@ -25,13 +25,16 @@ data class TextBlock private constructor(
     val style: TextStyle,
 ) : PlatformSerializable {
     /**
-     * Rejoins the parts, putting a single space before every [TextWord] except the first and no
-     * space before a [TextSymbol].
+     * Rejoins the parts by concatenating [TextPart.text] in order, except a [TextAnchor] which is
+     * rendered back as its `${id}` marker. Lossless: whitespace runs are stored as explicit
+     * [TextWhitespace] parts and anchors as their marker, so no character is invented or dropped.
      */
     override fun toString(): String = buildString {
-        parts.forEachIndexed { index, part ->
-            if (part is TextWord && index > 0) append(' ')
-            append(part.text)
+        parts.forEach { part ->
+            when (part) {
+                is TextAnchor -> append("\${").append(part.id).append('}')
+                else -> append(part.text)
+            }
         }
     }
 
@@ -59,11 +62,28 @@ data class TextBlock private constructor(
  * Splits [text] into [TextPart]s.
  *
  * Maximal runs of [Char.isLetterOrDigit] become a [TextWord], every other non-whitespace
- * character becomes its own [TextSymbol], and whitespace separates parts without being stored.
+ * character becomes its own [TextSymbol], and a maximal run of whitespace of a single
+ * [WhitespaceKind] (space or tab) becomes a [TextWhitespace] carrying that kind and the length of
+ * the run; a run splits at a change of kind (e.g. a space directly followed by a tab yields two
+ * [TextWhitespace] parts). Any other whitespace character (other than a line break, see below) is
+ * taken as [WhitespaceKind.SPACE].
+ *
+ * A `\n`, or a `\r\n` pair merged into one, becomes a single [TextBreak] instead of joining a
+ * [TextWhitespace] run - so it survives as its own explicit token rather than being absorbed into
+ * surrounding whitespace. A run of several line breaks (e.g. a blank line) yields one [TextBreak]
+ * per line break. A lone `\r` (not immediately followed by `\n`) is not a break on its own and is
+ * taken as [WhitespaceKind.SPACE], like any other whitespace character.
+ *
+ * A `${name}` marker - `$` immediately followed by `{`, a non-empty [name] and a closing `}` -
+ * becomes a [TextAnchor] with that `id`, instead of being tokenized as symbols/word. A `$` that is
+ * not followed by a well-formed `{name}` (missing `{`, missing closing `}` or an empty name) is
+ * rejected.
  */
 private fun tokenize(text: String): List<TextPart> {
     val parts = mutableListOf<TextPart>()
     val word = StringBuilder()
+    var whitespaceCount = 0
+    var whitespaceKind: WhitespaceKind? = null
 
     fun flushWord() {
         if (word.isNotEmpty()) {
@@ -72,16 +92,62 @@ private fun tokenize(text: String): List<TextPart> {
         }
     }
 
-    for (ch in text) {
+    fun flushWhitespace() {
+        val kind = whitespaceKind
+        if (kind != null && whitespaceCount > 0) {
+            parts += TextWhitespace(kind, whitespaceCount)
+        }
+        whitespaceCount = 0
+        whitespaceKind = null
+    }
+
+    var i = 0
+    while (i < text.length) {
+        val ch = text[i]
         when {
-            ch.isWhitespace() -> flushWord()
-            ch.isLetterOrDigit() -> word.append(ch)
+            ch == '$' -> {
+                val close = if (i + 1 < text.length && text[i + 1] == '{') text.indexOf('}', i + 2) else -1
+                require(close != -1) {
+                    "Invalid anchor syntax at index $i: expected '\${name}', got '${text.substring(i, minOf(i + 20, text.length))}'"
+                }
+                val name = text.substring(i + 2, close)
+                require(name.isNotEmpty()) { "Invalid anchor syntax at index $i: anchor name must not be empty" }
+                flushWord()
+                flushWhitespace()
+                parts += TextAnchor(name)
+                i = close + 1
+            }
+            ch == '\n' || (ch == '\r' && i + 1 < text.length && text[i + 1] == '\n') -> {
+                flushWord()
+                flushWhitespace()
+                parts += TextBreak
+                i += if (ch == '\r') 2 else 1
+            }
+            ch.isWhitespace() -> {
+                flushWord()
+                val kind = when (ch) {
+                    '\t' -> WhitespaceKind.TAB
+                    else -> WhitespaceKind.SPACE
+                }
+                if (whitespaceKind != null && whitespaceKind != kind) flushWhitespace()
+                whitespaceKind = kind
+                whitespaceCount++
+                i++
+            }
+            ch.isLetterOrDigit() -> {
+                flushWhitespace()
+                word.append(ch)
+                i++
+            }
             else -> {
                 flushWord()
+                flushWhitespace()
                 parts += TextSymbol(ch)
+                i++
             }
         }
     }
     flushWord()
+    flushWhitespace()
     return parts
 }

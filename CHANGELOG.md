@@ -12,6 +12,193 @@ excluded.
 
 ## [UNRELEASED]
 
+## [0.4.0]
+
+### Fixed
+
+- `engine`: `GreedyWordLineBreakerStrategy` and `BalancedLineBreakerStrategy` now
+  append a `-` mark to every piece but the last when a `WordBreakerStrategy`
+  splits an over-wide word, instead of silently breaking it without any visible
+  hyphen.
+
+### Added
+
+- `engine`: `PatternWordBreakerStrategy`, a `WordBreakerStrategy` that offers
+  syllable-accurate hyphenation using Liang's algorithm over hyph-utf8/TeX
+  patterns embedded in the engine. Build one with
+  `PatternWordBreakerStrategy.forLocale(locale)`, which returns `null` for a
+  locale with no bundled patterns. Ships with `de` and `en` patterns; see
+  `LICENSES.md` next to the pattern sources for their origin and licence.
+- `engine`: `TextBreak`, a new `TextPart` for an explicit line break. Every
+  `\n` (and every `\r\n`, merged into one) in a `TextBlock.Companion.of` source
+  text now tokenises to its own `TextBreak` instead of joining a whitespace run.
+  `charCount()` counts it as one character; `wordCount()`/`symbolCount()` ignore
+  it; `toString()` reproduces it as a plain `\n`.
+- `engine`: `ExplicitBreakLineBreakerStrategy`, a `LineBreakerStrategy` that
+  breaks only at a `TextBreak` and never on width - each segment between
+  breaks becomes exactly one line, however wide, and a blank line still takes
+  up vertical space. Select it with `SimpLayEngine.Builder.lineBreakerStrategy(
+  ExplicitBreakLineBreakerStrategy)`.
+- `engine`: the default `GreedyWordLineBreakerStrategy` and
+  `CharacterLineBreakerStrategy` now treat a `TextBreak` as a hard line break;
+  `NoWrapLineBreakerStrategy` ignores it, since it never breaks a line.
+  `BalancedLineBreakerStrategy` and `BreakOpportunityLineBreakerStrategy`
+  likewise treat a `TextBreak` as a hard line break.
+- `engine`: `BalancedLineBreakerStrategy`, a new `LineBreakerStrategy` that
+  breaks a whole block at once and picks the partition into lines with the
+  lowest total raggedness, instead of greedily filling every line. Opt-in via
+  `SimpLayEngine.Builder.lineBreakerStrategy(BalancedLineBreakerStrategy)`; the
+  default stays `GreedyWordLineBreakerStrategy`.
+- `engine`: `BreakOpportunityLineBreakerStrategy`, an opt-in `LineBreakerStrategy`
+  that greedily fills lines but only breaks at a curated approximation of
+  Unicode's line-break opportunities - not before closing punctuation, not
+  inside a digit group separated by `.`/`,`, and between (but never inside a
+  run of) CJK ideographs. Set it via
+  `SimpLayEngine.builder(...).lineBreakerStrategy(BreakOpportunityLineBreakerStrategy)`;
+  the default stays `GreedyWordLineBreakerStrategy`.
+
+### Changed
+
+- `engine`: **Breaking:** `LineBreakerStrategy`, `WordBreakerStrategy` and every
+  strategy implementation (`GreedyWordLineBreakerStrategy`,
+  `CharacterLineBreakerStrategy`, `NoWrapLineBreakerStrategy`,
+  `NoOpWordBreakerStrategy`, `BalancedLineBreakerStrategy`,
+  `BreakOpportunityLineBreakerStrategy`, `ExplicitBreakLineBreakerStrategy`)
+  moved from `org.pcsoft.framework.simplay.engine` to the new
+  `org.pcsoft.framework.simplay.engine.strategy` package. Update imports
+  accordingly.
+
+## [0.3.2]
+
+### Fixed
+
+- `ui/common`: editing a `TextBlock` that carries a `TextAnchor` (e.g. typing
+  right next to it) no longer drops the anchor. `DocumentEditor` now keeps the
+  anchor at its correct position within the edited block instead of losing it
+  during retokenization.
+
+## [0.3.1]
+
+### Added
+
+- `engine`: `TextAnchor`, a new `TextPart` that marks an invisible, zero-width
+  navigation point identified by an `id`. Written with the `${id}` syntax
+  (e.g. `${chapterOne}`) when a `TextBlock` is built from plain text via
+  `TextBlock.Companion.of`; never rendered and never counted as a word,
+  symbol or character.
+- `ui/fx` and `ui/swing`: `CaretModel` gained `anchorCount`, `anchorIds`,
+  `currentAnchorId`, `moveToAnchor(id)`, `moveToNextAnchor()` and
+  `moveToPrevAnchor()` to navigate the caret directly to a named `TextAnchor`.
+  `PaperSheetView` gained `scrollToAnchor(id)` to scroll the viewport to a
+  named anchor without moving the caret.
+
+## [0.3.0]
+
+### Added
+
+- `engine`: page numbering. `Document.numbering: PageNumbering` (default off)
+  configures where a page number is drawn (`PageNumberPosition`: `OFF`, plus
+  every combination of top/bottom with left, center, right, and the
+  binding-aware `INNER` / `OUTER` that alternate side by page parity), the
+  first displayed number (`startNumber`), a set of pages excluded from
+  numbering by their new stable `Page.id`, and how an excluded page affects the
+  running count (`PageCountingMode.CONTINUOUS` / `SKIP_EXCLUDED`).
+- `ui/fx` and `ui/swing`: `CanvasDocumentRenderer`, `DocumentImageRenderer` and
+  both `PaperSheetView` controls now draw the configured page number on every
+  page automatically, using `PageNumbering.textStyle` for its font.
+- `ui/common`, `ui/fx` and `ui/swing`: individual pages of a `PaperSheetView`
+  can override its `mode` with their own `PageMode`, keyed by their stable
+  `Page.id`, through the new `pageModes` property and the index-based
+  `setPageMode(index, PageMode?)` convenience setter. `PageMode` (`HIDDEN`,
+  `DISABLED`, `STATIC`, `SELECTABLE`, `NAVIGABLE`, `EDITABLE`) offers the same
+  interaction levels as `PaperSheetMode`, so a page can be made more
+  restrictive (e.g. read-only in an otherwise editable view) or more
+  permissive (e.g. editable in an otherwise static view) than the view as a
+  whole. `pageModes` resets to empty automatically whenever `document` is
+  reloaded from outside, but is left untouched by an edit.
+  `FloatingOverlayEvent` now reports
+  `pageDeactivated` so a registered overlay can react to a page's override.
+- `ui/fx` and `ui/swing`: `Page Up` / `Page Down` move the caret to the
+  previous / next navigable page, keeping its line and column instead of a
+  linear offset, optionally with `Shift` to extend the selection. The caret
+  model gained the matching `moveToNextPage()` / `moveToPrevPage()` commands.
+- `ui/fx` and `ui/swing`: `PaperSheetView` gained four scroll commands -
+  `scrollToPage(page)`, `scrollToBlock(block)`, `scrollToWord(word)` and
+  `scrollToSymbol(symbol)` - that move the viewport to a page, paragraph, word
+  or character. Unlike the caret commands, they work in every `PaperSheetMode`,
+  including `STATIC` and `SELECTABLE`, and never touch the caret or selection.
+- `ui/common`, `ui/fx` and `ui/swing`: `PaperSheetView` gained a `caretMode`
+  property (`CaretMode.INSERT` / `CaretMode.OVERWRITE`), toggled by the
+  `Insert` key and also freely readable and settable from outside. In
+  `OVERWRITE`, typing replaces the character at the caret instead of inserting
+  before it (never crossing past the end of the current line) and the caret is
+  shown as a filled block the width of the character about to be overwritten,
+  instead of the usual thin line; in `fx` this is also reflected as the new
+  `:overwrite` CSS pseudo-class.
+- `ui/fx` and `ui/swing`: `Ctrl+A` (`Cmd+A` on macOS) selects the whole
+  document text in `PaperSheetView`, in every mode that supports selection
+  (`SELECTABLE`, `NAVIGABLE`, `EDITABLE`).
+- `ui/fx` and `ui/swing`: `CaretModel` gained `currentTextPart`,
+  `currentTextBlock`, `currentPage` and `currentCharacter`, reporting the raw
+  text part, block, page and character the caret currently sits in or next
+  to (`null` without a document).
+- `ui/fx` and `ui/swing`: `PaperSheetView` gained an `onType` event, fired
+  right after a character was typed into an editable view with the typed
+  character plus the raw text part, block and page it landed in
+  (`PaperSheetTypeEvent`), and an `onMouseEvent` event, fired while the mouse
+  hovers or clicks over the view with the raw text part, block and page under
+  the pointer (`PaperSheetMouseEvent`) - `null` for the part and block over an
+  empty area of a page, and for all three outside every page.
+
+### Changed
+
+- `ui/fx` and `ui/swing`: `PaperSheetMode` now offers four interaction levels
+  instead of two. **Breaking:** `READONLY` and `EDITABLE` are replaced by
+  `STATIC` (the document behaves like an image - no selection, no caret, the
+  default arrow mouse cursor and no keyboard focus), `SELECTABLE` (the new
+  default, the former `READONLY`), `NAVIGABLE` (selection plus a blinking caret
+  and the caret-navigation keys, still without mutating the document) and
+  `EDITABLE` (unchanged). Each constant also exposes `supportsSelection`,
+  `supportsCaret`, `supportsEditing` and `supportsFocus`. Switching down to a
+  mode without selection drops the current selection.
+- `ui/fx`: **Breaking:** the `:readonly` CSS pseudo-class of `PaperSheetView` is
+  replaced by one pseudo-class per mode - `:static`, `:selectable`, `:navigable`
+  and `:editable` - of which exactly one is active. The bundled user-agent
+  stylesheet now greys the selection highlight for `:selectable` and
+  `:navigable`.
+- `ui/swing`: **Breaking:** the Look-and-Feel key
+  `PaperSheetView.selectionColorReadonly` is renamed to
+  `PaperSheetView.selectionColorNonEditable` (constant
+  `PaperSheetLookAndFeel.KEY_SELECTION_COLOR_NON_EDITABLE`, accessor
+  `nonEditableSelectionColor()`) and now applies to every non-editable mode.
+- `ui/fx` and `ui/swing`: a page whose effective mode is `PageMode.DISABLED` no
+  longer shows any floating overlay and keeps the default arrow mouse cursor
+  over its text instead of the text cursor. The same holds for the whole view
+  in `PaperSheetMode.STATIC`, which now shows no floating overlay at all.
+
+### Fixed
+
+- `engine`: `TextBlock` no longer invents a space when reconstructing text
+  where a symbol (e.g. `.`, `-`, `(`) was directly followed by a word with no
+  whitespace in between. Original spaces, tabs and line breaks are now
+  preserved as explicit `TextWhitespace(kind, count)` parts - a run is
+  described by its `WhitespaceKind` and its length, and its `text` is derived
+  from both - instead of being discarded during
+  tokenizing, which also fixes a caret/character-order drift that could occur
+  while typing right after such a symbol.
+- `ui/fx` and `ui/swing`: an editable `PaperSheetView` no longer keeps a
+  statically visible caret while it does not own the focus. The caret is now
+  hidden as soon as the view loses the focus and reappears, blinking, when it
+  regains it.
+- `ui/fx` and `ui/swing`: the viewport of a `PaperSheetView` now follows the
+  caret. Whenever the caret moves out of the visible area - by typing, by
+  keyboard navigation or through a `CaretModel` command such as `moveToEnd()` -
+  the view scrolls by the smallest amount that brings it back into sight.
+- `ui/fx` and `ui/swing`: replacing `PaperSheetView.document` from outside now
+  always resets the caret to the document start and scrolls the view back to
+  the top, instead of keeping a caret position that belonged to the previous
+  document. Editing keeps its caret as before.
+
 ## [0.2.2]
 
 ### Added

@@ -15,6 +15,10 @@ package org.pcsoft.framework.simplay.engine
 import org.pcsoft.framework.simplay.engine.internal.SimpLayPageEngine
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.engine.model.Document
+import org.pcsoft.framework.simplay.engine.strategy.GreedyWordLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.LineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.NoOpWordBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.WordBreakerStrategy
 
 /**
  * Converts a raw [Document] into a [MeasuredDocument] using a font-measuring callback.

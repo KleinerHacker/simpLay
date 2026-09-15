@@ -14,6 +14,7 @@ package org.pcsoft.framework.simplay.engine.model
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class TokenizerTest {
 
@@ -28,15 +29,17 @@ class TokenizerTest {
     private fun parts(text: String): List<TextPart> = TextBlock.of(text, style).parts
 
     /**
-     * Verifies that a plain sentence is split into one [TextWord] per space-separated token and
-     * that no whitespace is kept.
+     * Verifies that a plain sentence is split into one [TextWord] per space-separated token, with a
+     * [TextWhitespace] of kind [WhitespaceKind.SPACE] preserved between the words.
      */
     @Test
     fun splitsPlainWords() {
         assertEquals(
             listOf(
                 TextWord("The"),
+                TextWhitespace(WhitespaceKind.SPACE),
                 TextWord("quick"),
+                TextWhitespace(WhitespaceKind.SPACE),
                 TextWord("fox")
             ),
             parts("The quick fox"),
@@ -45,7 +48,7 @@ class TokenizerTest {
 
     /**
      * Verifies that a trailing punctuation mark becomes its own [TextSymbol] separate from the
-     * preceding word.
+     * preceding word, and that the space after it is preserved as its own part.
      */
     @Test
     fun splitsTrailingPunctuation() {
@@ -53,6 +56,7 @@ class TokenizerTest {
             listOf(
                 TextWord("Hello"),
                 TextSymbol(','),
+                TextWhitespace(WhitespaceKind.SPACE),
                 TextWord("world"),
                 TextSymbol('!')
             ),
@@ -101,25 +105,86 @@ class TokenizerTest {
     }
 
     /**
-     * Verifies that a line break acts as a separator just like a space and is not stored.
+     * Verifies that a line break acts as a word separator like a space, and is itself preserved - not
+     * as a [TextWhitespace], but as its own explicit [TextBreak] token - so the round trip stays
+     * lossless.
      */
     @Test
-    fun treatsLineBreakAsSeparator() {
-        assertEquals(listOf(
-            TextWord("first"),
-            TextWord("second")
-        ), parts("first\nsecond"))
+    fun newlineBecomesSingleTextBreak() {
+        assertEquals(
+            listOf(
+                TextWord("first"),
+                TextBreak,
+                TextWord("second")
+            ),
+            parts("first\nsecond"),
+        )
     }
 
     /**
-     * Verifies that runs of multiple whitespace characters collapse to a single separation.
+     * Verifies that a `\r\n` pair is merged into a single [TextBreak], not two.
      */
     @Test
-    fun collapsesMultipleWhitespace() {
-        assertEquals(listOf(
-            TextWord("a"),
-            TextWord("b")
-        ), parts("a    \t  b"))
+    fun crlfBecomesSingleTextBreak() {
+        assertEquals(
+            listOf(
+                TextWord("first"),
+                TextBreak,
+                TextWord("second")
+            ),
+            parts("first\r\nsecond"),
+        )
+    }
+
+    /**
+     * Verifies that a blank line - two consecutive newlines - becomes two consecutive [TextBreak]
+     * tokens, one per line break.
+     */
+    @Test
+    fun blankLineBecomesTwoTextBreaks() {
+        assertEquals(
+            listOf(
+                TextWord("first"),
+                TextBreak,
+                TextBreak,
+                TextWord("second")
+            ),
+            parts("first\n\nsecond"),
+        )
+    }
+
+    /**
+     * Verifies that ordinary space and tab whitespace is still stored as [TextWhitespace], not
+     * affected by the [TextBreak] change.
+     */
+    @Test
+    fun spacesStillNotStored() {
+        assertEquals(
+            listOf(
+                TextWord("first"),
+                TextWhitespace(WhitespaceKind.SPACE),
+                TextWord("second")
+            ),
+            parts("first second"),
+        )
+    }
+
+    /**
+     * Verifies that a run of whitespace mixing spaces and a tab splits into one [TextWhitespace] per
+     * kind change, each run keeping the length of its own original run.
+     */
+    @Test
+    fun mixedWhitespaceSplitsAtKindChange() {
+        assertEquals(
+            listOf(
+                TextWord("a"),
+                TextWhitespace(WhitespaceKind.SPACE, 4),
+                TextWhitespace(WhitespaceKind.TAB),
+                TextWhitespace(WhitespaceKind.SPACE, 2),
+                TextWord("b")
+            ),
+            parts("a    \t  b"),
+        )
     }
 
     /**
@@ -128,5 +193,162 @@ class TokenizerTest {
     @Test
     fun emptyInputYieldsNoParts() {
         assertEquals(emptyList(), parts(""))
+    }
+
+    /**
+     * Verifies that a single space between two words becomes one [TextWhitespace] run of kind
+     * [WhitespaceKind.SPACE] with a count of one.
+     */
+    @Test
+    fun tokenizePreservesSingleSpaceBetweenWords() {
+        assertEquals(
+            listOf(
+                TextWord("one"),
+                TextWhitespace(WhitespaceKind.SPACE),
+                TextWord("two")
+            ),
+            parts("one two"),
+        )
+    }
+
+    /**
+     * Verifies that several consecutive spaces collapse into a single [TextWhitespace] run whose
+     * count matches the number of original space characters.
+     */
+    @Test
+    fun tokenizePreservesMultipleSpacesAsOneRun() {
+        assertEquals(
+            listOf(
+                TextWord("one"),
+                TextWhitespace(WhitespaceKind.SPACE, 3),
+                TextWord("two")
+            ),
+            parts("one   two"),
+        )
+    }
+
+    /**
+     * Verifies that a run of tab characters is tokenized as [WhitespaceKind.TAB], distinct from a
+     * run of spaces.
+     */
+    @Test
+    fun tokenizeDistinguishesTabFromSpace() {
+        assertEquals(
+            listOf(
+                TextWord("one"),
+                TextWhitespace(WhitespaceKind.TAB, 2),
+                TextWord("two")
+            ),
+            parts("one\t\ttwo"),
+        )
+    }
+
+    /**
+     * Verifies that a word directly following a symbol without any whitespace between them produces
+     * no [TextWhitespace] part - the root cause of the caret-drift bug this model change fixes.
+     */
+    @Test
+    fun tokenizeSymbolDirectlyFollowedByWordHasNoWhitespacePart() {
+        assertEquals(
+            listOf(
+                TextWord("paragraph"),
+                TextSymbol('.'),
+                TextWord("X")
+            ),
+            parts("paragraph.X"),
+        )
+    }
+
+    /**
+     * Verifies that a text mixing alternating runs of spaces and tabs - including a leading and a
+     * trailing run - is tokenized into one [TextWhitespace] part per run, each keeping its own
+     * [WhitespaceKind] and its own run length.
+     */
+    @Test
+    fun tokenizeSplitsAlternatingWhitespaceRunsIncludingLeadingAndTrailing() {
+        assertEquals(
+            listOf(
+                TextWhitespace(WhitespaceKind.SPACE, 2),
+                TextWhitespace(WhitespaceKind.TAB, 2),
+                TextWord("one"),
+                TextWhitespace(WhitespaceKind.SPACE),
+                TextWhitespace(WhitespaceKind.TAB),
+                TextWhitespace(WhitespaceKind.SPACE, 3),
+                TextWord("two"),
+                TextSymbol('.'),
+                TextWhitespace(WhitespaceKind.TAB),
+                TextWhitespace(WhitespaceKind.SPACE, 2)
+            ),
+            parts("  \t\tone \t   two.\t  "),
+        )
+    }
+
+    /**
+     * Verifies that the [TextWhitespace.text] of a run is derived from its kind and count instead of
+     * being stored separately, for every [WhitespaceKind].
+     */
+    @Test
+    fun whitespaceTextIsDerivedFromKindAndCount() {
+        assertEquals("   ", TextWhitespace(WhitespaceKind.SPACE, 3).text)
+        assertEquals("\t\t", TextWhitespace(WhitespaceKind.TAB, 2).text)
+        assertEquals("\n", TextWhitespace(WhitespaceKind.LINE_BREAK).text)
+    }
+
+    /**
+     * Verifies that a `${name}` marker between words tokenizes to a [TextAnchor] carrying that name
+     * as its [TextAnchor.id], with the surrounding whitespace preserved on both sides.
+     */
+    @Test
+    fun tokenizeAnchorMarkerBetweenWords() {
+        assertEquals(
+            listOf(
+                TextWord("go"),
+                TextWhitespace(WhitespaceKind.SPACE),
+                TextAnchor("chapterOne"),
+                TextWhitespace(WhitespaceKind.SPACE),
+                TextWord("now")
+            ),
+            parts("go \${chapterOne} now"),
+        )
+    }
+
+    /**
+     * Verifies that an anchor marker directly adjacent to a word (no whitespace) produces no
+     * [TextWhitespace] part, matching the no-space rule for other parts.
+     */
+    @Test
+    fun tokenizeAnchorMarkerDirectlyAdjacentToWord() {
+        assertEquals(
+            listOf(
+                TextWord("go"),
+                TextAnchor("chapterOne")
+            ),
+            parts("go\${chapterOne}"),
+        )
+    }
+
+    /**
+     * Verifies that a `$` not followed by a well-formed `{name}` marker (no opening brace) is
+     * rejected instead of being silently tokenized as a plain symbol.
+     */
+    @Test
+    fun tokenizeRejectsDollarWithoutOpeningBrace() {
+        assertFailsWith<IllegalArgumentException> { parts("price: \$5") }
+    }
+
+    /**
+     * Verifies that a `${name}` marker missing its closing brace is rejected.
+     */
+    @Test
+    fun tokenizeRejectsAnchorMarkerWithoutClosingBrace() {
+        assertFailsWith<IllegalArgumentException> { parts("go \${chapterOne now") }
+    }
+
+    /**
+     * Verifies that an empty `${}` marker (no name) is rejected.
+     */
+    @Test
+    fun tokenizeRejectsAnchorMarkerWithEmptyName() {
+        assertFailsWith<IllegalArgumentException> { parts("go \${} now") }
     }
 }
