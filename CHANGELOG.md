@@ -12,6 +12,8 @@ excluded.
 
 ## [UNRELEASED]
 
+## [0.3.2]
+
 ### Fixed
 
 - `ui/common`: editing a `TextBlock` that carries a `TextAnchor` (e.g. typing
