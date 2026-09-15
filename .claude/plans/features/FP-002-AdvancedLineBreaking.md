@@ -1,4 +1,4 @@
-# Feature Plan: Advanced Line Breaking
+# Feature Plan: Advanced Line Breaking (COMPLETED)
 
 ## 1. Objective
 
@@ -66,18 +66,42 @@ No change to the default strategy or to existing engine output.
 
 ## 6. Implementation Plan Overview
 
-| ID    | Implementation Plan             | Objective                                                                                          | Dependencies |
-| ----- | ------------------------------- | ------------------------------------------------------------------------------------------------- | ------------ |
-| IP-01 | Balanced Line Breaking          | Provide `BalancedLineBreakerStrategy` with a Knuth-Plass-style minimal-raggedness line breaker.    | -            |
-| IP-02 | Break-Opportunity Line Breaking | Provide `BreakOpportunityLineBreakerStrategy` following UAX #14 break classes.                     | -            |
-| IP-03 | Explicit Break Line Breaking    | Add a raw line-break token and `ExplicitBreakLineBreakerStrategy` that breaks only at those tokens. | -            |
+| ID    | Implementation Plan             | Objective                                                                                          | Dependencies | Status |
+| ----- | ------------------------------- | ------------------------------------------------------------------------------------------------- | ------------ | ------ |
+| IP-01 | Balanced Line Breaking (COMPLETED)          | Provide `BalancedLineBreakerStrategy` with a Knuth-Plass-style minimal-raggedness line breaker.    | -            | COMPLETED |
+| IP-02 | Break-Opportunity Line Breaking (COMPLETED) | Provide `BreakOpportunityLineBreakerStrategy` following UAX #14 break classes.                     | -            | COMPLETED |
+| IP-03 | Explicit Break Line Breaking (COMPLETED)    | Add a raw line-break token and `ExplicitBreakLineBreakerStrategy` that breaks only at those tokens. | -            | COMPLETED |
 
 All three plans require the FP-001/IP-03 `LineBreakerStrategy` seam as an
 external precondition; among themselves they are independent and parallelizable.
 
+### Completed Plans
+
+* IP-01: Balanced Line Breaking - COMPLETED.
+* IP-02: Break-Opportunity Line Breaking - COMPLETED.
+* IP-03: Explicit Break Line Breaking - COMPLETED.
+
 ## 7. Implementation Plans
 
-### IP-01: Balanced Line Breaking
+### IP-01: Balanced Line Breaking (COMPLETED)
+
+**What was actually built**
+
+* `BalancedLineBreakerStrategy` lives in `org.pcsoft.framework.simplay.engine`
+  (next to `LineBreakerStrategy`), not under a nested `...engine.engine`
+  package as sections 2/5 above assumed - the engine module has no such nested
+  package.
+* Everything else matches the plan: internal cost constants, an `O(n^2)`
+  dynamic program over word-granular break points, `WordBreakerStrategy` reuse
+  for over-wide words, and tests comparing raggedness against
+  `GreedyWordLineBreakerStrategy`.
+* Follow-up integration (done as part of finishing the feature): the strategy
+  now splits `parts` into segments with the `splitAtBreaks()` helper shared
+  with `ExplicitBreakLineBreakerStrategy` and runs the balancing dynamic
+  program independently per segment, so a `TextBreak` always forces a hard
+  line end and can never be smoothed away by the raggedness optimisation. Two
+  consecutive breaks (or a break at the very start/end) yield an empty segment,
+  which still produces an empty line.
 
 **Objective**
 
@@ -101,7 +125,7 @@ total badness (raggedness) instead of filling each line greedily.
 * Consumes `LineBreakerStrategy`, `UnplacedLine`, `WordBreakerStrategy` from
   FP-001. Provides no new shared type.
 
-### IP-02: Break-Opportunity Line Breaking
+### IP-02: Break-Opportunity Line Breaking (COMPLETED)
 
 **Objective**
 
@@ -124,7 +148,27 @@ breaks at positions allowed by UAX #14 break classes.
 * Consumes the FP-001 seam and the deterministic test `FontMeasureCalculator`.
   Provides no new shared type.
 
-### IP-03: Explicit Break Line Breaking
+**Built**
+
+* `BreakOpportunityLineBreakerStrategy`, the internal `BreakClass` enum and the
+  classifier live in
+  `engine/src/commonMain/kotlin/org/pcsoft/framework/simplay/engine/BreakOpportunityLineBreakerStrategy.kt`
+  - the actual engine package is `org.pcsoft.framework.simplay.engine`
+  (single-level), not the `...engine.engine` path named in section 2/5; the
+  other shipped strategies (`GreedyWordLineBreakerStrategy`,
+  `CharacterLineBreakerStrategy`, `NoWrapLineBreakerStrategy`) already live
+  there too.
+* Break opportunities are derived by classifying `TextPart`s into atoms, then
+  grouping atoms into maximal non-breakable chunks; the greedy fill operates on
+  chunks exactly like `GreedyWordLineBreakerStrategy` operates on parts. An
+  over-wide CJK word needs no dedicated splitting path: each CJK character is
+  already its own chunk, so it wraps through the same greedy fill.
+* Follow-up integration (done as part of finishing the feature): a `TextBreak`
+  is now classified as a hard break independent of the curated break-opportunity
+  table - the atom stream is cut at every `TextBreak` before chunking, so it can
+  never be absorbed into a chunk or overridden by the break-class rules.
+
+### IP-03: Explicit Break Line Breaking (COMPLETED)
 
 **Objective**
 
@@ -149,13 +193,32 @@ Introduce an explicit line-break token in the raw model and add
 * Provides the raw `TextBreak` token to `engine.model` consumers. Consumes the
   FP-001 seam.
 
+**What was actually built**
+
+* The `LineBreakerStrategy` seam already lives directly in package
+  `org.pcsoft.framework.simplay.engine` (not a nested `...engine.engine`
+  sub-package as this plan's Architecture section assumed);
+  `ExplicitBreakLineBreakerStrategy` and the shared `splitAtBreaks()` helper
+  were placed there, next to `LineBreakerStrategy.kt`.
+  * `TextBreak` is a `data object` with a manual JVM `readResolve`, so it
+    resolves to the same singleton after `java.io.Serializable` round trips.
+  * `TextBreak.text` is `"\n"` (not empty), so it counts as one source
+    character in `charCount()`, matching the risk noted in section 9.
+  * The default `GreedyWordLineBreakerStrategy` and `CharacterLineBreakerStrategy`
+    were changed to flush the current line as a hard break at a `TextBreak`;
+    `NoWrapLineBreakerStrategy` ignores it.
+* `splitAtBreaks()` is now also reused by `BalancedLineBreakerStrategy` (IP-01),
+  and `BreakOpportunityLineBreakerStrategy` (IP-02) applies the equivalent
+  hard-break handling directly on its atom stream, so all three FP-002
+  strategies treat `TextBreak` consistently as a hard line separator.
+
 ## 8. Dependency Graph
 
 ```text
 FP-001/IP-03 (external precondition)
-├── FP-002/IP-01
-├── FP-002/IP-02
-└── FP-002/IP-03
+├── FP-002/IP-01 (COMPLETED)
+├── FP-002/IP-02 (COMPLETED)
+└── FP-002/IP-03 (COMPLETED)
 ```
 
 ## 9. Risks and Open Questions

@@ -105,18 +105,67 @@ class TokenizerTest {
     }
 
     /**
-     * Verifies that a line break acts as a word separator like a space, and is itself preserved as a
-     * [TextWhitespace] of kind [WhitespaceKind.LINE_BREAK] so the round trip stays lossless.
+     * Verifies that a line break acts as a word separator like a space, and is itself preserved - not
+     * as a [TextWhitespace], but as its own explicit [TextBreak] token - so the round trip stays
+     * lossless.
      */
     @Test
-    fun treatsLineBreakAsSeparator() {
+    fun newlineBecomesSingleTextBreak() {
         assertEquals(
             listOf(
                 TextWord("first"),
-                TextWhitespace(WhitespaceKind.LINE_BREAK),
+                TextBreak,
                 TextWord("second")
             ),
             parts("first\nsecond"),
+        )
+    }
+
+    /**
+     * Verifies that a `\r\n` pair is merged into a single [TextBreak], not two.
+     */
+    @Test
+    fun crlfBecomesSingleTextBreak() {
+        assertEquals(
+            listOf(
+                TextWord("first"),
+                TextBreak,
+                TextWord("second")
+            ),
+            parts("first\r\nsecond"),
+        )
+    }
+
+    /**
+     * Verifies that a blank line - two consecutive newlines - becomes two consecutive [TextBreak]
+     * tokens, one per line break.
+     */
+    @Test
+    fun blankLineBecomesTwoTextBreaks() {
+        assertEquals(
+            listOf(
+                TextWord("first"),
+                TextBreak,
+                TextBreak,
+                TextWord("second")
+            ),
+            parts("first\n\nsecond"),
+        )
+    }
+
+    /**
+     * Verifies that ordinary space and tab whitespace is still stored as [TextWhitespace], not
+     * affected by the [TextBreak] change.
+     */
+    @Test
+    fun spacesStillNotStored() {
+        assertEquals(
+            listOf(
+                TextWord("first"),
+                TextWhitespace(WhitespaceKind.SPACE),
+                TextWord("second")
+            ),
+            parts("first second"),
         )
     }
 

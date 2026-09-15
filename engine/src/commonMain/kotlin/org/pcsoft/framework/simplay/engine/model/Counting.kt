@@ -27,7 +27,8 @@ fun TextBlock.anchorCount(): Int = parts.count { it is TextAnchor }
 
 /** Total number of characters across all non-whitespace parts of this block; [TextWhitespace] runs
  * are not counted (as before whitespace was preserved as its own part). A [TextAnchor] never
- * contributes since its [TextPart.text] is always empty. */
+ * contributes since its [TextPart.text] is always empty. A [TextBreak] does contribute (its [TextPart.text]
+ * is `"\n"`, a single character): a line break is a source character, unlike a [TextWhitespace] run. */
 fun TextBlock.charCount(): Int = parts.filterNot { it is TextWhitespace }.sumOf { it.text.length }
 
 /** Sum of [wordCount] over all blocks of this page. */

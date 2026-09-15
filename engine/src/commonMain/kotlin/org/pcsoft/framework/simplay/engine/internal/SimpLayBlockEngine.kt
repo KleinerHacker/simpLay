@@ -12,7 +12,6 @@
 
 package org.pcsoft.framework.simplay.engine.internal
 
-import org.pcsoft.framework.simplay.engine.UnplacedLine
 import org.pcsoft.framework.simplay.engine.geometry.Rect
 import org.pcsoft.framework.simplay.engine.measure.MeasuredLine
 import org.pcsoft.framework.simplay.engine.measure.MeasuredTextBlock
@@ -20,6 +19,7 @@ import org.pcsoft.framework.simplay.engine.measure.MeasuredTextPart
 import org.pcsoft.framework.simplay.engine.measure.MeasuredTextStyle
 import org.pcsoft.framework.simplay.engine.model.TextAlignment
 import org.pcsoft.framework.simplay.engine.model.TextBlock
+import org.pcsoft.framework.simplay.engine.strategy.UnplacedLine
 
 /**
  * Measure stage that places the [UnplacedLine]s of one block slice at absolute positions, in

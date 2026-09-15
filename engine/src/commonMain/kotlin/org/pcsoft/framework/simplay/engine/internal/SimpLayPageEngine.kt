@@ -13,15 +13,15 @@
 package org.pcsoft.framework.simplay.engine.internal
 
 import org.pcsoft.framework.simplay.engine.FontMeasureCalculator
-import org.pcsoft.framework.simplay.engine.GreedyWordLineBreakerStrategy
-import org.pcsoft.framework.simplay.engine.LineBreakerStrategy
-import org.pcsoft.framework.simplay.engine.NoOpWordBreakerStrategy
-import org.pcsoft.framework.simplay.engine.UnplacedLine
-import org.pcsoft.framework.simplay.engine.WordBreakerStrategy
 import org.pcsoft.framework.simplay.engine.measure.*
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.SinglePage
+import org.pcsoft.framework.simplay.engine.strategy.GreedyWordLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.LineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.NoOpWordBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.UnplacedLine
+import org.pcsoft.framework.simplay.engine.strategy.WordBreakerStrategy
 
 /**
  * Measure stage that turns the pages of a raw [Document] into measured pages.

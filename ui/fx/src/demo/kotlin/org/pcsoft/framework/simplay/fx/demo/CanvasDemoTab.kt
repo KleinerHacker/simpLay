@@ -27,15 +27,20 @@ import javafx.scene.layout.Pane
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.text.Font as FxFont
-import org.pcsoft.framework.simplay.engine.CharacterLineBreakerStrategy
-import org.pcsoft.framework.simplay.engine.GreedyWordLineBreakerStrategy
-import org.pcsoft.framework.simplay.engine.LineBreakerStrategy
-import org.pcsoft.framework.simplay.engine.NoOpWordBreakerStrategy
-import org.pcsoft.framework.simplay.engine.NoWrapLineBreakerStrategy
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.SinglePage
 import org.pcsoft.framework.simplay.engine.model.TextBlock
+import org.pcsoft.framework.simplay.engine.strategy.BalancedLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.BreakOpportunityLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.CharacterLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.ExplicitBreakLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.GreedyWordLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.LineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.NoOpWordBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.NoWrapLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.PatternWordBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.WordBreakerStrategy
 import org.pcsoft.framework.simplay.fx.CanvasDocumentRenderer
 
 /**
@@ -84,14 +89,18 @@ class CanvasDemoTab : BorderPane() {
     }
 
     private val lineBreakBox = ComboBox<String>().apply {
-        items.setAll(LINE_GREEDY, LINE_CHARACTER, LINE_NOWRAP)
+        items.setAll(LINE_GREEDY, LINE_CHARACTER, LINE_NOWRAP, LINE_BALANCED, LINE_BREAK_OPPORTUNITY, LINE_EXPLICIT_BREAK)
         selectionModel.selectFirst()
     }
 
     private val wordBreakBox = ComboBox<String>().apply {
-        items.setAll(WORD_NOOP)
+        items.setAll(WORD_NOOP, WORD_GERMAN, WORD_ENGLISH)
         selectionModel.selectFirst()
     }
+
+    /** Caches a loaded [PatternWordBreakerStrategy] per locale so switching [wordBreakBox] back and
+     * forth does not re-parse the pattern file every time. */
+    private val patternWordBreakerCache = mutableMapOf<String, WordBreakerStrategy>()
 
     private val sizeLabel = Label()
 
@@ -143,7 +152,7 @@ class CanvasDemoTab : BorderPane() {
             unitScale = unitScaleSpinner.value
             pageGap = pageGapSpinner.value
             lineBreakerStrategy = selectedLineBreaker()
-            wordBreakerStrategy = NoOpWordBreakerStrategy
+            wordBreakerStrategy = selectedWordBreaker()
         }
 
         val singlePage = modeBox.value == MODE_SINGLE
@@ -247,8 +256,24 @@ class CanvasDemoTab : BorderPane() {
     private fun selectedLineBreaker(): LineBreakerStrategy = when (lineBreakBox.value) {
         LINE_CHARACTER -> CharacterLineBreakerStrategy
         LINE_NOWRAP -> NoWrapLineBreakerStrategy
+        LINE_BALANCED -> BalancedLineBreakerStrategy
+        LINE_BREAK_OPPORTUNITY -> BreakOpportunityLineBreakerStrategy
+        LINE_EXPLICIT_BREAK -> ExplicitBreakLineBreakerStrategy
         else -> GreedyWordLineBreakerStrategy
     }
+
+    private fun selectedWordBreaker(): WordBreakerStrategy = when (wordBreakBox.value) {
+        WORD_GERMAN -> patternWordBreaker("de")
+        WORD_ENGLISH -> patternWordBreaker("en")
+        else -> NoOpWordBreakerStrategy
+    }
+
+    /** Loads (and caches) the bundled [PatternWordBreakerStrategy] for [locale]. Falls back to
+     * [NoOpWordBreakerStrategy] if [locale] has no bundled pattern set. */
+    private fun patternWordBreaker(locale: String): WordBreakerStrategy =
+        patternWordBreakerCache.getOrPut(locale) {
+            PatternWordBreakerStrategy.forLocale(locale) ?: NoOpWordBreakerStrategy
+        }
 
     private fun format(value: Double): String = ((value * 10.0).toInt() / 10.0).toString()
 
@@ -259,7 +284,12 @@ class CanvasDemoTab : BorderPane() {
         const val LINE_GREEDY = "Greedy (word)"
         const val LINE_CHARACTER = "Character"
         const val LINE_NOWRAP = "No wrap"
+        const val LINE_BALANCED = "Balanced"
+        const val LINE_BREAK_OPPORTUNITY = "Break opportunity"
+        const val LINE_EXPLICIT_BREAK = "Explicit break"
         const val WORD_NOOP = "No-op"
+        const val WORD_GERMAN = "German (pattern)"
+        const val WORD_ENGLISH = "English (pattern)"
         const val FONT_DEFAULT = "Default (document)"
 
         /** Safe upper bound for a single JavaFX `Canvas` edge before texture allocation fails. */

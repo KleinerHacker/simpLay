@@ -24,6 +24,16 @@ import javax.swing.JScrollPane
 import javax.swing.JSpinner
 import javax.swing.SpinnerNumberModel
 import javax.swing.SwingUtilities
+import org.pcsoft.framework.simplay.engine.strategy.BalancedLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.BreakOpportunityLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.CharacterLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.ExplicitBreakLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.GreedyWordLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.LineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.NoOpWordBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.NoWrapLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.PatternWordBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.WordBreakerStrategy
 import org.pcsoft.framework.simplay.swing.DocumentImageRenderer
 
 /**
@@ -41,7 +51,15 @@ class ImageDemoPanel : JPanel(BorderLayout()) {
     private val sample = JComboBox(DemoDocuments.all.map { it.first }.toTypedArray())
     private val pageNumber = JComboBox(PageNumberPositions.labels.toTypedArray())
     private val scale = JSpinner(SpinnerNumberModel(1.0, 0.25, 4.0, 0.25))
+    private val lineBreak = JComboBox(
+        arrayOf(LINE_GREEDY, LINE_CHARACTER, LINE_NOWRAP, LINE_BALANCED, LINE_BREAK_OPPORTUNITY, LINE_EXPLICIT_BREAK),
+    )
+    private val wordBreak = JComboBox(arrayOf(WORD_NOOP, WORD_GERMAN, WORD_ENGLISH))
     private val imageLabel = JLabel()
+
+    /** Caches a loaded [PatternWordBreakerStrategy] per locale so switching [wordBreak] back and
+     * forth does not re-parse the pattern file every time. */
+    private val patternWordBreakerCache = mutableMapOf<String, WordBreakerStrategy>()
 
     init {
         val bar = JPanel(FlowLayout(FlowLayout.LEFT)).apply {
@@ -51,6 +69,10 @@ class ImageDemoPanel : JPanel(BorderLayout()) {
             add(pageNumber)
             add(JLabel("Scale:"))
             add(scale)
+            add(JLabel("Line break:"))
+            add(lineBreak)
+            add(JLabel("Word break:"))
+            add(wordBreak)
         }
         add(bar, BorderLayout.NORTH)
         add(JScrollPane(imageLabel), BorderLayout.CENTER)
@@ -58,6 +80,8 @@ class ImageDemoPanel : JPanel(BorderLayout()) {
         sample.addActionListener { selectPageNumberFromSample(); rerender() }
         pageNumber.addActionListener { rerender() }
         scale.addChangeListener { rerender() }
+        lineBreak.addActionListener { rerender() }
+        wordBreak.addActionListener { rerender() }
 
         selectPageNumberFromSample()
         rerender()
@@ -85,11 +109,38 @@ class ImageDemoPanel : JPanel(BorderLayout()) {
         val document = base.withPageNumberPosition(position)
         val unit = (scale.value as Number).toDouble()
         val deviceScale = graphicsConfiguration?.defaultTransform?.scaleX ?: 1.0
-        val renderer = DocumentImageRenderer.of(document) { unitScale = unit * deviceScale; pageGap = 16.0 * deviceScale }
+        val renderer = DocumentImageRenderer.of(document) {
+            unitScale = unit * deviceScale
+            pageGap = 16.0 * deviceScale
+            lineBreakerStrategy = selectedLineBreaker()
+            wordBreakerStrategy = selectedWordBreaker()
+        }
         imageLabel.icon = ImageIcon(toResolutionAwareImage(renderer.renderDocument(), deviceScale))
         imageLabel.revalidate()
         imageLabel.repaint()
     }
+
+    private fun selectedLineBreaker(): LineBreakerStrategy = when (lineBreak.selectedItem as String) {
+        LINE_CHARACTER -> CharacterLineBreakerStrategy
+        LINE_NOWRAP -> NoWrapLineBreakerStrategy
+        LINE_BALANCED -> BalancedLineBreakerStrategy
+        LINE_BREAK_OPPORTUNITY -> BreakOpportunityLineBreakerStrategy
+        LINE_EXPLICIT_BREAK -> ExplicitBreakLineBreakerStrategy
+        else -> GreedyWordLineBreakerStrategy
+    }
+
+    private fun selectedWordBreaker(): WordBreakerStrategy = when (wordBreak.selectedItem as String) {
+        WORD_GERMAN -> patternWordBreaker("de")
+        WORD_ENGLISH -> patternWordBreaker("en")
+        else -> NoOpWordBreakerStrategy
+    }
+
+    /** Loads (and caches) the bundled [PatternWordBreakerStrategy] for [locale]. Falls back to
+     * [NoOpWordBreakerStrategy] if [locale] has no bundled pattern set. */
+    private fun patternWordBreaker(locale: String): WordBreakerStrategy =
+        patternWordBreakerCache.getOrPut(locale) {
+            PatternWordBreakerStrategy.forLocale(locale) ?: NoOpWordBreakerStrategy
+        }
 
     /**
      * Wraps [deviceImage] - rendered at [deviceScale]x device pixels - into a [BaseMultiResolutionImage]
@@ -102,5 +153,18 @@ class ImageDemoPanel : JPanel(BorderLayout()) {
         val logicalHeight = (deviceImage.height / deviceScale).toInt().coerceAtLeast(1)
         val logicalPlaceholder = BufferedImage(logicalWidth, logicalHeight, BufferedImage.TYPE_INT_ARGB)
         return BaseMultiResolutionImage(logicalPlaceholder, deviceImage)
+    }
+
+    private companion object {
+
+        const val LINE_GREEDY = "Greedy (word)"
+        const val LINE_CHARACTER = "Character"
+        const val LINE_NOWRAP = "No wrap"
+        const val LINE_BALANCED = "Balanced"
+        const val LINE_BREAK_OPPORTUNITY = "Break opportunity"
+        const val LINE_EXPLICIT_BREAK = "Explicit break"
+        const val WORD_NOOP = "No-op"
+        const val WORD_GERMAN = "German (pattern)"
+        const val WORD_ENGLISH = "English (pattern)"
     }
 }

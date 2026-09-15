@@ -17,7 +17,8 @@ import kotlinx.serialization.Serializable
 import org.pcsoft.framework.simplay.engine.PlatformSerializable
 
 /**
- * A single atomic piece of text, including whitespace runs (see [TextWhitespace]).
+ * A single atomic piece of text, including whitespace runs (see [TextWhitespace]) and the explicit
+ * line-break token (see [TextBreak]).
  */
 @Serializable
 sealed interface TextPart : PlatformSerializable {
@@ -83,6 +84,34 @@ data class TextWhitespace(val kind: WhitespaceKind, val count: Int = 1) : TextPa
     /** The [count] characters of this run, derived from [WhitespaceKind.char]. */
     override val text: String
         get() = kind.char.toString().repeat(count)
+}
+
+/**
+ * An explicit line-break token, produced by the tokenizer for every `\n` (and every `\r\n`, merged
+ * into one) in the source text.
+ *
+ * A `data object` since there is only ever one kind of break; this keeps `equals`/`hashCode` free
+ * and lets serialization store it as a bare discriminator. [text] is `"\n"`, not the empty string,
+ * so a break is a source character that [TextBlock.charCount]/[TextBlock.toString] account for -
+ * the very thing it represents.
+ *
+ * Never measured and never turned into a `MeasuredTextPart`: a [org.pcsoft.framework.simplay.engine.strategy.LineBreakerStrategy]
+ * consumes every [TextBreak] before a line reaches the measure pipeline.
+ */
+@Serializable
+@SerialName("break")
+data object TextBreak : TextPart {
+
+    /** Always `"\n"`: a [TextBreak] represents exactly the line-feed character it replaced. */
+    override val text: String get() = "\n"
+
+    /**
+     * Resolves a deserialized instance back to the [TextBreak] singleton on the JVM, where plain
+     * `object`s do not do this automatically for `java.io.Serializable`/`ObjectInputStream` (unlike
+     * `enum`).
+     */
+    @Suppress("unused")
+    private fun readResolve(): Any = TextBreak
 }
 
 /**

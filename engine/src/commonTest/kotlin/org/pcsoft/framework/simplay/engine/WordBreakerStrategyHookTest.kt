@@ -14,9 +14,15 @@ package org.pcsoft.framework.simplay.engine
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.TextBlock
+import org.pcsoft.framework.simplay.engine.strategy.GreedyWordLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.NoOpWordBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.PatternWordBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.WordBreakerStrategy
 
 /**
  * Verifies the [WordBreakerStrategy] seam: the no-op default leaves an over-long word whole, while a
@@ -61,7 +67,7 @@ class WordBreakerStrategyHookTest {
         )
 
         assertEquals(2, lines.size)
-        assertEquals("abcde", lines[0].parts.single().part.text)
+        assertEquals("abcde-", lines[0].parts.single().part.text)
         assertEquals("fghij", lines[1].parts.single().part.text)
     }
 
@@ -86,5 +92,32 @@ class WordBreakerStrategyHookTest {
 
         val lines = measured.pages[0].blocks[0].lines
         assertEquals(2, lines.size)
+    }
+
+    /**
+     * Use case: a real, bundled [PatternWordBreakerStrategy] (English patterns) makes the greedy line
+     * breaker hyphenate a long word that does not fit a narrow line, instead of overflowing it.
+     */
+    @Test
+    fun patternWordBreakerStrategySplitsALongWordSyllableAccurately() {
+        val english = assertNotNull(PatternWordBreakerStrategy.forLocale("en"))
+
+        val lines = GreedyWordLineBreakerStrategy.breakIntoLines(
+            parts = EngineTestData.parts("information"),
+            font = font,
+            maxWidth = 30.0,
+            measurer = EngineTestData.measurer,
+            wordBreaker = english,
+        )
+
+        assertTrue(lines.size > 1)
+        assertEquals(
+            "information",
+            lines.joinToString("") { line -> line.parts.joinToString("") { it.part.text } }.replace("-", ""),
+        )
+        assertTrue(
+            lines.any { line -> line.parts.any { it.part.text.endsWith("-") } },
+            "expected at least one line part to carry a visible hyphen mark",
+        )
     }
 }

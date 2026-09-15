@@ -19,6 +19,8 @@ import kotlin.test.assertTrue
 import org.pcsoft.framework.simplay.engine.internal.SimpLayBlockEngine
 import org.pcsoft.framework.simplay.engine.model.TextAlignment
 import org.pcsoft.framework.simplay.engine.model.TextBlock
+import org.pcsoft.framework.simplay.engine.strategy.GreedyWordLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.NoOpWordBreakerStrategy
 
 /**
  * Verifies the horizontal placement rules of [SimpLayBlockEngine] for every [TextAlignment],

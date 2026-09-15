@@ -135,9 +135,11 @@ empty result.
   among them, and `naturalWidth` (the sum of all parts and gaps, before any
   alignment adjustment).
 
-Three implementations ship. All three insert one space before every `TextWord`
+Six implementations ship. All six insert one space before every `TextWord`
 except the first part of a line and attach a `TextSymbol` with no leading space;
-they differ only in *where* they end a line.
+they differ in *where* they end a line, in whether that choice looks only at the
+current line or at the whole block, and in how they handle an explicit
+`TextBreak` token.
 
 ##### GreedyWordLineBreakerStrategy (default)
 
@@ -159,7 +161,9 @@ strategy offers that word to the `WordBreakerStrategy`:
 
 Use it for normal prose: it gives the familiar "as many words as fit" wrapping
 and only ever breaks inside a word when a `WordBreakerStrategy` explicitly allows
-it.
+it. A `TextBreak` always flushes the current line - even an empty one, so a
+blank source line still produces an empty line - and the next line starts fresh,
+with no leading space carried over.
 
 ##### CharacterLineBreakerStrategy
 
@@ -168,7 +172,9 @@ that still fits the remaining line width (found by binary search), flushes, and
 continues with the rest of the part on the next line. It breaks at *any*
 position, including inside a word, and it **never** consults the
 `WordBreakerStrategy`. When a line is empty it always places at least one
-character, so progress is guaranteed even in a very narrow column.
+character, so progress is guaranteed even in a very narrow column. A `TextBreak`
+is handled the same as in `GreedyWordLineBreakerStrategy`: a hard flush, with no
+leading space carried over.
 
 Use it for hard-wrapped, monospace-style output, for narrow columns where ragged
 word wrapping would waste too much width, or wherever a guaranteed fit matters
@@ -178,12 +184,72 @@ more than word integrity. Expect words to be cut without a hyphen.
 
 Never breaks. Every part of the block goes onto a single `UnplacedLine`, whose
 `naturalWidth` may be far larger than `maxWidth`. The `WordBreakerStrategy` is
-ignored.
+ignored, and so is a `TextBreak` - it produces no glyph and does not mark a
+pending space, since this strategy never breaks a line in the first place.
 
 Use it when the caller handles overflow itself - a single-line label, a clipping
 viewport, a horizontally scrolling area, or a measuring pass that only needs the
 unwrapped width. Combined with a `SinglePage` this produces one very wide line
 rather than extra pages.
+
+##### ExplicitBreakLineBreakerStrategy
+
+Breaks only at a `TextBreak`, never on width. The raw parts are split into
+segments at every `TextBreak` (dropping the token itself); each segment becomes
+exactly one `UnplacedLine`, however wide - a segment wider than `maxWidth`
+simply overflows. Two consecutive breaks (or a break at the very start or end)
+yield an empty segment, which still becomes an empty line using the font's
+metric ascent/descent, so a blank line takes up vertical space. The
+`WordBreakerStrategy` is accepted but ignored, like `NoWrapLineBreakerStrategy`.
+
+Use it when the caller has already laid out the text into lines - e.g. source
+text with meaningful newlines, such as code or preformatted text - and wants
+those newlines to be the only line breaks, with no reflow on width.
+
+##### BalancedLineBreakerStrategy
+
+Breaks a whole block at once instead of line by line. It builds the legal break
+points before every `TextWord` (a `TextSymbol` run directly followed by a word,
+with no intervening whitespace, is never split apart - the symbols always stay
+attached to the front of that word) and runs a dynamic program over them that
+picks the partition into lines with the lowest total badness: a non-final line
+is penalised the more slack it leaves, an overflowing line is penalised in
+proportion to the overflow, and the final line of the block is free to be
+short. Ties favour fewer lines, then the earliest break. A `TextBreak` splits
+the block into independent segments first - each segment is broken on its own,
+so a hard break can never be smoothed away by the balancing pass.
+
+A word wider than the content width on its own is offered to the
+`WordBreakerStrategy`, exactly like `GreedyWordLineBreakerStrategy`; without an
+offer the word stays whole and its line overflows.
+
+Use it for body text where an even, book-like rag matters more than the cost of
+looking ahead across the whole block.
+
+```kotlin
+val engine = SimpLayEngine.builder(measurer)
+    .lineBreakerStrategy(BalancedLineBreakerStrategy)
+    .build()
+```
+
+##### BreakOpportunityLineBreakerStrategy
+
+Fills lines the same way `GreedyWordLineBreakerStrategy` does, but restricts
+where a cut is allowed to a curated, non-conformant approximation of the
+Unicode UAX #14 line-break classes: a break is allowed before an opening
+bracket or after a closing one, after terminal punctuation such as `,`, `;` or
+`.` (but not before it), and on either side of an em dash or a CJK ideograph.
+A digit run, a `.`/`,` and another digit run with nothing in between (e.g. the
+tokens of `"1,000"`) are always kept together, so a thousands or decimal
+separator is never picked as a break. A `TextWord` made only of CJK-classified
+characters breaks between any two of them instead of overflowing as a whole. A
+`TextBreak` is always a hard break, independent of the curated break-opportunity
+table. It **never** consults the `WordBreakerStrategy`.
+
+Use it for text where breaking on whitespace alone is too coarse but
+character-level wrapping is too aggressive - text with heavy punctuation, or
+mixed Latin/CJK content - while still respecting a few basic typographic
+rules (no break before closing punctuation, no split thousands separator).
 
 A custom strategy implements the `fun interface` directly; it may call `measurer`
 as often as needed but must return the same lines for the same input.
@@ -213,9 +279,10 @@ ascending order:
   out-of-order values are filtered and sorted by the caller.
 
 The engine inserts no hyphen glyph; if a strategy wants a visible hyphen it must
-be part of the measured widths it reasons about. Only
-`GreedyWordLineBreakerStrategy` consults this seam;
-`CharacterLineBreakerStrategy` and `NoWrapLineBreakerStrategy` ignore it.
+be part of the measured widths it reasons about. `GreedyWordLineBreakerStrategy`
+and `BalancedLineBreakerStrategy` consult this seam; `CharacterLineBreakerStrategy`,
+`NoWrapLineBreakerStrategy`, `ExplicitBreakLineBreakerStrategy` and
+`BreakOpportunityLineBreakerStrategy` ignore it.
 
 ##### `NoOpWordBreakerStrategy` (default)
 
