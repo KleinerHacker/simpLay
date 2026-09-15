@@ -1,6 +1,6 @@
 # engine - SimpLayEngine
 
-`SimpLayEngine` (package `org.pcsoft.framework.simplay.engine.engine`) converts a
+`SimpLayEngine` (package `org.pcsoft.framework.simplay.engine`) converts a
 raw [`Document`](raw-model.md) into a [`MeasuredDocument`](measured-model.md) in
 one explicit call. It never touches a platform text stack: all text measuring is
 delegated to a caller-supplied callback. `measure` is deterministic - the same
@@ -9,8 +9,8 @@ document and callback always produce the same result.
 ## Building the engine
 
 ```kotlin
-import org.pcsoft.framework.simplay.engine.engine.FontMeasureCalculator
-import org.pcsoft.framework.simplay.engine.engine.SimpLayEngine
+import org.pcsoft.framework.simplay.engine.FontMeasureCalculator
+import org.pcsoft.framework.simplay.engine.SimpLayEngine
 import org.pcsoft.framework.simplay.engine.geometry.TextMetrics
 
 val engine = SimpLayEngine.builder(
@@ -25,6 +25,11 @@ val measured = engine.measure(document)
 
 `SimpLayEngine.builder(measurer)` takes the mandatory `FontMeasureCalculator` and
 returns a `Builder`. The strategies are fixed once `build()` is called.
+
+A renderer that keeps its measure settings in a `RenderConfiguration` can skip
+the builder and use `config.createEngine(measurer)` or the one-shot
+`document.measure(measurer, config)` instead; see
+[Implementation](implementation.md#measuring-from-a-renderconfiguration).
 
 ## The FontMeasureCalculator contract
 
@@ -47,15 +52,18 @@ fun measure(font: Font, text: String): TextMetrics
 
 `lineBreakerStrategy(...)` on the builder selects how the parts of a block become
 lines. Every implementation is deterministic and platform-free and produces
-positionless `UnplacedLine` / `UnplacedPart` values. The three shipped
+positionless `UnplacedLine` / `UnplacedPart` values. The shipped
 strategies are described in detail on the
 [Implementation](implementation.md#choosing-strategies) page.
 
 | Strategy | Behaviour |
 |----------|-----------|
-| `GreedyWordLineBreakerStrategy` (default) | Adds parts until the next no longer fits, then starts a new line. Word- and symbol-aware: one space before every `TextWord` except the first of a line, `TextSymbol` attached with no leading space. A word wider than the content width is offered to the `WordBreakerStrategy`; if it declines, the word is kept whole and overflows. |
-| `CharacterLineBreakerStrategy` | Fills lines character by character, breaking at any position, even mid-word. Never consults the `WordBreakerStrategy`. |
-| `NoWrapLineBreakerStrategy` | Never breaks; all parts land in one line that may exceed the content width. |
+| `GreedyWordLineBreakerStrategy` (default) | Adds parts until the next no longer fits, then starts a new line. Word- and symbol-aware: one space before every `TextWord` except the first of a line, `TextSymbol` attached with no leading space. A word wider than the content width is offered to the `WordBreakerStrategy`; if it declines, the word is kept whole and overflows. A `TextBreak` is a hard break: the current line ends there, even if empty. |
+| `CharacterLineBreakerStrategy` | Fills lines character by character, breaking at any position, even mid-word. Never consults the `WordBreakerStrategy`. A `TextBreak` is a hard break, same as above. |
+| `NoWrapLineBreakerStrategy` | Never breaks; all parts land in one line that may exceed the content width. A `TextBreak` is ignored, since this strategy never breaks a line in the first place. |
+| `ExplicitBreakLineBreakerStrategy` | Breaks only at a `TextBreak`, never on width: every segment between two breaks (or the start/end and a break) becomes exactly one line, however wide. An empty segment - two consecutive breaks - still produces an empty line, so a blank line takes up vertical space. Ignores the `WordBreakerStrategy`. |
+| `BalancedLineBreakerStrategy` | Breaks a whole block at once, choosing the partition into lines with the lowest total raggedness instead of filling every line greedily. Word-granular, symbol-aware and consults the `WordBreakerStrategy` for over-wide words, same as `GreedyWordLineBreakerStrategy`. A `TextBreak` is a hard break, same as the greedy strategy. |
+| `BreakOpportunityLineBreakerStrategy` | Greedily fills lines like `GreedyWordLineBreakerStrategy`, but only breaks at a curated approximation of Unicode's line-break opportunities: not before a closing bracket or after an opening one, not inside a digit group separated by `.`/`,`, and between (but never inside a run of) CJK ideographs. Never consults the `WordBreakerStrategy`. A `TextBreak` is a hard break, same as the greedy strategy. |
 
 ```kotlin
 val engine = SimpLayEngine.builder(measurer)
@@ -68,12 +76,29 @@ val engine = SimpLayEngine.builder(measurer)
 `wordBreakerStrategy(...)` selects the intra-word (hyphenation) seam. It is asked
 where an over-wide single word may split and returns ascending break offsets in
 `1 until word.length`; an empty list means "do not split". Only
-`GreedyWordLineBreakerStrategy` consults it. See the
+`GreedyWordLineBreakerStrategy` and `BalancedLineBreakerStrategy` consult it. See the
 [Implementation](implementation.md#choosing-strategies) page for the full
 contract.
 
 The default `NoOpWordBreakerStrategy` always returns an empty list, so an
-over-long word overflows its line. No hyphenation ships with the engine.
+over-long word overflows its line.
+
+`PatternWordBreakerStrategy` offers syllable-accurate hyphenation, computed with
+Liang's algorithm from hyph-utf8/TeX patterns embedded in the engine at compile
+time. Build one with its factory function:
+
+```kotlin
+val german = PatternWordBreakerStrategy.forLocale("de") ?: NoOpWordBreakerStrategy
+
+SimpLayEngine.builder(measurer)
+    .wordBreakerStrategy(german)
+    .build()
+```
+
+`forLocale(...)` returns `null` when no patterns are bundled for the given
+locale; fall back to `NoOpWordBreakerStrategy` (or another `WordBreakerStrategy`)
+in that case. Only `de` and `en` ship with the engine today - see
+`LICENSES.md` next to the pattern sources for their origin and licence.
 
 ## Alignment and line spacing
 
@@ -111,8 +136,8 @@ lineSpacing.extraLeading`. Each line's `baseline` is set to its `ascent`.
 ## Worked example
 
 ```kotlin
-import org.pcsoft.framework.simplay.engine.engine.FontMeasureCalculator
-import org.pcsoft.framework.simplay.engine.engine.SimpLayEngine
+import org.pcsoft.framework.simplay.engine.FontMeasureCalculator
+import org.pcsoft.framework.simplay.engine.SimpLayEngine
 import org.pcsoft.framework.simplay.engine.geometry.Margins
 import org.pcsoft.framework.simplay.engine.geometry.Size
 import org.pcsoft.framework.simplay.engine.geometry.TextMetrics
@@ -153,6 +178,38 @@ val totalWords = measured.wordCount()               // 9
 The content width here is `200 - 10 - 10 = 180`, so at 6 units per glyph the
 block wraps into multiple `MeasuredLine` objects, each with a `lineBox` inside the
 page content area.
+
+## Page numbering
+
+Turning `Document.numbering` (a raw [`PageNumbering`](raw-model.md#page-numbering)
+value) into the labels a renderer draws is a two-step, pure computation:
+
+1. `numbering.counting` (a `PageCountingMode`) *is* the `PageCountingStrategy` to
+   run - the enum implements the strategy interface directly, so the persisted
+   setting and its executable behaviour are one value with no lookup or bridging
+   step in between. `numbering.counting.numbers(sheetCount, excludedSheetFlags,
+   startNumber)` returns the displayed number per sheet, `null` for an excluded
+   one.
+2. `measured.planPageNumbers(numbering)` - an extension function on
+   `MeasuredDocument` - combines that with the sheet geometry: it marks a sheet
+   excluded when its `MeasuredPage.raw.id` is in `numbering.excludedPageIds`,
+   resolves `TOP_INNER` / `TOP_OUTER` / `BOTTOM_INNER` / `BOTTOM_OUTER` against
+   the sheet's 1-based parity, and returns one `PageNumberLabel?` per sheet -
+   `null` where nothing is drawn, and an empty list outright when
+   `numbering.position == PageNumberPosition.OFF`.
+
+```kotlin
+import org.pcsoft.framework.simplay.engine.PageNumberLabel
+import org.pcsoft.framework.simplay.engine.planPageNumbers
+
+val labels: List<PageNumberLabel?> = measured.planPageNumbers(document.numbering)
+```
+
+A `PageNumberLabel` carries the rendered `text`, its page-local anchor (`x`, `y`)
+and a horizontal `alignment`; a renderer only draws it; every layout decision
+already happened in `planPageNumbers`. See
+[Rendering](rendering.md#page-numbering) for how `fx` and `swing` draw the
+result.
 
 ## Next
 

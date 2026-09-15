@@ -14,13 +14,17 @@ package org.pcsoft.framework.simplay.engine.model
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
+import nl.adaptivity.xmlutil.serialization.XML
+import org.pcsoft.framework.simplay.engine.PageCountingMode
 import org.pcsoft.framework.simplay.engine.geometry.Margins
 import org.pcsoft.framework.simplay.engine.geometry.Size
 
 class SerializationTest {
 
     private val json = Json { prettyPrint = false }
+    private val xml = XML { autoPolymorphic = true }
     private val style = TextStyle(
         Font(
             "Serif",
@@ -79,5 +83,150 @@ class SerializationTest {
         val document = Document()
         val encoded = json.encodeToString(Document.serializer(), document)
         assertEquals(document, json.decodeFromString(Document.serializer(), encoded))
+    }
+
+    /**
+     * Verifies that a page's stable [Page.id] is preserved across a JSON encode/decode round trip.
+     */
+    @Test
+    fun roundTripPreservesPageId() {
+        val page = FlowPage(layout, emptyList())
+        val encoded = json.encodeToString(Page.serializer(), page)
+        val decoded = json.decodeFromString(Page.serializer(), encoded)
+
+        assertEquals(page.id, decoded.id)
+    }
+
+    /**
+     * Verifies that decoding a page JSON payload without an "id" field assigns a fresh, non-blank
+     * identifier via the field default, instead of failing.
+     */
+    @Test
+    fun decodingWithoutIdAssignsFreshId() {
+        val legacyJson = """{"type":"flow","layout":${json.encodeToString(PageLayout.serializer(), layout)}}"""
+        val decoded = json.decodeFromString(Page.serializer(), legacyJson)
+
+        assertTrue(decoded.id.isNotBlank())
+    }
+
+    /**
+     * Verifies that a non-default [PageNumbering] configuration on a [Document] survives a JSON
+     * encode/decode round trip unchanged.
+     */
+    @Test
+    fun roundTripPreservesPageNumbering() {
+        val document = Document(
+            pages = listOf(FlowPage(layout, emptyList())),
+            numbering = PageNumbering(
+                position = PageNumberPosition.BOTTOM_OUTER,
+                startNumber = 5,
+                excludedPageIds = setOf("some-page-id"),
+                counting = PageCountingMode.SKIP_EXCLUDED,
+            ),
+        )
+
+        val encoded = json.encodeToString(Document.serializer(), document)
+        val decoded = json.decodeFromString(Document.serializer(), encoded)
+
+        assertEquals(document, decoded)
+    }
+
+    /**
+     * Verifies that a [TextWhitespace] part (both [WhitespaceKind]s) survives a JSON encode/decode
+     * round trip as part of a tokenized [TextBlock], keeping its polymorphic [TextPart] identity.
+     */
+    @Test
+    fun roundTripsTextWhitespaceViaJson() {
+        val block = TextBlock.of("one \t two", style)
+
+        val encoded = json.encodeToString(TextBlock.serializer(), block)
+        val decoded = json.decodeFromString(TextBlock.serializer(), encoded)
+
+        assertEquals(block, decoded)
+        assertTrue(decoded.parts.any { it is TextWhitespace && it.kind == WhitespaceKind.SPACE })
+        assertTrue(decoded.parts.any { it is TextWhitespace && it.kind == WhitespaceKind.TAB })
+        assertEquals("one \t two", decoded.toString())
+    }
+
+    /**
+     * Verifies that a [TextWhitespace] part (both [WhitespaceKind]s) survives an XML encode/decode
+     * round trip as part of a tokenized [TextBlock], keeping its polymorphic [TextPart] identity.
+     */
+    @Test
+    fun roundTripsTextWhitespaceViaXml() {
+        val block = TextBlock.of("one \t two", style)
+
+        val encoded = xml.encodeToString(TextBlock.serializer(), block)
+        val decoded = xml.decodeFromString(TextBlock.serializer(), encoded)
+
+        assertEquals(block, decoded)
+        assertTrue(decoded.parts.any { it is TextWhitespace && it.kind == WhitespaceKind.SPACE })
+        assertTrue(decoded.parts.any { it is TextWhitespace && it.kind == WhitespaceKind.TAB })
+        assertEquals("one \t two", decoded.toString())
+    }
+
+    /**
+     * Verifies that a [TextAnchor] part survives a JSON encode/decode round trip as part of a
+     * tokenized [TextBlock], keeping its polymorphic [TextPart] identity and `${id}` marker.
+     */
+    @Test
+    fun roundTripsTextAnchorViaJson() {
+        val block = TextBlock.of("go to \${chapterOne} now", style)
+
+        val encoded = json.encodeToString(TextBlock.serializer(), block)
+        val decoded = json.decodeFromString(TextBlock.serializer(), encoded)
+
+        assertEquals(block, decoded)
+        assertTrue(decoded.parts.any { it is TextAnchor && it.id == "chapterOne" })
+        assertEquals("go to \${chapterOne} now", decoded.toString())
+    }
+
+    /**
+     * Verifies that a [TextAnchor] part survives an XML encode/decode round trip as part of a
+     * tokenized [TextBlock], keeping its polymorphic [TextPart] identity and `${id}` marker.
+     */
+    @Test
+    fun roundTripsTextAnchorViaXml() {
+        val block = TextBlock.of("go to \${chapterOne} now", style)
+
+        val encoded = xml.encodeToString(TextBlock.serializer(), block)
+        val decoded = xml.decodeFromString(TextBlock.serializer(), encoded)
+
+        assertEquals(block, decoded)
+        assertTrue(decoded.parts.any { it is TextAnchor && it.id == "chapterOne" })
+        assertEquals("go to \${chapterOne} now", decoded.toString())
+    }
+
+    /**
+     * Verifies that a [TextBreak] survives a JSON encode/decode round trip as part of a tokenized
+     * [TextBlock], keeping its polymorphic [TextPart] identity and its `data object` singleton
+     * behaviour.
+     */
+    @Test
+    fun textBreakRoundTripsJson() {
+        val block = TextBlock.of("one\ntwo", style)
+
+        val encoded = json.encodeToString(TextBlock.serializer(), block)
+        val decoded = json.decodeFromString(TextBlock.serializer(), encoded)
+
+        assertEquals(block, decoded)
+        assertTrue(decoded.parts.any { it === TextBreak })
+        assertEquals("one\ntwo", decoded.toString())
+    }
+
+    /**
+     * Verifies that a [TextBreak] survives an XML encode/decode round trip as part of a tokenized
+     * [TextBlock], keeping its polymorphic [TextPart] identity as a bare discriminator element.
+     */
+    @Test
+    fun textBreakRoundTripsXml() {
+        val block = TextBlock.of("one\ntwo", style)
+
+        val encoded = xml.encodeToString(TextBlock.serializer(), block)
+        val decoded = xml.decodeFromString(TextBlock.serializer(), encoded)
+
+        assertEquals(block, decoded)
+        assertTrue(decoded.parts.any { it === TextBreak })
+        assertEquals("one\ntwo", decoded.toString())
     }
 }

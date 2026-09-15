@@ -12,13 +12,13 @@
 
 package org.pcsoft.framework.simplay.engine.measure
 
-import kotlin.math.max
 import org.pcsoft.framework.simplay.engine.geometry.Rect
 import org.pcsoft.framework.simplay.engine.geometry.Size
 import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.Page
 import org.pcsoft.framework.simplay.engine.model.PageLayout
 import org.pcsoft.framework.simplay.engine.model.SinglePage
+import kotlin.math.max
 
 /**
  * A raw [Page] with its blocks replaced by measured blocks.

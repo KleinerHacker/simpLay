@@ -1,9 +1,9 @@
-# simPLay
+# simpLay
 
-simPLay is a Kotlin framework for building simulations. The core is a Kotlin
-Multiplatform engine; a Kotlin Multiplatform module adds console output and
-dedicated JVM modules add integrations for JavaFX, Swing, PDF export and
-printing.
+simpLay is a Kotlin framework for building simulations. The core is a Kotlin
+Multiplatform engine; dedicated JVM modules add integrations for JavaFX and
+Swing. A Kotlin Multiplatform module for console output and dedicated JVM
+modules for PDF export and printing are planned.
 
 This documentation covers how to consume and interact with the public API of the
 framework. For checkout, build and contribution instructions see the project
@@ -11,11 +11,12 @@ framework. For checkout, build and contribution instructions see the project
 
 ## What it is
 
-`simPLay` provides a platform-independent simulation core (`engine`), a
-platform-independent console output module (`console`) and a set of JVM
-integration modules that connect a running simulation to a user interface
-(`fx`, `swing`) or to an output pipeline (`j-pdf`, `j-print`). Every module is
-published as a separate artifact and can be added independently.
+`simpLay` provides a platform-independent simulation core (`engine`) and two
+groups of integration modules: user-interface bindings under `ui/`
+(`ui/common`, `ui/fx`, `ui/swing`, plus the planned `ui/console`) and
+output-format bindings under `export/` (the planned `export/jvm-pdf` and
+`export/jvm-print`). Every module is published as a separate artifact and can
+be added independently.
 
 ## AI disclosure
 
@@ -25,18 +26,20 @@ entirely with the assistance of artificial intelligence.
 
 ## Modules
 
-- **console** - [Implementation](console/implementation.md): render simulation
-  output to the console with the Kotlin Multiplatform module.
 - **engine** - [Implementation](engine/implementation.md): add the dependency and
   create a simulation with the Kotlin Multiplatform core.
-- **fx** - [Implementation](fx/implementation.md): bind a simulation to a JavaFX
+- **ui/common** - [Implementation](common/implementation.md): the toolkit-agnostic
+  building blocks shared by the UI bindings.
+- **ui/fx** - [Implementation](fx/implementation.md): bind a simulation to a JavaFX
   user interface.
-- **j-pdf** - [Implementation](j-pdf/implementation.md): export simulation output
-  to PDF.
-- **j-print** - [Implementation](j-print/implementation.md): send simulation
-  output to a printer.
-- **swing** - [Implementation](swing/implementation.md): bind a simulation to a
+- **ui/swing** - [Implementation](swing/implementation.md): bind a simulation to a
   Swing user interface.
+- **ui/console** - [Implementation](console/implementation.md): render simulation
+  output to the console with the Kotlin Multiplatform module.
+- **export/jvm-pdf** - [Implementation](jvm-pdf/implementation.md): export
+  simulation output to PDF (JVM).
+- **export/jvm-print** - [Implementation](jvm-print/implementation.md): send
+  simulation output to a printer (JVM).
 
 ## Further references
 

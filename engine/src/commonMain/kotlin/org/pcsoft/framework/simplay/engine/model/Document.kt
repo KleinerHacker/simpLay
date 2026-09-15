@@ -19,4 +19,7 @@ import org.pcsoft.framework.simplay.engine.PlatformSerializable
  * A whole document made of pages. A plain data holder; an empty document is allowed.
  */
 @Serializable
-data class Document(val pages: List<Page> = emptyList()) : PlatformSerializable
+data class Document(
+    val pages: List<Page> = emptyList(),
+    val numbering: PageNumbering = PageNumbering.OFF,
+) : PlatformSerializable

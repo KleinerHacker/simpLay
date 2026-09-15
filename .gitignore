@@ -40,3 +40,7 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### MKDocs ###
+docs/docs/dokka
+docs/docs/licences

@@ -25,8 +25,14 @@ import org.pcsoft.framework.simplay.engine.model.FontWeight
  *
  * @property raw the wrapped raw font.
  * @property metrics the vertical metrics resolved for [raw], in layout units.
+ * @property fingerprintStatus whether [raw]'s stored fingerprint matched the current measurement;
+ *   [FontFingerprintStatus.NOT_CHECKED] when [raw] carried none.
  */
-class MeasuredFont(val raw: Font, val metrics: FontMetrics) {
+class MeasuredFont(
+    val raw: Font,
+    val metrics: FontMetrics,
+    val fingerprintStatus: FontFingerprintStatus = FontFingerprintStatus.NOT_CHECKED,
+) {
     /** The family of [raw]. */
     val family: String get() = raw.family
 

@@ -17,11 +17,11 @@ a public `raw` handle and follows one rule:
 
 | Measured type | `raw` | Adds |
 |---------------|-------|------|
-| `MeasuredDocument` | `Document` | `pages: List<MeasuredPage>` |
+| `MeasuredDocument` | `Document` | `pages: List<MeasuredPage>`, `fingerprintDeviations: List<Font>` |
 | `MeasuredPage` (`MeasuredFlowPage` / `MeasuredSinglePage`) | `Page` | `pageIndex`, `blocks`, `contentArea`, `requiredContentHeight`, `effectiveSize` |
 | `MeasuredTextBlock` | `TextBlock` | `lines: List<MeasuredLine>`, `bounds: Rect`, `style: MeasuredTextStyle` |
 | `MeasuredTextStyle` | `TextStyle` | `font: MeasuredFont`, `resolvedLineHeight` |
-| `MeasuredFont` | `Font` | `metrics: FontMetrics` |
+| `MeasuredFont` | `Font` | `metrics: FontMetrics`, `fingerprintStatus: FontFingerprintStatus` |
 | `MeasuredTextPart` | `TextPart` | `bounds: Rect` |
 
 `MeasuredPage` / `MeasuredTextPart` are **not** subtypes of `Page` / `TextPart`.
@@ -42,6 +42,21 @@ page content area; the content area is relative to the page origin.
 `FontMetrics` carries `ascent`, `descent`, `leading` and the derived
 `lineHeight`. `TextMetrics` (the result of the measuring callback) carries
 `width`, `ascent`, `descent`.
+
+## Font fingerprint status
+
+When a raw `Font` carries a `fingerprint` (see
+[Raw model](raw-model.md#font-fingerprint)), the measure pass takes a fresh
+fingerprint through the same `FontMeasureCalculator` and compares the two:
+
+| `MeasuredFont.fingerprintStatus` | Meaning |
+|----------------------------------|---------|
+| `NOT_CHECKED` | The font carried no fingerprint; nothing was verified. |
+| `MATCH` | The stored fingerprint still fits; the same face is in use. |
+| `DEVIATION` | The stored fingerprint no longer fits; the font is missing or was silently replaced. |
+
+`MeasuredDocument.fingerprintDeviations` collects the distinct raw `Font`s whose
+status is `DEVIATION`; an empty list means every fingerprinted font still matches.
 
 ## MeasuredLine
 

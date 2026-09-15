@@ -51,6 +51,14 @@ tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
 }
 
+// Set the JPMS Automatic-Module-Name so consumers on the module path get a stable module name.
+// Derived from the Gradle module name; hyphens are stripped because they are illegal in module names.
+tasks.named<Jar>("jar") {
+    manifest {
+        attributes("Automatic-Module-Name" to "org.pcsoft.framework.simplay.${project.name.replace("-", "")}")
+    }
+}
+
 tasks.withType<Test>().configureEach {
     // Configure all test Gradle tasks to use JUnitPlatform.
     useJUnitPlatform()
@@ -74,6 +82,16 @@ publishing {
         create<MavenPublication>("maven") {
             from(components["java"])
             artifactId = "simplay-${project.name}"
+
+            pom {
+                licenses {
+                    license {
+                        name.set("Apache License, Version 2.0")
+                        url.set("http://www.apache.org/licenses/LICENSE-2.0")
+                        distribution.set("repo")
+                    }
+                }
+            }
         }
     }
 

@@ -65,6 +65,15 @@ base {
     archivesName.set("simplay-${project.name}")
 }
 
+// Set the JPMS Automatic-Module-Name on the JVM jar so consumers on the module path get a stable
+// module name. Derived from the Gradle module name; hyphens are stripped because they are illegal
+// in module names.
+tasks.named<Jar>("jvmJar") {
+    manifest {
+        attributes("Automatic-Module-Name" to "org.pcsoft.framework.simplay.${project.name.replace("-", "")}")
+    }
+}
+
 tasks.withType<Test>().configureEach {
     // Configure all test Gradle tasks to use JUnitPlatform.
     useJUnitPlatform()
@@ -83,6 +92,25 @@ tasks.withType<Test>().configureEach {
 // repository has to be added. Credentials come from the environment - GITHUB_TOKEN is provided by
 // GitHub Actions automatically; locally they fall back to empty strings.
 publishing {
+    publications.withType<MavenPublication>().configureEach {
+        // The Kotlin Multiplatform plugin names its publications after the bare project name
+        // (`engine`, `engine-jvm`, `engine-mingwx64`, ...). Prefix them so every published module
+        // shares the `simplay-` namespace, matching the JVM convention plugin.
+        if (!artifactId.startsWith("simplay-")) {
+            artifactId = "simplay-$artifactId"
+        }
+
+        pom {
+            licenses {
+                license {
+                    name.set("Apache License, Version 2.0")
+                    url.set("http://www.apache.org/licenses/LICENSE-2.0")
+                    distribution.set("repo")
+                }
+            }
+        }
+    }
+
     repositories {
         maven {
             name = "GitHubPackages"

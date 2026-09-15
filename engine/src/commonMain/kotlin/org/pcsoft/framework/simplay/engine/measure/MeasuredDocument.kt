@@ -13,6 +13,7 @@
 package org.pcsoft.framework.simplay.engine.measure
 
 import org.pcsoft.framework.simplay.engine.model.Document
+import org.pcsoft.framework.simplay.engine.model.Font
 
 /**
  * A raw [Document] with its pages replaced by measured pages.
@@ -27,4 +28,20 @@ import org.pcsoft.framework.simplay.engine.model.Document
 class MeasuredDocument(
     val raw: Document,
     val pages: List<MeasuredPage>,
-)
+) {
+    /**
+     * The distinct raw fonts whose stored [org.pcsoft.framework.simplay.engine.model.FontFingerprint]
+     * did not match the current measurement ([FontFingerprintStatus.DEVIATION]).
+     *
+     * Empty when no block font carried a fingerprint or every one still matched. A non-empty list
+     * means the document is being rendered with at least one substituted or updated font.
+     */
+    val fingerprintDeviations: List<Font>
+        get() = pages.asSequence()
+            .flatMap { it.blocks.asSequence() }
+            .map { it.style.font }
+            .filter { it.fingerprintStatus == FontFingerprintStatus.DEVIATION }
+            .map { it.raw }
+            .distinct()
+            .toList()
+}
