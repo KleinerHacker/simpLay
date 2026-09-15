@@ -8,8 +8,8 @@ UI toolkit; text measuring is taken through the `engine` `FontMeasureCalculator`
 
 ```kotlin
 dependencies {
-    implementation("org.pcsoft.framework:simplay-engine:0.3.1")
-    implementation("org.pcsoft.framework:simplay-common:0.3.1")
+    implementation("org.pcsoft.framework:simplay-engine:0.3.2")
+    implementation("org.pcsoft.framework:simplay-common:0.3.2")
 }
 ```
 

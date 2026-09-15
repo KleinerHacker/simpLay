@@ -15,7 +15,7 @@ the parts in detail:
 
 ```kotlin
 dependencies {
-    implementation("org.pcsoft.framework:simplay-engine:0.3.1")
+    implementation("org.pcsoft.framework:simplay-engine:0.3.2")
 }
 ```
 
