@@ -1,0 +1,279 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>org.pcsoft.framework.simplay.uicommon</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js", "js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+      if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      } else {
+        const savedDarkMode = JSON.parse(storage)
+        if (savedDarkMode === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/safe-local-storage_blocking.js"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../ui-kit/ui-kit.min.js" defer></script></head>
+<body>
+<div class="root">
+    <header class="navigation theme-dark" id="navigation-wrapper" role="banner">
+<a class="library-name--link" href="../../../index.html" tabindex="1">
+                    simplay
+            </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">1.0-SNAPSHOT
+        </div>
+        <div class="navigation-controls">
+        <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
+                <button class="platform-tag platform-selector jvm-like" data-active="" aria-pressed="true" data-filter=":ui:common/main">jvm</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox" aria-label="Target filter">
+                    <div class="dropdown--header"><span>Target filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close target filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":ui:common/main" data-filter=":ui:common/main">
+                                <span class="checkbox--icon"></span>
+                                jvm
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </ul>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button" type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </header>
+    <div id="container">
+        <nav id="leftColumn" class="sidebar" data-item-type="SECTION" data-item-config="{&quot;defaultSize&quot;: 280, &quot;minSize&quot;: 200, &quot;maxSize&quot;: 400}">
+            <a class="toc--skip-link" href="#main">Skip to content</a>
+            <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list" data-role="dropdown-listbox" aria-label="Table of contents">
+                    <div class="dropdown--header">
+                            <span>
+                                    simplay
+                            </span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                    <div class="sidebar--inner" id="sideMenu"></div>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </nav>
+        <div id="resizer" class="resizer" data-item-type="BAR"></div>
+        <div id="main" data-item-type="SECTION" role="main">
+<div class="main-content" data-page-type="package" id="content" pageids="common::org.pcsoft.framework.simplay.uicommon////PointingToDeclaration//2086038527">
+  <div class="breadcrumbs"><a href="../index.html">common</a><span class="delimiter">/</span><span class="current">org.pcsoft.framework.simplay.uicommon</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Package-level</span></span> <span><span>declarations</span></span></h1>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="TYPE">Types</button><button class="section-tab" data-togglable="FUNCTION,EXTENSION_FUNCTION">Functions</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="TYPE">
+        <h2 class="tableheader">Types</h2>
+        <div class="table"><a data-name="2033168961%2FClasslikes%2F2086038527" anchor-label="CaretMode" id="2033168961%2FClasslikes%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-caret-mode/index.html"><span>Caret</span><wbr><span><span>Mode</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2033168961%2FClasslikes%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">enum </span><a href="-caret-mode/index.html">CaretMode</a> : <a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-enum/index.html">Enum</a><span class="token operator">&lt;</span><a href="-caret-mode/index.html">CaretMode</a><span class="token operator">&gt; </span></div><div class="brief "><p class="paragraph">The typing behaviour of a <code class="lang-kotlin">PaperSheetView</code> (fx and swing) edit caret.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1401711987%2FClasslikes%2F2086038527" anchor-label="DocumentEditor" id="1401711987%2FClasslikes%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-document-editor/index.html"><span>Document</span><wbr><span><span>Editor</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1401711987%2FClasslikes%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-document-editor/index.html">DocumentEditor</a></div><div class="brief "><p class="paragraph">Applies a single splice - insert, delete or replace - to a <a href="../../../engine/org.pcsoft.framework.simplay.engine.model/-document/index.html">Document</a>, expressed on the linear text axis of a <a href="-document-text-index/index.html">DocumentTextIndex</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-87867459%2FClasslikes%2F2086038527" anchor-label="DocumentTextIndex" id="-87867459%2FClasslikes%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-document-text-index/index.html"><span>Document</span><wbr><span>Text</span><wbr><span><span>Index</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-87867459%2FClasslikes%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="-document-text-index/index.html">DocumentTextIndex</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">measured<span class="token operator">: </span><a href="../../../engine/org.pcsoft.framework.simplay.engine.measure/-measured-document/index.html">MeasuredDocument</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">A flat, linear view of the text in a <a href="../../../engine/org.pcsoft.framework.simplay.engine.measure/-measured-document/index.html">MeasuredDocument</a> for block- and page-spanning selection and for editing.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-764292564%2FClasslikes%2F2086038527" anchor-label="EditableRegions" id="-764292564%2FClasslikes%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-editable-regions/index.html"><span>Editable</span><wbr><span><span>Regions</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-764292564%2FClasslikes%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="-editable-regions/index.html">EditableRegions</a></div><div class="brief "><p class="paragraph">The editable, selectable, navigable and visible linear-text regions of a document once every page has been resolved to its <a href="-page-mode/index.html">PageMode</a>, shared by the <code class="lang-kotlin">fx</code> and <code class="lang-kotlin">swing</code> <code class="lang-kotlin">PaperSheetView</code> implementations.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="721826897%2FClasslikes%2F2086038527" anchor-label="FontAvailability" id="721826897%2FClasslikes%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-font-availability/index.html"><span>Font</span><wbr><span><span>Availability</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="721826897%2FClasslikes%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">enum </span><a href="-font-availability/index.html">FontAvailability</a> : <a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-enum/index.html">Enum</a><span class="token operator">&lt;</span><a href="-font-availability/index.html">FontAvailability</a><span class="token operator">&gt; </span></div><div class="brief "><p class="paragraph">Outcome of checking whether a requested font family can still be resolved by the platform text stack the way it was when a document was authored.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-262435383%2FClasslikes%2F2086038527" anchor-label="PageMode" id="-262435383%2FClasslikes%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-page-mode/index.html"><span>Page</span><wbr><span><span>Mode</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-262435383%2FClasslikes%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">enum </span><a href="-page-mode/index.html">PageMode</a> : <a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-enum/index.html">Enum</a><span class="token operator">&lt;</span><a href="-page-mode/index.html">PageMode</a><span class="token operator">&gt; </span></div><div class="brief "><p class="paragraph">The interaction mode of a single page of a <code class="lang-kotlin">PaperSheetView</code> (fx and swing).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1699920817%2FClasslikes%2F2086038527" anchor-label="StyledTextClipboard" id="1699920817%2FClasslikes%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-styled-text-clipboard/index.html"><span>Styled</span><wbr><span>Text</span><wbr><span><span>Clipboard</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1699920817%2FClasslikes%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-styled-text-clipboard/index.html">StyledTextClipboard</a></div><div class="brief "><p class="paragraph">Serialises a run list from <a href="-document-text-index/styled-runs.html">DocumentTextIndex.styledRuns</a> into the two rich-text flavours other applications read when pasting: <code class="lang-kotlin">text/html</code> (inline CSS on <code class="lang-kotlin">&lt;span&gt;</code>) and RTF (font table plus <code class="lang-kotlin">\fN\fsNN\b\i</code> runs). Font sizes are emitted in points, matching how the document is measured on screen. Both outputs keep the plain characters so a plain-text paste stays identical.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="tableheader">Functions</h2>
+        <div class="table"><a data-name="-1250958279%2FFunctions%2F2086038527" anchor-label="hitTest" id="-1250958279%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="hit-test.html"><span>hit</span><wbr><span><span>Test</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1250958279%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="hit-test.html"><span class="token function">hitTest</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">part<span class="token operator">: </span><a href="../../../engine/org.pcsoft.framework.simplay.engine.measure/-measured-text-part/index.html">MeasuredTextPart</a><span class="token punctuation">, </span></span><span class="parameter ">font<span class="token operator">: </span><a href="../../../engine/org.pcsoft.framework.simplay.engine.model/-font/index.html">Font</a><span class="token punctuation">, </span></span><span class="parameter ">xInContentArea<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-double/index.html">Double</a><span class="token punctuation">, </span></span><span class="parameter ">measurer<span class="token operator">: </span><a href="../../../engine/org.pcsoft.framework.simplay.engine/-font-measure-calculator/index.html">FontMeasureCalculator</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Maps a horizontal position onto a character offset inside a measured text part.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1495547107%2FFunctions%2F2086038527" anchor-label="segmentSpanX" id="1495547107%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="segment-span-x.html"><span>segment</span><wbr><span>Span</span><wbr><span><span>X</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1495547107%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="segment-span-x.html"><span class="token function">segmentSpanX</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">segment<span class="token operator">: </span><a href="-document-text-index/-segment/index.html">DocumentTextIndex.Segment</a><span class="token punctuation">, </span></span><span class="parameter ">lo<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">hi<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter ">measurer<span class="token operator">: </span><a href="../../../engine/org.pcsoft.framework.simplay.engine/-font-measure-calculator/index.html">FontMeasureCalculator</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-pair/index.html">Pair</a><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-double/index.html">Double</a><span class="token punctuation">, </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-double/index.html">Double</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">The <code class="lang-kotlin">[x0, x1]</code> horizontal span, in page content-area coordinates, that the character range <code class="lang-kotlin">[lo, hi)</code> covers inside <a href="segment-span-x.html">segment</a>: <code class="lang-kotlin">x0</code> is the left edge of the first covered glyph, <code class="lang-kotlin">x1</code> the right edge of the last, both clamped to the segment's own part bounds. <a href="segment-span-x.html">measurer</a> measures the prefix widths. Shared by the selection highlight and the selection bounding box.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-374130361%2FFunctions%2F2086038527" anchor-label="toggled" id="-374130361%2FFunctions%2F2086038527" data-filterable-set=":ui:common/main"></a>
+          <div class="table-row table-row_content" data-togglable="EXTENSION_FUNCTION" data-filterable-current=":ui:common/main" data-filterable-set=":ui:common/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="toggled.html"><span><span>toggled</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-374130361%2FFunctions%2F2086038527"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:common/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="-caret-mode/index.html">CaretMode</a><span class="token punctuation">.</span><a href="toggled.html"><span class="token function">toggled</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="-caret-mode/index.html">CaretMode</a></div><div class="brief "><p class="paragraph">The other <a href="-caret-mode/index.html">CaretMode</a>: <a href="-caret-mode/-i-n-s-e-r-t/index.html">CaretMode.INSERT</a> toggles to <a href="-caret-mode/-o-v-e-r-w-r-i-t-e/index.html">CaretMode.OVERWRITE</a> and back.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <div class="footer--container">
+            <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+            <div class="footer--content">
+                <div>
+                    <span>Generated by </span>
+                    <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                        Dokka
+                    </a>
+                    <div>© 2026 Copyright</div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

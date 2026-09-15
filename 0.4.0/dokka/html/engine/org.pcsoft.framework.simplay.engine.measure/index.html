@@ -1,0 +1,324 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>org.pcsoft.framework.simplay.engine.measure</title>
+<link href="../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../";</script>
+    <script>document.documentElement.classList.replace("no-js", "js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+      if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      } else {
+        const savedDarkMode = JSON.parse(storage)
+        if (savedDarkMode === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      }
+    </script>
+<script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../styles/style.css" rel="Stylesheet">
+<link href="../../styles/main.css" rel="Stylesheet">
+<link href="../../styles/prism.css" rel="Stylesheet">
+<link href="../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../scripts/safe-local-storage_blocking.js"></script>
+<script type="text/javascript" src="../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../ui-kit/ui-kit.min.js" defer></script></head>
+<body>
+<div class="root">
+    <header class="navigation theme-dark" id="navigation-wrapper" role="banner">
+<a class="library-name--link" href="../../index.html" tabindex="1">
+                    simplay
+            </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">1.0-SNAPSHOT
+        </div>
+        <div class="navigation-controls">
+        <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
+                <button class="platform-tag platform-selector common-like" data-active="" aria-pressed="true" data-filter=":engine/commonMain">common</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox" aria-label="Target filter">
+                    <div class="dropdown--header"><span>Target filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close target filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option common-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":engine/commonMain" data-filter=":engine/commonMain">
+                                <span class="checkbox--icon"></span>
+                                common
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </ul>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button" type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </header>
+    <div id="container">
+        <nav id="leftColumn" class="sidebar" data-item-type="SECTION" data-item-config="{&quot;defaultSize&quot;: 280, &quot;minSize&quot;: 200, &quot;maxSize&quot;: 400}">
+            <a class="toc--skip-link" href="#main">Skip to content</a>
+            <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list" data-role="dropdown-listbox" aria-label="Table of contents">
+                    <div class="dropdown--header">
+                            <span>
+                                    simplay
+                            </span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                    <div class="sidebar--inner" id="sideMenu"></div>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </nav>
+        <div id="resizer" class="resizer" data-item-type="BAR"></div>
+        <div id="main" data-item-type="SECTION" role="main">
+<div class="main-content" data-page-type="package" id="content" pageids="engine::org.pcsoft.framework.simplay.engine.measure////PointingToDeclaration//1015982541">
+  <div class="breadcrumbs"><a href="../index.html">engine</a><span class="delimiter">/</span><span class="current">org.pcsoft.framework.simplay.engine.measure</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Package-level</span></span> <span><span>declarations</span></span></h1>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="TYPE">Types</button><button class="section-tab" data-togglable="FUNCTION,EXTENSION_FUNCTION">Functions</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="TYPE">
+        <h2 class="tableheader">Types</h2>
+        <div class="table"><a data-name="-499407443%2FClasslikes%2F1015982541" anchor-label="FontFingerprintStatus" id="-499407443%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-font-fingerprint-status/index.html"><span>Font</span><wbr><span>Fingerprint</span><wbr><span><span>Status</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-499407443%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">enum </span><a href="-font-fingerprint-status/index.html">FontFingerprintStatus</a> : <a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-enum/index.html">Enum</a><span class="token operator">&lt;</span><a href="-font-fingerprint-status/index.html">FontFingerprintStatus</a><span class="token operator">&gt; </span></div><div class="brief "><p class="paragraph">Result of matching a <a href="../org.pcsoft.framework.simplay.engine.model/-font/index.html">Font</a>'s stored <a href="../org.pcsoft.framework.simplay.engine.model/-font-fingerprint/index.html">FontFingerprint</a> against a fresh measurement during the measure pass.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-912450963%2FClasslikes%2F1015982541" anchor-label="MeasuredDocument" id="-912450963%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-measured-document/index.html"><span>Measured</span><wbr><span><span>Document</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-912450963%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-measured-document/index.html">MeasuredDocument</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>raw<span class="token operator">: </span><a href="../org.pcsoft.framework.simplay.engine.model/-document/index.html">Document</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>pages<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="-measured-page/index.html">MeasuredPage</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">A raw <a href="../org.pcsoft.framework.simplay.engine.model/-document/index.html">Document</a> with its pages replaced by measured pages.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="179976427%2FClasslikes%2F1015982541" anchor-label="MeasuredFlowPage" id="179976427%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-measured-flow-page/index.html"><span>Measured</span><wbr><span>Flow</span><wbr><span><span>Page</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="179976427%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-measured-flow-page/index.html">MeasuredFlowPage</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>raw<span class="token operator">: </span><a href="../org.pcsoft.framework.simplay.engine.model/-flow-page/index.html">FlowPage</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>pageIndex<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>blocks<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="-measured-text-block/index.html">MeasuredTextBlock</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span> : <a href="-measured-page/index.html">MeasuredPage</a></div><div class="brief "><p class="paragraph">A measured <a href="../org.pcsoft.framework.simplay.engine.model/-flow-page/index.html">FlowPage</a>. Its <a href="-measured-flow-page/effective-size.html">effectiveSize</a> is always the raw layout size.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-76794567%2FClasslikes%2F1015982541" anchor-label="MeasuredFont" id="-76794567%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-measured-font/index.html"><span>Measured</span><wbr><span><span>Font</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-76794567%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-measured-font/index.html">MeasuredFont</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>raw<span class="token operator">: </span><a href="../org.pcsoft.framework.simplay.engine.model/-font/index.html">Font</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>metrics<span class="token operator">: </span><a href="../org.pcsoft.framework.simplay.engine.geometry/-font-metrics/index.html">FontMetrics</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>fingerprintStatus<span class="token operator">: </span><a href="-font-fingerprint-status/index.html">FontFingerprintStatus</a><span class="token operator"> = </span>FontFingerprintStatus.NOT_CHECKED</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">A raw <a href="../org.pcsoft.framework.simplay.engine.model/-font/index.html">Font</a> enriched with the vertical <a href="../../engine/org.pcsoft.framework.simplay.engine.measure/-measured-font/--root--.html">metrics</a> resolved for it.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="849970484%2FClasslikes%2F1015982541" anchor-label="MeasuredLine" id="849970484%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-measured-line/index.html"><span>Measured</span><wbr><span><span>Line</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="849970484%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-measured-line/index.html">MeasuredLine</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>parts<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="-measured-text-part/index.html">MeasuredTextPart</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>lineBox<span class="token operator">: </span><a href="../org.pcsoft.framework.simplay.engine.geometry/-rect/index.html">Rect</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>baseline<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-double/index.html">Double</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>ascent<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-double/index.html">Double</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>descent<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-double/index.html">Double</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>alignment<span class="token operator">: </span><a href="../org.pcsoft.framework.simplay.engine.model/-text-alignment/index.html">TextAlignment</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>lastLine<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">One laid-out line of text. An intermediate level that has no raw counterpart.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1071028487%2FClasslikes%2F1015982541" anchor-label="MeasuredPage" id="-1071028487%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-measured-page/index.html"><span>Measured</span><wbr><span><span>Page</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1071028487%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">sealed </span><span class="token keyword">interface </span><a href="-measured-page/index.html">MeasuredPage</a></div><div class="brief "><p class="paragraph">A raw <a href="../org.pcsoft.framework.simplay.engine.model/-page/index.html">Page</a> with its blocks replaced by measured blocks.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="874881617%2FClasslikes%2F1015982541" anchor-label="MeasuredSinglePage" id="874881617%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-measured-single-page/index.html"><span>Measured</span><wbr><span>Single</span><wbr><span><span>Page</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="874881617%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-measured-single-page/index.html">MeasuredSinglePage</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>raw<span class="token operator">: </span><a href="../org.pcsoft.framework.simplay.engine.model/-single-page/index.html">SinglePage</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>pageIndex<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>blocks<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="-measured-text-block/index.html">MeasuredTextBlock</a><span class="token operator">&gt;</span></span></span><span class="token punctuation">)</span> : <a href="-measured-page/index.html">MeasuredPage</a></div><div class="brief "><p class="paragraph">A measured <a href="../org.pcsoft.framework.simplay.engine.model/-single-page/index.html">SinglePage</a>. Its <a href="-measured-single-page/effective-size.html">effectiveSize</a> keeps the layout width but grows in height to fit <a href="-measured-page/required-content-height.html">requiredContentHeight</a> plus the vertical margins.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2073988282%2FClasslikes%2F1015982541" anchor-label="MeasuredTextBlock" id="2073988282%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-measured-text-block/index.html"><span>Measured</span><wbr><span>Text</span><wbr><span><span>Block</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2073988282%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-measured-text-block/index.html">MeasuredTextBlock</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>raw<span class="token operator">: </span><a href="../org.pcsoft.framework.simplay.engine.model/-text-block/index.html">TextBlock</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>lines<span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/-list/index.html">List</a><span class="token operator">&lt;</span><a href="-measured-line/index.html">MeasuredLine</a><span class="token operator">&gt;</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>bounds<span class="token operator">: </span><a href="../org.pcsoft.framework.simplay.engine.geometry/-rect/index.html">Rect</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>style<span class="token operator">: </span><a href="-measured-text-style/index.html">MeasuredTextStyle</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">A raw <a href="../org.pcsoft.framework.simplay.engine.model/-text-block/index.html">TextBlock</a> broken into laid-out <a href="../../engine/org.pcsoft.framework.simplay.engine.measure/-measured-text-block/--root--.html">lines</a> and placed at its <a href="../../engine/org.pcsoft.framework.simplay.engine.measure/-measured-text-block/--root--.html">bounds</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="2140495976%2FClasslikes%2F1015982541" anchor-label="MeasuredTextPart" id="2140495976%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-measured-text-part/index.html"><span>Measured</span><wbr><span>Text</span><wbr><span><span>Part</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2140495976%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-measured-text-part/index.html">MeasuredTextPart</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>raw<span class="token operator">: </span><a href="../org.pcsoft.framework.simplay.engine.model/-text-part/index.html">TextPart</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>bounds<span class="token operator">: </span><a href="../org.pcsoft.framework.simplay.engine.geometry/-rect/index.html">Rect</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">A raw <a href="../org.pcsoft.framework.simplay.engine.model/-text-part/index.html">TextPart</a> placed at its measured <a href="../../engine/org.pcsoft.framework.simplay.engine.measure/-measured-text-part/--root--.html">bounds</a> relative to the page content area.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="847315990%2FClasslikes%2F1015982541" anchor-label="MeasuredTextStyle" id="847315990%2FClasslikes%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-measured-text-style/index.html"><span>Measured</span><wbr><span>Text</span><wbr><span><span>Style</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="847315990%2FClasslikes%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">class </span><a href="-measured-text-style/index.html">MeasuredTextStyle</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>raw<span class="token operator">: </span><a href="../org.pcsoft.framework.simplay.engine.model/-text-style/index.html">TextStyle</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>font<span class="token operator">: </span><a href="-measured-font/index.html">MeasuredFont</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">A raw <a href="../org.pcsoft.framework.simplay.engine.model/-text-style/index.html">TextStyle</a> with its font replaced by a <a href="-measured-font/index.html">MeasuredFont</a> and the <a href="-measured-text-style/resolved-line-height.html">resolvedLineHeight</a> derived.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="EXTENSION_FUNCTION">
+        <h2 class="tableheader">Functions</h2>
+        <div class="table"><a data-name="-2067424520%2FFunctions%2F1015982541" anchor-label="charCount" id="-2067424520%2FFunctions%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="char-count.html"><span>char</span><wbr><span><span>Count</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2067424520%2FFunctions%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="-measured-document/index.html">MeasuredDocument</a><span class="token punctuation">.</span><a href="char-count.html"><span class="token function">charCount</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Sum of <a href="char-count.html">MeasuredPage.charCount</a> over all measured pages of this document.</p></div><div class="symbol monospace"><span class="token keyword">fun </span><a href="-measured-page/index.html">MeasuredPage</a><span class="token punctuation">.</span><a href="char-count.html"><span class="token function">charCount</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Sum of <a href="char-count.html">MeasuredTextBlock.charCount</a> over all measured blocks of this page.</p></div><div class="symbol monospace"><span class="token keyword">fun </span><a href="-measured-text-block/index.html">MeasuredTextBlock</a><span class="token punctuation">.</span><a href="char-count.html"><span class="token function">charCount</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Total number of characters across all parts of this block, taken from its raw block.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-334434570%2FFunctions%2F1015982541" anchor-label="symbolCount" id="-334434570%2FFunctions%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="symbol-count.html"><span>symbol</span><wbr><span><span>Count</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-334434570%2FFunctions%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="-measured-document/index.html">MeasuredDocument</a><span class="token punctuation">.</span><a href="symbol-count.html"><span class="token function">symbolCount</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Sum of <a href="symbol-count.html">MeasuredPage.symbolCount</a> over all measured pages of this document.</p></div><div class="symbol monospace"><span class="token keyword">fun </span><a href="-measured-page/index.html">MeasuredPage</a><span class="token punctuation">.</span><a href="symbol-count.html"><span class="token function">symbolCount</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Sum of <a href="symbol-count.html">MeasuredTextBlock.symbolCount</a> over all measured blocks of this page.</p></div><div class="symbol monospace"><span class="token keyword">fun </span><a href="-measured-text-block/index.html">MeasuredTextBlock</a><span class="token punctuation">.</span><a href="symbol-count.html"><span class="token function">symbolCount</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Number of symbol parts in this block, taken from its raw block.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-666305724%2FFunctions%2F1015982541" anchor-label="wordCount" id="-666305724%2FFunctions%2F1015982541" data-filterable-set=":engine/commonMain"></a>
+          <div class="table-row table-row_content" data-filterable-current=":engine/commonMain" data-filterable-set=":engine/commonMain">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="word-count.html"><span>word</span><wbr><span><span>Count</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-666305724%2FFunctions%2F1015982541"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":engine/commonMain"><div class="symbol monospace"><span class="token keyword">fun </span><a href="-measured-document/index.html">MeasuredDocument</a><span class="token punctuation">.</span><a href="word-count.html"><span class="token function">wordCount</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Sum of <a href="word-count.html">MeasuredPage.wordCount</a> over all measured pages of this document.</p></div><div class="symbol monospace"><span class="token keyword">fun </span><a href="-measured-page/index.html">MeasuredPage</a><span class="token punctuation">.</span><a href="word-count.html"><span class="token function">wordCount</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Sum of <a href="word-count.html">MeasuredTextBlock.wordCount</a> over all measured blocks of this page.</p></div><div class="symbol monospace"><span class="token keyword">fun </span><a href="-measured-text-block/index.html">MeasuredTextBlock</a><span class="token punctuation">.</span><a href="word-count.html"><span class="token function">wordCount</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Number of word parts in this block, taken from its raw block.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <div class="footer--container">
+            <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+            <div class="footer--content">
+                <div>
+                    <span>Generated by </span>
+                    <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                        Dokka
+                    </a>
+                    <div>© 2026 Copyright</div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
