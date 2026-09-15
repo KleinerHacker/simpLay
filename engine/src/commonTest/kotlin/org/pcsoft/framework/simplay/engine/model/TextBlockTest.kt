@@ -126,4 +126,18 @@ class TextBlockTest {
         assertTrue(block.parts.any { it is TextAnchor && it.id == "chapterOne" })
         assertEquals(text, block.toString())
     }
+
+    /**
+     * Verifies that a line break round trips through [TextBlock.Companion.of] and [toString] as a
+     * plain `\n`, with no space invented around it - a [TextWord] right after a [TextBreak] gets no
+     * leading space, just as one right after a symbol does not.
+     */
+    @Test
+    fun breakRendersAsNewlineWithoutExtraSpace() {
+        val text = "first line\nsecond line"
+        val block = TextBlock.of(text, style)
+
+        assertTrue(block.parts.any { it is TextBreak })
+        assertEquals(text, block.toString())
+    }
 }

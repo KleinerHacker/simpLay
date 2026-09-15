@@ -45,22 +45,46 @@ val page = FlowPage(layout = layout, blocks = emptyList())
 ## Text blocks and parts
 
 A `TextBlock` is a run of styled text. It holds an ordered list of `TextPart` and
-one `TextStyle`. `TextPart` is a sealed type with four realisations:
+one `TextStyle`. `TextPart` is a sealed type with five realisations:
 
 * `TextWord` - a maximal run of letters and/or digits.
 * `TextSymbol` - a single non-letter, non-digit, non-whitespace character. Its
   public constructor takes a `Char`; the character is also available through
   `symbol`.
 * `TextWhitespace` - a maximal run of whitespace of one `WhitespaceKind`
-  (`SPACE`, `TAB`, `LINE_BREAK`). It stores only that kind and the run length
-  `count`; its `text` is derived from both. A run never mixes kinds, so a space
-  followed by a tab yields two parts.
+  (`SPACE`, `TAB`). It stores only that kind and the run length `count`; its
+  `text` is derived from both. A run never mixes kinds, so a space followed by a
+  tab yields two parts.
+* `TextBreak` - an explicit line-break token; see
+  [Explicit line breaks](#explicit-line-breaks) below.
 * `TextAnchor` - an invisible, zero-width navigation marker carrying an `id`.
   Written as `${id}` in plain text (e.g. `${chapterOne}`); see
   [Navigation anchors](#navigation-anchors) below.
 
 A `TextWhitespace` is not addressable on its own: it produces no glyph in the
 layout and no caret-selectable segment, but it keeps the original spacing.
+
+### Explicit line breaks
+
+Every `\n` (and every `\r\n`, merged into one) tokenises to its own `TextBreak`
+instead of joining a `TextWhitespace` run:
+
+```kotlin
+val block = TextBlock.of("first line\nsecond line", style)
+// parts: TextWord("first"), TextWhitespace(SPACE), TextWord("line"), TextBreak,
+//        TextWord("second"), TextWhitespace(SPACE), TextWord("line")
+```
+
+`TextBreak` is a `data object` - there is only one kind of break - with
+`text == "\n"`, so it still counts as one character in `charCount()` and
+round-trips through `toString()` like any other source character; `wordCount()`
+and `symbolCount()` ignore it. A blank line (two consecutive newlines) yields two
+consecutive `TextBreak` tokens. Every default `LineBreakerStrategy` consumes a
+`TextBreak` as a hard line separator - `GreedyWordLineBreakerStrategy` and
+`CharacterLineBreakerStrategy` start a new line at it, `NoWrapLineBreakerStrategy`
+ignores it since it never breaks a line in the first place - so it never reaches a
+`MeasuredTextPart`. See [`ExplicitBreakLineBreakerStrategy`](simplay-engine.md)
+for a strategy that breaks _only_ at `TextBreak` tokens.
 
 ### Navigation anchors
 

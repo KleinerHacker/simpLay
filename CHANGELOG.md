@@ -12,6 +12,47 @@ excluded.
 
 ## [UNRELEASED]
 
+### Added
+
+- `engine`: `TextBreak`, a new `TextPart` for an explicit line break. Every
+  `\n` (and every `\r\n`, merged into one) in a `TextBlock.Companion.of` source
+  text now tokenises to its own `TextBreak` instead of joining a whitespace run.
+  `charCount()` counts it as one character; `wordCount()`/`symbolCount()` ignore
+  it; `toString()` reproduces it as a plain `\n`.
+- `engine`: `ExplicitBreakLineBreakerStrategy`, a `LineBreakerStrategy` that
+  breaks only at a `TextBreak` and never on width - each segment between
+  breaks becomes exactly one line, however wide, and a blank line still takes
+  up vertical space. Select it with `SimpLayEngine.Builder.lineBreakerStrategy(
+  ExplicitBreakLineBreakerStrategy)`.
+- `engine`: the default `GreedyWordLineBreakerStrategy` and
+  `CharacterLineBreakerStrategy` now treat a `TextBreak` as a hard line break;
+  `NoWrapLineBreakerStrategy` ignores it, since it never breaks a line.
+  `BalancedLineBreakerStrategy` and `BreakOpportunityLineBreakerStrategy`
+  likewise treat a `TextBreak` as a hard line break.
+- `engine`: `BalancedLineBreakerStrategy`, a new `LineBreakerStrategy` that
+  breaks a whole block at once and picks the partition into lines with the
+  lowest total raggedness, instead of greedily filling every line. Opt-in via
+  `SimpLayEngine.Builder.lineBreakerStrategy(BalancedLineBreakerStrategy)`; the
+  default stays `GreedyWordLineBreakerStrategy`.
+- `engine`: `BreakOpportunityLineBreakerStrategy`, an opt-in `LineBreakerStrategy`
+  that greedily fills lines but only breaks at a curated approximation of
+  Unicode's line-break opportunities - not before closing punctuation, not
+  inside a digit group separated by `.`/`,`, and between (but never inside a
+  run of) CJK ideographs. Set it via
+  `SimpLayEngine.builder(...).lineBreakerStrategy(BreakOpportunityLineBreakerStrategy)`;
+  the default stays `GreedyWordLineBreakerStrategy`.
+
+### Changed
+
+- `engine`: **Breaking:** `LineBreakerStrategy`, `WordBreakerStrategy` and every
+  strategy implementation (`GreedyWordLineBreakerStrategy`,
+  `CharacterLineBreakerStrategy`, `NoWrapLineBreakerStrategy`,
+  `NoOpWordBreakerStrategy`, `BalancedLineBreakerStrategy`,
+  `BreakOpportunityLineBreakerStrategy`, `ExplicitBreakLineBreakerStrategy`)
+  moved from `org.pcsoft.framework.simplay.engine` to the new
+  `org.pcsoft.framework.simplay.engine.strategy` package. Update imports
+  accordingly.
+
 ## [0.3.1]
 
 ### Added

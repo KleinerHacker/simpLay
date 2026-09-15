@@ -10,11 +10,12 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.engine
+package org.pcsoft.framework.simplay.engine.strategy
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import org.pcsoft.framework.simplay.engine.EngineTestData
 
 /**
  * Verifies that [NoWrapLineBreakerStrategy] never breaks: all parts land in a single, possibly
@@ -100,5 +101,26 @@ class NoWrapLineBreakerStrategyTest {
         assertEquals(3, lines[0].parts.size)
         assertEquals(0.0, lines[0].parts[1].spaceBefore)
         assertEquals(EngineTestData.SPACE_WIDTH, lines[0].parts[2].spaceBefore)
+    }
+
+    /**
+     * Use case (regression, FP-002/IP-03): a [org.pcsoft.framework.simplay.engine.model.TextBreak]
+     * is ignored, not treated as a hard break - since this strategy never breaks a line in the first
+     * place, both words still land on the single resulting line.
+     */
+    @Test
+    fun noWrapStrategyIgnoresTextBreakGracefully() {
+        val lines = NoWrapLineBreakerStrategy.breakIntoLines(
+            parts = EngineTestData.parts("first\nsecond"),
+            font = font,
+            maxWidth = 1_000.0,
+            measurer = EngineTestData.measurer,
+            wordBreaker = NoOpWordBreakerStrategy,
+        )
+
+        assertEquals(1, lines.size)
+        assertEquals(2, lines[0].parts.size)
+        assertEquals("first", lines[0].parts[0].part.text)
+        assertEquals("second", lines[0].parts[1].part.text)
     }
 }

@@ -20,6 +20,7 @@ import org.pcsoft.framework.simplay.engine.measure.MeasuredTextPart
 import org.pcsoft.framework.simplay.engine.model.Font
 import org.pcsoft.framework.simplay.engine.model.TextAnchor
 import org.pcsoft.framework.simplay.engine.model.TextBlock
+import org.pcsoft.framework.simplay.engine.model.TextBreak
 import org.pcsoft.framework.simplay.engine.model.TextPart
 import org.pcsoft.framework.simplay.engine.model.TextSymbol
 import org.pcsoft.framework.simplay.engine.model.TextWhitespace
@@ -162,6 +163,7 @@ class DocumentTextIndex(measured: MeasuredDocument) {
                     anchorIds[raw.id] = segment.start
                 }
                 is TextWhitespace -> Unit
+                is TextBreak -> Unit
             }
         }
         wordRanges = words
@@ -384,7 +386,7 @@ class DocumentTextIndex(measured: MeasuredDocument) {
  * actually tokenized between two glyph parts, or `""` when there was none - instead of assuming one.
  *
  * A word split across lines by the line breaker (see
- * [org.pcsoft.framework.simplay.engine.CharacterLineBreakerStrategy]) is offered to [consume] in
+ * [org.pcsoft.framework.simplay.engine.strategy.CharacterLineBreakerStrategy]) is offered to [consume] in
  * several shorter fragments that together match one raw [TextWord]; the cursor tracks the unmatched
  * remainder so [consumeSeparator] correctly returns `""` between those fragments.
  */

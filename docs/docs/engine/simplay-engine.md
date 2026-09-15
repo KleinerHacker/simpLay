@@ -52,15 +52,18 @@ fun measure(font: Font, text: String): TextMetrics
 
 `lineBreakerStrategy(...)` on the builder selects how the parts of a block become
 lines. Every implementation is deterministic and platform-free and produces
-positionless `UnplacedLine` / `UnplacedPart` values. The three shipped
+positionless `UnplacedLine` / `UnplacedPart` values. The shipped
 strategies are described in detail on the
 [Implementation](implementation.md#choosing-strategies) page.
 
 | Strategy | Behaviour |
 |----------|-----------|
-| `GreedyWordLineBreakerStrategy` (default) | Adds parts until the next no longer fits, then starts a new line. Word- and symbol-aware: one space before every `TextWord` except the first of a line, `TextSymbol` attached with no leading space. A word wider than the content width is offered to the `WordBreakerStrategy`; if it declines, the word is kept whole and overflows. |
-| `CharacterLineBreakerStrategy` | Fills lines character by character, breaking at any position, even mid-word. Never consults the `WordBreakerStrategy`. |
-| `NoWrapLineBreakerStrategy` | Never breaks; all parts land in one line that may exceed the content width. |
+| `GreedyWordLineBreakerStrategy` (default) | Adds parts until the next no longer fits, then starts a new line. Word- and symbol-aware: one space before every `TextWord` except the first of a line, `TextSymbol` attached with no leading space. A word wider than the content width is offered to the `WordBreakerStrategy`; if it declines, the word is kept whole and overflows. A `TextBreak` is a hard break: the current line ends there, even if empty. |
+| `CharacterLineBreakerStrategy` | Fills lines character by character, breaking at any position, even mid-word. Never consults the `WordBreakerStrategy`. A `TextBreak` is a hard break, same as above. |
+| `NoWrapLineBreakerStrategy` | Never breaks; all parts land in one line that may exceed the content width. A `TextBreak` is ignored, since this strategy never breaks a line in the first place. |
+| `ExplicitBreakLineBreakerStrategy` | Breaks only at a `TextBreak`, never on width: every segment between two breaks (or the start/end and a break) becomes exactly one line, however wide. An empty segment - two consecutive breaks - still produces an empty line, so a blank line takes up vertical space. Ignores the `WordBreakerStrategy`. |
+| `BalancedLineBreakerStrategy` | Breaks a whole block at once, choosing the partition into lines with the lowest total raggedness instead of filling every line greedily. Word-granular, symbol-aware and consults the `WordBreakerStrategy` for over-wide words, same as `GreedyWordLineBreakerStrategy`. A `TextBreak` is a hard break, same as the greedy strategy. |
+| `BreakOpportunityLineBreakerStrategy` | Greedily fills lines like `GreedyWordLineBreakerStrategy`, but only breaks at a curated approximation of Unicode's line-break opportunities: not before a closing bracket or after an opening one, not inside a digit group separated by `.`/`,`, and between (but never inside a run of) CJK ideographs. Never consults the `WordBreakerStrategy`. A `TextBreak` is a hard break, same as the greedy strategy. |
 
 ```kotlin
 val engine = SimpLayEngine.builder(measurer)
@@ -73,7 +76,7 @@ val engine = SimpLayEngine.builder(measurer)
 `wordBreakerStrategy(...)` selects the intra-word (hyphenation) seam. It is asked
 where an over-wide single word may split and returns ascending break offsets in
 `1 until word.length`; an empty list means "do not split". Only
-`GreedyWordLineBreakerStrategy` consults it. See the
+`GreedyWordLineBreakerStrategy` and `BalancedLineBreakerStrategy` consult it. See the
 [Implementation](implementation.md#choosing-strategies) page for the full
 contract.
 

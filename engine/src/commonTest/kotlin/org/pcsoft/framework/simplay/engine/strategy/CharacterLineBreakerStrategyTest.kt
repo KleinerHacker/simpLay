@@ -10,11 +10,12 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.engine
+package org.pcsoft.framework.simplay.engine.strategy
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import org.pcsoft.framework.simplay.engine.EngineTestData
 
 /**
  * Verifies that [CharacterLineBreakerStrategy] fills lines character by character and breaks inside

@@ -63,10 +63,16 @@ data class TextBlock private constructor(
  *
  * Maximal runs of [Char.isLetterOrDigit] become a [TextWord], every other non-whitespace
  * character becomes its own [TextSymbol], and a maximal run of whitespace of a single
- * [WhitespaceKind] (space, tab or line break) becomes a [TextWhitespace] carrying that kind and the
- * length of the run; a run splits at a change of kind (e.g. a space directly followed by a tab
- * yields two [TextWhitespace] parts). Any other whitespace character is taken as
- * [WhitespaceKind.SPACE].
+ * [WhitespaceKind] (space or tab) becomes a [TextWhitespace] carrying that kind and the length of
+ * the run; a run splits at a change of kind (e.g. a space directly followed by a tab yields two
+ * [TextWhitespace] parts). Any other whitespace character (other than a line break, see below) is
+ * taken as [WhitespaceKind.SPACE].
+ *
+ * A `\n`, or a `\r\n` pair merged into one, becomes a single [TextBreak] instead of joining a
+ * [TextWhitespace] run - so it survives as its own explicit token rather than being absorbed into
+ * surrounding whitespace. A run of several line breaks (e.g. a blank line) yields one [TextBreak]
+ * per line break. A lone `\r` (not immediately followed by `\n`) is not a break on its own and is
+ * taken as [WhitespaceKind.SPACE], like any other whitespace character.
  *
  * A `${name}` marker - `$` immediately followed by `{`, a non-empty [name] and a closing `}` -
  * becomes a [TextAnchor] with that `id`, instead of being tokenized as symbols/word. A `$` that is
@@ -111,11 +117,16 @@ private fun tokenize(text: String): List<TextPart> {
                 parts += TextAnchor(name)
                 i = close + 1
             }
+            ch == '\n' || (ch == '\r' && i + 1 < text.length && text[i + 1] == '\n') -> {
+                flushWord()
+                flushWhitespace()
+                parts += TextBreak
+                i += if (ch == '\r') 2 else 1
+            }
             ch.isWhitespace() -> {
                 flushWord()
                 val kind = when (ch) {
                     '\t' -> WhitespaceKind.TAB
-                    '\n' -> WhitespaceKind.LINE_BREAK
                     else -> WhitespaceKind.SPACE
                 }
                 if (whitespaceKind != null && whitespaceKind != kind) flushWhitespace()

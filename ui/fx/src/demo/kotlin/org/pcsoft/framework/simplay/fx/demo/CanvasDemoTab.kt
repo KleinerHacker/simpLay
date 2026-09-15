@@ -27,15 +27,18 @@ import javafx.scene.layout.Pane
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.text.Font as FxFont
-import org.pcsoft.framework.simplay.engine.CharacterLineBreakerStrategy
-import org.pcsoft.framework.simplay.engine.GreedyWordLineBreakerStrategy
-import org.pcsoft.framework.simplay.engine.LineBreakerStrategy
-import org.pcsoft.framework.simplay.engine.NoOpWordBreakerStrategy
-import org.pcsoft.framework.simplay.engine.NoWrapLineBreakerStrategy
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
 import org.pcsoft.framework.simplay.engine.model.SinglePage
 import org.pcsoft.framework.simplay.engine.model.TextBlock
+import org.pcsoft.framework.simplay.engine.strategy.BalancedLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.BreakOpportunityLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.CharacterLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.ExplicitBreakLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.GreedyWordLineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.LineBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.NoOpWordBreakerStrategy
+import org.pcsoft.framework.simplay.engine.strategy.NoWrapLineBreakerStrategy
 import org.pcsoft.framework.simplay.fx.CanvasDocumentRenderer
 
 /**
@@ -84,7 +87,7 @@ class CanvasDemoTab : BorderPane() {
     }
 
     private val lineBreakBox = ComboBox<String>().apply {
-        items.setAll(LINE_GREEDY, LINE_CHARACTER, LINE_NOWRAP)
+        items.setAll(LINE_GREEDY, LINE_CHARACTER, LINE_NOWRAP, LINE_BALANCED, LINE_BREAK_OPPORTUNITY, LINE_EXPLICIT_BREAK)
         selectionModel.selectFirst()
     }
 
@@ -247,6 +250,9 @@ class CanvasDemoTab : BorderPane() {
     private fun selectedLineBreaker(): LineBreakerStrategy = when (lineBreakBox.value) {
         LINE_CHARACTER -> CharacterLineBreakerStrategy
         LINE_NOWRAP -> NoWrapLineBreakerStrategy
+        LINE_BALANCED -> BalancedLineBreakerStrategy
+        LINE_BREAK_OPPORTUNITY -> BreakOpportunityLineBreakerStrategy
+        LINE_EXPLICIT_BREAK -> ExplicitBreakLineBreakerStrategy
         else -> GreedyWordLineBreakerStrategy
     }
 
@@ -259,6 +265,9 @@ class CanvasDemoTab : BorderPane() {
         const val LINE_GREEDY = "Greedy (word)"
         const val LINE_CHARACTER = "Character"
         const val LINE_NOWRAP = "No wrap"
+        const val LINE_BALANCED = "Balanced"
+        const val LINE_BREAK_OPPORTUNITY = "Break opportunity"
+        const val LINE_EXPLICIT_BREAK = "Explicit break"
         const val WORD_NOOP = "No-op"
         const val FONT_DEFAULT = "Default (document)"
 

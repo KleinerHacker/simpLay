@@ -10,8 +10,9 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.engine
+package org.pcsoft.framework.simplay.engine.strategy
 
+import org.pcsoft.framework.simplay.engine.FontMeasureCalculator
 import org.pcsoft.framework.simplay.engine.model.Font
 
 /**
@@ -19,7 +20,8 @@ import org.pcsoft.framework.simplay.engine.model.Font
  * where a single word that is wider than the available width may be split.
  *
  * IP-03 ships only the no-op [NoOpWordBreakerStrategy]; real hyphenation strategies are added later
- * (see feature plan FP-002). The strategy is set on the [SimpLayEngine.Builder] and defaults to
+ * (see feature plan FP-002). The strategy is set on the
+ * [org.pcsoft.framework.simplay.engine.SimpLayEngine.Builder] and defaults to
  * [NoOpWordBreakerStrategy].
  */
 fun interface WordBreakerStrategy {
@@ -40,18 +42,4 @@ fun interface WordBreakerStrategy {
         maxWidth: Double,
         measurer: FontMeasureCalculator,
     ): List<Int>
-}
-
-/**
- * The default [WordBreakerStrategy]: never offers a break, so no hyphenation happens and an
- * over-long word simply overflows its line.
- */
-object NoOpWordBreakerStrategy : WordBreakerStrategy {
-
-    override fun breakOffsets(
-        word: String,
-        font: Font,
-        maxWidth: Double,
-        measurer: FontMeasureCalculator,
-    ): List<Int> = emptyList()
 }

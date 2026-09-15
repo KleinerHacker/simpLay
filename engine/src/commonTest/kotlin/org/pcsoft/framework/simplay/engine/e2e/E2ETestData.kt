@@ -125,7 +125,7 @@ internal object E2ETestData {
                 layout = layout(width = 200.0, height = 300.0),
                 blocks = listOf(
                     TextBlock.of(
-                        "Hello, brave new world!",
+                        "Hello, brave new world!\nA second line follows.",
                         TextStyle(
                             font = Font(
                                 family = "Serif",

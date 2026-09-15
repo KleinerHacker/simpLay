@@ -18,7 +18,9 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertSame
 import org.pcsoft.framework.simplay.engine.model.Document
+import org.pcsoft.framework.simplay.engine.model.TextBreak
 
 /**
  * Verifies that the raw document survives a JVM-serialization save / load round-trip through
@@ -58,5 +60,21 @@ class JvmSerializationRoundTripTest {
             document.pages.flatMap { it.blocks }.map { it.toString() },
             restored.pages.flatMap { it.blocks }.map { it.toString() },
         )
+    }
+
+    /**
+     * Use case: a [TextBreak] surviving the JVM-serialization round trip resolves back to the same
+     * `data object` singleton instance, not merely an equal but distinct copy - relying on
+     * [TextBreak]'s `readResolve`.
+     */
+    @Test
+    fun jvmSerializationRoundTripPreservesTextBreakSingletonIdentity() {
+        val restored = roundTrip(document)
+
+        val restoredBreak = restored.pages.flatMap { it.blocks }
+            .flatMap { it.parts }
+            .first { it is TextBreak }
+
+        assertSame(TextBreak, restoredBreak)
     }
 }

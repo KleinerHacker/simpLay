@@ -10,10 +10,11 @@
  * See the License for the specific language governing permissions and limitations.
  */
 
-package org.pcsoft.framework.simplay.engine
+package org.pcsoft.framework.simplay.engine.strategy
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import org.pcsoft.framework.simplay.engine.EngineTestData
 
 /**
  * Verifies the greedy, word-aware line breaker: a line is filled part by part, a single leading
@@ -135,5 +136,26 @@ class GreedyWordLineBreakerStrategyTest {
         assertEquals(3, lines[0].parts.size)
         assertEquals(0.0, lines[0].parts[1].spaceBefore)
         assertEquals(EngineTestData.SPACE_WIDTH, lines[0].parts[2].spaceBefore)
+    }
+
+    /**
+     * Use case (regression, FP-002/IP-03): a [org.pcsoft.framework.simplay.engine.model.TextBreak]
+     * acts as a hard line break even with ample width available - the line is flushed and the next
+     * word starts a fresh line without a leading space.
+     */
+    @Test
+    fun greedyStrategyTreatsTextBreakAsHardBreak() {
+        val lines = GreedyWordLineBreakerStrategy.breakIntoLines(
+            parts = EngineTestData.parts("first\nsecond"),
+            font = font,
+            maxWidth = 1_000.0,
+            measurer = EngineTestData.measurer,
+            wordBreaker = NoOpWordBreakerStrategy,
+        )
+
+        assertEquals(2, lines.size)
+        assertEquals("first", lines[0].parts.single().part.text)
+        assertEquals("second", lines[1].parts.single().part.text)
+        assertEquals(0.0, lines[1].parts.single().spaceBefore)
     }
 }

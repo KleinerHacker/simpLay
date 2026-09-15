@@ -196,4 +196,37 @@ class SerializationTest {
         assertTrue(decoded.parts.any { it is TextAnchor && it.id == "chapterOne" })
         assertEquals("go to \${chapterOne} now", decoded.toString())
     }
+
+    /**
+     * Verifies that a [TextBreak] survives a JSON encode/decode round trip as part of a tokenized
+     * [TextBlock], keeping its polymorphic [TextPart] identity and its `data object` singleton
+     * behaviour.
+     */
+    @Test
+    fun textBreakRoundTripsJson() {
+        val block = TextBlock.of("one\ntwo", style)
+
+        val encoded = json.encodeToString(TextBlock.serializer(), block)
+        val decoded = json.decodeFromString(TextBlock.serializer(), encoded)
+
+        assertEquals(block, decoded)
+        assertTrue(decoded.parts.any { it === TextBreak })
+        assertEquals("one\ntwo", decoded.toString())
+    }
+
+    /**
+     * Verifies that a [TextBreak] survives an XML encode/decode round trip as part of a tokenized
+     * [TextBlock], keeping its polymorphic [TextPart] identity as a bare discriminator element.
+     */
+    @Test
+    fun textBreakRoundTripsXml() {
+        val block = TextBlock.of("one\ntwo", style)
+
+        val encoded = xml.encodeToString(TextBlock.serializer(), block)
+        val decoded = xml.decodeFromString(TextBlock.serializer(), encoded)
+
+        assertEquals(block, decoded)
+        assertTrue(decoded.parts.any { it === TextBreak })
+        assertEquals("one\ntwo", decoded.toString())
+    }
 }
