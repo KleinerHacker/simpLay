@@ -81,7 +81,24 @@ where an over-wide single word may split and returns ascending break offsets in
 contract.
 
 The default `NoOpWordBreakerStrategy` always returns an empty list, so an
-over-long word overflows its line. No hyphenation ships with the engine.
+over-long word overflows its line.
+
+`PatternWordBreakerStrategy` offers syllable-accurate hyphenation, computed with
+Liang's algorithm from hyph-utf8/TeX patterns embedded in the engine at compile
+time. Build one with its factory function:
+
+```kotlin
+val german = PatternWordBreakerStrategy.forLocale("de") ?: NoOpWordBreakerStrategy
+
+SimpLayEngine.builder(measurer)
+    .wordBreakerStrategy(german)
+    .build()
+```
+
+`forLocale(...)` returns `null` when no patterns are bundled for the given
+locale; fall back to `NoOpWordBreakerStrategy` (or another `WordBreakerStrategy`)
+in that case. Only `de` and `en` ship with the engine today - see
+`LICENSES.md` next to the pattern sources for their origin and licence.
 
 ## Alignment and line spacing
 

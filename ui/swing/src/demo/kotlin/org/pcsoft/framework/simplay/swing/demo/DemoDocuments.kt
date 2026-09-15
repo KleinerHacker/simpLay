@@ -38,6 +38,13 @@ object DemoDocuments {
         margins = Margins(left = 60.0, top = 60.0, right = 60.0, bottom = 60.0),
     )
 
+    /** A narrow column (roughly 190pt wide) - too narrow for most long words in [hyphenation] to fit
+     * whole, so the effect of the "Word break" control is clearly visible. */
+    private val narrowColumn = PageLayout(
+        size = Size(width = 250.0, height = 842.0),
+        margins = Margins(left = 30.0, top = 60.0, right = 30.0, bottom = 60.0),
+    )
+
     private val body = TextStyle(font = Font(family = "Serif", size = 14.0))
     private val heading = TextStyle(font = Font(family = "Serif", size = 22.0, weight = FontWeight.BOLD))
 
@@ -45,6 +52,24 @@ object DemoDocuments {
         "The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs. " +
             "How vexingly quick daft zebras jump. The five boxing wizards jump quickly. " +
             "Sphinx of black quartz, judge my vow. Jackdaws love my big sphinx of quartz."
+
+    /** German prose deliberately built from long compound nouns, to exercise [PatternWordBreakerStrategy]'s German patterns. */
+    private val germanLongWords =
+        "Die Donaudampfschifffahrtsgesellschaftskapitänspatentverwaltung prüft " +
+            "Rindfleischetikettierungsüberwachungsaufgabenübertragungsgesetze. " +
+            "Das Bundesausbildungsförderungsgesetz regelt Kraftfahrzeughaftpflichtversicherungsbeiträge. " +
+            "Sicherheitsdatenblattinformationsverarbeitungssysteme unterstützen die " +
+            "Rechtschreibreformkommission bei der Weltgesundheitsorganisationskoordination. " +
+            "Verkehrsinfrastrukturmaßnahmenplanungsverfahren benötigen Silbentrennungsalgorithmen."
+
+    /** English prose deliberately built from long, low-frequency words, to exercise
+     * [PatternWordBreakerStrategy]'s English patterns. */
+    private val englishLongWords =
+        "The internationalization of telecommunications infrastructure requires characteristically " +
+            "disproportionate counterrevolutionary responsibility. Uncharacteristically, the " +
+            "incomprehensibility of antidisestablishmentarianism baffled the electroencephalograph " +
+            "technician. Institutionalization and deinstitutionalization remain " +
+            "counterproductive when administered uncharacteristically and disproportionately."
 
     /** A short one-page flow document, numbered bottom-center - the default sample shown at startup. */
     val short: Document = Document(
@@ -154,6 +179,28 @@ object DemoDocuments {
         numbering = PageNumbering(position = PageNumberPosition.BOTTOM_CENTER),
     )
 
+    /**
+     * A narrow-column flow page of German and English long-word prose, meant to demo the "Word
+     * break" control ([org.pcsoft.framework.simplay.engine.strategy.PatternWordBreakerStrategy]):
+     * with word breaking off, the long words overflow the narrow column; switching it to the
+     * matching locale hyphenates them at syllable boundaries instead.
+     */
+    val hyphenation: Document = Document(
+        pages = listOf(
+            FlowPage(
+                layout = narrowColumn,
+                blocks = listOf(
+                    TextBlock.of("Hyphenation", heading),
+                    TextBlock.of("German:", body),
+                    TextBlock.of(germanLongWords, body),
+                    TextBlock.of("English:", body),
+                    TextBlock.of(englishLongWords, body),
+                ),
+            ),
+        ),
+        numbering = PageNumbering(position = PageNumberPosition.BOTTOM_CENTER),
+    )
+
     /** All samples with a display name, in menu order. */
     val all: List<Pair<String, Document>> = listOf(
         "Short" to short,
@@ -161,6 +208,7 @@ object DemoDocuments {
         "Mixed" to mixed,
         "Four pages" to fourPages,
         "Anchors" to anchors,
+        "Hyphenation (DE/EN)" to hyphenation,
         "Novella (~150 pages)" to novella,
     )
 }

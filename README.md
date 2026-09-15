@@ -88,6 +88,8 @@ Build tasks relevant for consumers and maintainers:
     * [x] Measure engine (`SimpLayEngine`): font-measuring callback, pluggable
       line breaking, alignment, `FlowPage` continuation, `SinglePage` growth,
       shared `RenderConfiguration`
+    * [x] Syllable-accurate hyphenation: `PatternWordBreakerStrategy` applies
+      Liang's algorithm over bundled hyph-utf8/TeX patterns (`de`, `en`)
     * [x] Font fingerprinting: `Document.withFontFingerprints`, per-font
       `MeasuredFont.fingerprintStatus` and `MeasuredDocument.fingerprintDeviations`
       to detect a missing or silently replaced font on reopen

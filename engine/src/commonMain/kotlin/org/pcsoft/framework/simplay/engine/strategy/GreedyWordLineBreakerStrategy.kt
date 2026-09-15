@@ -29,8 +29,9 @@ import org.pcsoft.framework.simplay.engine.model.TextWord
  * starts a new line). A part with no preceding [TextWhitespace] - e.g. a [TextWord] directly after a
  * symbol - is attached without a leading space. A word wider than [maxWidth] on its own is offered
  * to the [WordBreakerStrategy]; if that returns no offsets the word stays whole and overflows its
- * line. A [TextBreak] is a hard break: the current line is flushed (even if empty, so a blank line
- * still takes up vertical space) and no leading space carries over to the next line.
+ * line, otherwise it is split at the offered offsets and every piece but the last gets a trailing
+ * `-` mark. A [TextBreak] is a hard break: the current line is flushed (even if empty, so a blank
+ * line still takes up vertical space) and no leading space carries over to the next line.
  */
 object GreedyWordLineBreakerStrategy : LineBreakerStrategy {
 
@@ -107,18 +108,22 @@ object GreedyWordLineBreakerStrategy : LineBreakerStrategy {
             val candidates = offsets.filter { it > start }
             var cut = -1
             for (candidate in candidates) {
-                if (measurer.measure(font.raw, text.substring(start, candidate)).width <= maxWidth) {
+                if (measurer.measure(font.raw, text.substring(start, candidate) + HYPHEN).width <= maxWidth) {
                     cut = candidate
                 } else {
                     break
                 }
             }
             val end = if (cut != -1) cut else (candidates.firstOrNull() ?: text.length)
-            val piece = text.substring(start, end)
+            val isLastPiece = end == text.length
+            val piece = if (isLastPiece) text.substring(start, end) else text.substring(start, end) + HYPHEN
             val pieceMetrics = measurer.measure(font.raw, piece)
             acc.add(TextWord(piece), pieceMetrics.width, 0.0, pieceMetrics.ascent, pieceMetrics.descent)
             start = end
             if (start < text.length) acc.flush()
         }
     }
+
+    /** The visible mark inserted at every intra-word break [placeHyphenated] introduces. */
+    private const val HYPHEN = "-"
 }

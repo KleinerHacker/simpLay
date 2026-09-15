@@ -42,7 +42,8 @@ import org.pcsoft.framework.simplay.engine.model.TextWord
  *
  * A word wider than [maxWidth] on its own is offered to the [WordBreakerStrategy], exactly like
  * [GreedyWordLineBreakerStrategy]; if that returns no offsets the word stays whole and its line
- * overflows.
+ * overflows, otherwise it is split at the offered offsets and every piece but the last gets a
+ * trailing `-` mark.
  *
  * The cost constants below are internal tuning values, not public configuration.
  */
@@ -187,6 +188,9 @@ object BalancedLineBreakerStrategy : LineBreakerStrategy {
         return result
     }
 
+    /** The visible mark inserted at every intra-word break [splitOverlongWord] introduces. */
+    private const val HYPHEN = "-"
+
     /** Splits [text] into synthetic-word runs at [offsets], mirroring `placeHyphenated`. */
     private fun splitOverlongWord(
         text: String,
@@ -203,14 +207,15 @@ object BalancedLineBreakerStrategy : LineBreakerStrategy {
             val candidates = offsets.filter { it > start }
             var cut = -1
             for (candidate in candidates) {
-                if (measure(text.substring(start, candidate)).width <= maxWidth) {
+                if (measure(text.substring(start, candidate) + HYPHEN).width <= maxWidth) {
                     cut = candidate
                 } else {
                     break
                 }
             }
             val end = if (cut != -1) cut else (candidates.firstOrNull() ?: text.length)
-            val piece = text.substring(start, end)
+            val isLastPiece = end == text.length
+            val piece = if (isLastPiece) text.substring(start, end) else text.substring(start, end) + HYPHEN
             val metrics = measure(piece)
             pieces += Run(
                 mutableListOf(SubPart(TextWord(piece), metrics.width, metrics.ascent, metrics.descent)),

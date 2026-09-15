@@ -168,7 +168,7 @@ class BalancedLineBreakerStrategyTest {
         )
 
         assertEquals(2, lines.size)
-        assertEquals("abc", lines[0].parts.single().part.text)
+        assertEquals("abc-", lines[0].parts.single().part.text)
         assertEquals("def", lines[1].parts.single().part.text)
         assertEquals(0.0, lines[0].parts.single().spaceBefore)
         assertEquals(0.0, lines[1].parts.single().spaceBefore)

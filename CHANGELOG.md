@@ -12,8 +12,21 @@ excluded.
 
 ## [UNRELEASED]
 
+### Fixed
+
+- `engine`: `GreedyWordLineBreakerStrategy` and `BalancedLineBreakerStrategy` now
+  append a `-` mark to every piece but the last when a `WordBreakerStrategy`
+  splits an over-wide word, instead of silently breaking it without any visible
+  hyphen.
+
 ### Added
 
+- `engine`: `PatternWordBreakerStrategy`, a `WordBreakerStrategy` that offers
+  syllable-accurate hyphenation using Liang's algorithm over hyph-utf8/TeX
+  patterns embedded in the engine. Build one with
+  `PatternWordBreakerStrategy.forLocale(locale)`, which returns `null` for a
+  locale with no bundled patterns. Ships with `de` and `en` patterns; see
+  `LICENSES.md` next to the pattern sources for their origin and licence.
 - `engine`: `TextBreak`, a new `TextPart` for an explicit line break. Every
   `\n` (and every `\r\n`, merged into one) in a `TextBlock.Companion.of` source
   text now tokenises to its own `TextBreak` instead of joining a whitespace run.
