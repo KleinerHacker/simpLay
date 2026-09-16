@@ -11,6 +11,9 @@ on:
 # "Build" and "Verify" run in parallel; every job inside "Verify" also runs in parallel.
 # NOTE: simPLay is a Kotlin framework, not an IntelliJ plugin - the "Verify plugin" and
 # signature stages have no Gradle task and are kept as explicit placeholders.
+# NOTE: Kotlin Multiplatform has no task literally named "test" - the real, all-targets task
+# is "allTests" (jvm/js/native). The "build" job excludes it so it only compiles; the "test"
+# job below runs it per OS so jvm, js and the OS-specific native target are all exercised.
 
 permissions:
   contents: read
@@ -132,7 +135,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build
-        run: ./gradlew build -x test --stacktrace --info
+        run: ./gradlew build -x allTests --stacktrace --info
 
       - name: Verify plugin
         run: echo "::warning::No plugin verification task defined for this framework project."
@@ -164,7 +167,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Run tests
-        run: ./gradlew test --stacktrace --info
+        run: ./gradlew allTests --stacktrace --info
 
       - name: Coverage report (Kover)
         run: ./gradlew koverXmlReport --stacktrace
