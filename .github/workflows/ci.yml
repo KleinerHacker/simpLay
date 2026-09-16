@@ -132,7 +132,11 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build
-        run: ./gradlew build -x test --stacktrace --info
+        run: |
+          ./gradlew kotlinUpgradeYarnLock --no-daemon --stacktrace --info
+          echo "===YARN_LOCK_BEGIN==="
+          cat kotlin-js-store/yarn.lock
+          echo "===YARN_LOCK_END==="
 
       - name: Verify plugin
         run: echo "::warning::No plugin verification task defined for this framework project."
