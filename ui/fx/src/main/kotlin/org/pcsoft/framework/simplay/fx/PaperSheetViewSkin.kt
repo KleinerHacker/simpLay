@@ -35,6 +35,7 @@ import org.pcsoft.framework.simplay.engine.model.TextPart
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
 import org.pcsoft.framework.simplay.uicommon.PageMode
+import org.pcsoft.framework.simplay.uicommon.effectiveZoom
 import org.pcsoft.framework.simplay.uicommon.hitTest
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetCanvasPainter
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetCaret
@@ -72,6 +73,11 @@ import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetStyle
  * whether it is excluded from layout entirely ([PageMode.laidOut]) or drawn specially
  * ([PageMode.paintedDisabled]); both are re-evaluated on every relayout / redraw, so a change to
  * [PaperSheetView.mode] or [PaperSheetView.pageModes] takes effect immediately.
+ *
+ * [PaperSheetView.zoom] is a logical scale factor; the actual conversion between layout units and
+ * screen pixels always goes through [org.pcsoft.framework.simplay.uicommon.effectiveZoom], which
+ * converts the engine's point-based layout unit to JavaFX's `96` DPI device-independent pixel, so that
+ * a zoom of `1.0` renders a sheet at true physical size.
  */
 internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheetView>(control) {
 
@@ -140,7 +146,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         measuredDocument = { measured },
         pageTops = { pageTops },
         scrollTo = { y ->
-            val maxValue = ((contentHeightUnscaled + 2.0 * skinnable.outerMargin) * skinnable.zoom - canvas.height)
+            val maxValue = ((contentHeightUnscaled + 2.0 * skinnable.outerMargin) * effectiveZoom(skinnable.zoom) - canvas.height)
                 .coerceAtLeast(0.0)
             scrollBar.value = y.coerceIn(0.0, maxValue)
         },
@@ -345,7 +351,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     }
 
     private fun updateScrollBar(viewportHeight: Double) {
-        val totalScaled = (contentHeightUnscaled + 2.0 * skinnable.outerMargin) * skinnable.zoom
+        val totalScaled = (contentHeightUnscaled + 2.0 * skinnable.outerMargin) * effectiveZoom(skinnable.zoom)
         val maxValue = (totalScaled - viewportHeight).coerceAtLeast(0.0)
         scrollBar.max = maxValue
         scrollBar.visibleAmount = if (maxValue <= 0.0) 0.0 else viewportHeight
@@ -356,10 +362,10 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     }
 
     override fun computePrefWidth(height: Double, top: Double, right: Double, bottom: Double, left: Double): Double =
-        left + right + (skinnable.contentSize.width * skinnable.zoom).coerceIn(PREF_MIN, PREF_MAX)
+        left + right + (skinnable.contentSize.width * effectiveZoom(skinnable.zoom)).coerceIn(PREF_MIN, PREF_MAX)
 
     override fun computePrefHeight(width: Double, top: Double, right: Double, bottom: Double, left: Double): Double =
-        top + bottom + (skinnable.contentSize.height * skinnable.zoom).coerceIn(PREF_MIN, PREF_MAX)
+        top + bottom + (skinnable.contentSize.height * effectiveZoom(skinnable.zoom)).coerceIn(PREF_MIN, PREF_MAX)
 
     override fun dispose() {
         caret.dispose()
@@ -414,7 +420,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         painter.paint(
             measured = measured,
             pageTops = pageTops,
-            zoom = skinnable.zoom,
+            zoom = effectiveZoom(skinnable.zoom),
             outerMargin = skinnable.outerMargin,
             scrollOffset = scrollOffset(),
             index = index,
@@ -475,7 +481,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         if (!skinnable.anySelection) return Cursor.DEFAULT
         val doc = measured ?: return Cursor.DEFAULT
         if (doc.pages.isEmpty()) return Cursor.DEFAULT
-        val zoom = skinnable.zoom
+        val zoom = effectiveZoom(skinnable.zoom)
         val outer = skinnable.outerMargin
         val cx = px / zoom
         val cy = (py + scrollOffset()) / zoom
@@ -493,7 +499,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         val idx = index ?: return 0
         if (doc.pages.isEmpty() || idx.segments.isEmpty()) return 0
 
-        val zoom = skinnable.zoom
+        val zoom = effectiveZoom(skinnable.zoom)
         val outer = skinnable.outerMargin
         val cx = px / zoom
         val cy = (py + scrollOffset()) / zoom
@@ -539,7 +545,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
      */
     private fun resolveMouseHit(px: Double, py: Double): Triple<TextPart?, TextBlock?, Page?> {
         val doc = measured?.takeIf { it.pages.isNotEmpty() } ?: return Triple(null, null, null)
-        val zoom = skinnable.zoom
+        val zoom = effectiveZoom(skinnable.zoom)
         val outer = skinnable.outerMargin
         val cx = px / zoom
         val cy = (py + scrollOffset()) / zoom
@@ -586,7 +592,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     private fun onMousePressed(event: MouseEvent) {
         val doc = measured
         val hitPageMode = doc?.pages?.takeIf { it.isNotEmpty() }
-            ?.let { pageMode(it[nearestPage((event.y + scrollOffset()) / skinnable.zoom).first]) }
+            ?.let { pageMode(it[nearestPage((event.y + scrollOffset()) / effectiveZoom(skinnable.zoom)).first]) }
         if (hitPageMode?.supportsSelection != true) return
         if (skinnable.anyFocus) skinnable.requestFocus()
         caret.clearShiftAnchor()
@@ -637,7 +643,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         fireMouseEvent(PaperSheetMouseEvent.CLICK, event.x, event.y)
         if (event.clickCount != 2) return
         val doc = measured?.takeIf { it.pages.isNotEmpty() } ?: return
-        val hitPageMode = pageMode(doc.pages[nearestPage((event.y + scrollOffset()) / skinnable.zoom).first])
+        val hitPageMode = pageMode(doc.pages[nearestPage((event.y + scrollOffset()) / effectiveZoom(skinnable.zoom)).first])
         if (!hitPageMode.supportsSelection) return
         selection.selectWordAt(hitIndexAt(event.x, event.y))
         if (hitPageMode.supportsCaret) caret.placeCaret(selection.end)

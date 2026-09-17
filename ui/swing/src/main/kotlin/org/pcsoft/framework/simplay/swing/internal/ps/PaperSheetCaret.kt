@@ -115,7 +115,7 @@ internal class PaperSheetCaret(
         val doc = measuredDocument() ?: return null
         val g = geom(position) ?: return null
         if (g.pageIndex !in doc.pages.indices) return null
-        val zoom = view.zoom
+        val zoom = effectiveZoom(view.zoom)
         val outer = view.outerMargin
         val contentArea = doc.pages[g.pageIndex].contentArea
         val absX = outer + contentArea.x + g.xContent

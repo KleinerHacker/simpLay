@@ -152,7 +152,7 @@ class PaperSheetEditingTest {
     fun typingKeepsTheCaretDespiteTheDocumentChange() {
         val (_, ui) = editableView()
 
-        ui.placeCaretAtForTest(35.0, 45.0)
+        ui.placeCaretAtForTest(35.0 * (96.0 / 72.0), 45.0 * (96.0 / 72.0))
         val before = ui.caretIndexForTest
         ui.typeTextForTest("X")
 
@@ -206,7 +206,7 @@ class PaperSheetEditingTest {
     @Test
     fun typingInsertsTextAndAdvancesCaret() {
         val (view, ui) = editableView()
-        ui.placeCaretAtForTest(35.0, 45.0)
+        ui.placeCaretAtForTest(35.0 * (96.0 / 72.0), 45.0 * (96.0 / 72.0))
         val caretBefore = ui.caretIndexForTest
         ui.typeTextForTest("XY")
         assertEquals(caretBefore + 2, ui.caretIndexForTest)
@@ -220,7 +220,7 @@ class PaperSheetEditingTest {
     @Test
     fun rightArrowMovesCaretForward() {
         val (_, ui) = editableView()
-        ui.placeCaretAtForTest(35.0, 45.0)
+        ui.placeCaretAtForTest(35.0 * (96.0 / 72.0), 45.0 * (96.0 / 72.0))
         val before = ui.caretIndexForTest
         ui.pressKeyForTest(KeyEvent.VK_RIGHT)
         assertEquals(before + 1, ui.caretIndexForTest)
@@ -232,7 +232,7 @@ class PaperSheetEditingTest {
     @Test
     fun backspaceDeletesThePrecedingCharacter() {
         val (_, ui) = editableView()
-        ui.placeCaretAtForTest(35.0, 45.0)
+        ui.placeCaretAtForTest(35.0 * (96.0 / 72.0), 45.0 * (96.0 / 72.0))
         ui.typeTextForTest("Z")
         val afterType = ui.caretIndexForTest
         ui.pressKeyForTest(KeyEvent.VK_BACK_SPACE)
@@ -245,7 +245,7 @@ class PaperSheetEditingTest {
     @Test
     fun caretHasViewportBoundsWhenEditable() {
         val (_, ui) = editableView()
-        ui.placeCaretAtForTest(35.0, 45.0)
+        ui.placeCaretAtForTest(35.0 * (96.0 / 72.0), 45.0 * (96.0 / 72.0))
         assertNotNull(ui.caretBoundsForTest())
     }
 

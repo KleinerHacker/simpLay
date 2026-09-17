@@ -24,6 +24,7 @@ import org.pcsoft.framework.simplay.engine.model.FontStyle
 import org.pcsoft.framework.simplay.engine.model.FontWeight
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
+import org.pcsoft.framework.simplay.uicommon.effectiveZoom
 import org.pcsoft.framework.simplay.uicommon.segmentSpanX
 
 /**
@@ -115,7 +116,7 @@ internal class PaperSheetSelection(
     fun viewportBounds(): Bounds? {
         val idx = textIndex() ?: return null
         if (model.isEmpty) return null
-        val zoom = view.zoom
+        val zoom = effectiveZoom(view.zoom)
         val outer = view.outerMargin
         val scroll = scrollOffset()
         var minX = Double.MAX_VALUE

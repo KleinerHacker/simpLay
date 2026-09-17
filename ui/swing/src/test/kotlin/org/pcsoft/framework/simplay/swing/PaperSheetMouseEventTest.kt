@@ -49,7 +49,7 @@ class PaperSheetMouseEventTest {
 
         var event: PaperSheetMouseEvent? = null
         view.onMouseEvent = PaperSheetMouseListener { e -> event = e }
-        delegate.fireMouseEventForTest(PaperSheetMouseEvent.Kind.HOVER, 60.0, 60.0)
+        delegate.fireMouseEventForTest(PaperSheetMouseEvent.Kind.HOVER, 60.0 * (96.0 / 72.0), 60.0 * (96.0 / 72.0))
 
         val fired = assertNotNull(event)
         assertNotNull(fired.textPart)
@@ -70,7 +70,7 @@ class PaperSheetMouseEventTest {
 
         var event: PaperSheetMouseEvent? = null
         view.onMouseEvent = PaperSheetMouseListener { e -> event = e }
-        delegate.fireMouseEventForTest(PaperSheetMouseEvent.Kind.CLICK, 60.0, 50_000.0)
+        delegate.fireMouseEventForTest(PaperSheetMouseEvent.Kind.CLICK, 60.0 * (96.0 / 72.0), 50_000.0)
 
         val fired = assertNotNull(event)
         assertNull(fired.textPart)

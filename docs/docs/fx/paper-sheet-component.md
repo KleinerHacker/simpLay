@@ -58,7 +58,7 @@ the property object and `getXxx()` / `setXxx()` (or `isXxx()`) for the value.
 | `pageGap` | `Double` | read/write, styleable | Vertical space in layout units between two sheets. Default `16.0`. |
 | `minZoom` | `Double` | read/write | Lower bound for `zoom`. Default `0.25`. |
 | `maxZoom` | `Double` | read/write | Upper bound for `zoom`. Default `4.0`. |
-| `zoom` | `Double` | read/write | Current scale factor for the whole view, always kept within `[minZoom, maxZoom]`; assigning outside the range, or narrowing the range, re-clamps it. Default `1.0`. |
+| `zoom` | `Double` | read/write | Current scale factor for the whole view, always kept within `[minZoom, maxZoom]`; assigning outside the range, or narrowing the range, re-clamps it. Default `1.0`. A `zoom` of `1.0` renders a sheet at true physical size: the layout unit is a PostScript/PDF point (`72` per inch, e.g. ISO A4 is `595 x 842`), converted to JavaFX's `96` DPI device-independent pixel, which JavaFX itself has mapped to the real screen automatically since Java 9. |
 | `smoothCaretBlink` | `Boolean` | read/write | When `true`, the caret fades in and out instead of blinking hard. Off by default; only effective in a mode with a caret. |
 | `contentSize` | `Dimension2D` | read-only | Unscaled size of the whole sheet stack including `outerMargin` on every side; `0 x 0` for a `null` document. |
 | `selectionModel` | `TextSelectionModel` | read-only | The selection state and commands; see [Selection and clipboard](#selection-and-clipboard). |

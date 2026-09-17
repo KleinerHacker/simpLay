@@ -50,7 +50,7 @@ class PaperSheetMouseEventTest : JavaFxTestBase() {
         var event: PaperSheetMouseEvent? = null
         onFxThread {
             view.onMouseEvent = javafx.event.EventHandler { e -> event = e }
-            skin.fireMouseEventForTest(PaperSheetMouseEvent.HOVER, 60.0, 60.0)
+            skin.fireMouseEventForTest(PaperSheetMouseEvent.HOVER, 60.0 * (96.0 / 72.0), 60.0 * (96.0 / 72.0))
         }
 
         val fired = assertNotNull(event)
@@ -70,7 +70,7 @@ class PaperSheetMouseEventTest : JavaFxTestBase() {
         var event: PaperSheetMouseEvent? = null
         onFxThread {
             view.onMouseEvent = javafx.event.EventHandler { e -> event = e }
-            skin.fireMouseEventForTest(PaperSheetMouseEvent.CLICK, 60.0, 50_000.0)
+            skin.fireMouseEventForTest(PaperSheetMouseEvent.CLICK, 60.0 * (96.0 / 72.0), 50_000.0)
         }
 
         val fired = assertNotNull(event)
@@ -84,6 +84,6 @@ class PaperSheetMouseEventTest : JavaFxTestBase() {
     @Test
     fun withoutHandlerNothingHappens() {
         val (_, skin) = fixture()
-        onFxThread { skin.fireMouseEventForTest(PaperSheetMouseEvent.HOVER, 60.0, 60.0) }
+        onFxThread { skin.fireMouseEventForTest(PaperSheetMouseEvent.HOVER, 60.0 * (96.0 / 72.0), 60.0 * (96.0 / 72.0)) }
     }
 }

@@ -23,6 +23,7 @@ import org.pcsoft.framework.simplay.swing.TextSelectionData
 import org.pcsoft.framework.simplay.swing.TextSelectionModel
 import org.pcsoft.framework.simplay.swing.internal.SwingFontMeasureCalculator
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
+import org.pcsoft.framework.simplay.uicommon.effectiveZoom
 import org.pcsoft.framework.simplay.uicommon.segmentSpanX
 
 /**
@@ -97,7 +98,7 @@ internal class PaperSheetSelection(
     fun viewportBounds(): Rectangle? {
         val idx = textIndex() ?: return null
         if (model.isEmpty) return null
-        val zoom = view.zoom
+        val zoom = effectiveZoom(view.zoom)
         val outer = view.outerMargin
         val scroll = scrollOffset()
         var minX = Double.MAX_VALUE

@@ -15,6 +15,7 @@ package org.pcsoft.framework.simplay.swing.internal.ps
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.swing.PaperSheetView
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
+import org.pcsoft.framework.simplay.uicommon.effectiveZoom
 
 /**
  * The [PaperSheetView.ScrollCommands] sink for the public `scrollToPage` / `scrollToBlock` /
@@ -44,7 +45,7 @@ internal class PaperSheetScroll(
         val tops = pageTops()
         if (tops.isEmpty()) return
         val p = page.coerceIn(0, tops.lastIndex)
-        scrollTo((view.outerMargin + tops[p]) * view.zoom)
+        scrollTo((view.outerMargin + tops[p]) * effectiveZoom(view.zoom))
     }
 
     override fun scrollToBlock(block: Int) = scrollToLinear(textIndex()?.startOfBlock(block))
@@ -72,6 +73,6 @@ internal class PaperSheetScroll(
         val pageIndex = seg.pageIndex
         if (pageIndex !in tops.indices || pageIndex !in doc.pages.indices) return
         val y = view.outerMargin + tops[pageIndex] + doc.pages[pageIndex].contentArea.y + seg.line.lineBox.y
-        scrollTo(y * view.zoom)
+        scrollTo(y * effectiveZoom(view.zoom))
     }
 }

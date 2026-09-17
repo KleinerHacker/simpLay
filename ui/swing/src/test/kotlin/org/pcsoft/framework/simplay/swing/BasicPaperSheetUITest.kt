@@ -74,7 +74,7 @@ class BasicPaperSheetUITest {
         val view = PaperSheetView().apply { document = TestDocuments.short }
         val ui = ui(view)
         paint(ui)
-        ui.selectByPointsForTest(35.0, 45.0, 260.0, 45.0)
+        ui.selectByPointsForTest(35.0 * (96.0 / 72.0), 45.0 * (96.0 / 72.0), 260.0 * (96.0 / 72.0), 45.0 * (96.0 / 72.0))
         assertTrue(view.selectionModel.length > 0)
         assertTrue(view.selectedText.isNotBlank())
     }
@@ -88,8 +88,8 @@ class BasicPaperSheetUITest {
         val view = PaperSheetView().apply { document = TestDocuments.short }
         val ui = ui(view)
         paint(ui)
-        assertEquals(Cursor.TEXT_CURSOR, ui.cursorAtForTest(80.0, 80.0).type)
-        assertEquals(Cursor.DEFAULT_CURSOR, ui.cursorAtForTest(5.0, 5.0).type)
+        assertEquals(Cursor.TEXT_CURSOR, ui.cursorAtForTest(80.0 * (96.0 / 72.0), 80.0 * (96.0 / 72.0)).type)
+        assertEquals(Cursor.DEFAULT_CURSOR, ui.cursorAtForTest(5.0 * (96.0 / 72.0), 5.0 * (96.0 / 72.0)).type)
     }
 
     /**
@@ -105,7 +105,7 @@ class BasicPaperSheetUITest {
         paint(ui)
         view.setPageMode(0, PageMode.DISABLED)
         paint(ui)
-        assertEquals(Cursor.DEFAULT_CURSOR, ui.cursorAtForTest(80.0, 80.0).type)
+        assertEquals(Cursor.DEFAULT_CURSOR, ui.cursorAtForTest(80.0 * (96.0 / 72.0), 80.0 * (96.0 / 72.0)).type)
     }
 
     /**
@@ -121,7 +121,7 @@ class BasicPaperSheetUITest {
         val ui = ui(view)
         paint(ui)
         view.selectionModel.selectAll()
-        assertEquals(Cursor.DEFAULT_CURSOR, ui.cursorAtForTest(80.0, 80.0).type)
+        assertEquals(Cursor.DEFAULT_CURSOR, ui.cursorAtForTest(80.0 * (96.0 / 72.0), 80.0 * (96.0 / 72.0)).type)
         assertFalse(view.isFocusable)
         assertTrue(view.selectionModel.isEmpty)
     }

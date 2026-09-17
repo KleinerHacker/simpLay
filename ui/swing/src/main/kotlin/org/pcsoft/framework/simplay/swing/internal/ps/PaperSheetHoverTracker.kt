@@ -17,6 +17,7 @@ import kotlin.math.roundToInt
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.engine.measure.MeasuredTextBlock
 import org.pcsoft.framework.simplay.swing.PaperSheetView
+import org.pcsoft.framework.simplay.uicommon.effectiveZoom
 
 /**
  * Tracks which paragraph (a measured block) and which sheet the mouse currently hovers in a
@@ -48,7 +49,7 @@ internal class PaperSheetHoverTracker(
             clear()
             return
         }
-        val zoom = view.zoom
+        val zoom = effectiveZoom(view.zoom)
         val outer = view.outerMargin
         val cx = px / zoom
         val cy = (py + scrollOffset()) / zoom
@@ -133,7 +134,7 @@ internal class PaperSheetHoverTracker(
     }
 
     private fun contentRectToViewport(page: Int, rx: Double, ry: Double, rw: Double, rh: Double): Rectangle {
-        val zoom = view.zoom
+        val zoom = effectiveZoom(view.zoom)
         val outer = view.outerMargin
         val contentArea = measured()!!.pages[page].contentArea
         val absX = outer + contentArea.x + rx
@@ -147,7 +148,7 @@ internal class PaperSheetHoverTracker(
     }
 
     private fun pageRectToViewport(page: Int): Rectangle {
-        val zoom = view.zoom
+        val zoom = effectiveZoom(view.zoom)
         val outer = view.outerMargin
         val measuredPage = measured()!!.pages[page]
         val absX = outer

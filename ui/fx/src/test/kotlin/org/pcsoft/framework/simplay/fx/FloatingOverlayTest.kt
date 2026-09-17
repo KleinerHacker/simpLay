@@ -63,11 +63,11 @@ class FloatingOverlayTest : JavaFxTestBase() {
         }
         val (_, skin) = fixture(overlays = arrayOf(overlay))
 
-        onFxThread { skin.selectByPointsForTest(57.0, 57.0, 200.0, 57.0) }
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0), 200.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0)) }
         assertTrue(overlay.isActive)
         val firstBounds = assertNotNull(overlay.activeBounds)
 
-        onFxThread { skin.selectByPointsForTest(57.0, 45.0, 300.0, 140.0) }
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 45.0 * (96.0 / 72.0), 300.0 * (96.0 / 72.0), 140.0 * (96.0 / 72.0)) }
         val grownBounds = assertNotNull(overlay.activeBounds)
 
         assertTrue(skin.activeOverlaysForTest.contains(overlay))
@@ -84,7 +84,7 @@ class FloatingOverlayTest : JavaFxTestBase() {
             content = Label("Copy")
         }
         val (view, skin) = fixture(overlays = arrayOf(overlay))
-        onFxThread { skin.selectByPointsForTest(57.0, 57.0, 200.0, 57.0) }
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0), 200.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0)) }
         assertTrue(overlay.isActive)
 
         onFxThread { view.selectionModel.clearSelection() }
@@ -105,7 +105,7 @@ class FloatingOverlayTest : JavaFxTestBase() {
         }
         val (view, skin) = fixture(paragraphs = 6, overlays = arrayOf(overlay))
 
-        onFxThread { skin.hoverAtForTest(60.0, 60.0) }
+        onFxThread { skin.hoverAtForTest(60.0 * (96.0 / 72.0), 60.0 * (96.0 / 72.0)) }
 
         assertTrue(overlay.isActive)
         assertTrue(overlay.activeIndex >= 0)
@@ -125,7 +125,7 @@ class FloatingOverlayTest : JavaFxTestBase() {
         }
         val (view, skin) = fixture(overlays = arrayOf(overlay))
 
-        onFxThread { skin.hoverAtForTest(60.0, 60.0) }
+        onFxThread { skin.hoverAtForTest(60.0 * (96.0 / 72.0), 60.0 * (96.0 / 72.0)) }
 
         assertTrue(overlay.isActive)
         val pageBounds = assertNotNull(view.hoveredPageBounds)
@@ -146,7 +146,7 @@ class FloatingOverlayTest : JavaFxTestBase() {
             content = Label("Copy")
         }
         val (view, skin) = fixture(paragraphs = 40, overlays = arrayOf(overlay))
-        onFxThread { skin.selectByPointsForTest(57.0, 130.0, 250.0, 150.0) }
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 45.0 * (96.0 / 72.0), 250.0 * (96.0 / 72.0), 100.0 * (96.0 / 72.0)) }
         val node = assertNotNull(overlay.content)
 
         val yBeforeScroll = onFxThread { node.layoutY }
@@ -178,7 +178,7 @@ class FloatingOverlayTest : JavaFxTestBase() {
             content = Label("Copy")
         }
         val (_, skin) = fixture(paragraphs = 40, overlays = arrayOf(overlay))
-        onFxThread { skin.selectByPointsForTest(57.0, 42.0, 250.0, 120.0) }
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 42.0 * (96.0 / 72.0), 250.0 * (96.0 / 72.0), 120.0 * (96.0 / 72.0)) }
         val node = assertNotNull(overlay.content)
         val nodeHeight = onFxThread { node.layoutBounds.height.takeIf { it > 0.0 } ?: node.prefHeight(-1.0) }
 
@@ -215,11 +215,11 @@ class FloatingOverlayTest : JavaFxTestBase() {
             view.skin as PaperSheetViewSkin
         }
 
-        onFxThread { skin.selectByPointsForTest(57.0, 57.0, 200.0, 57.0) }
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0), 200.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0)) }
         val selectionOverlay = view.floatingOverlays.first { it.trigger == FloatingOverlayTrigger.SELECTION }
         assertTrue(selectionOverlay.isActive)
 
-        onFxThread { skin.hoverAtForTest(60.0, 60.0) }
+        onFxThread { skin.hoverAtForTest(60.0 * (96.0 / 72.0), 60.0 * (96.0 / 72.0)) }
         val paragraphOverlay = view.floatingOverlays.first { it.trigger == FloatingOverlayTrigger.PARAGRAPH_HOVER }
         assertTrue(paragraphOverlay.isActive)
     }
@@ -236,8 +236,8 @@ class FloatingOverlayTest : JavaFxTestBase() {
         val (_, skin) = fixture(overlays = arrayOf(overlay))
 
         onFxThread {
-            skin.selectByPointsForTest(57.0, 57.0, 200.0, 57.0)
-            skin.hoverAtForTest(60.0, 60.0)
+            skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0), 200.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0))
+            skin.hoverAtForTest(60.0 * (96.0 / 72.0), 60.0 * (96.0 / 72.0))
             skin.refreshOverlaysForTest()
         }
 
@@ -261,7 +261,7 @@ class FloatingOverlayTest : JavaFxTestBase() {
         }
         val (view, skin) = fixture(overlays = arrayOf(overlay))
 
-        onFxThread { skin.selectByPointsForTest(57.0, 57.0, 220.0, 57.0) }
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0), 220.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0)) }
         assertEquals(1, shown.size)
         val event = shown.first()
         assertEquals(FloatingOverlayTrigger.SELECTION, event.triggerKind)
@@ -302,7 +302,7 @@ class FloatingOverlayTest : JavaFxTestBase() {
             view.skin as PaperSheetViewSkin
         }
 
-        onFxThread { skin.hoverAtForTest(60.0, 336.0) }
+        onFxThread { skin.hoverAtForTest(60.0 * (96.0 / 72.0), 336.0 * (96.0 / 72.0)) }
 
         assertTrue(overlay.isActive)
         assertEquals(1, shown.size)
@@ -334,7 +334,7 @@ class FloatingOverlayTest : JavaFxTestBase() {
             view.skin as PaperSheetViewSkin
         }
 
-        onFxThread { skin.hoverAtForTest(60.0, 60.0) }
+        onFxThread { skin.hoverAtForTest(60.0 * (96.0 / 72.0), 60.0 * (96.0 / 72.0)) }
 
         assertTrue(overlay.isActive)
         assertEquals(1, shown.size)
@@ -364,10 +364,10 @@ class FloatingOverlayTest : JavaFxTestBase() {
             view.skin as PaperSheetViewSkin
         }
 
-        onFxThread { skin.hoverAtForTest(60.0, 336.0) }
+        onFxThread { skin.hoverAtForTest(60.0 * (96.0 / 72.0), 336.0 * (96.0 / 72.0)) }
         assertFalse(overlay.isActive)
 
-        onFxThread { skin.hoverAtForTest(60.0, 60.0) }
+        onFxThread { skin.hoverAtForTest(60.0 * (96.0 / 72.0), 60.0 * (96.0 / 72.0)) }
         assertTrue(overlay.isActive)
     }
 
@@ -393,12 +393,12 @@ class FloatingOverlayTest : JavaFxTestBase() {
             view.skin as PaperSheetViewSkin
         }
 
-        onFxThread { skin.hoverAtForTest(60.0, 60.0) }
+        onFxThread { skin.hoverAtForTest(60.0 * (96.0 / 72.0), 60.0 * (96.0 / 72.0)) }
         assertTrue(overlay.isActive)
 
         onFxThread {
             skin.skinnable.mode = PaperSheetMode.STATIC
-            skin.hoverAtForTest(60.0, 60.0)
+            skin.hoverAtForTest(60.0 * (96.0 / 72.0), 60.0 * (96.0 / 72.0))
         }
         assertFalse(overlay.isActive)
     }

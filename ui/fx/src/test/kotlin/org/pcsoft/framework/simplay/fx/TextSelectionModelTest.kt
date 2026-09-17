@@ -61,7 +61,7 @@ class TextSelectionModelTest : JavaFxTestBase() {
     fun dragSelectionFillsTextRangeAndRuns() {
         val (view, skin) = fixture()
 
-        onFxThread { skin.selectByPointsForTest(57.0, 57.0, 250.0, 57.0) }
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0), 250.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0)) }
         val model = view.selectionModel
 
         assertFalse(model.isEmpty)
@@ -79,7 +79,7 @@ class TextSelectionModelTest : JavaFxTestBase() {
     fun runsCarryFontFamilySizeBoldItalic() {
         val (view, skin) = fixture()
 
-        onFxThread { skin.selectByPointsForTest(57.0, 57.0, 250.0, 57.0) }
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0), 250.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0)) }
         val run = view.selectionModel.runs.first()
 
         assertEquals("Serif", run.fontFamily)
@@ -95,7 +95,7 @@ class TextSelectionModelTest : JavaFxTestBase() {
     fun boundsEqualViewSelectionBounds() {
         val (view, skin) = fixture()
 
-        onFxThread { skin.selectByPointsForTest(57.0, 57.0, 250.0, 57.0) }
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0), 250.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0)) }
 
         val bounds = assertNotNull(view.selectionModel.bounds)
         assertTrue(bounds.width > 0.0 && bounds.height > 0.0)
@@ -141,7 +141,7 @@ class TextSelectionModelTest : JavaFxTestBase() {
     @Test
     fun clearSelectionEmptiesModelAndView() {
         val (view, skin) = fixture()
-        onFxThread { skin.selectByPointsForTest(57.0, 57.0, 250.0, 57.0) }
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0), 250.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0)) }
 
         onFxThread { view.selectionModel.clearSelection() }
 
@@ -157,7 +157,7 @@ class TextSelectionModelTest : JavaFxTestBase() {
     @Test
     fun documentChangeResetsModel() {
         val (view, skin) = fixture()
-        onFxThread { skin.selectByPointsForTest(57.0, 57.0, 250.0, 57.0) }
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0), 250.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0)) }
         assertFalse(view.selectionModel.isEmpty)
 
         onFxThread { view.document = PaperSheetTestFixtures.flowDocument(2) }

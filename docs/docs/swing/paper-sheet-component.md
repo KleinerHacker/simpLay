@@ -31,7 +31,7 @@ shown; register a `java.beans.PropertyChangeListener` to react.
 | `pageModes` | `Map<String, PageMode>` | `emptyMap()` | Per-page `PageMode` overrides, keyed by stable `Page.id`; see [Per-page modes](#per-page-modes). Reset to empty when `document` is reloaded from outside, but not by an edit. |
 | `outerMargin` | `Double` | `24.0` | Space around the whole sheet stack, in layout units. |
 | `pageGap` | `Double` | `16.0` | Vertical space between two sheets, in layout units. |
-| `minZoom` / `maxZoom` / `zoom` | `Double` | `0.25` / `4.0` / `1.0` | `zoom` is always clamped into `[minZoom, maxZoom]`. |
+| `minZoom` / `maxZoom` / `zoom` | `Double` | `0.25` / `4.0` / `1.0` | `zoom` is always clamped into `[minZoom, maxZoom]`. A `zoom` of `1.0` renders a sheet at true physical size: the layout unit is a PostScript/PDF point (`72` per inch, e.g. ISO A4 is `595 x 842`), converted to Swing's `96` DPI device-independent pixel, which Swing itself has mapped to the real screen automatically since Java 9. |
 | `smoothCaretBlink` | `Boolean` | `false` | Fade the caret instead of blinking it hard on and off. |
 | `contentSize` | `Dimension` (read-only) | `0 x 0` | The unscaled size of the sheet stack including `outerMargin` on every side. |
 | `selectedText` | `String` (read-only) | `""` | Convenience delegate for `selectionModel.text`. |

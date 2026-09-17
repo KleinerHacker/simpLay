@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (c) KleinerHacker alias Pfeiffer C Soft 2026.
  * This work is licensed under the Apache License, Version 2.0.
  * You may not use this file except in compliance with the License.
@@ -392,7 +392,7 @@ class PaperSheetEditingTest : JavaFxTestBase() {
             view.caretModel.moveTo(0)
             skin.typeTextForTest("ZZZ ")
             view.selectionModel.selectRange(0, 3)
-            skin.dragSelectionToForTest(250.0, 200.0, copy = false)
+            skin.dragSelectionToForTest(250.0 * (96.0 / 72.0), 200.0 * (96.0 / 72.0), copy = false)
         }
 
         val text = view.document!!.plain()
@@ -412,7 +412,7 @@ class PaperSheetEditingTest : JavaFxTestBase() {
             view.caretModel.moveTo(0)
             skin.typeTextForTest("ZZZ ")
             view.selectionModel.selectRange(0, 3)
-            skin.dragSelectionToForTest(250.0, 200.0, copy = true)
+            skin.dragSelectionToForTest(250.0 * (96.0 / 72.0), 200.0 * (96.0 / 72.0), copy = true)
         }
 
         val text = view.document!!.plain()
@@ -573,7 +573,7 @@ class PaperSheetEditingTest : JavaFxTestBase() {
     fun typingKeepsTheCaretDespiteTheDocumentChange() {
         val (_, skin) = fixture()
 
-        onFxThread { skin.placeCaretAtForTest(60.0, 60.0) }
+        onFxThread { skin.placeCaretAtForTest(60.0 * (96.0 / 72.0), 60.0 * (96.0 / 72.0)) }
         val before = skin.caretIndexForTest
         onFxThread { skin.typeTextForTest("X") }
 

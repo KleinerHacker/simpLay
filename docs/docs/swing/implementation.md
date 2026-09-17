@@ -9,8 +9,8 @@ can express is exposed.
 
 ```kotlin
 dependencies {
-    implementation("org.pcsoft.framework:simplay-engine:0.4.0")
-    implementation("org.pcsoft.framework:simplay-swing:0.4.0")
+    implementation("org.pcsoft.framework:simplay-engine:0.4.1")
+    implementation("org.pcsoft.framework:simplay-swing:0.4.1")
 }
 ```
 

@@ -12,6 +12,15 @@ excluded.
 
 ## [UNRELEASED]
 
+## [0.4.1]
+
+### Fixed
+
+- `swing`, `fx`: `PaperSheetView.zoom` of `1.0` now renders a sheet at true
+  physical size. The layout unit is a PostScript/PDF point (`72` per inch);
+  it is now converted to the `96` DPI device-independent pixel Swing and
+  JavaFX render with, instead of being treated as if it already were one.
+
 ## [0.4.0]
 
 ### Fixed

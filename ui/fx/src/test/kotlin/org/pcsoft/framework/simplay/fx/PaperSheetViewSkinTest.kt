@@ -99,7 +99,7 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
     fun verticalScrollBarTracksContentHeight() {
         val (view, skin) = fixture(paragraphs = 40)
 
-        val expected = view.contentSize.height * view.zoom - skin.viewportHeight
+        val expected = view.contentSize.height * view.zoom * (96.0 / 72.0) - skin.viewportHeight
 
         assertTrue(expected > 0.0)
         assertTrue(abs(skin.verticalScrollBar.max - expected) < 1.0)
@@ -123,8 +123,8 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
     fun cursorIsTextOverContentAreaAndDefaultOverMargin() {
         val (_, skin) = fixture(paragraphs = 6)
 
-        assertEquals(Cursor.TEXT, onFxThread { skin.cursorAtForTest(80.0, 90.0) })
-        assertEquals(Cursor.DEFAULT, onFxThread { skin.cursorAtForTest(4.0, 4.0) })
+        assertEquals(Cursor.TEXT, onFxThread { skin.cursorAtForTest(80.0 * (96.0 / 72.0), 90.0 * (96.0 / 72.0)) })
+        assertEquals(Cursor.DEFAULT, onFxThread { skin.cursorAtForTest(4.0 * (96.0 / 72.0), 4.0 * (96.0 / 72.0)) })
     }
 
     /**
@@ -141,7 +141,7 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
             view.layout()
         }
 
-        assertEquals(Cursor.DEFAULT, onFxThread { skin.cursorAtForTest(80.0, 90.0) })
+        assertEquals(Cursor.DEFAULT, onFxThread { skin.cursorAtForTest(80.0 * (96.0 / 72.0), 90.0 * (96.0 / 72.0)) })
     }
 
     /**
@@ -152,7 +152,7 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
     fun cursorStaysDefaultOverContentAreaInStaticMode() {
         val (_, skin) = fixture(paragraphs = 6, mode = PaperSheetMode.STATIC)
 
-        assertEquals(Cursor.DEFAULT, onFxThread { skin.cursorAtForTest(80.0, 90.0) })
+        assertEquals(Cursor.DEFAULT, onFxThread { skin.cursorAtForTest(80.0 * (96.0 / 72.0), 90.0 * (96.0 / 72.0)) })
     }
 
     /**
@@ -163,7 +163,7 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
     fun clickThenDragSelectsTextRange() {
         val (view, skin) = fixture(paragraphs = 6)
 
-        onFxThread { skin.selectByPointsForTest(57.0, 57.0, 250.0, 57.0) }
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0), 250.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0)) }
 
         assertTrue(view.selectedText.isNotEmpty())
         val bounds = view.selectionBounds
@@ -179,7 +179,7 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
     fun selectionCoversWhitespaceBetweenWords() {
         val (view, skin) = fixture(paragraphs = 6)
 
-        onFxThread { skin.selectByPointsForTest(57.0, 57.0, 170.0, 57.0) }
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0), 170.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0)) }
 
         assertTrue(view.selectedText.contains(" "), "expected a multi-word selection: '${view.selectedText}'")
         val bounds = assertNotNull(view.selectionBounds)
@@ -194,7 +194,7 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
     fun selectionSpansBlocksAndPages() {
         val (view, skin) = fixture(paragraphs = 40)
 
-        onFxThread { skin.selectByPointsForTest(57.0, 45.0, 300.0, 240.0) }
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 45.0 * (96.0 / 72.0), 300.0 * (96.0 / 72.0), 240.0 * (96.0 / 72.0)) }
 
         assertTrue(
             view.selectedText.length > PaperSheetTestFixtures.PARAGRAPH.length,
@@ -210,7 +210,7 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
     fun dragUpdatesSelectionModelRunsAndRange() {
         val (view, skin) = fixture(paragraphs = 6)
 
-        onFxThread { skin.selectByPointsForTest(57.0, 57.0, 170.0, 57.0) }
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0), 170.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0)) }
 
         val model = view.selectionModel
         assertTrue(model.length > 0)
@@ -225,7 +225,7 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
     @Test
     fun ctrlCPutsPlainAndStyledTextOnClipboard() {
         val (view, skin) = fixture(paragraphs = 6)
-        onFxThread { skin.selectByPointsForTest(57.0, 57.0, 260.0, 57.0) }
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0), 260.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0)) }
         val expected = view.selectedText
 
         val clipboard = onFxThread {
@@ -254,7 +254,7 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
         }
         onFxThread {
             view.floatingOverlays.add(overlay)
-            skin.selectByPointsForTest(57.0, 57.0, 220.0, 57.0)
+            skin.selectByPointsForTest(57.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0), 220.0 * (96.0 / 72.0), 57.0 * (96.0 / 72.0))
         }
 
         assertTrue(overlay.isActive)
@@ -293,8 +293,8 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
     @Test
     fun pageNumberIsPaintedAtExpectedEdge() {
         val plain = fixture(paragraphs = 2)
-        val expectedX = plain.view.outerMargin + PaperSheetTestFixtures.layout.size.width / 2.0
-        val expectedY = plain.view.outerMargin + PaperSheetTestFixtures.layout.margins.top / 2.0
+        val expectedX = (plain.view.outerMargin + PaperSheetTestFixtures.layout.size.width / 2.0) * (96.0 / 72.0)
+        val expectedY = (plain.view.outerMargin + PaperSheetTestFixtures.layout.margins.top / 2.0) * (96.0 / 72.0)
 
         assertFalse(
             hasDarkPixelNear(plain.skin, expectedX, expectedY),

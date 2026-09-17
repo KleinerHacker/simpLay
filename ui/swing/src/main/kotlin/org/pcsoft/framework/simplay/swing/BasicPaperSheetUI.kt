@@ -50,6 +50,7 @@ import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetStyle
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetSwingPainter
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 import org.pcsoft.framework.simplay.uicommon.PageMode
+import org.pcsoft.framework.simplay.uicommon.effectiveZoom
 import org.pcsoft.framework.simplay.uicommon.hitTest
 
 /**
@@ -71,6 +72,11 @@ import org.pcsoft.framework.simplay.uicommon.hitTest
  * Each page's effective [PageMode] ([PaperSheetView.effectivePageMode]) decides whether it is
  * excluded from layout entirely ([PageMode.laidOut]) or drawn specially ([PageMode.paintedDisabled]);
  * both are re-evaluated on every relayout / redraw.
+ *
+ * [PaperSheetView.zoom] is a logical scale factor; the actual conversion between layout units and
+ * screen pixels always goes through [org.pcsoft.framework.simplay.uicommon.effectiveZoom], which
+ * converts the engine's point-based layout unit to Swing's `96` DPI device-independent pixel, so that
+ * a zoom of `1.0` renders a sheet at true physical size.
  */
 open class BasicPaperSheetUI : PaperSheetUI() {
 
@@ -163,7 +169,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             measuredDocument = { measured },
             pageTops = { pageTops },
             scrollTo = { y ->
-                val total = (contentHeightUnscaled + 2.0 * view.outerMargin) * view.zoom
+                val total = (contentHeightUnscaled + 2.0 * view.outerMargin) * effectiveZoom(view.zoom)
                 val maxValue = (total - viewportHeight()).coerceAtLeast(0.0)
                 scrollBar.value = y.coerceIn(0.0, maxValue).roundToInt()
             },
@@ -360,7 +366,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     }
 
     private fun updateScrollBar(viewportHeight: Double) {
-        val total = ((contentHeightUnscaled + 2.0 * view.outerMargin) * view.zoom).toInt().coerceAtLeast(0)
+        val total = ((contentHeightUnscaled + 2.0 * view.outerMargin) * effectiveZoom(view.zoom)).toInt().coerceAtLeast(0)
         val extent = viewportHeight.toInt().coerceAtLeast(0)
         val maxValue = (total - extent).coerceAtLeast(0)
         scrollBar.setValues(scrollBar.value.coerceIn(0, maxValue), extent, 0, total)
@@ -438,7 +444,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
                 viewportHeight = viewportHeight(),
                 measured = measured,
                 pageTops = pageTops,
-                zoom = view.zoom,
+                zoom = effectiveZoom(view.zoom),
                 outerMargin = view.outerMargin,
                 scrollOffset = scrollOffset(),
                 index = index,
@@ -457,8 +463,9 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     }
 
     override fun getPreferredSize(c: JComponent): Dimension {
-        val w = (view.contentSize.width * view.zoom).coerceIn(PREF_MIN, PREF_MAX)
-        val h = (view.contentSize.height * view.zoom).coerceIn(PREF_MIN, PREF_MAX)
+        val zoom = effectiveZoom(view.zoom)
+        val w = (view.contentSize.width * zoom).coerceIn(PREF_MIN, PREF_MAX)
+        val h = (view.contentSize.height * zoom).coerceIn(PREF_MIN, PREF_MAX)
         return Dimension(w.toInt(), h.toInt())
     }
 
@@ -497,7 +504,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         if (!selectable) return Cursor.getDefaultCursor()
         val doc = measured ?: return Cursor.getDefaultCursor()
         if (doc.pages.isEmpty()) return Cursor.getDefaultCursor()
-        val zoom = view.zoom
+        val zoom = effectiveZoom(view.zoom)
         val outer = view.outerMargin
         val cx = px / zoom
         val cy = (py + scrollOffset()) / zoom
@@ -519,7 +526,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         val idx = index ?: return 0
         if (doc.pages.isEmpty() || idx.segments.isEmpty()) return 0
 
-        val zoom = view.zoom
+        val zoom = effectiveZoom(view.zoom)
         val outer = view.outerMargin
         val cx = px / zoom
         val cy = (py + scrollOffset()) / zoom
@@ -565,7 +572,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
      */
     private fun resolveMouseHit(px: Double, py: Double): Triple<TextPart?, TextBlock?, Page?> {
         val doc = measured?.takeIf { it.pages.isNotEmpty() } ?: return Triple(null, null, null)
-        val zoom = view.zoom
+        val zoom = effectiveZoom(view.zoom)
         val outer = view.outerMargin
         val cx = px / zoom
         val cy = (py + scrollOffset()) / zoom
@@ -611,7 +618,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     private fun onMousePressed(event: MouseEvent) {
         val doc = measured
         val hitPageMode = doc?.pages?.takeIf { it.isNotEmpty() }
-            ?.let { pageMode(it[nearestPage((event.y + scrollOffset()) / view.zoom).first]) }
+            ?.let { pageMode(it[nearestPage((event.y + scrollOffset()) / effectiveZoom(view.zoom)).first]) }
         if (hitPageMode?.supportsSelection != true) return
         view.requestFocusInWindow()
         caret.clearShiftAnchor()
@@ -653,7 +660,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         fireMouseEvent(PaperSheetMouseEvent.Kind.CLICK, event.x.toDouble(), event.y.toDouble())
         if (event.clickCount != 2) return
         val doc = measured?.takeIf { it.pages.isNotEmpty() } ?: return
-        val hitPageMode = pageMode(doc.pages[nearestPage((event.y + scrollOffset()) / view.zoom).first])
+        val hitPageMode = pageMode(doc.pages[nearestPage((event.y + scrollOffset()) / effectiveZoom(view.zoom)).first])
         if (!hitPageMode.supportsSelection) return
         selection.selectWordAt(hitIndexAt(event.x.toDouble(), event.y.toDouble()))
         if (hitPageMode.supportsCaret) caret.placeCaret(selection.end)

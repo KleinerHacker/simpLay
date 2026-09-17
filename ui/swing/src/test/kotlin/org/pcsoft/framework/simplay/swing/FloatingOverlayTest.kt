@@ -54,7 +54,7 @@ class FloatingOverlayTest {
         val (_, ui, overlay) = setUp()
         var shown = 0
         overlay.onShown = FloatingOverlayListener { shown++ }
-        ui.selectByPointsForTest(35.0, 45.0, 260.0, 45.0)
+        ui.selectByPointsForTest(35.0 * (96.0 / 72.0), 45.0 * (96.0 / 72.0), 260.0 * (96.0 / 72.0), 45.0 * (96.0 / 72.0))
         assertTrue(overlay in ui.activeOverlaysForTest)
         assertEquals(1, ui.overlayNodeCountForTest)
         assertTrue(overlay.isActive)
@@ -68,7 +68,7 @@ class FloatingOverlayTest {
     @Test
     fun clearingSelectionAutoHidesTheOverlay() {
         val (view, ui, overlay) = setUp()
-        ui.selectByPointsForTest(35.0, 45.0, 260.0, 45.0)
+        ui.selectByPointsForTest(35.0 * (96.0 / 72.0), 45.0 * (96.0 / 72.0), 260.0 * (96.0 / 72.0), 45.0 * (96.0 / 72.0))
         view.selectionModel.clearSelection()
         ui.refreshOverlaysForTest()
         assertFalse(overlay in ui.activeOverlaysForTest)
@@ -92,7 +92,7 @@ class FloatingOverlayTest {
         val image = BufferedImage(500, 400, BufferedImage.TYPE_INT_ARGB)
         image.createGraphics().let { g -> ui.paintForTest(g, 500, 400); g.dispose() }
 
-        ui.hoverAtForTest(80.0, 80.0)
+        ui.hoverAtForTest(80.0 * (96.0 / 72.0), 80.0 * (96.0 / 72.0))
         assertTrue(overlay.isActive)
         ui.clearHoverForTest()
         assertFalse(overlay.isActive)
@@ -120,7 +120,7 @@ class FloatingOverlayTest {
 
         val shown = ArrayList<FloatingOverlayEvent>()
         overlay.onShown = FloatingOverlayListener { shown.add(it) }
-        ui.hoverAtForTest(80.0, 396.0)
+        ui.hoverAtForTest(80.0 * (96.0 / 72.0), 396.0 * (96.0 / 72.0))
 
         assertTrue(overlay.isActive)
         assertEquals(1, shown.size)
@@ -149,7 +149,7 @@ class FloatingOverlayTest {
 
         val shown = ArrayList<FloatingOverlayEvent>()
         overlay.onShown = FloatingOverlayListener { shown.add(it) }
-        ui.hoverAtForTest(80.0, 80.0)
+        ui.hoverAtForTest(80.0 * (96.0 / 72.0), 80.0 * (96.0 / 72.0))
 
         assertTrue(overlay.isActive)
         assertEquals(1, shown.size)
@@ -176,10 +176,10 @@ class FloatingOverlayTest {
         view.setPageMode(1, PageMode.DISABLED)
         image.createGraphics().let { g -> ui.paintForTest(g, 500, 800); g.dispose() }
 
-        ui.hoverAtForTest(80.0, 396.0)
+        ui.hoverAtForTest(80.0 * (96.0 / 72.0), 396.0 * (96.0 / 72.0))
         assertFalse(overlay.isActive)
 
-        ui.hoverAtForTest(80.0, 80.0)
+        ui.hoverAtForTest(80.0 * (96.0 / 72.0), 80.0 * (96.0 / 72.0))
         assertTrue(overlay.isActive)
     }
 
@@ -199,11 +199,11 @@ class FloatingOverlayTest {
         val image = BufferedImage(500, 800, BufferedImage.TYPE_INT_ARGB)
         image.createGraphics().let { g -> ui.paintForTest(g, 500, 800); g.dispose() }
 
-        ui.hoverAtForTest(80.0, 80.0)
+        ui.hoverAtForTest(80.0 * (96.0 / 72.0), 80.0 * (96.0 / 72.0))
         assertTrue(overlay.isActive)
 
         view.mode = PaperSheetMode.STATIC
-        ui.hoverAtForTest(80.0, 80.0)
+        ui.hoverAtForTest(80.0 * (96.0 / 72.0), 80.0 * (96.0 / 72.0))
         assertFalse(overlay.isActive)
     }
 }
