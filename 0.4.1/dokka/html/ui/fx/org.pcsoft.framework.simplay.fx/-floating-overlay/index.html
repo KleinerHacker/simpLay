@@ -1,0 +1,565 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>FloatingOverlay</title>
+<link href="../../../../images/logo-icon.svg" rel="icon" type="image/svg"><script>var pathToRoot = "../../../../";</script>
+    <script>document.documentElement.classList.replace("no-js", "js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+      if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      } else {
+        const savedDarkMode = JSON.parse(storage)
+        if (savedDarkMode === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      }
+    </script>
+<script type="text/javascript" src="../../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../../styles/style.css" rel="Stylesheet">
+<link href="../../../../styles/main.css" rel="Stylesheet">
+<link href="../../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../../scripts/safe-local-storage_blocking.js"></script>
+<script type="text/javascript" src="../../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../../ui-kit/ui-kit.min.js" defer></script></head>
+<body>
+<div class="root">
+    <header class="navigation theme-dark" id="navigation-wrapper" role="banner">
+<a class="library-name--link" href="../../../../index.html" tabindex="1">
+                    simplay
+            </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">1.0-SNAPSHOT
+        </div>
+        <div class="navigation-controls">
+        <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
+                <button class="platform-tag platform-selector jvm-like" data-active="" aria-pressed="true" data-filter=":ui:fx/main">jvm</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox" data-role="dropdown-toggle" aria-controls="platform-tags-listbox" aria-haspopup="listbox" aria-expanded="false" aria-label="Toggle source sets"></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox" aria-label="Target filter">
+                    <div class="dropdown--header"><span>Target filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close target filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":ui:fx/main" data-filter=":ui:fx/main">
+                                <span class="checkbox--icon"></span>
+                                jvm
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </ul>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button" type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </header>
+    <div id="container">
+        <nav id="leftColumn" class="sidebar" data-item-type="SECTION" data-item-config="{&quot;defaultSize&quot;: 280, &quot;minSize&quot;: 200, &quot;maxSize&quot;: 400}">
+            <a class="toc--skip-link" href="#main">Skip to content</a>
+            <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list" data-role="dropdown-listbox" aria-label="Table of contents">
+                    <div class="dropdown--header">
+                            <span>
+                                    simplay
+                            </span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                    <div class="sidebar--inner" id="sideMenu"></div>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </nav>
+        <div id="resizer" class="resizer" data-item-type="BAR"></div>
+        <div id="main" data-item-type="SECTION" role="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="fx::org.pcsoft.framework.simplay.fx/FloatingOverlay///PointingToDeclaration//276353382">
+  <div class="breadcrumbs"><a href="../../index.html">fx</a><span class="delimiter">/</span><a href="../index.html">org.pcsoft.framework.simplay.fx</a><span class="delimiter">/</span><span class="current">FloatingOverlay</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Floating</span><wbr><span><span>Overlay</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">FloatingOverlay</a></div><p class="paragraph">A caller-supplied node that a <a href="../-paper-sheet-view/index.html">PaperSheetView</a> shows, positions and hides on its own when a <a href="trigger.html">trigger</a> condition holds - a copy bar above the text selection, a label above the hovered paragraph, and so on. Register instances through PaperSheetView.getFloatingOverlays.</p><p class="paragraph">The bean has a no-argument constructor and only JavaFX properties, so it can be declared in FXML:</p><div class="sample-container"><pre><code class="block lang-xml" theme="idea">&lt;PaperSheetView&gt;<br>  &lt;floatingOverlays&gt;<br>    &lt;FloatingOverlay fx:id="copyBar" trigger="SELECTION" anchor="TOP_LEFT" offsetY="-6.0"&gt;<br>      &lt;content&gt;<br>        &lt;Button text="Copy" onAction="#copySelection"/&gt;<br>      &lt;/content&gt;<br>    &lt;/FloatingOverlay&gt;<br>  &lt;/floatingOverlays&gt;<br>&lt;/PaperSheetView&gt;</code></pre><span class="copy-tooltip"><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div><span class="copy-icon"></span></span></div><p class="paragraph">While the trigger holds, the read-only active, <a href="active-bounds.html">activeBounds</a>, <a href="active-index.html">activeIndex</a>, <a href="active-text.html">activeText</a>, <a href="active-document-range.html">activeDocumentRange</a> and activePageDeactivated fields carry the current context and can be bound from FXML with <code class="lang-kotlin">${copyBar.activeText}</code> and friends. <a href="on-shown.html">onShown</a> and <a href="on-hidden.html">onHidden</a> fire on the show / hide transitions with the same context in a <a href="../-floating-overlay-event/index.html">FloatingOverlayEvent</a>.</p><p class="paragraph">Every property follows the JavaFX bean convention: the property object through <code class="lang-kotlin">xxxProperty()</code>, the value through <code class="lang-kotlin">getXxx()</code> / <code class="lang-kotlin">setXxx()</code> (or <code class="lang-kotlin">isXxx()</code> for booleans).</p></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="tableheader">Constructors</h2>
+        <div class="table"><a data-name="-1494925861%2FConstructors%2F276353382" anchor-label="FloatingOverlay" id="-1494925861%2FConstructors%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-togglable="CONSTRUCTOR" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-floating-overlay.html"><span>Floating</span><wbr><span><span>Overlay</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1494925861%2FConstructors%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="tableheader">Properties</h2>
+        <div class="table"><a data-name="-939528294%2FProperties%2F276353382" anchor-label="activeBounds" id="-939528294%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="active-bounds.html"><span>active</span><wbr><span><span>Bounds</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-939528294%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="active-bounds.html">activeBounds</a><span class="token operator">: </span><span data-unresolved-link="javafx.geometry/Bounds///PointingToDeclaration/">Bounds</span><span class="token operator">?</span></div><div class="brief "><p class="paragraph">The trigger box in viewport pixels while <a href="is-active.html">isActive</a>, else <code class="lang-kotlin">null</code>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-486003131%2FProperties%2F276353382" anchor-label="activeBoundsProperty" id="-486003131%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="active-bounds-property.html"><span>active</span><wbr><span>Bounds</span><wbr><span><span>Property</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-486003131%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"activeBoundsProperty"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">val </span><a href="active-bounds-property.html">activeBoundsProperty</a><span class="token operator">: </span><span data-unresolved-link="javafx.beans.property/ReadOnlyObjectProperty///PointingToDeclaration/">ReadOnlyObjectProperty</span><span class="token operator">&lt;</span><span data-unresolved-link="javafx.geometry/Bounds///PointingToDeclaration/">Bounds</span><span class="token operator">?</span><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">The <a href="active-bounds.html">activeBounds</a> property, read-only.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1348320279%2FProperties%2F276353382" anchor-label="activeDocumentRange" id="-1348320279%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="active-document-range.html"><span>active</span><wbr><span>Document</span><wbr><span><span>Range</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1348320279%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="active-document-range.html">activeDocumentRange</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.ranges/-int-range/index.html">IntRange</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">The covered character range for <a href="../-floating-overlay-trigger/-s-e-l-e-c-t-i-o-n/index.html">FloatingOverlayTrigger.SELECTION</a> while <a href="is-active.html">isActive</a>, else <code class="lang-kotlin">null</code>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1043645332%2FProperties%2F276353382" anchor-label="activeDocumentRangeProperty" id="1043645332%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="active-document-range-property.html"><span>active</span><wbr><span>Document</span><wbr><span>Range</span><wbr><span><span>Property</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1043645332%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"activeDocumentRangeProperty"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">val </span><a href="active-document-range-property.html">activeDocumentRangeProperty</a><span class="token operator">: </span><span data-unresolved-link="javafx.beans.property/ReadOnlyObjectProperty///PointingToDeclaration/">ReadOnlyObjectProperty</span><span class="token operator">&lt;</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.ranges/-int-range/index.html">IntRange</a><span class="token operator">?</span><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">The <a href="active-document-range.html">activeDocumentRange</a> property, read-only.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1420658681%2FProperties%2F276353382" anchor-label="activeIndex" id="1420658681%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="active-index.html"><span>active</span><wbr><span><span>Index</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1420658681%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="active-index.html">activeIndex</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-int/index.html">Int</a></div><div class="brief "><p class="paragraph">Trigger-specific index while <a href="is-active.html">isActive</a>: selection start index, paragraph ordinal, page index or caret index; <code class="lang-kotlin">-1</code> when not applicable.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="436402084%2FProperties%2F276353382" anchor-label="activeIndexProperty" id="436402084%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="active-index-property.html"><span>active</span><wbr><span>Index</span><wbr><span><span>Property</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="436402084%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"activeIndexProperty"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">val </span><a href="active-index-property.html">activeIndexProperty</a><span class="token operator">: </span><span data-unresolved-link="javafx.beans.property/ReadOnlyIntegerProperty///PointingToDeclaration/">ReadOnlyIntegerProperty</span></div><div class="brief "><p class="paragraph">The <a href="active-index.html">activeIndex</a> property, read-only.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="31506549%2FProperties%2F276353382" anchor-label="activePageDeactivatedProperty" id="31506549%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="active-page-deactivated-property.html"><span>active</span><wbr><span>Page</span><wbr><span>Deactivated</span><wbr><span><span>Property</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="31506549%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"activePageDeactivatedProperty"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">val </span><a href="active-page-deactivated-property.html">activePageDeactivatedProperty</a><span class="token operator">: </span><span data-unresolved-link="javafx.beans.property/ReadOnlyBooleanProperty///PointingToDeclaration/">ReadOnlyBooleanProperty</span></div><div class="brief "><p class="paragraph">The activePageDeactivated property, read-only.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-296691718%2FProperties%2F276353382" anchor-label="activeProperty" id="-296691718%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="active-property.html"><span>active</span><wbr><span><span>Property</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-296691718%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"activeProperty"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">val </span><a href="active-property.html">activeProperty</a><span class="token operator">: </span><span data-unresolved-link="javafx.beans.property/ReadOnlyBooleanProperty///PointingToDeclaration/">ReadOnlyBooleanProperty</span></div><div class="brief "><p class="paragraph">The active property, read-only.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-44503902%2FProperties%2F276353382" anchor-label="activeText" id="-44503902%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="active-text.html"><span>active</span><wbr><span><span>Text</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-44503902%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="active-text.html">activeText</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">The selected text or the hovered paragraph text while <a href="is-active.html">isActive</a>; <code class="lang-kotlin">""</code> otherwise.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2076728499%2FProperties%2F276353382" anchor-label="activeTextProperty" id="-2076728499%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="active-text-property.html"><span>active</span><wbr><span>Text</span><wbr><span><span>Property</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2076728499%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"activeTextProperty"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">val </span><a href="active-text-property.html">activeTextProperty</a><span class="token operator">: </span><span data-unresolved-link="javafx.beans.property/ReadOnlyStringProperty///PointingToDeclaration/">ReadOnlyStringProperty</span></div><div class="brief "><p class="paragraph">The <a href="active-text.html">activeText</a> property, read-only.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-971895424%2FProperties%2F276353382" anchor-label="anchor" id="-971895424%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="anchor.html"><span><span>anchor</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-971895424%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="anchor.html">anchor</a><span class="token operator">: </span><span data-unresolved-link="javafx.geometry/Pos///PointingToDeclaration/">Pos</span></div><div class="brief "><p class="paragraph">Where the overlay sits relative to the trigger box. The horizontal part aligns the node's left edge (<code class="lang-kotlin">LEFT</code>), centre (<code class="lang-kotlin">CENTER</code>) or right edge (<code class="lang-kotlin">RIGHT</code>) to the box; the vertical part places the node fully above the box (<code class="lang-kotlin">TOP</code>), centred on it (<code class="lang-kotlin">CENTER</code>) or fully below it (<code class="lang-kotlin">BOTTOM</code> / <code class="lang-kotlin">BASELINE</code>). <a href="offset-x.html">offsetX</a> / <a href="offset-y.html">offsetY</a> are added afterwards. Defaults to <span data-unresolved-link="javafx.geometry/Pos.TOP_LEFT///PointingToDeclaration/{&quot;org.jetbrains.dokka.links.EnumEntryDRIExtra&quot;:{&quot;key&quot;:&quot;org.jetbrains.dokka.links.EnumEntryDRIExtra&quot;}}">Pos.TOP_LEFT</span>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1524038101%2FProperties%2F276353382" anchor-label="anchorProperty" id="-1524038101%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="anchor-property.html"><span>anchor</span><wbr><span><span>Property</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1524038101%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"anchorProperty"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">val </span><a href="anchor-property.html">anchorProperty</a><span class="token operator">: </span><span data-unresolved-link="javafx.beans.property/ObjectProperty///PointingToDeclaration/">ObjectProperty</span><span class="token operator">&lt;</span><span data-unresolved-link="javafx.geometry/Pos///PointingToDeclaration/">Pos</span><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">The <a href="anchor.html">anchor</a> property, for binding and change listeners.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="511814180%2FProperties%2F276353382" anchor-label="autoHide" id="511814180%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="auto-hide.html"><span>auto</span><wbr><span><span>Hide</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="511814180%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="auto-hide.html">autoHide</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">When <code class="lang-kotlin">true</code> (default), the overlay is removed as soon as its trigger stops holding.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-837566769%2FProperties%2F276353382" anchor-label="autoHideProperty" id="-837566769%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="auto-hide-property.html"><span>auto</span><wbr><span>Hide</span><wbr><span><span>Property</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-837566769%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"autoHideProperty"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">val </span><a href="auto-hide-property.html">autoHideProperty</a><span class="token operator">: </span><span data-unresolved-link="javafx.beans.property/BooleanProperty///PointingToDeclaration/">BooleanProperty</span></div><div class="brief "><p class="paragraph">The <a href="auto-hide.html">autoHide</a> property, for binding and change listeners.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="711519628%2FProperties%2F276353382" anchor-label="content" id="711519628%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="content.html"><span><span>content</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="711519628%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="content.html">content</a><span class="token operator">: </span><span data-unresolved-link="javafx.scene/Node///PointingToDeclaration/">Node</span><span class="token operator">?</span></div><div class="brief "><p class="paragraph">The node to place into the view while the overlay is active; <code class="lang-kotlin">null</code> shows nothing.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="668277303%2FProperties%2F276353382" anchor-label="contentProperty" id="668277303%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="content-property.html"><span>content</span><wbr><span><span>Property</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="668277303%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"contentProperty"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">val </span><a href="content-property.html">contentProperty</a><span class="token operator">: </span><span data-unresolved-link="javafx.beans.property/ObjectProperty///PointingToDeclaration/">ObjectProperty</span><span class="token operator">&lt;</span><span data-unresolved-link="javafx.scene/Node///PointingToDeclaration/">Node</span><span class="token operator">?</span><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">The <a href="content.html">content</a> property, for binding and change listeners.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-338326075%2FProperties%2F276353382" anchor-label="isActive" id="-338326075%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="is-active.html"><span>is</span><wbr><span><span>Active</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-338326075%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="is-active.html">isActive</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph"><code class="lang-kotlin">true</code> while the overlay's node is currently placed in the view.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1470847084%2FProperties%2F276353382" anchor-label="isActivePageDeactivated" id="-1470847084%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="is-active-page-deactivated.html"><span>is</span><wbr><span>Active</span><wbr><span>Page</span><wbr><span><span>Deactivated</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1470847084%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><span class="token keyword">val </span><a href="is-active-page-deactivated.html">isActivePageDeactivated</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-boolean/index.html">Boolean</a></div><div class="brief "><p class="paragraph">Whether the page the trigger sits on is currently deactivated while <a href="is-active.html">isActive</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-974590624%2FProperties%2F276353382" anchor-label="offsetX" id="-974590624%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="offset-x.html"><span>offset</span><wbr><span><span>X</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-974590624%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="offset-x.html">offsetX</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-double/index.html">Double</a></div><div class="brief "><p class="paragraph">Extra horizontal shift in pixels applied after <a href="anchor.html">anchor</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-946731509%2FProperties%2F276353382" anchor-label="offsetXProperty" id="-946731509%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="offset-x-property.html"><span>offset</span><wbr><span><span>XProperty</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-946731509%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"offsetXProperty"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">val </span><a href="offset-x-property.html">offsetXProperty</a><span class="token operator">: </span><span data-unresolved-link="javafx.beans.property/DoubleProperty///PointingToDeclaration/">DoubleProperty</span></div><div class="brief "><p class="paragraph">The <a href="offset-x.html">offsetX</a> property, for binding and change listeners.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-943570817%2FProperties%2F276353382" anchor-label="offsetY" id="-943570817%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="offset-y.html"><span>offset</span><wbr><span><span>Y</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-943570817%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="offset-y.html">offsetY</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-double/index.html">Double</a></div><div class="brief "><p class="paragraph">Extra vertical shift in pixels applied after <a href="anchor.html">anchor</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="78760490%2FProperties%2F276353382" anchor-label="offsetYProperty" id="78760490%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="offset-y-property.html"><span>offset</span><wbr><span><span>YProperty</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="78760490%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"offsetYProperty"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">val </span><a href="offset-y-property.html">offsetYProperty</a><span class="token operator">: </span><span data-unresolved-link="javafx.beans.property/DoubleProperty///PointingToDeclaration/">DoubleProperty</span></div><div class="brief "><p class="paragraph">The <a href="offset-y.html">offsetY</a> property, for binding and change listeners.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-980772788%2FProperties%2F276353382" anchor-label="onHidden" id="-980772788%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="on-hidden.html"><span>on</span><wbr><span><span>Hidden</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-980772788%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="on-hidden.html">onHidden</a><span class="token operator">: </span><span data-unresolved-link="javafx.event/EventHandler///PointingToDeclaration/">EventHandler</span><span class="token operator">&lt;</span><a href="../-floating-overlay-event/index.html">FloatingOverlayEvent</a><span class="token operator">&gt;</span><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Handler invoked right after the overlay's node was removed from the view.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1224735497%2FProperties%2F276353382" anchor-label="onHiddenProperty" id="-1224735497%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="on-hidden-property.html"><span>on</span><wbr><span>Hidden</span><wbr><span><span>Property</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1224735497%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"onHiddenProperty"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">val </span><a href="on-hidden-property.html">onHiddenProperty</a><span class="token operator">: </span><span data-unresolved-link="javafx.beans.property/ObjectProperty///PointingToDeclaration/">ObjectProperty</span><span class="token operator">&lt;</span><span data-unresolved-link="javafx.event/EventHandler///PointingToDeclaration/">EventHandler</span><span class="token operator">&lt;</span><a href="../-floating-overlay-event/index.html">FloatingOverlayEvent</a><span class="token operator">&gt;</span><span class="token operator">?</span><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">The <a href="on-hidden.html">onHidden</a> property, for binding and change listeners.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-692436557%2FProperties%2F276353382" anchor-label="onShown" id="-692436557%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="on-shown.html"><span>on</span><wbr><span><span>Shown</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-692436557%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="on-shown.html">onShown</a><span class="token operator">: </span><span data-unresolved-link="javafx.event/EventHandler///PointingToDeclaration/">EventHandler</span><span class="token operator">&lt;</span><a href="../-floating-overlay-event/index.html">FloatingOverlayEvent</a><span class="token operator">&gt;</span><span class="token operator">?</span></div><div class="brief "><p class="paragraph">Handler invoked right after the overlay's node was added to the view.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-33597602%2FProperties%2F276353382" anchor-label="onShownProperty" id="-33597602%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="on-shown-property.html"><span>on</span><wbr><span>Shown</span><wbr><span><span>Property</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-33597602%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"onShownProperty"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">val </span><a href="on-shown-property.html">onShownProperty</a><span class="token operator">: </span><span data-unresolved-link="javafx.beans.property/ObjectProperty///PointingToDeclaration/">ObjectProperty</span><span class="token operator">&lt;</span><span data-unresolved-link="javafx.event/EventHandler///PointingToDeclaration/">EventHandler</span><span class="token operator">&lt;</span><a href="../-floating-overlay-event/index.html">FloatingOverlayEvent</a><span class="token operator">&gt;</span><span class="token operator">?</span><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">The <a href="on-shown.html">onShown</a> property, for binding and change listeners.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="838820141%2FProperties%2F276353382" anchor-label="trigger" id="838820141%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="trigger.html"><span><span>trigger</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="838820141%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><span class="token keyword">var </span><a href="trigger.html">trigger</a><span class="token operator">: </span><a href="../-floating-overlay-trigger/index.html">FloatingOverlayTrigger</a></div><div class="brief "><p class="paragraph">The condition that shows this overlay; defaults to <a href="../-floating-overlay-trigger/-s-e-l-e-c-t-i-o-n/index.html">FloatingOverlayTrigger.SELECTION</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="911367384%2FProperties%2F276353382" anchor-label="triggerProperty" id="911367384%2FProperties%2F276353382" data-filterable-set=":ui:fx/main"></a>
+          <div class="table-row table-row_content" data-filterable-current=":ui:fx/main" data-filterable-set=":ui:fx/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="trigger-property.html"><span>trigger</span><wbr><span><span>Property</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="911367384%2FProperties%2F276353382"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":ui:fx/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@get:</span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.jvm/-jvm-name/index.html"><span class="token annotation builtin">JvmName</span></a><span class="token punctuation">(</span><span>name<span class="token operator"> = </span><span class="breakable-word"><span class="token string">"triggerProperty"</span></span></span><wbr><span class="token punctuation">)</span></div></div><span class="token keyword">val </span><a href="trigger-property.html">triggerProperty</a><span class="token operator">: </span><span data-unresolved-link="javafx.beans.property/ObjectProperty///PointingToDeclaration/">ObjectProperty</span><span class="token operator">&lt;</span><a href="../-floating-overlay-trigger/index.html">FloatingOverlayTrigger</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">The <a href="trigger.html">trigger</a> property, for binding and change listeners.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <div class="footer--container">
+            <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+            <div class="footer--content">
+                <div>
+                    <span>Generated by </span>
+                    <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                        Dokka
+                    </a>
+                    <div>© 2026 Copyright</div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
