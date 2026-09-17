@@ -11,9 +11,13 @@ on:
 # "Build" and "Verify" run in parallel; every job inside "Verify" also runs in parallel.
 # NOTE: simPLay is a Kotlin framework, not an IntelliJ plugin - the "Verify plugin" and
 # signature stages have no Gradle task and are kept as explicit placeholders.
-# NOTE: Kotlin Multiplatform has no task literally named "test" - the real, all-targets task
-# is "allTests" (jvm/js/native). The "build" job excludes it so it only compiles; the "test"
-# job below runs it per OS so jvm, js and the OS-specific native target are all exercised.
+# NOTE: There is no single Gradle task name that covers every module's tests: the "engine"
+# module (Kotlin Multiplatform) only has "allTests" (jvm/js/native, no literal "test" task),
+# while "ui:fx" (plain Kotlin/JVM + TestFX) only has a literal "test" task. Kover also wires
+# its coverage/verification tasks directly to each module's real test tasks, bypassing
+# "allTests" if only that aggregate is excluded. The lifecycle task "check" bundles all of
+# this project-wide regardless of module type, so the "build" job excludes it (compile only)
+# and the "test" job below runs it (minus "licensee", which the check-licences job covers).
 
 permissions:
   contents: read
@@ -135,7 +139,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build
-        run: ./gradlew build -x allTests --stacktrace --info
+        run: ./gradlew build -x check --stacktrace --info
 
       - name: Verify plugin
         run: echo "::warning::No plugin verification task defined for this framework project."
@@ -167,7 +171,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Run tests
-        run: ./gradlew allTests --stacktrace --info
+        run: ./gradlew check -x licensee --stacktrace --info
 
       - name: Coverage report (Kover)
         run: ./gradlew koverXmlReport --stacktrace
