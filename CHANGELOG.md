@@ -12,8 +12,14 @@ excluded.
 
 ## [UNRELEASED]
 
+## [0.4.1]
+
 ### Fixed
 
+- `swing`, `fx`: `PaperSheetView.zoom` of `1.0` now renders a sheet at true
+  physical size. The layout unit is a PostScript/PDF point (`72` per inch);
+  it is now converted to the `96` DPI device-independent pixel Swing and
+  JavaFX render with, instead of being treated as if it already were one.
 - `swing`, `fx`: in an editable `PaperSheetView`, clicking inside the current
   selection without dragging no longer leaves the caret and selection
   unchanged (previously mistaken for a no-op "drop the selection onto
@@ -51,15 +57,6 @@ excluded.
   `caretInputControlEnabled` (`Home` / `End` / `Page Up` / `Page Down`).
   Arrow-key caret navigation and mouse interaction are unaffected by any of
   them.
-
-## [0.4.1]
-
-### Fixed
-
-- `swing`, `fx`: `PaperSheetView.zoom` of `1.0` now renders a sheet at true
-  physical size. The layout unit is a PostScript/PDF point (`72` per inch);
-  it is now converted to the `96` DPI device-independent pixel Swing and
-  JavaFX render with, instead of being treated as if it already were one.
 
 ## [0.4.0]
 
