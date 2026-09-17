@@ -75,13 +75,13 @@ folgen ihr durch Scroll und Zoom.
 
 | ID    | Implementierungsplan                          | Ziel                                                                 | Abhängigkeiten |
 | ----- | ---------------------------------------------- | --------------------------------------------------------------------| -------------- |
-| IP-01 | Gemeinsames Kanten-/Anker-Modell (ui:common)   | Toolkit-unabhängiges Kanten-Enum und Ausrichtungslogik               | -              |
+| IP-01 (COMPLETED) | Gemeinsames Kanten-/Anker-Modell (ui:common)   | Toolkit-unabhängiges Kanten-Enum und Ausrichtungslogik               | -              |
 | IP-02 | Umsetzung `PageDecoration` (fx & swing)        | `PageDecoration`, Property-Liste, Skin-/UI-Delegate-Integration in beiden Modulen | IP-01 |
 | IP-03 | Dokumentation & Tests                          | MkDocs-Seiten, JUnit/TestFX-Tests für fx und swing                   | IP-02          |
 
 ## 7. Implementierungspläne
 
-### IP-01: Gemeinsames Kanten-/Anker-Modell (ui:common)
+### IP-01 (COMPLETED): Gemeinsames Kanten-/Anker-Modell (ui:common)
 
 **Ziel**
 
@@ -100,6 +100,13 @@ Keine - unabhängig.
 **Schnittstellen zu anderen Plänen**
 
 Stellt das Kanten-Enum und die Ausrichtungslogik bereit, die IP-02 konsumiert.
+
+**Tatsächliche Umsetzung**
+
+* `EdgeAlignment` erhielt zusätzlich zu `START`/`CENTER`/`END` den Wert `STRETCH`
+  (volle Kantenlänge), der als Standardwert von `PageDecorationPlacement.alignment` dient.
+* Positionsberechnung nutzt die bereits vorhandenen `engine.geometry`-Typen `Rect`/`Size` statt
+  neuer eigener Geometrie-Typen.
 
 ### IP-02: Umsetzung `PageDecoration` (fx & swing)
 
@@ -148,7 +155,7 @@ Verbraucht die in IP-02 fertiggestellten öffentlichen APIs beider Module.
 ## 8. Abhängigkeitsgraph
 
 ```text
-IP-01
+IP-01 (COMPLETED)
 └── IP-02
     └── IP-03
 ```
