@@ -43,6 +43,7 @@ import org.pcsoft.framework.simplay.uicommon.effectiveZoom
 import org.pcsoft.framework.simplay.uicommon.hitTest
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetCanvasPainter
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetCaret
+import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetDecorations
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetEditor
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetHoverTracker
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetOverlays
@@ -70,6 +71,8 @@ import java.awt.dnd.DragSource
  *   mutations they trigger, plus drag-and-drop of the selection;
  * * [PaperSheetHoverTracker] - the hovered paragraph / sheet;
  * * [PaperSheetOverlays] - the registered [FloatingOverlay]s and the overlay layer on top of the
+ *   viewport;
+ * * [PaperSheetDecorations] - the registered [PageDecoration]s and the decoration layer on top of the
  *   viewport.
  *
  * The sheet chrome, the selection highlight and the caret are painted with the values from the
@@ -188,6 +191,14 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         textIndex = { index },
     )
 
+    /** The registered page decorations and the decoration layer on top of the viewport. */
+    private val decorations = PaperSheetDecorations(
+        view = control,
+        measuredDocument = { measured },
+        pageTops = { pageTops },
+        scrollOffset = ::scrollOffset,
+    )
+
     private val keyHandler = EventHandler<KeyEvent> { editor.onKeyPressed(it) }
     private val keyTypedHandler = EventHandler<KeyEvent> { editor.onKeyTyped(it) }
 
@@ -232,7 +243,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     //region Wiring
 
     init {
-        children.addAll(canvas, scrollBar, overlays.layer)
+        children.addAll(canvas, scrollBar, overlays.layer, decorations.layer)
 
         remeasure()
         skinnable.registerSelectionCommands(selection)
@@ -353,6 +364,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         scrollBar.resizeRelocate(x + viewportWidth, y, barWidth, h)
 
         overlays.layout(x, y, viewportWidth, h)
+        decorations.layout(x, y, viewportWidth, h)
 
         updateScrollBar(h)
         redraw()
@@ -378,6 +390,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     override fun dispose() {
         caret.dispose()
         overlays.dispose()
+        decorations.dispose()
         skinnable?.removeEventHandler(KeyEvent.KEY_PRESSED, keyHandler)
         skinnable?.removeEventHandler(KeyEvent.KEY_TYPED, keyTypedHandler)
         skinnable?.unregisterSelectionCommands(selection)
@@ -446,6 +459,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         selection.publish()
         hover.publishOutputs()
         overlays.refresh()
+        decorations.refresh()
         caret.publish()
     }
 
@@ -720,6 +734,15 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     /** Number of nodes currently in the overlay layer; for tests. */
     internal val overlayNodeCountForTest: Int get() = overlays.nodeCountForTest
+
+    /** Recomputes decoration visibility and position; for tests. */
+    internal fun refreshDecorationsForTest() = decorations.refresh()
+
+    /** The decorations whose node currently sits in the decoration layer; for tests. */
+    internal val activeDecorationsForTest: Set<PageDecoration> get() = decorations.activeForTest
+
+    /** Number of nodes currently in the decoration layer; for tests. */
+    internal val decorationNodeCountForTest: Int get() = decorations.nodeCountForTest
 
     /** The current caret index; for tests. */
     internal val caretIndexForTest: Int get() = caret.position

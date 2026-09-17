@@ -814,6 +814,21 @@ class PaperSheetView : Control() {
 
     //endregion
 
+    //region Page decorations
+
+    private val pageDecorationsList: ObservableList<PageDecoration> = FXCollections.observableArrayList()
+
+    /**
+     * The registered page decorations: caller-supplied nodes permanently anchored to one edge of a
+     * single page, identified by its stable [org.pcsoft.framework.simplay.engine.model.Page.id].
+     * Unlike [floatingOverlays] they are not tied to an interaction. Mutable; also populated from
+     * FXML as a `<pageDecorations>` child element. The same list instance for the whole life of the
+     * view.
+     */
+    val pageDecorations: ObservableList<PageDecoration> get() = pageDecorationsList
+
+    //endregion
+
     //region Events
 
     /** The [onType] property, for binding and change listeners. */

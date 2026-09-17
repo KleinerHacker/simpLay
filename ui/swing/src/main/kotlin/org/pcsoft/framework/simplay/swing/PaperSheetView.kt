@@ -597,6 +597,20 @@ open class PaperSheetView : JComponent() {
 
     //endregion
 
+    //region Page decorations
+
+    private val pageDecorationsList = ArrayList<PageDecoration>()
+
+    /**
+     * The registered page decorations: caller-supplied components permanently anchored to one edge of
+     * a single page, identified by its stable [org.pcsoft.framework.simplay.engine.model.Page.id].
+     * Unlike [floatingOverlays] they are not tied to an interaction. Mutable; the same list instance
+     * for the whole life of the view. A newly added decoration is picked up on the next repaint.
+     */
+    val pageDecorations: MutableList<PageDecoration> get() = pageDecorationsList
+
+    //endregion
+
     //region UI wiring
 
     init {

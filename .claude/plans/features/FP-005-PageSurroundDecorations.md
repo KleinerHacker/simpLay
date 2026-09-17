@@ -76,8 +76,8 @@ folgen ihr durch Scroll und Zoom.
 | ID    | Implementierungsplan                          | Ziel                                                                 | Abhängigkeiten |
 | ----- | ---------------------------------------------- | --------------------------------------------------------------------| -------------- |
 | IP-01 (COMPLETED) | Gemeinsames Kanten-/Anker-Modell (ui:common)   | Toolkit-unabhängiges Kanten-Enum und Ausrichtungslogik               | -              |
-| IP-02 | Umsetzung `PageDecoration` (fx & swing)        | `PageDecoration`, Property-Liste, Skin-/UI-Delegate-Integration in beiden Modulen | IP-01 |
-| IP-03 | Dokumentation & Tests                          | MkDocs-Seiten, JUnit/TestFX-Tests für fx und swing                   | IP-02          |
+| IP-02 (COMPLETED) | Umsetzung `PageDecoration` (fx & swing)        | `PageDecoration`, Property-Liste, Skin-/UI-Delegate-Integration in beiden Modulen | IP-01 |
+| IP-03 (COMPLETED) | Dokumentation & Tests                          | MkDocs-Seiten, JUnit/TestFX-Tests für fx und swing                   | IP-02          |
 
 ## 7. Implementierungspläne
 
@@ -108,7 +108,7 @@ Stellt das Kanten-Enum und die Ausrichtungslogik bereit, die IP-02 konsumiert.
 * Positionsberechnung nutzt die bereits vorhandenen `engine.geometry`-Typen `Rect`/`Size` statt
   neuer eigener Geometrie-Typen.
 
-### IP-02: Umsetzung `PageDecoration` (fx & swing)
+### IP-02 (COMPLETED): Umsetzung `PageDecoration` (fx & swing)
 
 **Ziel**
 
@@ -132,7 +132,21 @@ IP-01.
 Konsumiert das Kanten-Enum aus IP-01; liefert die fertige `PageDecoration`-API beider Module an
 IP-03.
 
-### IP-03: Dokumentation & Tests
+**Tatsächliche Umsetzung**
+
+* `PageDecoration` trägt flache Felder `pageId`, `edge`, `alignment`, `offsetX`, `offsetY` statt
+  eines eigenen `placement`-Objekts, damit sie (fx) direkt als FXML-Attribute setzbar sind; intern
+  bauen beide Module daraus ein `PageDecorationPlacement` für `resolveDecorationBounds`.
+* Positionierung liegt nicht direkt in `PaperSheetViewSkin`/`BasicPaperSheetUI`, sondern in einer
+  neuen, je Modul eigenen internen Helferklasse `PaperSheetDecorations`
+  (fx: `fx.internal.ps`, swing: `swing.internal.ps`), analog zum bestehenden
+  `PaperSheetOverlays`-Muster; Skin bzw. UI-Delegate erzeugen sie nur und rufen `layout`/`refresh`/
+  `dispose` auf.
+* Keine zusätzlichen CSS-Regeln in `paper-sheet-view.css` nötig; der Dekorations-Layer trägt eine
+  Style-Klasse (`page-decoration-layer`) als Erweiterungspunkt, analog zum stilklassenlosen
+  Overlay-Layer.
+
+### IP-03 (COMPLETED): Dokumentation & Tests
 
 **Ziel**
 
@@ -152,12 +166,29 @@ IP-02.
 
 Verbraucht die in IP-02 fertiggestellten öffentlichen APIs beider Module.
 
+**Tatsächliche Umsetzung**
+
+* MkDocs-Seiten `docs/fx/page-decorations.md` und `docs/swing/page-decorations.md`
+  angelegt, strukturell an `floating-overlays.md` angelehnt (Registrierung,
+  Konfigurationstabelle, Verhalten, Weiterführende Links).
+* `docs/mkdocs.yml`: Navigationseintrag "Page decorations" je Modul direkt nach
+  "Floating overlays" ergänzt.
+* Keine neuen `ui:common`-Tests: `PageDecorationLayoutTest` aus IP-01 deckt
+  `resolveDecorationBounds` bereits vollständig ab.
+* `PageDecorationTest` neu je Modul: fx nutzt die `JavaFxTestBase`-Fixture analog zu
+  `FloatingOverlayTest`, swing rendert offscreen über `paintForTest`. Beide decken
+  Seitenzuordnung, Default-Alignment `STRETCH` vs. `CENTER`, `offsetX`/`offsetY`,
+  Scroll-/Zoom-Folgeverhalten, Koexistenz mehrerer Dekorationen sowie Unabhängigkeit
+  von `PageMode`/`PaperSheetMode` ab.
+* Kein CHANGELOG-Eintrag, da laut `project-docs`-Skill reine Doku-/Testaenderungen
+  keinen Eintrag erhalten.
+
 ## 8. Abhängigkeitsgraph
 
 ```text
 IP-01 (COMPLETED)
-└── IP-02
-    └── IP-03
+└── IP-02 (COMPLETED)
+    └── IP-03 (COMPLETED)
 ```
 
 ## 9. Risiken und offene Fragen
