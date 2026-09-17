@@ -83,8 +83,8 @@ nav:
         - Implementation: console/implementation.md
   - export:
       - PDF:
-          - Java: jvm-pdf/implementation.md
+          - Java: pdf-jvm/implementation.md
       - Printing:
-          - Java: jvm-print/implementation.md
+          - Java: print-jvm/implementation.md
   - API Docs: dokka/html/index.html
   - Licences: licences/index.html
