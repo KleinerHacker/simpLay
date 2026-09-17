@@ -78,4 +78,32 @@ class PaperSheetMouseEventTest {
         assertNull(fired.page)
         assertEquals(PaperSheetMouseEvent.Kind.CLICK, fired.kind)
     }
+
+    /** A double-click on text fires [PaperSheetMouseEvent.Kind.SELECT_WORD] in addition to [PaperSheetMouseEvent.Kind.CLICK]. */
+    @Test
+    fun doubleClickOnTextFiresSelectWord() {
+        val view = PaperSheetView().apply { mode = PaperSheetMode.SELECTABLE; document = TestDocuments.short }
+        val delegate = ui(view)
+        paint(delegate)
+
+        val kinds = mutableListOf<PaperSheetMouseEvent.Kind>()
+        view.onMouseEvent = PaperSheetMouseListener { e -> kinds += e.kind }
+        delegate.clickAtForTest(60.0 * (96.0 / 72.0), 60.0 * (96.0 / 72.0), clickCount = 2)
+
+        assertEquals(listOf(PaperSheetMouseEvent.Kind.CLICK, PaperSheetMouseEvent.Kind.SELECT_WORD), kinds)
+    }
+
+    /** A triple-click on text fires [PaperSheetMouseEvent.Kind.SELECT_LINE] in addition to [PaperSheetMouseEvent.Kind.CLICK]. */
+    @Test
+    fun tripleClickOnTextFiresSelectLine() {
+        val view = PaperSheetView().apply { mode = PaperSheetMode.SELECTABLE; document = TestDocuments.short }
+        val delegate = ui(view)
+        paint(delegate)
+
+        val kinds = mutableListOf<PaperSheetMouseEvent.Kind>()
+        view.onMouseEvent = PaperSheetMouseListener { e -> kinds += e.kind }
+        delegate.clickAtForTest(60.0 * (96.0 / 72.0), 60.0 * (96.0 / 72.0), clickCount = 3)
+
+        assertEquals(listOf(PaperSheetMouseEvent.Kind.CLICK, PaperSheetMouseEvent.Kind.SELECT_LINE), kinds)
+    }
 }

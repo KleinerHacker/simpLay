@@ -144,8 +144,10 @@ into an editable view; the event (`PaperSheetTypeEvent`) carries the typed
 `character` plus the raw `textPart`, `textBlock` and `page` it landed in.
 
 `onMouseEvent` (a `PaperSheetMouseListener`) fires while the mouse hovers
-(`PaperSheetMouseEvent.Kind.HOVER`, on every pointer move) or clicks
-(`PaperSheetMouseEvent.Kind.CLICK`) over the view; the event carries the raw
+(`PaperSheetMouseEvent.Kind.HOVER`, on every pointer move), clicks
+(`PaperSheetMouseEvent.Kind.CLICK`), selects a word by double-click
+(`PaperSheetMouseEvent.Kind.SELECT_WORD`) or selects a line by triple-click
+(`PaperSheetMouseEvent.Kind.SELECT_LINE`) over the view; the event carries the raw
 `textPart`, `textBlock` and `page` under the pointer - `textPart` and
 `textBlock` are `null` over an empty area of a page, and all three are `null`
 outside every page.
@@ -200,6 +202,7 @@ of the character about to be overwritten - instead of the thin line.
 | `Ctrl+A` / `Cmd+A` | Select the whole document text. Works in both modes. |
 | `Ctrl+C` / `Cmd+C` | Copy the selection as plain text + styled HTML + RTF. Works in both modes. |
 | double-click | Select the word under the pointer. |
+| triple-click | Select the line under the pointer. |
 | `Ctrl+X` | Cut the selection (editable). |
 | `Ctrl+V` | Paste plain text at the caret / over the selection (editable). |
 | `Ctrl+D` | Duplicate the selection, or the caret line when the selection is empty (editable). |

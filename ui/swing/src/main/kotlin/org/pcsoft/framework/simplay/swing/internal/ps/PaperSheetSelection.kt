@@ -72,6 +72,9 @@ internal class PaperSheetSelection(
     /** Selects the word around [index] (double-click). */
     fun selectWordAt(index: Int) = model.selectWordAt(index)
 
+    /** Selects the line around [index] (triple-click). */
+    fun selectLineAt(index: Int) = model.selectLineAt(index)
+
     /** Sets both ends of the selection; used by `PaperSheetCaret` for `Shift` + navigation. */
     fun setAnchorFocus(anchor: Int, focus: Int) {
         model.anchor = anchor

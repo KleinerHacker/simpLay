@@ -249,6 +249,33 @@ class DocumentTextIndex(measured: MeasuredDocument) {
         return lo..hi
     }
 
+    /**
+     * The half-open range of the measured line around [index], for triple-click selection.
+     * Returns `index..index` when the document has no segments.
+     */
+    fun lineRangeAt(index: Int): IntRange {
+        if (segments.isEmpty()) return clamp(index).let { it..it }
+        val i = clamp(index)
+        val segIndex = segments.indexOfLast { it.start <= i }.coerceAtLeast(0)
+        val line = segments[segIndex].line
+
+        var lo = segments[segIndex].start
+        var j = segIndex
+        while (j > 0 && segments[j - 1].line === line) {
+            j--
+            lo = segments[j].start
+        }
+
+        var hi = segments[segIndex].end
+        var k = segIndex
+        while (k < segments.size - 1 && segments[k + 1].line === line) {
+            k++
+            hi = segments[k].end
+        }
+
+        return lo..hi
+    }
+
     //region Structural addressing
 
     /** Linear index [index] characters into block [block]; ordinal and offset are clamped. */

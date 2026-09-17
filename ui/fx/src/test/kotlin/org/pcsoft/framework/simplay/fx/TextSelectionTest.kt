@@ -124,6 +124,21 @@ class TextSelectionTest : JavaFxTestBase() {
     }
 
     /**
+     * Triple-click line selection expands an interior index to the whole surrounding line, spanning
+     * across the words it is made of.
+     */
+    @Test
+    fun selectLineAtExpandsToTheWholeLine() {
+        val idx = index("The quick brown fox")
+        val selection = TextSelection().apply { index = idx }
+
+        val insideQuick = idx.text.indexOf("quick") + 2
+        selection.selectLineAt(insideQuick)
+
+        assertEquals(idx.text, selection.selectedText)
+    }
+
+    /**
      * Copying the selected text puts exactly that plain string on the system clipboard.
      */
     @Test

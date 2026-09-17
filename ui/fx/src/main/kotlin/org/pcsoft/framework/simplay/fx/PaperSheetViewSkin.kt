@@ -18,11 +18,15 @@ import javafx.geometry.Bounds
 import javafx.geometry.Dimension2D
 import javafx.geometry.Orientation
 import javafx.scene.Cursor
+import javafx.scene.ImageCursor
 import javafx.scene.canvas.Canvas
 import javafx.scene.control.ScrollBar
 import javafx.scene.control.SkinBase
+import javafx.scene.input.DragEvent
+import javafx.scene.input.Dragboard
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
+import javafx.scene.input.MouseButton
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.ScrollEvent
 import org.pcsoft.framework.simplay.engine.RenderConfiguration
@@ -45,6 +49,7 @@ import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetOverlays
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetScroll
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetSelection
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetStyle
+import java.awt.dnd.DragSource
 
 /**
  * Skin of [PaperSheetView]. Owns the measuring, the vertical [ScrollBar], the pointer / mouse
@@ -107,6 +112,9 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     /** `true` while the mouse drags an existing selection to a new drop position. */
     private var draggingSelection = false
+
+    /** `true` once the pointer actually moved while [draggingSelection], as opposed to a plain click on the selection. */
+    private var selectionDragMoved = false
 
     /** `true` while the next `document` change comes from [editor] rather than from outside. */
     private var internalEdit = false
@@ -605,8 +613,10 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         val i = hitIndexAt(event.x, event.y)
         if (hitPageMode.supportsEditing && !selection.isEmpty && selection.contains(event.x, event.y)) {
             draggingSelection = true
+            selectionDragMoved = false
             dragging = false
             caret.setDropPreview(i)
+            canvas.cursor = Cursor.MOVE
             event.consume()
             return
         }
@@ -622,6 +632,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     private fun onMouseDragged(event: MouseEvent) {
         if (draggingSelection) {
+            selectionDragMoved = true
             caret.setDropPreview(hitIndexAt(event.x, event.y))
             event.consume()
             return
@@ -635,10 +646,18 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     private fun onMouseReleased(event: MouseEvent) {
         if (draggingSelection) {
             val target = hitIndexAt(event.x, event.y)
-            val copy = event.isShortcutDown
+            val moved = selectionDragMoved
             draggingSelection = false
+            selectionDragMoved = false
             caret.setDropPreview(null)
-            editor.dropSelection(target, copy)
+            if (moved) {
+                val copy = event.isShortcutDown
+                editor.dropSelection(target, copy)
+            } else {
+                selection.beginAt(target)
+                caret.placeCaret(target)
+            }
+            canvas.cursor = cursorFor(event.x, event.y)
             event.consume()
             return
         }
@@ -647,11 +666,21 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
 
     private fun onMouseClicked(event: MouseEvent) {
         fireMouseEvent(PaperSheetMouseEvent.CLICK, event.x, event.y)
-        if (event.clickCount != 2) return
         val doc = measured?.takeIf { it.pages.isNotEmpty() } ?: return
         val hitPageMode = pageMode(doc.pages[nearestPage((event.y + scrollOffset()) / effectiveZoom(skinnable.zoom)).first])
         if (!hitPageMode.supportsSelection) return
-        selection.selectWordAt(hitIndexAt(event.x, event.y))
+        val index = hitIndexAt(event.x, event.y)
+        when (event.clickCount) {
+            2 -> {
+                selection.selectWordAt(index)
+                fireMouseEvent(PaperSheetMouseEvent.SELECT_WORD, event.x, event.y)
+            }
+            3 -> {
+                selection.selectLineAt(index)
+                fireMouseEvent(PaperSheetMouseEvent.SELECT_LINE, event.x, event.y)
+            }
+            else -> return
+        }
         if (hitPageMode.supportsCaret) caret.placeCaret(selection.end)
         redraw()
         event.consume()
@@ -736,9 +765,58 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     internal fun dragSelectionToForTest(x: Double, y: Double, copy: Boolean) =
         editor.dropSelection(hitIndexAt(x, y), copy)
 
+    /** Simulates a mouse click of [clickCount] at a viewport point through [onMouseClicked]; for tests. */
+    internal fun clickAtForTest(x: Double, y: Double, clickCount: Int) {
+        onMouseClicked(
+            MouseEvent(
+                MouseEvent.MOUSE_CLICKED, x, y, x, y, MouseButton.PRIMARY, clickCount,
+                false, false, false, false, true, false, false, false, false, false, null,
+            )
+        )
+    }
+
     /** Fires a [PaperSheetMouseEvent] of [type] at a viewport point, as the real handlers do; for tests. */
     internal fun fireMouseEventForTest(type: EventType<PaperSheetMouseEvent>, x: Double, y: Double) =
         fireMouseEvent(type, x, y)
+
+    /** Fires a `MOUSE_PRESSED` at a viewport point through [onMousePressed]; for tests. */
+    internal fun pressAtForTest(x: Double, y: Double) {
+        onMousePressed(
+            MouseEvent(
+                MouseEvent.MOUSE_PRESSED, x, y, x, y, MouseButton.PRIMARY, 1,
+                false, false, false, false, true, false, false, false, false, false, null,
+            )
+        )
+    }
+
+    /** Fires a `MOUSE_DRAGGED` at a viewport point through [onMouseDragged]; for tests. */
+    internal fun dragToForTest(x: Double, y: Double) {
+        onMouseDragged(
+            MouseEvent(
+                MouseEvent.MOUSE_DRAGGED, x, y, x, y, MouseButton.PRIMARY, 0,
+                false, false, false, false, true, false, false, false, false, false, null,
+            )
+        )
+    }
+
+    /** Fires a `MOUSE_RELEASED` at a viewport point through [onMouseReleased]; for tests. */
+    internal fun releaseAtForTest(x: Double, y: Double) {
+        onMouseReleased(
+            MouseEvent(
+                MouseEvent.MOUSE_RELEASED, x, y, x, y, MouseButton.PRIMARY, 1,
+                false, false, false, false, true, false, false, false, false, false, null,
+            )
+        )
+    }
+
+    /** Simulates a plain click (press then release at the same point, no drag) through [onMousePressed] / [onMouseReleased]; for tests. */
+    internal fun clickWithoutDragForTest(x: Double, y: Double) {
+        pressAtForTest(x, y)
+        releaseAtForTest(x, y)
+    }
+
+    /** The cursor currently shown by the canvas; for tests. */
+    internal val canvasCursorForTest: Cursor get() = canvas.cursor
 
     //endregion
 

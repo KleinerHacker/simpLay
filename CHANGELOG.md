@@ -12,8 +12,29 @@ excluded.
 
 ## [UNRELEASED]
 
+### Fixed
+
+- `swing`, `fx`: in an editable `PaperSheetView`, clicking inside the current
+  selection without dragging no longer leaves the caret and selection
+  unchanged (previously mistaken for a no-op "drop the selection onto
+  itself"); it now clears the selection and places the caret under the
+  pointer like any other click.
+- `swing`, `fx`: dragging an existing selection to a new drop position now
+  shows a move cursor for the whole gesture, instead of keeping the text
+  cursor until the mouse is released.
+
 ### Added
 
+- `engine`: `PaperFormat`, an enum of standard page formats - DIN A0-A10, DIN
+  B0-B10, DIN C0-C10, Letter, Legal, Tabloid and common photo formats - each
+  exposing its `size` and an infix `withMargin(margins)` that builds a
+  ready-to-use `PageLayout`.
+- `swing`, `fx`: a third click on a `PaperSheetView` now selects the whole
+  line under the pointer, in addition to the existing single-click
+  (place cursor) and double-click (select word) behaviour. The public
+  `PaperSheetView.onMouseEvent` listener now also reports the new
+  `SELECT_WORD` and `SELECT_LINE` event kinds for the double- and
+  triple-click selections.
 - `swing`, `fx`: `PaperSheetView.zoom` can now be changed with `Ctrl` + mouse
   wheel and with the `Ctrl+Plus` / `Ctrl+Minus` / `Ctrl+0` keyboard shortcuts.
   The step size for both is computed by the new `zoomStepFunction` property

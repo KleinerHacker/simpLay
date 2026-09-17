@@ -28,7 +28,7 @@ fun interface PaperSheetMouseListener {
  * Swing counterpart of the `fx` module's `PaperSheetMouseEvent`; it extends [EventObject] instead of
  * a JavaFX `Event`.
  *
- * @property kind whether the mouse hovered or clicked.
+ * @property kind whether the mouse hovered, clicked, selected a word or selected a line.
  * @property textPart the raw part under the pointer, or `null` over an empty area of a page or
  *   outside every page.
  * @property textBlock the raw block under the pointer, or `null` over an empty area of a page or
@@ -43,5 +43,18 @@ class PaperSheetMouseEvent internal constructor(
     val page: Page?,
 ) : EventObject(source) {
 
-    enum class Kind { HOVER, CLICK }
+    /** The kind of pointer interaction a [PaperSheetMouseEvent] reports. */
+    enum class Kind {
+        /** Fired while the mouse hovers over the view (on every pointer move). */
+        HOVER,
+
+        /** Fired when the mouse clicks the view. */
+        CLICK,
+
+        /** Fired when a double-click selected the word under the pointer. */
+        SELECT_WORD,
+
+        /** Fired when a triple-click selected the line under the pointer. */
+        SELECT_LINE,
+    }
 }

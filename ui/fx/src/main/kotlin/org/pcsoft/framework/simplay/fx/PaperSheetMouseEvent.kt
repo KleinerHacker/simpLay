@@ -19,8 +19,9 @@ import org.pcsoft.framework.simplay.engine.model.TextBlock
 import org.pcsoft.framework.simplay.engine.model.TextPart
 
 /**
- * Passed to [PaperSheetView.getOnMouseEvent] while the mouse hovers ([HOVER]) or clicks ([CLICK])
- * over a [PaperSheetView], carrying the document structure under the pointer.
+ * Passed to [PaperSheetView.getOnMouseEvent] while the mouse hovers ([HOVER]), clicks ([CLICK]),
+ * selects a word ([SELECT_WORD]) or selects a line ([SELECT_LINE]) over a [PaperSheetView], carrying
+ * the document structure under the pointer.
  *
  * @property textPart the raw part under the pointer, or `null` over an empty area of a page or
  *   outside every page.
@@ -48,5 +49,13 @@ class PaperSheetMouseEvent internal constructor(
         /** Fired when the mouse clicks the view. */
         @JvmField
         val CLICK: EventType<PaperSheetMouseEvent> = EventType(ANY, "PAPER_SHEET_MOUSE_CLICK")
+
+        /** Fired when a double-click selected the word under the pointer. */
+        @JvmField
+        val SELECT_WORD: EventType<PaperSheetMouseEvent> = EventType(ANY, "PAPER_SHEET_MOUSE_SELECT_WORD")
+
+        /** Fired when a triple-click selected the line under the pointer. */
+        @JvmField
+        val SELECT_LINE: EventType<PaperSheetMouseEvent> = EventType(ANY, "PAPER_SHEET_MOUSE_SELECT_LINE")
     }
 }

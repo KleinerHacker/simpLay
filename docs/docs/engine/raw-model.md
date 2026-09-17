@@ -42,6 +42,22 @@ val layout = PageLayout(
 val page = FlowPage(layout = layout, blocks = emptyList())
 ```
 
+### Standard page formats
+
+`PaperFormat` is an enum of standard page sizes - DIN A0-A10, DIN B0-B10, DIN
+C0-C10, Letter, Legal, Tabloid and common photo formats - each exposing a
+`size` in the engine's point-based layout unit. Its infix `withMargin(margins)`
+builds a ready-to-use `PageLayout` directly:
+
+```kotlin
+import org.pcsoft.framework.simplay.engine.geometry.Margins
+import org.pcsoft.framework.simplay.engine.geometry.PaperFormat
+import org.pcsoft.framework.simplay.engine.model.FlowPage
+
+val layout = PaperFormat.DIN_A4 withMargin Margins(left = 40.0, top = 40.0, right = 40.0, bottom = 40.0)
+val page = FlowPage(layout = layout, blocks = emptyList())
+```
+
 ## Text blocks and parts
 
 A `TextBlock` is a run of styled text. It holds an ordered list of `TextPart` and

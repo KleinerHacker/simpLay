@@ -78,6 +78,13 @@ internal class TextSelection {
         focus = range.last
     }
 
+    /** Selects the measured line around [charIndex]; no-op without an [index]. */
+    fun selectLineAt(charIndex: Int) {
+        val range = index?.lineRangeAt(charIndex) ?: return
+        anchor = range.first
+        focus = range.last
+    }
+
     /**
      * Puts the current selection onto the system clipboard in every flavour at once: plain text,
      * `text/html` and RTF, the rich flavours carrying the per-part font (family, size, weight,

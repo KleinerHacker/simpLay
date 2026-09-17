@@ -12,6 +12,7 @@
 
 package org.pcsoft.framework.simplay.fx
 
+import javafx.scene.Cursor
 import javafx.scene.Scene
 import javafx.scene.input.Clipboard
 import javafx.scene.input.ClipboardContent
@@ -1021,6 +1022,55 @@ class PaperSheetEditingTest : JavaFxTestBase() {
 
         onFxThread { skin.pressKeyForTest(KeyCode.RIGHT) }
         assertEquals(6, skin.caretIndexForTest)
+    }
+
+    /**
+     * A plain click (no drag) that lands inside the current selection must behave like any other
+     * click: it clears the selection and places the caret exactly under the pointer, instead of
+     * being swallowed as a no-op "drop the selection onto itself" (the drag-existing-selection
+     * gesture only makes sense once the pointer has actually moved).
+     */
+    @Test
+    fun clickInsideSelectionWithoutDraggingPlacesCaretAndClearsSelection() {
+        val (view, skin) = fixture()
+        val y = 57.0 * (96.0 / 72.0)
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), y, 200.0 * (96.0 / 72.0), y) }
+        assertTrue(view.selectedText.isNotBlank())
+
+        val (_, controlSkin) = fixture()
+        val clickX = 100.0 * (96.0 / 72.0)
+        onFxThread { controlSkin.placeCaretAtForTest(clickX, y) }
+        val expectedCaret = controlSkin.caretIndexForTest
+
+        onFxThread { skin.clickWithoutDragForTest(clickX, y) }
+
+        assertEquals(0, view.selectionModel.length)
+        assertEquals(expectedCaret, skin.caretIndexForTest)
+    }
+
+    /**
+     * While an existing selection is being dragged to a new drop position, the pointer shows the
+     * move cursor instead of the text cursor, from the moment the drag starts until the mouse is
+     * released - at which point it falls back to whatever [PaperSheetViewSkin]'s normal hit-testing
+     * would show at that point.
+     */
+    @Test
+    fun draggingSelectionShowsMoveCursorUntilReleased() {
+        val (view, skin) = fixture()
+        val y = 57.0 * (96.0 / 72.0)
+        onFxThread { skin.selectByPointsForTest(57.0 * (96.0 / 72.0), y, 200.0 * (96.0 / 72.0), y) }
+        val bounds = view.selectionModel.bounds!!
+        val pressX = bounds.centerX
+        val pressY = bounds.centerY
+
+        onFxThread { skin.pressAtForTest(pressX, pressY) }
+        assertEquals(Cursor.MOVE, skin.canvasCursorForTest)
+
+        onFxThread { skin.dragToForTest(pressX, pressY) }
+        assertEquals(Cursor.MOVE, skin.canvasCursorForTest)
+
+        onFxThread { skin.releaseAtForTest(pressX, pressY) }
+        assertEquals(skin.cursorAtForTest(pressX, pressY), skin.canvasCursorForTest)
     }
 
     /**

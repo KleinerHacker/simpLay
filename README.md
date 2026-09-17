@@ -101,6 +101,10 @@ Build tasks relevant for consumers and maintainers:
     * [x] Navigation anchors: `TextAnchor`, an invisible, zero-width `TextPart`
       identified by an `id`, written as `${id}` in plain text and resolved by
       `ui/fx` / `ui/swing`'s `CaretModel.moveToAnchor` / `PaperSheetView.scrollToAnchor`
+    * [x] Standard page formats: `PaperFormat`, an enum of DIN A0-A10, DIN
+      B0-B10, DIN C0-C10, Letter, Legal, Tabloid and common photo formats,
+      each with a `size` and an infix `withMargin(margins)` building a
+      ready-to-use `PageLayout`
     * [ ] End-to-end layout and persistence tests
     * [ ] Engine user documentation (MkDocs, KDoc alignment)
 * [ ] Console output integration (`ui/console`)
@@ -112,7 +116,8 @@ Build tasks relevant for consumers and maintainers:
   single-page canvas rendering) and `PaperSheetView` - a scrollable, zoomable
   paper-sheet control with four interaction levels (`PaperSheetMode.STATIC` /
   `SELECTABLE` / `NAVIGABLE` / `EDITABLE`, overridable per page through
-  `pageModes`), mouse text selection, in-place editing with insert/overwrite
+  `pageModes`), mouse text selection (click to place the cursor, double-click
+  to select a word, triple-click to select a line), in-place editing with insert/overwrite
   `caretMode`, `Page Up` / `Page Down`, `scrollTo*` navigation and direct
   navigation-anchor jumps (`moveToAnchor` / `scrollToAnchor`), `Ctrl+A`
   select-all, `Ctrl` + mouse wheel and `Ctrl+Plus` / `Ctrl+Minus` / `Ctrl+0`
@@ -131,7 +136,8 @@ Build tasks relevant for consumers and maintainers:
 * [x] Swing integration (`ui/swing`): `DocumentImageRenderer` (whole-document and
   single-page `BufferedImage` rendering) and `PaperSheetView` - a scrollable,
   zoomable paper-sheet `JComponent` with the same four interaction levels,
-  per-page `pageModes` overrides, mouse text selection, in-place editing with
+  per-page `pageModes` overrides, mouse text selection (click to place the
+  cursor, double-click to select a word, triple-click to select a line), in-place editing with
   insert/overwrite `caretMode`, `Page Up` / `Page Down`, `scrollTo*`
   navigation and direct navigation-anchor jumps (`moveToAnchor` /
   `scrollToAnchor`), `Ctrl+A` select-all, `Ctrl` + mouse wheel and

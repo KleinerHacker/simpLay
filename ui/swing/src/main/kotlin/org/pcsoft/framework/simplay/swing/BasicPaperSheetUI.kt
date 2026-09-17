@@ -104,6 +104,9 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     /** `true` while the mouse drags an existing selection to a new drop position. */
     private var draggingSelection = false
 
+    /** `true` once the pointer actually moved while [draggingSelection], as opposed to a plain click on the selection. */
+    private var selectionDragMoved = false
+
     /** `true` while the next `document` change comes from [editor] rather than from outside. */
     private var internalEdit = false
 
@@ -631,8 +634,10 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         val i = hitIndexAt(event.x.toDouble(), event.y.toDouble())
         if (hitPageMode.supportsEditing && !selection.isEmpty && selection.contains(event.x.toDouble(), event.y.toDouble())) {
             draggingSelection = true
+            selectionDragMoved = false
             dragging = false
             caret.setDropPreview(i)
+            view.cursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR)
             return
         }
         selection.beginAt(i)
@@ -642,6 +647,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
 
     private fun onMouseDragged(event: MouseEvent) {
         if (draggingSelection) {
+            selectionDragMoved = true
             caret.setDropPreview(hitIndexAt(event.x.toDouble(), event.y.toDouble()))
             return
         }
@@ -653,10 +659,18 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     private fun onMouseReleased(event: MouseEvent) {
         if (draggingSelection) {
             val target = hitIndexAt(event.x.toDouble(), event.y.toDouble())
-            val copy = (event.modifiersEx and shortcutMask) == shortcutMask
+            val moved = selectionDragMoved
             draggingSelection = false
+            selectionDragMoved = false
             caret.setDropPreview(null)
-            editor.dropSelection(target, copy)
+            if (moved) {
+                val copy = (event.modifiersEx and shortcutMask) == shortcutMask
+                editor.dropSelection(target, copy)
+            } else {
+                selection.beginAt(target)
+                caret.placeCaret(target)
+            }
+            view.cursor = cursorFor(event.x.toDouble(), event.y.toDouble())
             return
         }
         dragging = false
@@ -664,11 +678,21 @@ open class BasicPaperSheetUI : PaperSheetUI() {
 
     private fun onMouseClicked(event: MouseEvent) {
         fireMouseEvent(PaperSheetMouseEvent.Kind.CLICK, event.x.toDouble(), event.y.toDouble())
-        if (event.clickCount != 2) return
         val doc = measured?.takeIf { it.pages.isNotEmpty() } ?: return
         val hitPageMode = pageMode(doc.pages[nearestPage((event.y + scrollOffset()) / effectiveZoom(view.zoom)).first])
         if (!hitPageMode.supportsSelection) return
-        selection.selectWordAt(hitIndexAt(event.x.toDouble(), event.y.toDouble()))
+        val index = hitIndexAt(event.x.toDouble(), event.y.toDouble())
+        when (event.clickCount) {
+            2 -> {
+                selection.selectWordAt(index)
+                fireMouseEvent(PaperSheetMouseEvent.Kind.SELECT_WORD, event.x.toDouble(), event.y.toDouble())
+            }
+            3 -> {
+                selection.selectLineAt(index)
+                fireMouseEvent(PaperSheetMouseEvent.Kind.SELECT_LINE, event.x.toDouble(), event.y.toDouble())
+            }
+            else -> return
+        }
         if (hitPageMode.supportsCaret) caret.placeCaret(selection.end)
         redraw()
     }
@@ -721,6 +745,43 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     /** Fires a [PaperSheetMouseEvent] of [kind] at a viewport point, as the real listeners do; for tests. */
     internal fun fireMouseEventForTest(kind: PaperSheetMouseEvent.Kind, x: Double, y: Double) =
         fireMouseEvent(kind, x, y)
+
+    /** Simulates a mouse click of [clickCount] at a viewport point through [onMouseClicked]; for tests. */
+    internal fun clickAtForTest(x: Double, y: Double, clickCount: Int) {
+        onMouseClicked(
+            MouseEvent(
+                view, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0,
+                x.toInt(), y.toInt(), clickCount, false, MouseEvent.BUTTON1,
+            )
+        )
+    }
+
+    /** Fires a `MOUSE_PRESSED` at a viewport point through [onMousePressed]; for tests. */
+    internal fun pressAtForTest(x: Double, y: Double) {
+        onMousePressed(
+            MouseEvent(view, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), 0, x.toInt(), y.toInt(), 1, false, MouseEvent.BUTTON1)
+        )
+    }
+
+    /** Fires a `MOUSE_DRAGGED` at a viewport point through [onMouseDragged]; for tests. */
+    internal fun dragToForTest(x: Double, y: Double) {
+        onMouseDragged(
+            MouseEvent(view, MouseEvent.MOUSE_DRAGGED, System.currentTimeMillis(), 0, x.toInt(), y.toInt(), 0, false, MouseEvent.BUTTON1)
+        )
+    }
+
+    /** Fires a `MOUSE_RELEASED` at a viewport point through [onMouseReleased]; for tests. */
+    internal fun releaseAtForTest(x: Double, y: Double) {
+        onMouseReleased(
+            MouseEvent(view, MouseEvent.MOUSE_RELEASED, System.currentTimeMillis(), 0, x.toInt(), y.toInt(), 1, false, MouseEvent.BUTTON1)
+        )
+    }
+
+    /** Simulates a plain click (press then release at the same point, no drag) through [onMousePressed] / [onMouseReleased]; for tests. */
+    internal fun clickWithoutDragForTest(x: Double, y: Double) {
+        pressAtForTest(x, y)
+        releaseAtForTest(x, y)
+    }
 
     internal fun hoverAtForTest(x: Double, y: Double) {
         hover.update(x, y)

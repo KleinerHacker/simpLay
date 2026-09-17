@@ -13,6 +13,7 @@
 package org.pcsoft.framework.simplay.swing.demo
 
 import org.pcsoft.framework.simplay.engine.geometry.Margins
+import org.pcsoft.framework.simplay.engine.geometry.PaperFormat
 import org.pcsoft.framework.simplay.engine.geometry.Size
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.engine.model.FlowPage
@@ -33,10 +34,7 @@ object DemoDocuments {
 
     private const val NOVELLA_PARAGRAPHS = 2300
 
-    private val a4 = PageLayout(
-        size = Size(width = 595.0, height = 842.0),
-        margins = Margins(left = 60.0, top = 60.0, right = 60.0, bottom = 60.0),
-    )
+    private val a4 = PaperFormat.DIN_A4 withMargin Margins(left = 60.0, top = 60.0, right = 60.0, bottom = 60.0)
 
     /** A narrow column (roughly 190pt wide) - too narrow for most long words in [hyphenation] to fit
      * whole, so the effect of the "Word break" control is clearly visible. */

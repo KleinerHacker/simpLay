@@ -12,6 +12,7 @@
 
 package org.pcsoft.framework.simplay.swing
 
+import java.awt.Cursor
 import java.awt.event.KeyEvent
 import java.awt.image.BufferedImage
 import org.pcsoft.framework.simplay.engine.model.Document
@@ -79,6 +80,55 @@ class PaperSheetEditingTest {
 
         val updatedText = view.document!!.plain()
         assertEquals("HELLO$originalText", updatedText)
+    }
+
+    /**
+     * A plain click (no drag) that lands inside the current selection must behave like any other
+     * click: it clears the selection and places the caret exactly under the pointer, instead of
+     * being swallowed as a no-op "drop the selection onto itself" (the drag-existing-selection
+     * gesture only makes sense once the pointer has actually moved).
+     */
+    @Test
+    fun clickInsideSelectionWithoutDraggingPlacesCaretAndClearsSelection() {
+        val (view, ui) = editableView()
+        val y = 45.0 * (96.0 / 72.0)
+        ui.selectByPointsForTest(35.0 * (96.0 / 72.0), y, 260.0 * (96.0 / 72.0), y)
+        assertTrue(view.selectedText.isNotBlank())
+
+        val (_, controlUi) = editableView()
+        val clickX = 150.0 * (96.0 / 72.0)
+        controlUi.placeCaretAtForTest(clickX, y)
+        val expectedCaret = controlUi.caretIndexForTest
+
+        ui.clickWithoutDragForTest(clickX, y)
+
+        assertEquals(0, view.selectionModel.length)
+        assertEquals(expectedCaret, ui.caretIndexForTest)
+    }
+
+    /**
+     * While an existing selection is being dragged to a new drop position, the pointer shows the
+     * move cursor instead of the text cursor, from the moment the drag starts until the mouse is
+     * released - at which point it falls back to whatever [BasicPaperSheetUI]'s normal hit-testing
+     * would show at that point.
+     */
+    @Test
+    fun draggingSelectionShowsMoveCursorUntilReleased() {
+        val (view, ui) = editableView()
+        val y = 45.0 * (96.0 / 72.0)
+        ui.selectByPointsForTest(35.0 * (96.0 / 72.0), y, 260.0 * (96.0 / 72.0), y)
+        val bounds = view.selectionModel.bounds!!
+        val pressX = bounds.centerX
+        val pressY = bounds.centerY
+
+        ui.pressAtForTest(pressX, pressY)
+        assertEquals(Cursor.MOVE_CURSOR, view.cursor.type)
+
+        ui.dragToForTest(pressX, pressY)
+        assertEquals(Cursor.MOVE_CURSOR, view.cursor.type)
+
+        ui.releaseAtForTest(pressX, pressY)
+        assertEquals(ui.cursorAtForTest(pressX, pressY).type, view.cursor.type)
     }
 
     /**

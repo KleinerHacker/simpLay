@@ -140,7 +140,8 @@ currently has a `pageModes` override.
 
 ## Selection and clipboard
 
-The mouse always selects: drag to extend, double-click to take a word. The
+The mouse always selects: drag to extend, double-click to take a word,
+triple-click to take the whole line. The
 highlight also covers the whitespace between selected words. `Ctrl+A` selects
 the whole document text. `Ctrl+C` copies the selection to the system clipboard
 as plain text plus styled HTML and RTF that carry the font (family, size,
@@ -202,8 +203,10 @@ character was typed into an editable view; the event carries the typed
 `character` plus the raw `textPart`, `textBlock` and `page` it landed in.
 
 `onMouseEvent` (an `EventHandler<PaperSheetMouseEvent>`) fires while the mouse
-hovers (`PaperSheetMouseEvent.HOVER`, on every pointer move) or clicks
-(`PaperSheetMouseEvent.CLICK`) over the view; the event carries the raw
+hovers (`PaperSheetMouseEvent.HOVER`, on every pointer move), clicks
+(`PaperSheetMouseEvent.CLICK`), selects a word by double-click
+(`PaperSheetMouseEvent.SELECT_WORD`) or selects a line by triple-click
+(`PaperSheetMouseEvent.SELECT_LINE`) over the view; the event carries the raw
 `textPart`, `textBlock` and `page` under the pointer - `textPart` and
 `textBlock` are `null` over an empty area of a page, and all three are `null`
 outside every page.

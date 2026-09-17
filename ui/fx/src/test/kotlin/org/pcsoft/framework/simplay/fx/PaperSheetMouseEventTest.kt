@@ -86,4 +86,30 @@ class PaperSheetMouseEventTest : JavaFxTestBase() {
         val (_, skin) = fixture()
         onFxThread { skin.fireMouseEventForTest(PaperSheetMouseEvent.HOVER, 60.0 * (96.0 / 72.0), 60.0 * (96.0 / 72.0)) }
     }
+
+    /** A double-click on text fires [PaperSheetMouseEvent.SELECT_WORD] in addition to [PaperSheetMouseEvent.CLICK]. */
+    @Test
+    fun doubleClickOnTextFiresSelectWord() {
+        val (view, skin) = fixture()
+        val kinds = mutableListOf<javafx.event.EventType<*>>()
+        onFxThread {
+            view.onMouseEvent = javafx.event.EventHandler { e -> kinds.add(e.eventType) }
+            skin.clickAtForTest(60.0 * (96.0 / 72.0), 60.0 * (96.0 / 72.0), 2)
+        }
+
+        assertEquals(listOf<javafx.event.EventType<*>>(PaperSheetMouseEvent.CLICK, PaperSheetMouseEvent.SELECT_WORD), kinds)
+    }
+
+    /** A triple-click on text fires [PaperSheetMouseEvent.SELECT_LINE] in addition to [PaperSheetMouseEvent.CLICK]. */
+    @Test
+    fun tripleClickOnTextFiresSelectLine() {
+        val (view, skin) = fixture()
+        val kinds = mutableListOf<javafx.event.EventType<*>>()
+        onFxThread {
+            view.onMouseEvent = javafx.event.EventHandler { e -> kinds.add(e.eventType) }
+            skin.clickAtForTest(60.0 * (96.0 / 72.0), 60.0 * (96.0 / 72.0), 3)
+        }
+
+        assertEquals(listOf<javafx.event.EventType<*>>(PaperSheetMouseEvent.CLICK, PaperSheetMouseEvent.SELECT_LINE), kinds)
+    }
 }
