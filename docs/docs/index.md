@@ -36,9 +36,9 @@ entirely with the assistance of artificial intelligence.
   Swing user interface.
 - **ui/console** - [Implementation](console/implementation.md): render simulation
   output to the console with the Kotlin Multiplatform module.
-- **export/jvm-pdf** - [Implementation](jvm-pdf/implementation.md): export
+- **export/jvm-pdf** - [Implementation](pdf-jvm/implementation.md): export
   simulation output to PDF (JVM).
-- **export/jvm-print** - [Implementation](jvm-print/implementation.md): send
+- **export/jvm-print** - [Implementation](print-jvm/implementation.md): send
   simulation output to a printer (JVM).
 
 ## Further references
