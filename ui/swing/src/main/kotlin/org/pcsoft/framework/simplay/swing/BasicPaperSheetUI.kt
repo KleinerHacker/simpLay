@@ -609,6 +609,12 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     //region input
 
     private fun onScroll(event: MouseWheelEvent) {
+        if ((event.modifiersEx and shortcutMask) == shortcutMask && view.zoomInputControlEnabled) {
+            val step = view.currentZoomStep()
+            view.zoom += if (event.wheelRotation < 0) step else -step
+            event.consume()
+            return
+        }
         if (!scrollBar.isEnabled) return
         val step = event.unitsToScroll * scrollBar.unitIncrement
         scrollBar.value = (scrollBar.value + step).coerceIn(0, scrollBar.maximum - scrollBar.visibleAmount)
@@ -700,6 +706,17 @@ open class BasicPaperSheetUI : PaperSheetUI() {
 
     internal fun dragSelectionToForTest(x: Double, y: Double, copy: Boolean) =
         editor.dropSelection(hitIndexAt(x, y), copy)
+
+    /** Fires a mouse-wheel event with the given rotation through [onScroll]; for tests. */
+    internal fun scrollForTest(wheelRotation: Int, shortcut: Boolean = false) {
+        val mods = if (shortcut) shortcutMask else 0
+        onScroll(
+            MouseWheelEvent(
+                view, MouseEvent.MOUSE_WHEEL, System.currentTimeMillis(), mods, 0, 0, 0, 0, 1, false,
+                MouseWheelEvent.WHEEL_UNIT_SCROLL, 1, wheelRotation,
+            )
+        )
+    }
 
     /** Fires a [PaperSheetMouseEvent] of [kind] at a viewport point, as the real listeners do; for tests. */
     internal fun fireMouseEventForTest(kind: PaperSheetMouseEvent.Kind, x: Double, y: Double) =

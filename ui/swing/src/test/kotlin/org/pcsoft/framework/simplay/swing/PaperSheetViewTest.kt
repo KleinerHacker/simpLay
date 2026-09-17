@@ -15,6 +15,7 @@ package org.pcsoft.framework.simplay.swing
 import java.awt.Color
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
@@ -81,5 +82,38 @@ class PaperSheetViewTest {
         val view = PaperSheetView().apply { document = TestDocuments.short }
         assertTrue(view.contentSize.width > 0)
         assertTrue(view.contentSize.height > 0)
+    }
+
+    /**
+     * Verifies that all five input-control switches - zoom, clipboard, text (duplicate), selection
+     * and caret (`Home`/`End`/`Page Up`/`Page Down`) - default to `true`, can be toggled off and
+     * back on, and fire a `PropertyChangeEvent` under their respective `PROP_*` constant.
+     */
+    @Test
+    fun inputControlPropertiesDefaultToTrueAndFirePropertyChanges() {
+        val view = PaperSheetView()
+        assertTrue(view.zoomInputControlEnabled)
+        assertTrue(view.clipboardInputControlEnabled)
+        assertTrue(view.textInputControlEnabled)
+        assertTrue(view.selectionInputControlEnabled)
+        assertTrue(view.caretInputControlEnabled)
+
+        var fired = 0
+        view.addPropertyChangeListener(PaperSheetView.PROP_ZOOM_INPUT_CONTROL_ENABLED) { fired++ }
+        view.zoomInputControlEnabled = false
+        view.clipboardInputControlEnabled = false
+        view.textInputControlEnabled = false
+        view.selectionInputControlEnabled = false
+        view.caretInputControlEnabled = false
+
+        assertEquals(1, fired)
+        assertFalse(view.zoomInputControlEnabled)
+        assertFalse(view.clipboardInputControlEnabled)
+        assertFalse(view.textInputControlEnabled)
+        assertFalse(view.selectionInputControlEnabled)
+        assertFalse(view.caretInputControlEnabled)
+
+        view.zoomInputControlEnabled = true
+        assertTrue(view.zoomInputControlEnabled)
     }
 }

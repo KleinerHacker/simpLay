@@ -19,7 +19,9 @@ import javafx.scene.input.KeyCode
 import javafx.stage.Stage
 import org.junit.jupiter.api.Test
 import org.pcsoft.framework.simplay.engine.model.Document
+import org.pcsoft.framework.simplay.uicommon.DEFAULT_ZOOM_STEP_FUNCTION
 import org.pcsoft.framework.simplay.uicommon.PageMode
+import org.pcsoft.framework.simplay.uicommon.ZoomStepFunction
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -824,6 +826,319 @@ class PaperSheetEditingTest : JavaFxTestBase() {
         onFxThread { view.document = PaperSheetTestFixtures.flowDocument(2) }
 
         assertEquals(emptyMap(), view.pageModes)
+    }
+
+    //endregion
+
+    //region Zoom and grouped input control
+
+    /**
+     * `Ctrl` + mouse wheel up increases [PaperSheetView.zoom] by exactly the step the default
+     * [PaperSheetView.zoomStepFunction] computes for the zoom at that moment; `Ctrl` + wheel down
+     * decreases it by the step recomputed for the *new* (already changed) zoom, since the step is
+     * non-linear; a plain wheel scroll (no `Ctrl`) leaves the zoom untouched.
+     */
+    @Test
+    fun ctrlScrollChangesZoomByOneStep() {
+        val (view, skin) = fixture()
+        onFxThread { view.zoom = 1.0 }
+
+        val afterUp = 1.0 + DEFAULT_ZOOM_STEP_FUNCTION(1.0)
+        onFxThread { skin.scrollForTest(deltaY = 1.0, shortcut = true) }
+        assertEquals(afterUp, view.zoom, 1e-9)
+
+        val afterDown = afterUp - DEFAULT_ZOOM_STEP_FUNCTION(afterUp)
+        onFxThread { skin.scrollForTest(deltaY = -1.0, shortcut = true) }
+        assertEquals(afterDown, view.zoom, 1e-9)
+
+        onFxThread { skin.scrollForTest(deltaY = 1.0, shortcut = false) }
+        assertEquals(afterDown, view.zoom, 1e-9)
+    }
+
+    /**
+     * `Ctrl` + mouse wheel zoom respects [PaperSheetView.minZoom] / [PaperSheetView.maxZoom]: it never
+     * pushes the zoom past either bound.
+     */
+    @Test
+    fun ctrlScrollZoomRespectsMinAndMaxZoom() {
+        val (view, skin) = fixture()
+        onFxThread {
+            view.minZoom = 0.9
+            view.maxZoom = 1.1
+            view.zoom = 1.1
+        }
+
+        onFxThread { skin.scrollForTest(deltaY = 1.0, shortcut = true) }
+        assertEquals(1.1, view.zoom, 1e-9)
+
+        onFxThread {
+            view.zoom = 0.9
+            skin.scrollForTest(deltaY = -1.0, shortcut = true)
+        }
+        assertEquals(0.9, view.zoom, 1e-9)
+    }
+
+    /**
+     * With [PaperSheetView.zoomInputControlEnabled] switched off, `Ctrl` + mouse wheel falls back to
+     * plain scrolling instead of changing the zoom.
+     */
+    @Test
+    fun ctrlScrollDoesNothingWhenZoomInputControlDisabled() {
+        val (view, skin) = fixture(paragraphs = 40)
+        onFxThread {
+            view.zoom = 1.0
+            view.zoomInputControlEnabled = false
+        }
+
+        onFxThread { skin.scrollForTest(deltaY = 1.0, shortcut = true) }
+
+        assertEquals(1.0, view.zoom, 1e-9)
+    }
+
+    /**
+     * `Ctrl+Plus` increases the zoom by the step the default [PaperSheetView.zoomStepFunction]
+     * computes for the zoom at that moment, `Ctrl+Minus` decreases it by the step recomputed for the
+     * *new* zoom (the step is non-linear), and `Ctrl+0` resets it back to [PaperSheetView.DEFAULT_ZOOM]
+     * regardless of the step.
+     */
+    @Test
+    fun keyboardZoomShortcutsChangeAndResetZoom() {
+        val (view, skin) = fixture()
+        onFxThread { view.zoom = 1.0 }
+
+        val afterPlus = 1.0 + DEFAULT_ZOOM_STEP_FUNCTION(1.0)
+        onFxThread { skin.pressKeyForTest(KeyCode.PLUS, shortcut = true) }
+        assertEquals(afterPlus, view.zoom, 1e-9)
+
+        val afterMinus = afterPlus - DEFAULT_ZOOM_STEP_FUNCTION(afterPlus)
+        onFxThread { skin.pressKeyForTest(KeyCode.MINUS, shortcut = true) }
+        assertEquals(afterMinus, view.zoom, 1e-9)
+
+        onFxThread {
+            view.zoom = 2.0
+            skin.pressKeyForTest(KeyCode.DIGIT0, shortcut = true)
+        }
+        assertEquals(PaperSheetView.DEFAULT_ZOOM, view.zoom, 1e-9)
+    }
+
+    /**
+     * With [PaperSheetView.zoomInputControlEnabled] switched off, `Ctrl+Plus` / `Ctrl+Minus` / `Ctrl+0`
+     * leave the zoom unchanged.
+     */
+    @Test
+    fun keyboardZoomShortcutsDoNothingWhenZoomInputControlDisabled() {
+        val (view, skin) = fixture()
+        onFxThread {
+            view.zoom = 1.0
+            view.zoomInputControlEnabled = false
+        }
+
+        onFxThread {
+            skin.pressKeyForTest(KeyCode.PLUS, shortcut = true)
+            skin.pressKeyForTest(KeyCode.MINUS, shortcut = true)
+            skin.pressKeyForTest(KeyCode.DIGIT0, shortcut = true)
+        }
+
+        assertEquals(1.0, view.zoom, 1e-9)
+    }
+
+    /**
+     * With [PaperSheetView.clipboardInputControlEnabled] switched off, `Ctrl+C`, `Ctrl+V` and
+     * `Ctrl+X` are all inert: nothing lands on the clipboard and the document stays untouched.
+     */
+    @Test
+    fun clipboardShortcutsDoNothingWhenClipboardInputControlDisabled() {
+        val (view, skin) = fixture()
+        onFxThread { view.clipboardInputControlEnabled = false }
+        val before = view.document
+
+        val clipboardAfterCtrlC = onFxThread {
+            Clipboard.getSystemClipboard().setContent(ClipboardContent().apply { putString("MARKER") })
+            view.selectionModel.selectRange(0, 9)
+            skin.pressKeyForTest(KeyCode.C, shortcut = true)
+            Clipboard.getSystemClipboard().string
+        }
+        assertEquals("MARKER", clipboardAfterCtrlC)
+
+        onFxThread { skin.pressKeyForTest(KeyCode.X, shortcut = true) }
+        assertEquals(before, view.document)
+
+        onFxThread { skin.pressKeyForTest(KeyCode.V, shortcut = true) }
+        assertEquals(before, view.document)
+    }
+
+    /**
+     * With [PaperSheetView.textInputControlEnabled] switched off, `Ctrl+D` no longer duplicates the
+     * current selection or line.
+     */
+    @Test
+    fun duplicateShortcutDoesNothingWhenTextInputControlDisabled() {
+        val (view, skin) = fixture()
+        onFxThread { view.textInputControlEnabled = false }
+        val before = documentLength(view)
+
+        onFxThread {
+            view.selectionModel.selectRange(0, 9)
+            skin.pressKeyForTest(KeyCode.D, shortcut = true)
+        }
+
+        assertEquals(before, documentLength(view))
+    }
+
+    /**
+     * With [PaperSheetView.selectionInputControlEnabled] switched off, `Ctrl+A` no longer selects the
+     * whole document.
+     */
+    @Test
+    fun selectAllShortcutDoesNothingWhenSelectionInputControlDisabled() {
+        val (view, skin) = fixture()
+        onFxThread { view.selectionInputControlEnabled = false }
+
+        onFxThread { skin.pressKeyForTest(KeyCode.A, shortcut = true) }
+
+        assertTrue(view.selectionModel.isEmpty)
+    }
+
+    /**
+     * With [PaperSheetView.caretInputControlEnabled] switched off, `Home`, `End`, `Page Up` and `Page
+     * Down` no longer move the caret, but the arrow keys still do.
+     */
+    @Test
+    fun homeEndPageKeysDoNothingWhenCaretInputControlDisabled() {
+        val (view, skin) = fixture(paragraphs = 40)
+        onFxThread {
+            view.caretModel.moveTo(5)
+            view.caretInputControlEnabled = false
+        }
+
+        onFxThread {
+            skin.pressKeyForTest(KeyCode.HOME)
+            skin.pressKeyForTest(KeyCode.END)
+            skin.pressKeyForTest(KeyCode.PAGE_DOWN)
+            skin.pressKeyForTest(KeyCode.PAGE_UP)
+        }
+        assertEquals(5, skin.caretIndexForTest)
+
+        onFxThread { skin.pressKeyForTest(KeyCode.RIGHT) }
+        assertEquals(6, skin.caretIndexForTest)
+    }
+
+    /**
+     * Mouse-based caret placement keeps working no matter how the five input-control switches are
+     * set, since the mouse handlers are never gated by them.
+     */
+    @Test
+    fun mouseCaretPlacementIgnoresInputControlSwitches() {
+        val (view, skin) = fixture()
+        onFxThread {
+            view.zoomInputControlEnabled = false
+            view.clipboardInputControlEnabled = false
+            view.textInputControlEnabled = false
+            view.selectionInputControlEnabled = false
+            view.caretInputControlEnabled = false
+        }
+
+        onFxThread { skin.placeCaretAtForTest(60.0 * (96.0 / 72.0), 60.0 * (96.0 / 72.0)) }
+
+        assertTrue(skin.caretIndexForTest > 0)
+    }
+
+    /**
+     * A custom [PaperSheetView.zoomStepFactor] scales both `Ctrl` + wheel and `Ctrl+Plus` identically,
+     * without having to replace [PaperSheetView.zoomStepFunction].
+     */
+    @Test
+    fun zoomStepFactorScalesWheelAndKeyboardZoomEqually() {
+        val (view, skin) = fixture()
+        onFxThread {
+            view.zoom = 1.0
+            view.zoomStepFactor = 2.0
+        }
+        val expectedStep = DEFAULT_ZOOM_STEP_FUNCTION(1.0) * 2.0
+
+        onFxThread { skin.scrollForTest(deltaY = 1.0, shortcut = true) }
+        assertEquals(1.0 + expectedStep, view.zoom, 1e-9)
+
+        onFxThread {
+            view.zoom = 1.0
+            skin.pressKeyForTest(KeyCode.PLUS, shortcut = true)
+        }
+        assertEquals(1.0 + expectedStep, view.zoom, 1e-9)
+    }
+
+    /**
+     * A custom [PaperSheetView.zoomStepFunction] replaces the step for both `Ctrl` + wheel and
+     * `Ctrl+Plus` identically.
+     */
+    @Test
+    fun customZoomStepFunctionReplacesWheelAndKeyboardZoomEqually() {
+        val (view, skin) = fixture()
+        onFxThread {
+            view.zoom = 1.0
+            view.zoomStepFunction = { 0.5 }
+        }
+
+        onFxThread { skin.scrollForTest(deltaY = 1.0, shortcut = true) }
+        assertEquals(1.5, view.zoom, 1e-9)
+
+        onFxThread {
+            view.zoom = 1.0
+            skin.pressKeyForTest(KeyCode.PLUS, shortcut = true)
+        }
+        assertEquals(1.5, view.zoom, 1e-9)
+    }
+
+    /**
+     * The default [PaperSheetView.zoomStepFunction] is non-linear: it returns a larger step for a
+     * larger `zoom` than for a smaller one, instead of a flat constant.
+     */
+    @Test
+    fun defaultZoomStepFunctionGrowsWithZoom() {
+        val smallStep = DEFAULT_ZOOM_STEP_FUNCTION(0.25)
+        val largeStep = DEFAULT_ZOOM_STEP_FUNCTION(2.0)
+
+        assertTrue(smallStep < largeStep)
+    }
+
+    /**
+     * [PaperSheetView.zoomStepFunction] defaults to [DEFAULT_ZOOM_STEP_FUNCTION], is gettable and
+     * settable, and its property fires on a change.
+     */
+    @Test
+    fun zoomStepFunctionDefaultsAndIsSettable() {
+        val view = onFxThread { PaperSheetView() }
+
+        assertEquals(DEFAULT_ZOOM_STEP_FUNCTION(0.5), view.zoomStepFunction(0.5), 1e-9)
+
+        val seen = ArrayList<ZoomStepFunction>()
+        val custom: ZoomStepFunction = { 0.25 }
+        onFxThread {
+            view.zoomStepFunctionProperty.addListener { _, _, value -> seen.add(value) }
+            view.zoomStepFunction = custom
+        }
+
+        assertEquals(1, seen.size)
+        assertEquals(0.25, view.zoomStepFunction(1.0), 1e-9)
+    }
+
+    /**
+     * [PaperSheetView.zoomStepFactor] defaults to `1.0`, is gettable and settable, and its property
+     * fires on a change.
+     */
+    @Test
+    fun zoomStepFactorDefaultsAndIsSettable() {
+        val view = onFxThread { PaperSheetView() }
+
+        assertEquals(1.0, view.zoomStepFactor, 1e-9)
+
+        val seen = ArrayList<Double>()
+        onFxThread {
+            view.zoomStepFactorProperty.addListener { _, _, value -> seen.add(value.toDouble()) }
+            view.zoomStepFactor = 3.0
+        }
+
+        assertEquals(listOf(3.0), seen)
+        assertEquals(3.0, view.zoomStepFactor, 1e-9)
     }
 
     //endregion

@@ -36,3 +36,26 @@ const val TOOLKIT_DPI: Double = 96.0
  * @return the scale factor to apply when converting layout units to toolkit (screen) pixels.
  */
 fun effectiveZoom(zoom: Double): Double = zoom * (TOOLKIT_DPI / LAYOUT_DPI)
+
+/**
+ * Computes the amount a `PaperSheetView` (fx and swing) `zoom` factor changes per single wheel notch
+ * (`Ctrl` + mouse wheel) or per keyboard zoom shortcut (`Ctrl` + `+`/`-`) press, given the *current*
+ * `zoom` value. Exposed on the view as a settable `zoomStepFunction` property, so the growth curve of
+ * the step size is fully replaceable; [DEFAULT_ZOOM_STEP_FACTOR] additionally scales whatever this
+ * function returns without having to replace it.
+ */
+typealias ZoomStepFunction = (zoom: Double) -> Double
+
+/**
+ * The default [ZoomStepFunction]: the step grows proportionally with the current `zoom` (`10%` of it),
+ * so zooming feels equally fast at every zoom level instead of the same fixed step feeling coarse when
+ * zoomed far out and sluggish when zoomed far in. Floored at `0.01` so the step never vanishes near the
+ * lower end of the zoom range.
+ */
+val DEFAULT_ZOOM_STEP_FUNCTION: ZoomStepFunction = { zoom -> (zoom * 0.1).coerceAtLeast(0.01) }
+
+/**
+ * The default value of a `PaperSheetView` (fx and swing) `zoomStepFactor` property: a plain multiplier
+ * applied on top of the `zoomStepFunction` result, `1.0` leaving it unchanged.
+ */
+const val DEFAULT_ZOOM_STEP_FACTOR: Double = 1.0

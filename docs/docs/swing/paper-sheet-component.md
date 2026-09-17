@@ -33,6 +33,13 @@ shown; register a `java.beans.PropertyChangeListener` to react.
 | `pageGap` | `Double` | `16.0` | Vertical space between two sheets, in layout units. |
 | `minZoom` / `maxZoom` / `zoom` | `Double` | `0.25` / `4.0` / `1.0` | `zoom` is always clamped into `[minZoom, maxZoom]`. A `zoom` of `1.0` renders a sheet at true physical size: the layout unit is a PostScript/PDF point (`72` per inch, e.g. ISO A4 is `595 x 842`), converted to Swing's `96` DPI device-independent pixel, which Swing itself has mapped to the real screen automatically since Java 9. |
 | `smoothCaretBlink` | `Boolean` | `false` | Fade the caret instead of blinking it hard on and off. |
+| `zoomInputControlEnabled` | `Boolean` | `true` | Toggles `Ctrl` + mouse wheel and the `Ctrl+Plus` / `Ctrl+Minus` / `Ctrl+0` zoom shortcuts. |
+| `clipboardInputControlEnabled` | `Boolean` | `true` | Toggles the `Ctrl+C` / `Ctrl+V` / `Ctrl+X` shortcuts. |
+| `textInputControlEnabled` | `Boolean` | `true` | Toggles the `Ctrl+D` duplicate shortcut. |
+| `selectionInputControlEnabled` | `Boolean` | `true` | Toggles the `Ctrl+A` select-all shortcut. |
+| `caretInputControlEnabled` | `Boolean` | `true` | Toggles the `Home` / `End` / `Page Up` / `Page Down` keys. Arrow-key navigation and mouse input are unaffected. |
+| `zoomStepFunction` | `(Double) -> Double` | proportional | Computes the `zoom` step for `Ctrl` + mouse wheel and `Ctrl+Plus`/`Ctrl+Minus` from the current `zoom`. Default grows the step proportionally with `zoom` (`10%` of it, floored at `0.01`), so zooming feels equally fast at every level; freely replaceable with a custom curve. |
+| `zoomStepFactor` | `Double` | `1.0` | Plain multiplier applied on top of `zoomStepFunction`'s result; lets the step be scaled without replacing `zoomStepFunction`. |
 | `contentSize` | `Dimension` (read-only) | `0 x 0` | The unscaled size of the sheet stack including `outerMargin` on every side. |
 | `selectedText` | `String` (read-only) | `""` | Convenience delegate for `selectionModel.text`. |
 | `selectionBounds` | `Rectangle?` (read-only) | `null` | Convenience delegate for `selectionModel.bounds`. |
@@ -196,11 +203,21 @@ of the character about to be overwritten - instead of the thin line.
 | `Ctrl+X` | Cut the selection (editable). |
 | `Ctrl+V` | Paste plain text at the caret / over the selection (editable). |
 | `Ctrl+D` | Duplicate the selection, or the caret line when the selection is empty (editable). |
+| `Ctrl` + mouse wheel | Zoom in / out by `zoomStepFunction(zoom) * zoomStepFactor`. Works in every mode. |
+| `Ctrl+Plus` / `Ctrl+Minus` | Zoom in / out by `zoomStepFunction(zoom) * zoomStepFactor`. Works in every mode. |
+| `Ctrl+0` | Reset `zoom` to `1.0`. Works in every mode. |
 | arrows, `Home`, `End`, `Ctrl+Home`, `Ctrl+End`, `Ctrl+Left`, `Ctrl+Right` | Caret navigation, optionally with `Shift` to extend the selection (editable). |
 | `Page Up` / `Page Down` | Move the caret one page, keeping its line and column, optionally with `Shift` to extend the selection (editable). |
 | `Backspace`, `Delete` | Delete backward / forward, or the selection (editable). |
 | `Insert` | Toggle insert / overwrite typing mode (overwrite shows a block cursor) (editable). |
 | typing | Insert the character at the caret, replacing the selection (editable). |
+
+Each shortcut group above can be disabled independently through
+`zoomInputControlEnabled`, `clipboardInputControlEnabled`,
+`textInputControlEnabled`, `selectionInputControlEnabled` and
+`caretInputControlEnabled` (all default `true`, see the properties table
+above); arrow-key navigation, `Backspace` / `Delete` / `Insert` and mouse
+input are never gated by any of them.
 
 Dragging an existing selection with the mouse moves it; holding the copy
 modifier (`Ctrl` / `Cmd`) while dropping copies it instead.

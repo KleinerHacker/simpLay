@@ -60,6 +60,13 @@ the property object and `getXxx()` / `setXxx()` (or `isXxx()`) for the value.
 | `maxZoom` | `Double` | read/write | Upper bound for `zoom`. Default `4.0`. |
 | `zoom` | `Double` | read/write | Current scale factor for the whole view, always kept within `[minZoom, maxZoom]`; assigning outside the range, or narrowing the range, re-clamps it. Default `1.0`. A `zoom` of `1.0` renders a sheet at true physical size: the layout unit is a PostScript/PDF point (`72` per inch, e.g. ISO A4 is `595 x 842`), converted to JavaFX's `96` DPI device-independent pixel, which JavaFX itself has mapped to the real screen automatically since Java 9. |
 | `smoothCaretBlink` | `Boolean` | read/write | When `true`, the caret fades in and out instead of blinking hard. Off by default; only effective in a mode with a caret. |
+| `zoomInputControlEnabled` | `Boolean` | read/write | Toggles `Ctrl` + mouse wheel and the `Ctrl+Plus` / `Ctrl+Minus` / `Ctrl+0` zoom shortcuts. Default `true`. |
+| `clipboardInputControlEnabled` | `Boolean` | read/write | Toggles the `Ctrl+C` / `Ctrl+V` / `Ctrl+X` shortcuts. Default `true`. |
+| `textInputControlEnabled` | `Boolean` | read/write | Toggles the `Ctrl+D` duplicate shortcut. Default `true`. |
+| `selectionInputControlEnabled` | `Boolean` | read/write | Toggles the `Ctrl+A` select-all shortcut. Default `true`. |
+| `caretInputControlEnabled` | `Boolean` | read/write | Toggles the `Home` / `End` / `Page Up` / `Page Down` keys. Default `true`. Arrow-key navigation and mouse input are unaffected. |
+| `zoomStepFunction` | `(Double) -> Double` | read/write | Computes the `zoom` step for `Ctrl` + mouse wheel and `Ctrl+Plus`/`Ctrl+Minus` from the current `zoom`. Default grows the step proportionally with `zoom` (`10%` of it, floored at `0.01`), so zooming feels equally fast at every level; freely replaceable with a custom curve. |
+| `zoomStepFactor` | `Double` | read/write | Plain multiplier applied on top of `zoomStepFunction`'s result. Default `1.0`; lets the step be scaled without replacing `zoomStepFunction`. |
 | `contentSize` | `Dimension2D` | read-only | Unscaled size of the whole sheet stack including `outerMargin` on every side; `0 x 0` for a `null` document. |
 | `selectionModel` | `TextSelectionModel` | read-only | The selection state and commands; see [Selection and clipboard](#selection-and-clipboard). |
 | `caretModel` | `CaretModel` | read-only | The caret state and move commands; see [The caret model](#the-caret-model). |
@@ -258,6 +265,9 @@ with any caret-navigation key to extend the selection instead of moving.
 | `Ctrl+X` | Cut selection | `EDITABLE` |
 | `Ctrl+V` | Paste clipboard text at the caret | `EDITABLE` |
 | `Ctrl+D` | Duplicate the selection, or the current line when nothing is selected | `EDITABLE` |
+| `Ctrl` + mouse wheel | Zoom in / out by `zoomStepFunction(zoom) * zoomStepFactor` | every mode |
+| `Ctrl+Plus` / `Ctrl+Minus` | Zoom in / out by `zoomStepFunction(zoom) * zoomStepFactor` | every mode |
+| `Ctrl+0` | Reset `zoom` to `1.0` | every mode |
 | `Left` / `Right` | Move caret one character | `EDITABLE` |
 | `Ctrl+Left` / `Ctrl+Right` | Move caret one word | `EDITABLE` |
 | `Up` / `Down` | Move caret one line | `EDITABLE` |
@@ -271,6 +281,13 @@ with any caret-navigation key to extend the selection instead of moving.
 
 Dragging with the mouse inside an existing selection box moves the selected text;
 holding `Ctrl` while releasing copies it instead of moving it.
+
+Each shortcut group above can be disabled independently through
+`zoomInputControlEnabled`, `clipboardInputControlEnabled`,
+`textInputControlEnabled`, `selectionInputControlEnabled` and
+`caretInputControlEnabled` (all default `true`, see the properties table
+above); arrow-key navigation, `Backspace` / `Delete` / `Insert` and mouse
+input are never gated by any of them.
 
 ## Loading and saving a document
 

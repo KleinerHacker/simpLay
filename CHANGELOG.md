@@ -12,6 +12,25 @@ excluded.
 
 ## [UNRELEASED]
 
+### Added
+
+- `swing`, `fx`: `PaperSheetView.zoom` can now be changed with `Ctrl` + mouse
+  wheel and with the `Ctrl+Plus` / `Ctrl+Minus` / `Ctrl+0` keyboard shortcuts.
+  The step size for both is computed by the new `zoomStepFunction` property
+  (default: `10%` of the current `zoom`, so the step grows and shrinks with
+  the zoom level instead of staying fixed) and additionally scaled by the new
+  `zoomStepFactor` property (default `1.0`); both are shared between the
+  mouse wheel and the keyboard shortcuts.
+- `swing`, `fx`: five new `PaperSheetView` boolean properties, all `true` by
+  default, each toggling a functional group of built-in mouse-wheel/keyboard
+  shortcuts independently: `zoomInputControlEnabled` (`Ctrl` + wheel,
+  `Ctrl+Plus` / `Ctrl+Minus` / `Ctrl+0`), `clipboardInputControlEnabled`
+  (`Ctrl+C` / `Ctrl+V` / `Ctrl+X`), `textInputControlEnabled` (`Ctrl+D`
+  duplicate), `selectionInputControlEnabled` (`Ctrl+A` select-all) and
+  `caretInputControlEnabled` (`Home` / `End` / `Page Up` / `Page Down`).
+  Arrow-key caret navigation and mouse interaction are unaffected by any of
+  them.
+
 ## [0.4.1]
 
 ### Fixed

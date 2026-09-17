@@ -584,6 +584,12 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     //region Input
 
     private fun onScroll(event: ScrollEvent) {
+        if (event.isShortcutDown && skinnable.zoomInputControlEnabled) {
+            val step = skinnable.currentZoomStep()
+            skinnable.zoom += if (event.deltaY > 0) step else -step
+            event.consume()
+            return
+        }
         if (scrollBar.max <= 0.0) return
         scrollBar.value = (scrollBar.value - event.deltaY).coerceIn(0.0, scrollBar.max)
         event.consume()
@@ -710,6 +716,20 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         val control = shortcut && !mac
         val meta = shortcut && mac
         editor.onKeyPressed(KeyEvent(KeyEvent.KEY_PRESSED, "", "", code, shift, control, false, meta))
+    }
+
+    /** Fires a `SCROLL` event with the given wheel delta through [onScroll]; for tests. */
+    internal fun scrollForTest(deltaY: Double, shortcut: Boolean = false) {
+        val mac = System.getProperty("os.name", "").lowercase().contains("mac")
+        onScroll(
+            ScrollEvent(
+                ScrollEvent.SCROLL, 0.0, 0.0, 0.0, 0.0,
+                false, shortcut && !mac, false, shortcut && mac,
+                true, false, 0.0, deltaY, 0.0, deltaY,
+                ScrollEvent.HorizontalTextScrollUnits.NONE, 0.0,
+                ScrollEvent.VerticalTextScrollUnits.NONE, 0.0, 0, null,
+            )
+        )
     }
 
     /** Drops the current selection at the character nearest a viewport point; for tests. */

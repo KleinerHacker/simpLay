@@ -16,6 +16,7 @@ import javafx.scene.Scene
 import javafx.stage.Stage
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
@@ -151,5 +152,43 @@ class PaperSheetViewTest : JavaFxTestBase() {
         onFxThread { view.document = PaperSheetTestFixtures.flowDocument(2) }
 
         assertSame(model, view.selectionModel)
+    }
+
+    /**
+     * All five input-control switches - zoom, clipboard, text (duplicate), selection and caret
+     * (`Home`/`End`/`Page Up`/`Page Down`) - default to `true` and can be toggled off and back on,
+     * with the property and its plain getter/setter staying in sync.
+     */
+    @Test
+    fun inputControlPropertiesDefaultToTrueAndAreSettable() {
+        val view = onFxThread { PaperSheetView() }
+
+        assertTrue(view.zoomInputControlEnabled)
+        assertTrue(view.clipboardInputControlEnabled)
+        assertTrue(view.textInputControlEnabled)
+        assertTrue(view.selectionInputControlEnabled)
+        assertTrue(view.caretInputControlEnabled)
+
+        onFxThread {
+            view.zoomInputControlEnabled = false
+            view.clipboardInputControlEnabled = false
+            view.textInputControlEnabled = false
+            view.selectionInputControlEnabled = false
+            view.caretInputControlEnabled = false
+        }
+
+        assertFalse(view.zoomInputControlEnabled)
+        assertFalse(view.zoomInputControlEnabledProperty.get())
+        assertFalse(view.clipboardInputControlEnabled)
+        assertFalse(view.clipboardInputControlEnabledProperty.get())
+        assertFalse(view.textInputControlEnabled)
+        assertFalse(view.textInputControlEnabledProperty.get())
+        assertFalse(view.selectionInputControlEnabled)
+        assertFalse(view.selectionInputControlEnabledProperty.get())
+        assertFalse(view.caretInputControlEnabled)
+        assertFalse(view.caretInputControlEnabledProperty.get())
+
+        onFxThread { view.zoomInputControlEnabledProperty.set(true) }
+        assertTrue(view.zoomInputControlEnabled)
     }
 }

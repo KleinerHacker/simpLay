@@ -42,7 +42,10 @@ import javafx.scene.paint.Paint
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetStyleableProperties
 import org.pcsoft.framework.simplay.uicommon.CaretMode
+import org.pcsoft.framework.simplay.uicommon.DEFAULT_ZOOM_STEP_FACTOR
+import org.pcsoft.framework.simplay.uicommon.DEFAULT_ZOOM_STEP_FUNCTION
 import org.pcsoft.framework.simplay.uicommon.PageMode
+import org.pcsoft.framework.simplay.uicommon.ZoomStepFunction
 
 /**
  * A scrollable and zoomable view that renders a [Document] as physical-looking sheets - each with a
@@ -400,6 +403,107 @@ class PaperSheetView : Control() {
             clamping = false
         }
     }
+
+    //endregion
+
+    //region Input control
+
+    /** The [zoomInputControlEnabled] property, for binding and change listeners. */
+    @get:JvmName("zoomInputControlEnabledProperty")
+    val zoomInputControlEnabledProperty: BooleanProperty =
+        SimpleBooleanProperty(this, "zoomInputControlEnabled", true)
+
+    /**
+     * When `true` (default), `Ctrl` + mouse wheel and the `Ctrl` + `+`/`-`/`0` keyboard shortcuts
+     * change [zoom]. When `false`, both are disabled and the mouse wheel only scrolls.
+     */
+    var zoomInputControlEnabled: Boolean
+        get() = zoomInputControlEnabledProperty.get()
+        set(value) = zoomInputControlEnabledProperty.set(value)
+
+    /** The [clipboardInputControlEnabled] property, for binding and change listeners. */
+    @get:JvmName("clipboardInputControlEnabledProperty")
+    val clipboardInputControlEnabledProperty: BooleanProperty =
+        SimpleBooleanProperty(this, "clipboardInputControlEnabled", true)
+
+    /**
+     * When `true` (default), the `Ctrl` + `C`/`X`/`V` copy/cut/paste keyboard shortcuts are active.
+     * Does not affect caret navigation or mouse-based selection.
+     */
+    var clipboardInputControlEnabled: Boolean
+        get() = clipboardInputControlEnabledProperty.get()
+        set(value) = clipboardInputControlEnabledProperty.set(value)
+
+    /** The [textInputControlEnabled] property, for binding and change listeners. */
+    @get:JvmName("textInputControlEnabledProperty")
+    val textInputControlEnabledProperty: BooleanProperty =
+        SimpleBooleanProperty(this, "textInputControlEnabled", true)
+
+    /**
+     * When `true` (default), the `Ctrl` + `D` duplicate keyboard shortcut is active. Does not affect
+     * caret navigation or mouse-based selection.
+     */
+    var textInputControlEnabled: Boolean
+        get() = textInputControlEnabledProperty.get()
+        set(value) = textInputControlEnabledProperty.set(value)
+
+    /** The [selectionInputControlEnabled] property, for binding and change listeners. */
+    @get:JvmName("selectionInputControlEnabledProperty")
+    val selectionInputControlEnabledProperty: BooleanProperty =
+        SimpleBooleanProperty(this, "selectionInputControlEnabled", true)
+
+    /**
+     * When `true` (default), the `Ctrl` + `A` select-all keyboard shortcut is active. Does not affect
+     * caret navigation or mouse-based selection.
+     */
+    var selectionInputControlEnabled: Boolean
+        get() = selectionInputControlEnabledProperty.get()
+        set(value) = selectionInputControlEnabledProperty.set(value)
+
+    /** The [caretInputControlEnabled] property, for binding and change listeners. */
+    @get:JvmName("caretInputControlEnabledProperty")
+    val caretInputControlEnabledProperty: BooleanProperty =
+        SimpleBooleanProperty(this, "caretInputControlEnabled", true)
+
+    /**
+     * When `true` (default), the `Home`/`End`/`Page Up`/`Page Down` keys (with or without `Shift`)
+     * move the caret. Does not affect arrow-key navigation or mouse-based caret placement.
+     */
+    var caretInputControlEnabled: Boolean
+        get() = caretInputControlEnabledProperty.get()
+        set(value) = caretInputControlEnabledProperty.set(value)
+
+    /** The [zoomStepFunction] property, for binding and change listeners. */
+    @get:JvmName("zoomStepFunctionProperty")
+    val zoomStepFunctionProperty: ObjectProperty<ZoomStepFunction> =
+        SimpleObjectProperty(this, "zoomStepFunction", DEFAULT_ZOOM_STEP_FUNCTION)
+
+    /**
+     * Computes the `zoom` step for `Ctrl` + mouse wheel and the `Ctrl+Plus`/`Ctrl+Minus`/`Ctrl+0`
+     * shortcuts from the current [zoom]. Defaults to [DEFAULT_ZOOM_STEP_FUNCTION] (the step grows
+     * proportionally with `zoom`, so zooming feels equally fast at every level); freely replaceable
+     * with a custom curve. [zoomStepFactor] additionally scales the result without replacing this
+     * function.
+     */
+    var zoomStepFunction: ZoomStepFunction
+        get() = zoomStepFunctionProperty.get()
+        set(value) = zoomStepFunctionProperty.set(value)
+
+    /** The [zoomStepFactor] property, for binding and change listeners. */
+    @get:JvmName("zoomStepFactorProperty")
+    val zoomStepFactorProperty: DoubleProperty =
+        SimpleDoubleProperty(this, "zoomStepFactor", DEFAULT_ZOOM_STEP_FACTOR)
+
+    /**
+     * Plain multiplier applied on top of [zoomStepFunction]'s result; `1.0` (default) leaves it
+     * unchanged. Lets the step size be scaled without having to replace [zoomStepFunction] itself.
+     */
+    var zoomStepFactor: Double
+        get() = zoomStepFactorProperty.get()
+        set(value) = zoomStepFactorProperty.set(value)
+
+    /** The `zoom` step to apply for a single `Ctrl` + wheel notch or zoom-shortcut press, right now. */
+    internal fun currentZoomStep(): Double = zoomStepFunction(zoom) * zoomStepFactor
 
     //endregion
 

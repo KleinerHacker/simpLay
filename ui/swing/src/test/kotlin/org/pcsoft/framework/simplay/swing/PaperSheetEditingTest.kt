@@ -15,7 +15,9 @@ package org.pcsoft.framework.simplay.swing
 import java.awt.event.KeyEvent
 import java.awt.image.BufferedImage
 import org.pcsoft.framework.simplay.engine.model.Document
+import org.pcsoft.framework.simplay.uicommon.DEFAULT_ZOOM_STEP_FUNCTION
 import org.pcsoft.framework.simplay.uicommon.PageMode
+import org.pcsoft.framework.simplay.uicommon.ZoomStepFunction
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -470,6 +472,285 @@ class PaperSheetEditingTest {
         view.document = TestDocuments.short
 
         assertEquals(emptyMap(), view.pageModes)
+    }
+
+    //endregion
+
+    //region Zoom and grouped input control
+
+    private fun documentLength(view: PaperSheetView): Int =
+        view.selectionModel.let { it.selectAll(); val l = it.text.length; it.clearSelection(); l }
+
+    /**
+     * Verifies that `Ctrl` + mouse wheel up increases [PaperSheetView.zoom] by exactly the step the
+     * default [PaperSheetView.zoomStepFunction] computes for the zoom at that moment, `Ctrl` + wheel
+     * down decreases it by the step recomputed for the *new* (already changed) zoom since the step is
+     * non-linear, and a plain wheel scroll (no `Ctrl`) leaves the zoom untouched.
+     */
+    @Test
+    fun ctrlScrollChangesZoomByOneStep() {
+        val (view, ui) = editableView()
+        view.zoom = 1.0
+
+        val afterUp = 1.0 + DEFAULT_ZOOM_STEP_FUNCTION(1.0)
+        ui.scrollForTest(wheelRotation = -1, shortcut = true)
+        assertEquals(afterUp, view.zoom, 1e-9)
+
+        val afterDown = afterUp - DEFAULT_ZOOM_STEP_FUNCTION(afterUp)
+        ui.scrollForTest(wheelRotation = 1, shortcut = true)
+        assertEquals(afterDown, view.zoom, 1e-9)
+
+        ui.scrollForTest(wheelRotation = -1, shortcut = false)
+        assertEquals(afterDown, view.zoom, 1e-9)
+    }
+
+    /**
+     * Verifies that `Ctrl` + mouse wheel zoom respects [PaperSheetView.minZoom] /
+     * [PaperSheetView.maxZoom]: it never pushes the zoom past either bound.
+     */
+    @Test
+    fun ctrlScrollZoomRespectsMinAndMaxZoom() {
+        val (view, ui) = editableView()
+        view.minZoom = 0.9
+        view.maxZoom = 1.1
+        view.zoom = 1.1
+
+        ui.scrollForTest(wheelRotation = -1, shortcut = true)
+        assertEquals(1.1, view.zoom, 1e-9)
+
+        view.zoom = 0.9
+        ui.scrollForTest(wheelRotation = 1, shortcut = true)
+        assertEquals(0.9, view.zoom, 1e-9)
+    }
+
+    /**
+     * Verifies that with [PaperSheetView.zoomInputControlEnabled] switched off, `Ctrl` + mouse wheel
+     * falls back to plain scrolling instead of changing the zoom.
+     */
+    @Test
+    fun ctrlScrollDoesNothingWhenZoomInputControlDisabled() {
+        val (view, ui) = editableView()
+        view.zoom = 1.0
+        view.zoomInputControlEnabled = false
+
+        ui.scrollForTest(wheelRotation = -1, shortcut = true)
+
+        assertEquals(1.0, view.zoom, 1e-9)
+    }
+
+    /**
+     * Verifies that `Ctrl+Plus` increases the zoom by the step the default
+     * [PaperSheetView.zoomStepFunction] computes for the zoom at that moment, `Ctrl+Minus` decreases it
+     * by the step recomputed for the *new* zoom (the step is non-linear), and `Ctrl+0` resets it back
+     * to [PaperSheetView.DEFAULT_ZOOM] regardless of the step.
+     */
+    @Test
+    fun keyboardZoomShortcutsChangeAndResetZoom() {
+        val (view, ui) = editableView()
+        view.zoom = 1.0
+
+        val afterPlus = 1.0 + DEFAULT_ZOOM_STEP_FUNCTION(1.0)
+        ui.pressKeyForTest(KeyEvent.VK_PLUS, shortcut = true)
+        assertEquals(afterPlus, view.zoom, 1e-9)
+
+        val afterMinus = afterPlus - DEFAULT_ZOOM_STEP_FUNCTION(afterPlus)
+        ui.pressKeyForTest(KeyEvent.VK_MINUS, shortcut = true)
+        assertEquals(afterMinus, view.zoom, 1e-9)
+
+        view.zoom = 2.0
+        ui.pressKeyForTest(KeyEvent.VK_0, shortcut = true)
+        assertEquals(PaperSheetView.DEFAULT_ZOOM, view.zoom, 1e-9)
+    }
+
+    /**
+     * Verifies that with [PaperSheetView.zoomInputControlEnabled] switched off, `Ctrl+Plus` /
+     * `Ctrl+Minus` / `Ctrl+0` leave the zoom unchanged.
+     */
+    @Test
+    fun keyboardZoomShortcutsDoNothingWhenZoomInputControlDisabled() {
+        val (view, ui) = editableView()
+        view.zoom = 1.0
+        view.zoomInputControlEnabled = false
+
+        ui.pressKeyForTest(KeyEvent.VK_PLUS, shortcut = true)
+        ui.pressKeyForTest(KeyEvent.VK_MINUS, shortcut = true)
+        ui.pressKeyForTest(KeyEvent.VK_0, shortcut = true)
+
+        assertEquals(1.0, view.zoom, 1e-9)
+    }
+
+    /**
+     * Verifies that with [PaperSheetView.clipboardInputControlEnabled] switched off, `Ctrl+C`,
+     * `Ctrl+V` and `Ctrl+X` are all inert, so neither ever touches the system clipboard and the
+     * document stays untouched. `Ctrl+C`/`Ctrl+X`/`Ctrl+V` are gated before any clipboard access, so
+     * this holds even in a headless test environment without a real system clipboard.
+     */
+    @Test
+    fun clipboardShortcutsDoNothingWhenClipboardInputControlDisabled() {
+        val (view, ui) = editableView()
+        view.clipboardInputControlEnabled = false
+        val before = view.document
+
+        view.selectionModel.selectRange(0, 9)
+        ui.pressKeyForTest(KeyEvent.VK_C, shortcut = true)
+        ui.pressKeyForTest(KeyEvent.VK_X, shortcut = true)
+        assertEquals(before, view.document)
+
+        ui.pressKeyForTest(KeyEvent.VK_V, shortcut = true)
+        assertEquals(before, view.document)
+    }
+
+    /**
+     * Verifies that with [PaperSheetView.textInputControlEnabled] switched off, `Ctrl+D` no longer
+     * duplicates the current selection.
+     */
+    @Test
+    fun duplicateShortcutDoesNothingWhenTextInputControlDisabled() {
+        val (view, ui) = editableView()
+        view.textInputControlEnabled = false
+        val before = documentLength(view)
+
+        view.selectionModel.selectRange(0, 9)
+        ui.pressKeyForTest(KeyEvent.VK_D, shortcut = true)
+
+        assertEquals(before, documentLength(view))
+    }
+
+    /**
+     * Verifies that with [PaperSheetView.selectionInputControlEnabled] switched off, `Ctrl+A` no
+     * longer selects the whole document.
+     */
+    @Test
+    fun selectAllShortcutDoesNothingWhenSelectionInputControlDisabled() {
+        val (view, ui) = editableView()
+        view.selectionInputControlEnabled = false
+
+        ui.pressKeyForTest(KeyEvent.VK_A, shortcut = true)
+
+        assertTrue(view.selectionModel.isEmpty)
+    }
+
+    /**
+     * Verifies that with [PaperSheetView.caretInputControlEnabled] switched off, `Home`, `End`,
+     * `Page Up` and `Page Down` no longer move the caret, but the arrow keys still do.
+     */
+    @Test
+    fun homeEndPageKeysDoNothingWhenCaretInputControlDisabled() {
+        val (view, ui) = editableView()
+        view.caretModel.moveTo(5)
+        view.caretInputControlEnabled = false
+
+        ui.pressKeyForTest(KeyEvent.VK_HOME)
+        ui.pressKeyForTest(KeyEvent.VK_END)
+        ui.pressKeyForTest(KeyEvent.VK_PAGE_DOWN)
+        ui.pressKeyForTest(KeyEvent.VK_PAGE_UP)
+        assertEquals(5, ui.caretIndexForTest)
+
+        ui.pressKeyForTest(KeyEvent.VK_RIGHT)
+        assertEquals(6, ui.caretIndexForTest)
+    }
+
+    /**
+     * Verifies that mouse-based caret placement keeps working no matter how the five input-control
+     * switches are set, since the mouse handlers are never gated by them.
+     */
+    @Test
+    fun mouseCaretPlacementIgnoresInputControlSwitches() {
+        val (view, ui) = editableView()
+        view.caretModel.moveTo(5)
+        view.zoomInputControlEnabled = false
+        view.clipboardInputControlEnabled = false
+        view.textInputControlEnabled = false
+        view.selectionInputControlEnabled = false
+        view.caretInputControlEnabled = false
+
+        ui.placeCaretAtForTest(35.0 * (96.0 / 72.0), 45.0 * (96.0 / 72.0))
+
+        assertEquals(0, ui.caretIndexForTest)
+    }
+
+    /**
+     * Verifies that a custom [PaperSheetView.zoomStepFactor] scales both `Ctrl` + wheel and
+     * `Ctrl+Plus` identically, without having to replace [PaperSheetView.zoomStepFunction].
+     */
+    @Test
+    fun zoomStepFactorScalesWheelAndKeyboardZoomEqually() {
+        val (view, ui) = editableView()
+        view.zoom = 1.0
+        view.zoomStepFactor = 2.0
+        val expectedStep = DEFAULT_ZOOM_STEP_FUNCTION(1.0) * 2.0
+
+        ui.scrollForTest(wheelRotation = -1, shortcut = true)
+        assertEquals(1.0 + expectedStep, view.zoom, 1e-9)
+
+        view.zoom = 1.0
+        ui.pressKeyForTest(KeyEvent.VK_PLUS, shortcut = true)
+        assertEquals(1.0 + expectedStep, view.zoom, 1e-9)
+    }
+
+    /**
+     * Verifies that a custom [PaperSheetView.zoomStepFunction] replaces the step for both `Ctrl` +
+     * wheel and `Ctrl+Plus` identically.
+     */
+    @Test
+    fun customZoomStepFunctionReplacesWheelAndKeyboardZoomEqually() {
+        val (view, ui) = editableView()
+        view.zoom = 1.0
+        view.zoomStepFunction = { 0.5 }
+
+        ui.scrollForTest(wheelRotation = -1, shortcut = true)
+        assertEquals(1.5, view.zoom, 1e-9)
+
+        view.zoom = 1.0
+        ui.pressKeyForTest(KeyEvent.VK_PLUS, shortcut = true)
+        assertEquals(1.5, view.zoom, 1e-9)
+    }
+
+    /**
+     * Verifies that the default [PaperSheetView.zoomStepFunction] is non-linear: it returns a larger
+     * step for a larger `zoom` than for a smaller one, instead of a flat constant.
+     */
+    @Test
+    fun defaultZoomStepFunctionGrowsWithZoom() {
+        val smallStep = DEFAULT_ZOOM_STEP_FUNCTION(0.25)
+        val largeStep = DEFAULT_ZOOM_STEP_FUNCTION(2.0)
+
+        assertTrue(smallStep < largeStep)
+    }
+
+    /**
+     * Verifies that [PaperSheetView.zoomStepFunction] defaults to [DEFAULT_ZOOM_STEP_FUNCTION], is
+     * gettable and settable, and fires the `PROP_ZOOM_STEP_FUNCTION` property change.
+     */
+    @Test
+    fun zoomStepFunctionDefaultsAndFiresPropertyChange() {
+        val view = PaperSheetView()
+        assertEquals(DEFAULT_ZOOM_STEP_FUNCTION(0.5), view.zoomStepFunction(0.5), 1e-9)
+
+        var fired = 0
+        view.addPropertyChangeListener(PaperSheetView.PROP_ZOOM_STEP_FUNCTION) { fired++ }
+        val custom: ZoomStepFunction = { 0.25 }
+        view.zoomStepFunction = custom
+
+        assertEquals(1, fired)
+        assertEquals(0.25, view.zoomStepFunction(1.0), 1e-9)
+    }
+
+    /**
+     * Verifies that [PaperSheetView.zoomStepFactor] defaults to `1.0`, is gettable and settable, and
+     * fires the `PROP_ZOOM_STEP_FACTOR` property change.
+     */
+    @Test
+    fun zoomStepFactorDefaultsAndFiresPropertyChange() {
+        val view = PaperSheetView()
+        assertEquals(1.0, view.zoomStepFactor, 1e-9)
+
+        var fired = 0
+        view.addPropertyChangeListener(PaperSheetView.PROP_ZOOM_STEP_FACTOR) { fired++ }
+        view.zoomStepFactor = 3.0
+
+        assertEquals(1, fired)
+        assertEquals(3.0, view.zoomStepFactor, 1e-9)
     }
 
     //endregion

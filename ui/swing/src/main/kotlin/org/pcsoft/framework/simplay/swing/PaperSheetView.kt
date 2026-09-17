@@ -21,7 +21,10 @@ import javax.swing.UIManager
 import org.pcsoft.framework.simplay.engine.model.Document
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetStyle
 import org.pcsoft.framework.simplay.uicommon.CaretMode
+import org.pcsoft.framework.simplay.uicommon.DEFAULT_ZOOM_STEP_FACTOR
+import org.pcsoft.framework.simplay.uicommon.DEFAULT_ZOOM_STEP_FUNCTION
 import org.pcsoft.framework.simplay.uicommon.PageMode
+import org.pcsoft.framework.simplay.uicommon.ZoomStepFunction
 
 /**
  * A scrollable and zoomable Swing component that renders a [Document] as physical-looking sheets -
@@ -314,6 +317,93 @@ open class PaperSheetView : JComponent() {
 
     //endregion
 
+    //region Input control
+
+    /**
+     * When `true` (default), `Ctrl` + mouse wheel and the `Ctrl` + `+`/`-`/`0` keyboard shortcuts
+     * change [zoom]. When `false`, both are disabled and the mouse wheel only scrolls.
+     */
+    var zoomInputControlEnabled: Boolean = true
+        set(value) {
+            val old = field
+            field = value
+            firePropertyChange(PROP_ZOOM_INPUT_CONTROL_ENABLED, old, value)
+        }
+
+    /**
+     * When `true` (default), the `Ctrl` + `C`/`X`/`V` copy/cut/paste keyboard shortcuts are active.
+     * Does not affect caret navigation or mouse-based selection.
+     */
+    var clipboardInputControlEnabled: Boolean = true
+        set(value) {
+            val old = field
+            field = value
+            firePropertyChange(PROP_CLIPBOARD_INPUT_CONTROL_ENABLED, old, value)
+        }
+
+    /**
+     * When `true` (default), the `Ctrl` + `D` duplicate keyboard shortcut is active. Does not affect
+     * caret navigation or mouse-based selection.
+     */
+    var textInputControlEnabled: Boolean = true
+        set(value) {
+            val old = field
+            field = value
+            firePropertyChange(PROP_TEXT_INPUT_CONTROL_ENABLED, old, value)
+        }
+
+    /**
+     * When `true` (default), the `Ctrl` + `A` select-all keyboard shortcut is active. Does not affect
+     * caret navigation or mouse-based selection.
+     */
+    var selectionInputControlEnabled: Boolean = true
+        set(value) {
+            val old = field
+            field = value
+            firePropertyChange(PROP_SELECTION_INPUT_CONTROL_ENABLED, old, value)
+        }
+
+    /**
+     * When `true` (default), the `Home`/`End`/`Page Up`/`Page Down` keys (with or without `Shift`)
+     * move the caret. Does not affect arrow-key navigation or mouse-based caret placement.
+     */
+    var caretInputControlEnabled: Boolean = true
+        set(value) {
+            val old = field
+            field = value
+            firePropertyChange(PROP_CARET_INPUT_CONTROL_ENABLED, old, value)
+        }
+
+    /**
+     * Computes the `zoom` step for `Ctrl` + mouse wheel and the `Ctrl+Plus`/`Ctrl+Minus`/`Ctrl+0`
+     * shortcuts from the current [zoom]. Defaults to [DEFAULT_ZOOM_STEP_FUNCTION] (the step grows
+     * proportionally with `zoom`, so zooming feels equally fast at every level); freely replaceable
+     * with a custom curve. [zoomStepFactor] additionally scales the result without replacing this
+     * function.
+     */
+    var zoomStepFunction: ZoomStepFunction = DEFAULT_ZOOM_STEP_FUNCTION
+        set(value) {
+            val old = field
+            field = value
+            firePropertyChange(PROP_ZOOM_STEP_FUNCTION, old, value)
+        }
+
+    /**
+     * Plain multiplier applied on top of [zoomStepFunction]'s result; `1.0` (default) leaves it
+     * unchanged. Lets the step size be scaled without having to replace [zoomStepFunction] itself.
+     */
+    var zoomStepFactor: Double = DEFAULT_ZOOM_STEP_FACTOR
+        set(value) {
+            val old = field
+            field = value
+            firePropertyChange(PROP_ZOOM_STEP_FACTOR, old, value)
+        }
+
+    /** The `zoom` step to apply for a single `Ctrl` + wheel notch or zoom-shortcut press, right now. */
+    internal fun currentZoomStep(): Double = zoomStepFunction(zoom) * zoomStepFactor
+
+    //endregion
+
     //region Content size (read-only)
 
     var contentSize: Dimension = Dimension(0, 0)
@@ -553,6 +643,13 @@ open class PaperSheetView : JComponent() {
         const val PROP_DEACTIVATED_OVERLAY_COLOR = "deactivatedOverlayColor"
         const val PROP_SMOOTH_CARET_BLINK = "smoothCaretBlink"
         const val PROP_CARET_MODE = "caretMode"
+        const val PROP_ZOOM_INPUT_CONTROL_ENABLED = "zoomInputControlEnabled"
+        const val PROP_CLIPBOARD_INPUT_CONTROL_ENABLED = "clipboardInputControlEnabled"
+        const val PROP_TEXT_INPUT_CONTROL_ENABLED = "textInputControlEnabled"
+        const val PROP_SELECTION_INPUT_CONTROL_ENABLED = "selectionInputControlEnabled"
+        const val PROP_CARET_INPUT_CONTROL_ENABLED = "caretInputControlEnabled"
+        const val PROP_ZOOM_STEP_FUNCTION = "zoomStepFunction"
+        const val PROP_ZOOM_STEP_FACTOR = "zoomStepFactor"
         const val PROP_CONTENT_SIZE = "contentSize"
         const val PROP_HOVERED_PARAGRAPH = "hoveredParagraph"
         const val PROP_HOVERED_PAGE = "hoveredPage"

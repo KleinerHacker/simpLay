@@ -115,10 +115,17 @@ Build tasks relevant for consumers and maintainers:
   `pageModes`), mouse text selection, in-place editing with insert/overwrite
   `caretMode`, `Page Up` / `Page Down`, `scrollTo*` navigation and direct
   navigation-anchor jumps (`moveToAnchor` / `scrollToAnchor`), `Ctrl+A`
-  select-all, `onType` and `onMouseEvent` events, automatic page-number
+  select-all, `Ctrl` + mouse wheel and `Ctrl+Plus` / `Ctrl+Minus` / `Ctrl+0`
+  zoom shortcuts, `onType` and `onMouseEvent` events, automatic page-number
   drawing, FXML-compatible floating overlays and JavaFX CSS styling, plus
   `FxFontProbe` (font availability and fingerprint checks against the JavaFX
-  text stack) - plus the `ui/fx` user documentation
+  text stack) - built-in mouse-wheel and keyboard shortcuts can be toggled per
+  group (`zoomInputControlEnabled`, `clipboardInputControlEnabled`,
+  `textInputControlEnabled`, `selectionInputControlEnabled`,
+  `caretInputControlEnabled`, all default `true`); the zoom step is a
+  replaceable, non-linear `zoomStepFunction(zoom)` (default: `10%` of the
+  current `zoom`) additionally scaled by a plain `zoomStepFactor` (default
+  `1.0`) - plus the `ui/fx` user documentation
 * [ ] PDF export integration (`export/jvm-pdf`)
 * [ ] Printing integration (`export/jvm-print`)
 * [x] Swing integration (`ui/swing`): `DocumentImageRenderer` (whole-document and
@@ -127,7 +134,14 @@ Build tasks relevant for consumers and maintainers:
   per-page `pageModes` overrides, mouse text selection, in-place editing with
   insert/overwrite `caretMode`, `Page Up` / `Page Down`, `scrollTo*`
   navigation and direct navigation-anchor jumps (`moveToAnchor` /
-  `scrollToAnchor`), `Ctrl+A` select-all, `onType` and `onMouseEvent` events,
-  automatic page-number drawing, floating overlays and Look-and-Feel styling,
-  plus `SwingFontProbe` (font availability and fingerprint checks against the
-  AWT text stack) - plus the `ui/swing` user documentation
+  `scrollToAnchor`), `Ctrl+A` select-all, `Ctrl` + mouse wheel and
+  `Ctrl+Plus` / `Ctrl+Minus` / `Ctrl+0` zoom shortcuts, `onType` and
+  `onMouseEvent` events, automatic page-number drawing, floating overlays and
+  Look-and-Feel styling, plus `SwingFontProbe` (font availability and
+  fingerprint checks against the AWT text stack) - built-in mouse-wheel and
+  keyboard shortcuts can be toggled per group (`zoomInputControlEnabled`,
+  `clipboardInputControlEnabled`, `textInputControlEnabled`,
+  `selectionInputControlEnabled`, `caretInputControlEnabled`, all default
+  `true`); the zoom step is a replaceable, non-linear `zoomStepFunction(zoom)`
+  (default: `10%` of the current `zoom`) additionally scaled by a plain
+  `zoomStepFactor` (default `1.0`) - plus the `ui/swing` user documentation

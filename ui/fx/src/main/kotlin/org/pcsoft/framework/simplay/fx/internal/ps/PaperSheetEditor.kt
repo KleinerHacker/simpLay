@@ -28,10 +28,16 @@ import org.pcsoft.framework.simplay.uicommon.EditableRegions
 /**
  * The editable-mode input controller of a [PaperSheetView]: the keyboard shortcuts (character
  * typing, `Backspace` / `Delete`, `Insert` (insert/overwrite typing mode), `Ctrl+A` / `Ctrl+C` /
- * `Ctrl+V` / `Ctrl+X` / `Ctrl+D`, the caret-navigation keys) and the text mutations they trigger,
- * plus drag-and-drop of the selection. Every mutation runs through [DocumentEditor] and replaces
- * [PaperSheetView.document] with the rebuilt document; [PaperSheetCaret.onEditApplied] then restores
- * the caret.
+ * `Ctrl+V` / `Ctrl+X` / `Ctrl+D`, `Ctrl+Plus` / `Ctrl+Minus` / `Ctrl+0` for zoom, the caret-navigation
+ * keys) and the text mutations they trigger, plus drag-and-drop of the selection. Every mutation runs
+ * through [DocumentEditor] and replaces [PaperSheetView.document] with the rebuilt document;
+ * [PaperSheetCaret.onEditApplied] then restores the caret.
+ *
+ * The `Ctrl+Plus`/`Ctrl+Minus`/`Ctrl+0` zoom shortcuts are gated by
+ * [PaperSheetView.zoomInputControlEnabled], `Ctrl+C`/`Ctrl+V`/`Ctrl+X` by
+ * [PaperSheetView.clipboardInputControlEnabled], `Ctrl+D` by [PaperSheetView.textInputControlEnabled],
+ * `Ctrl+A` by [PaperSheetView.selectionInputControlEnabled], and `Home`/`End`/`Page Up`/`Page Down` by
+ * [PaperSheetView.caretInputControlEnabled]; arrow-key navigation and mouse input are never gated.
  *
  * A per-view helper the skin creates once and routes key events and selection drops to. The text
  * index is read through [textIndex]; navigation keys are delegated to [caret], clipboard text to
@@ -69,12 +75,32 @@ internal class PaperSheetEditor(
     //region Key handling
 
     fun onKeyPressed(event: KeyEvent) {
+        if (event.isShortcutDown && !event.isAltDown && view.zoomInputControlEnabled) {
+            when (event.code) {
+                KeyCode.PLUS, KeyCode.ADD, KeyCode.EQUALS -> {
+                    view.zoom += view.currentZoomStep()
+                    event.consume()
+                    return
+                }
+                KeyCode.MINUS, KeyCode.SUBTRACT -> {
+                    view.zoom -= view.currentZoomStep()
+                    event.consume()
+                    return
+                }
+                KeyCode.DIGIT0, KeyCode.NUMPAD0 -> {
+                    view.zoom = PaperSheetView.DEFAULT_ZOOM
+                    event.consume()
+                    return
+                }
+                else -> {}
+            }
+        }
         if (event.code == KeyCode.C && event.isShortcutDown && !event.isAltDown) {
-            if (selectable && selection.putStyledSelectionOnClipboard()) event.consume()
+            if (selectable && view.clipboardInputControlEnabled && selection.putStyledSelectionOnClipboard()) event.consume()
             return
         }
         if (event.code == KeyCode.A && event.isShortcutDown && !event.isAltDown) {
-            if (selectable) {
+            if (selectable && view.selectionInputControlEnabled) {
                 selection.selectAll()
                 event.consume()
             }
@@ -88,16 +114,16 @@ internal class PaperSheetEditor(
             KeyCode.RIGHT -> if (shortcut) caret.moveWordRight(shift) else caret.moveHorizontal(1, shift)
             KeyCode.UP -> caret.moveVertical(-1, shift)
             KeyCode.DOWN -> caret.moveVertical(1, shift)
-            KeyCode.PAGE_UP -> caret.movePage(-1, shift)
-            KeyCode.PAGE_DOWN -> caret.movePage(1, shift)
-            KeyCode.HOME -> if (shortcut) caret.moveDocStart(shift) else caret.moveLineStart(shift)
-            KeyCode.END -> if (shortcut) caret.moveDocEnd(shift) else caret.moveLineEnd(shift)
+            KeyCode.PAGE_UP -> if (view.caretInputControlEnabled) caret.movePage(-1, shift) else return
+            KeyCode.PAGE_DOWN -> if (view.caretInputControlEnabled) caret.movePage(1, shift) else return
+            KeyCode.HOME -> if (view.caretInputControlEnabled) { if (shortcut) caret.moveDocStart(shift) else caret.moveLineStart(shift) } else return
+            KeyCode.END -> if (view.caretInputControlEnabled) { if (shortcut) caret.moveDocEnd(shift) else caret.moveLineEnd(shift) } else return
             KeyCode.BACK_SPACE -> if (editable) backspace() else return
             KeyCode.DELETE -> if (editable) deleteForward() else return
             KeyCode.INSERT -> if (editable) caret.toggleCaretMode() else return
-            KeyCode.V -> if (shortcut && editable) paste() else return
-            KeyCode.X -> if (shortcut && editable) cut() else return
-            KeyCode.D -> if (shortcut && editable) duplicate() else return
+            KeyCode.V -> if (shortcut && editable && view.clipboardInputControlEnabled) paste() else return
+            KeyCode.X -> if (shortcut && editable && view.clipboardInputControlEnabled) cut() else return
+            KeyCode.D -> if (shortcut && editable && view.textInputControlEnabled) duplicate() else return
             else -> return
         }
         event.consume()
