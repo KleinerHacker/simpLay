@@ -12,6 +12,8 @@ excluded.
 
 ## [UNRELEASED]
 
+## [0.5.0]
+
 ### Added
 
 - `swing`, `fx`: `PageDecoration`, a configurable decoration attached to a

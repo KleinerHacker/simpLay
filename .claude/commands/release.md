@@ -6,6 +6,8 @@ step in this turn as part of that release prep, not as an unrelated version-numb
 
 If `$ARGUMENTS` is empty, ask the user for the target version before doing anything else.
 
+All changes MUST BE run WITHOUT ANY PLAN.
+
 ## Steps
 
 1. Load the `release-prep` skill to know where the version number lives in this repository.
