@@ -36,6 +36,8 @@ enum class EdgeAlignment {
 /**
  * Where a single page decoration of a `PaperSheetView` (fx and swing) is anchored, in the
  * component area around a page (inside `outerMargin`/`pageGap`), not in the page content itself.
+ * That band is no longer a fixed `outerMargin`: when the decoration opts into reservation, it grows
+ * via [resolveReservedMargins]/[EdgeReservation] to fit the decoration's natural size.
  *
  * @property edge the page edge the decoration is attached to.
  * @property alignment how the decoration is positioned along [edge]; [EdgeAlignment.STRETCH] by

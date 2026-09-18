@@ -60,8 +60,10 @@ import org.pcsoft.framework.simplay.uicommon.PageMode
  * Two [FloatingOverlay]s show that feature off: a `Copy` bar that follows the text selection
  * ([FloatingOverlayTrigger.SELECTION]) and a small label that tracks the paragraph under the mouse
  * ([FloatingOverlayTrigger.PARAGRAPH_HOVER]). A toolbar label reads back the last triggered
- * paragraph and page index. A [PageDecoration] shows that feature off too: a label permanently
- * anchored above the first page, following it through scroll and zoom regardless of interaction.
+ * paragraph and page index. Three [PageDecoration]s show that feature off too, one per edge (TOP,
+ * LEFT, BOTTOM), each permanently anchored to the first page and following it through scroll and
+ * zoom regardless of interaction; the TOP one is sized well beyond the outer margin to show that a
+ * decoration reserves its own layout space instead of clipping against the page.
  *
  * Per-page mode overrides are demonstrated by the "Page mode" boxes - one per page of the current
  * document, up to [MAX_OVERRIDE_PAGES] - each a [PageMode] selector left empty for "follow the
@@ -162,14 +164,41 @@ class PaperSheetDemoTab : BorderPane() {
         hoverBadge.textProperty().bind(activeIndexProperty.asString("Paragraph %d"))
     }
 
-    private val decorationBadge = Label("Decoration").apply { style = HOVER_BADGE_STYLE }
+    // Padded well beyond the outer margin, so the reserved-space fix is visible: the page shifts
+    // down/right to fully show the decoration instead of it clipping/overlapping the page.
+    private val decorationBadge = Label("Decoration (reserves space)").apply {
+        style = "$HOVER_BADGE_STYLE -fx-padding: 20 12 20 12;"
+    }
+    private val leftDecorationBadge = Label("Left").apply {
+        style = "$HOVER_BADGE_STYLE -fx-padding: 12;"
+    }
+    private val bottomDecorationBadge = Label("Bottom").apply { style = HOVER_BADGE_STYLE }
 
-    /** Permanently anchored above the first page of the current document; follows scroll and zoom. */
+    /** Permanently anchored above the first page of the current document; follows scroll and zoom.
+     * Deliberately taller than the outer margin, so it now reserves its own layout space. */
     private val pageDecoration = PageDecoration().apply {
         edge = PageEdge.TOP
         alignment = EdgeAlignment.CENTER
         offsetY = 4.0
         content = decorationBadge
+    }
+
+    /** Second decoration, anchored to the left edge of the first page; demonstrates a reserving
+     * decoration on a horizontal edge. */
+    private val leftPageDecoration = PageDecoration().apply {
+        edge = PageEdge.LEFT
+        alignment = EdgeAlignment.CENTER
+        offsetX = 4.0
+        content = leftDecorationBadge
+    }
+
+    /** Third decoration, anchored below the first page; demonstrates a reserving decoration on the
+     * bottom edge. */
+    private val bottomPageDecoration = PageDecoration().apply {
+        edge = PageEdge.BOTTOM
+        alignment = EdgeAlignment.CENTER
+        offsetY = 4.0
+        content = bottomDecorationBadge
     }
 
     init {
@@ -213,7 +242,7 @@ class PaperSheetDemoTab : BorderPane() {
         center = view
 
         view.floatingOverlays.addAll(copyOverlay, hoverOverlay)
-        view.pageDecorations.add(pageDecoration)
+        view.pageDecorations.addAll(pageDecoration, leftPageDecoration, bottomPageDecoration)
 
         modeBox.valueProperty().addListener { _, _, v -> if (v != null) view.mode = v }
         smoothCaretBox.selectedProperty().addListener { _, _, v -> view.smoothCaretBlink = v }
@@ -329,9 +358,12 @@ class PaperSheetDemoTab : BorderPane() {
         documentLabel.text = "Document: $chars chars in $pages page(s)"
     }
 
-    /** Anchors [pageDecoration] to the first page of the current document, if any. */
+    /** Anchors the demo's page decorations to the first page of the current document, if any. */
     private fun updatePageDecoration() {
-        pageDecoration.pageId = view.document?.pages?.firstOrNull()?.id ?: ""
+        val pageId = view.document?.pages?.firstOrNull()?.id ?: ""
+        pageDecoration.pageId = pageId
+        leftPageDecoration.pageId = pageId
+        bottomPageDecoration.pageId = pageId
     }
 
     /** Refreshes [anchorBox]'s items from the current document's anchors, keeping the selection when possible. */

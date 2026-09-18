@@ -38,9 +38,11 @@ import org.pcsoft.framework.simplay.engine.model.TextBlock
 import org.pcsoft.framework.simplay.engine.model.TextPart
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
+import org.pcsoft.framework.simplay.uicommon.EdgeReservation
 import org.pcsoft.framework.simplay.uicommon.PageMode
 import org.pcsoft.framework.simplay.uicommon.effectiveZoom
 import org.pcsoft.framework.simplay.uicommon.hitTest
+import org.pcsoft.framework.simplay.uicommon.resolveReservedMargins
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetCanvasPainter
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetCaret
 import org.pcsoft.framework.simplay.fx.internal.ps.PaperSheetDecorations
@@ -110,6 +112,10 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     private var contentWidthUnscaled = 0.0
     private var contentHeightUnscaled = 0.0
 
+    /** The per-edge margins currently in effect, grown past [PaperSheetView.outerMargin] to fit any
+     * page decoration that opts into reservation. */
+    private var reservedMargins: EdgeReservation = EdgeReservation()
+
     /** `true` while the mouse extends a selection by dragging. */
     private var dragging = false
 
@@ -128,6 +134,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         measurer = measurer,
         textIndex = { index },
         pageTops = { pageTops },
+        reservedMargins = { reservedMargins },
         scrollOffset = ::scrollOffset,
         requestRedraw = ::redraw,
         onProgrammaticChange = { dragging = false },
@@ -141,6 +148,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         textIndex = { index },
         measuredDocument = { measured },
         pageTops = { pageTops },
+        reservedMargins = { reservedMargins },
         scrollOffset = ::scrollOffset,
         requestRedraw = ::redraw,
         scrollCaretIntoView = ::scrollCaretIntoView,
@@ -156,8 +164,9 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         textIndex = { index },
         measuredDocument = { measured },
         pageTops = { pageTops },
+        reservedMargins = { reservedMargins },
         scrollTo = { y ->
-            val maxValue = ((contentHeightUnscaled + 2.0 * skinnable.outerMargin) * effectiveZoom(skinnable.zoom) - canvas.height)
+            val maxValue = ((contentHeightUnscaled + reservedMargins.top + reservedMargins.bottom) * effectiveZoom(skinnable.zoom) - canvas.height)
                 .coerceAtLeast(0.0)
             scrollBar.value = y.coerceIn(0.0, maxValue)
         },
@@ -178,6 +187,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         view = control,
         measured = { measured },
         pageTops = { pageTops },
+        reservedMargins = { reservedMargins },
         scrollOffset = ::scrollOffset,
         nearestPage = ::nearestPage,
     )
@@ -197,6 +207,8 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         measuredDocument = { measured },
         pageTops = { pageTops },
         scrollOffset = ::scrollOffset,
+        reservedMargins = { reservedMargins },
+        onReservationChanged = ::relayout,
     )
 
     private val keyHandler = EventHandler<KeyEvent> { editor.onKeyPressed(it) }
@@ -331,6 +343,9 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         val doc = measured
         val gap = skinnable.pageGap
         val outer = skinnable.outerMargin
+        // LEFT/RIGHT space is shared by the whole page stack (a single content width for every page),
+        // so it is reserved from the aggregate across all pages.
+        reservedMargins = resolveReservedMargins(outer, decorations.reservation())
         if (doc == null || doc.pages.isEmpty()) {
             pageTops = DoubleArray(0)
             contentWidthUnscaled = 0.0
@@ -338,19 +353,41 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
             skinnable.updateContentSize(Dimension2D(0.0, 0.0))
             return
         }
+        val laidOutIndices = doc.pages.indices.filter { !isPageHidden(doc.pages[it]) }
+        // TOP/BOTTOM space is per page: only the first laid-out page's TOP decorations need the space
+        // before it, only the last laid-out page's BOTTOM decorations need the space after it, and an
+        // inter-page gap only needs to fit the BOTTOM decorations of the page above it together with the
+        // TOP decorations of the page below it - never every page's decorations at once. Resolved by
+        // sheet index, not raw page id (see `reservation`'s KDoc).
+        val topReservation = laidOutIndices.firstOrNull()?.let { decorations.reservation(it).top } ?: 0.0
+        val bottomReservation = laidOutIndices.lastOrNull()?.let { decorations.reservation(it).bottom } ?: 0.0
+        reservedMargins = EdgeReservation(
+            top = maxOf(outer, topReservation),
+            bottom = maxOf(outer, bottomReservation),
+            left = reservedMargins.left,
+            right = reservedMargins.right,
+        )
         pageTops = DoubleArray(doc.pages.size)
         var y = 0.0
         doc.pages.forEachIndexed { i, page ->
             pageTops[i] = y
             if (!isPageHidden(page)) {
                 y += page.effectiveSize.height
-                if (i != doc.pages.lastIndex) y += gap
+                if (i != doc.pages.lastIndex) {
+                    val nextLaidOutIndex = (i + 1..doc.pages.lastIndex).firstOrNull { !isPageHidden(doc.pages[it]) }
+                    val boundaryReservation = decorations.reservation(i).bottom +
+                        (nextLaidOutIndex?.let { decorations.reservation(it).top } ?: 0.0)
+                    y += maxOf(gap, boundaryReservation)
+                }
             }
         }
         contentHeightUnscaled = y
         contentWidthUnscaled = doc.pages.filterNot(::isPageHidden).maxOfOrNull { it.effectiveSize.width } ?: 0.0
         skinnable.updateContentSize(
-            Dimension2D(contentWidthUnscaled + 2.0 * outer, contentHeightUnscaled + 2.0 * outer),
+            Dimension2D(
+                contentWidthUnscaled + reservedMargins.left + reservedMargins.right,
+                contentHeightUnscaled + reservedMargins.top + reservedMargins.bottom,
+            ),
         )
     }
 
@@ -371,7 +408,7 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     }
 
     private fun updateScrollBar(viewportHeight: Double) {
-        val totalScaled = (contentHeightUnscaled + 2.0 * skinnable.outerMargin) * effectiveZoom(skinnable.zoom)
+        val totalScaled = (contentHeightUnscaled + reservedMargins.top + reservedMargins.bottom) * effectiveZoom(skinnable.zoom)
         val maxValue = (totalScaled - viewportHeight).coerceAtLeast(0.0)
         scrollBar.max = maxValue
         scrollBar.visibleAmount = if (maxValue <= 0.0) 0.0 else viewportHeight
@@ -442,7 +479,8 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
             measured = measured,
             pageTops = pageTops,
             zoom = effectiveZoom(skinnable.zoom),
-            outerMargin = skinnable.outerMargin,
+            outerTop = reservedMargins.top,
+            outerLeft = reservedMargins.left,
             scrollOffset = scrollOffset(),
             index = index,
             selectionStart = selection.start,
@@ -474,12 +512,11 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
      */
     private fun nearestPage(cyUnscaled: Double): Pair<Int, Double> {
         val doc = measured!!
-        val outer = skinnable.outerMargin
         var pageIndex = 0
         var bestDist = Double.MAX_VALUE
         doc.pages.forEachIndexed { i, page ->
             if (isPageHidden(page)) return@forEachIndexed
-            val top = outer + pageTops[i]
+            val top = reservedMargins.top + pageTops[i]
             val bottom = top + page.effectiveSize.height
             val dist = when {
                 cyUnscaled < top -> top - cyUnscaled
@@ -504,15 +541,14 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         val doc = measured ?: return Cursor.DEFAULT
         if (doc.pages.isEmpty()) return Cursor.DEFAULT
         val zoom = effectiveZoom(skinnable.zoom)
-        val outer = skinnable.outerMargin
         val cx = px / zoom
         val cy = (py + scrollOffset()) / zoom
         val (pageIndex, bandDistance) = nearestPage(cy)
         if (bandDistance > 0.0) return Cursor.DEFAULT
         if (!pageMode(doc.pages[pageIndex]).supportsSelection) return Cursor.DEFAULT
         val contentArea = doc.pages[pageIndex].contentArea
-        val localX = cx - outer - contentArea.x
-        val localY = cy - (outer + pageTops[pageIndex]) - contentArea.y
+        val localX = cx - reservedMargins.left - contentArea.x
+        val localY = cy - (reservedMargins.top + pageTops[pageIndex]) - contentArea.y
         return if (localX in 0.0..contentArea.width && localY in 0.0..contentArea.height) Cursor.TEXT else Cursor.DEFAULT
     }
 
@@ -522,15 +558,14 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
         if (doc.pages.isEmpty() || idx.segments.isEmpty()) return 0
 
         val zoom = effectiveZoom(skinnable.zoom)
-        val outer = skinnable.outerMargin
         val cx = px / zoom
         val cy = (py + scrollOffset()) / zoom
 
         val (pageIndex, _) = nearestPage(cy)
         val page = doc.pages[pageIndex]
         val contentArea = page.contentArea
-        val localX = cx - outer - contentArea.x
-        val localY = cy - (outer + pageTops[pageIndex]) - contentArea.y
+        val localX = cx - reservedMargins.left - contentArea.x
+        val localY = cy - (reservedMargins.top + pageTops[pageIndex]) - contentArea.y
 
         val pageSegments = idx.segments.filter { it.pageIndex == pageIndex }
         if (pageSegments.isEmpty()) {
@@ -568,15 +603,14 @@ internal class PaperSheetViewSkin(control: PaperSheetView) : SkinBase<PaperSheet
     private fun resolveMouseHit(px: Double, py: Double): Triple<TextPart?, TextBlock?, Page?> {
         val doc = measured?.takeIf { it.pages.isNotEmpty() } ?: return Triple(null, null, null)
         val zoom = effectiveZoom(skinnable.zoom)
-        val outer = skinnable.outerMargin
         val cx = px / zoom
         val cy = (py + scrollOffset()) / zoom
         val (pageIndex, bandDistance) = nearestPage(cy)
         if (bandDistance > 0.0) return Triple(null, null, null)
         val page = doc.pages[pageIndex]
         val contentArea = page.contentArea
-        val localX = cx - outer - contentArea.x
-        val localY = cy - (outer + pageTops[pageIndex]) - contentArea.y
+        val localX = cx - reservedMargins.left - contentArea.x
+        val localY = cy - (reservedMargins.top + pageTops[pageIndex]) - contentArea.y
         val block = page.blocks.firstOrNull { b ->
             val bounds = b.bounds
             localX >= bounds.x && localX <= bounds.x + bounds.width && localY >= bounds.y && localY <= bounds.y + bounds.height

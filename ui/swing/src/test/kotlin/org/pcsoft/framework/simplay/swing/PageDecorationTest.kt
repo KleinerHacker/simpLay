@@ -196,6 +196,55 @@ class PageDecorationTest {
     }
 
     /**
+     * A decoration whose component is larger than [PaperSheetView.outerMargin] grows the reserved
+     * layout space on its edge: the view's `contentSize` height ends up taller than it would be for a
+     * document with no decoration at all.
+     */
+    @Test
+    fun oversizedDecorationGrowsReservedSpace() {
+        val (plainView, plainUi) = setUp()
+        paint(plainUi)
+        val plainHeight = plainView.contentSize.height
+
+        val (view, ui) = setUp()
+        val decoration = PageDecoration().apply {
+            edge = PageEdge.TOP
+            pageId = view.document!!.pages[0].id
+            content = JLabel("Tall").apply { preferredSize = java.awt.Dimension(100, 500) }
+        }
+        view.pageDecorations += decoration
+        paint(ui)
+
+        assertTrue(
+            view.contentSize.height > plainHeight + 400,
+            "a decoration taller than outerMargin should grow the reserved space",
+        )
+    }
+
+    /**
+     * A decoration with [PageDecoration.reserveSpace] set to `false` stays a plain overlay: it never
+     * grows the reserved space, even when it is larger than [PaperSheetView.outerMargin].
+     */
+    @Test
+    fun nonReservingDecorationDoesNotGrowReservedSpace() {
+        val (plainView, plainUi) = setUp()
+        paint(plainUi)
+        val plainHeight = plainView.contentSize.height
+
+        val (view, ui) = setUp()
+        val decoration = PageDecoration().apply {
+            edge = PageEdge.TOP
+            pageId = view.document!!.pages[0].id
+            reserveSpace = false
+            content = JLabel("Tall").apply { preferredSize = java.awt.Dimension(100, 500) }
+        }
+        view.pageDecorations += decoration
+        paint(ui)
+
+        assertEquals(plainHeight, view.contentSize.height)
+    }
+
+    /**
      * A decoration stays attached while its page is laid out regardless of a restrictive [PageMode]
      * on that page or a non-`STATIC` [PaperSheetMode], unlike a [FloatingOverlay].
      */

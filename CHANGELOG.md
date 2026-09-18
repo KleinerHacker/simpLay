@@ -12,6 +12,16 @@ excluded.
 
 ## [UNRELEASED]
 
+### Fixed
+
+- `swing`, `fx`: a `PageDecoration` larger than `outerMargin`/`pageGap` no
+  longer clips against or overlaps the neighbouring page. The page stack now
+  reserves the extra space a decoration needs on its `TOP`, `BOTTOM`, `LEFT`
+  and `RIGHT` edge, growing the content size and scroll range accordingly. A
+  decoration opts out of this reservation and keeps the previous
+  clip-if-needed overlay behaviour by setting `fx`'s `Node.isManaged` to
+  `false`, or `swing`'s new `PageDecoration.reserveSpace` to `false`.
+
 ## [0.5.0]
 
 ### Added

@@ -106,6 +106,23 @@ class PaperSheetViewSkinTest : JavaFxTestBase() {
     }
 
     /**
+     * Regression: a document with no page decoration keeps exactly the pre-reservation content size
+     * and scrollbar range - `outerMargin` on every side, none of it grown - since `resolveReservedMargins`
+     * falls back to plain `max(outerMargin, 0.0)` without any decoration to measure.
+     */
+    @Test
+    fun contentSizeAndScrollbarAreUnchangedWithoutDecorations() {
+        val (view, skin) = fixture(paragraphs = 40)
+
+        val expectedWidth = PaperSheetTestFixtures.layout.size.width + 2.0 * view.outerMargin
+        val expectedHeight = view.contentSize.height
+        val expectedScrollMax = (expectedHeight * view.zoom * (96.0 / 72.0)) - skin.viewportHeight
+
+        assertEquals(expectedWidth, view.contentSize.width, 0.5)
+        assertTrue(abs(skin.verticalScrollBar.max - expectedScrollMax) < 1.0)
+    }
+
+    /**
      * A mode without a caret never draws one.
      */
     @Test

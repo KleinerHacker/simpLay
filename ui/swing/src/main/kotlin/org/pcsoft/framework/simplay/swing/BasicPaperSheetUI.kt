@@ -50,9 +50,11 @@ import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetSelection
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetStyle
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetSwingPainter
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
+import org.pcsoft.framework.simplay.uicommon.EdgeReservation
 import org.pcsoft.framework.simplay.uicommon.PageMode
 import org.pcsoft.framework.simplay.uicommon.effectiveZoom
 import org.pcsoft.framework.simplay.uicommon.hitTest
+import org.pcsoft.framework.simplay.uicommon.resolveReservedMargins
 
 /**
  * The default [PaperSheetUI]: owns the measuring, the vertical [JScrollBar], the pointer / mouse
@@ -100,6 +102,10 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     private var pageTops: DoubleArray = DoubleArray(0)
     private var contentWidthUnscaled = 0.0
     private var contentHeightUnscaled = 0.0
+
+    /** The per-edge margins currently in effect, grown past [PaperSheetView.outerMargin] to fit any
+     * page decoration that opts into reservation. */
+    private var reservedMargins: EdgeReservation = EdgeReservation()
 
     /** `true` while the mouse extends a selection by dragging. */
     private var dragging = false
@@ -151,6 +157,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             measurer = measurer,
             textIndex = { index },
             pageTops = { pageTops },
+            reservedMargins = { reservedMargins },
             scrollOffset = ::scrollOffset,
             requestRedraw = ::redraw,
             onProgrammaticChange = { dragging = false },
@@ -162,6 +169,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             textIndex = { index },
             measuredDocument = { measured },
             pageTops = { pageTops },
+            reservedMargins = { reservedMargins },
             scrollOffset = ::scrollOffset,
             requestRedraw = ::redraw,
             scrollCaretIntoView = ::scrollCaretIntoView,
@@ -174,8 +182,9 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             textIndex = { index },
             measuredDocument = { measured },
             pageTops = { pageTops },
+            reservedMargins = { reservedMargins },
             scrollTo = { y ->
-                val total = (contentHeightUnscaled + 2.0 * view.outerMargin) * effectiveZoom(view.zoom)
+                val total = (contentHeightUnscaled + reservedMargins.top + reservedMargins.bottom) * effectiveZoom(view.zoom)
                 val maxValue = (total - viewportHeight()).coerceAtLeast(0.0)
                 scrollBar.value = y.coerceIn(0.0, maxValue).roundToInt()
             },
@@ -192,6 +201,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             view = view,
             measured = { measured },
             pageTops = { pageTops },
+            reservedMargins = { reservedMargins },
             scrollOffset = ::scrollOffset,
             nearestPage = ::nearestPage,
         )
@@ -201,6 +211,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             measuredDocument = { measured },
             pageTops = { pageTops },
             scrollOffset = ::scrollOffset,
+            reservedMargins = { reservedMargins },
+            onReservationChanged = ::relayout,
         )
 
         scrollBar = JScrollBar(JScrollBar.VERTICAL, 0, 0, 0, 0).apply {
@@ -340,6 +352,9 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         val doc = measured
         val gap = view.pageGap
         val outer = view.outerMargin
+        // LEFT/RIGHT space is shared by the whole page stack (a single content width for every page),
+        // so it is reserved from the aggregate across all pages.
+        reservedMargins = resolveReservedMargins(outer, decorations.reservation())
         if (doc == null || doc.pages.isEmpty()) {
             pageTops = DoubleArray(0)
             contentWidthUnscaled = 0.0
@@ -349,19 +364,41 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             relayoutViewport()
             return
         }
+        val laidOutIndices = doc.pages.indices.filter { !isPageHidden(doc.pages[it]) }
+        // TOP/BOTTOM space is per page: only the first laid-out page's TOP decorations need the space
+        // before it, only the last laid-out page's BOTTOM decorations need the space after it, and an
+        // inter-page gap only needs to fit the BOTTOM decorations of the page above it together with the
+        // TOP decorations of the page below it - never every page's decorations at once. Resolved by
+        // sheet index, not raw page id (see `reservation`'s KDoc).
+        val topReservation = laidOutIndices.firstOrNull()?.let { decorations.reservation(it).top } ?: 0.0
+        val bottomReservation = laidOutIndices.lastOrNull()?.let { decorations.reservation(it).bottom } ?: 0.0
+        reservedMargins = EdgeReservation(
+            top = maxOf(outer, topReservation),
+            bottom = maxOf(outer, bottomReservation),
+            left = reservedMargins.left,
+            right = reservedMargins.right,
+        )
         pageTops = DoubleArray(doc.pages.size)
         var y = 0.0
         doc.pages.forEachIndexed { i, page ->
             pageTops[i] = y
             if (!isPageHidden(page)) {
                 y += page.effectiveSize.height
-                if (i != doc.pages.lastIndex) y += gap
+                if (i != doc.pages.lastIndex) {
+                    val nextLaidOutIndex = (i + 1..doc.pages.lastIndex).firstOrNull { !isPageHidden(doc.pages[it]) }
+                    val boundaryReservation = decorations.reservation(i).bottom +
+                        (nextLaidOutIndex?.let { decorations.reservation(it).top } ?: 0.0)
+                    y += maxOf(gap, boundaryReservation)
+                }
             }
         }
         contentHeightUnscaled = y
         contentWidthUnscaled = doc.pages.filterNot(::isPageHidden).maxOfOrNull { it.effectiveSize.width } ?: 0.0
         view.updateContentSize(
-            Dimension((contentWidthUnscaled + 2.0 * outer).toInt(), (contentHeightUnscaled + 2.0 * outer).toInt()),
+            Dimension(
+                (contentWidthUnscaled + reservedMargins.left + reservedMargins.right).toInt(),
+                (contentHeightUnscaled + reservedMargins.top + reservedMargins.bottom).toInt(),
+            ),
         )
         view.revalidate()
         relayoutViewport()
@@ -383,7 +420,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     }
 
     private fun updateScrollBar(viewportHeight: Double) {
-        val total = ((contentHeightUnscaled + 2.0 * view.outerMargin) * effectiveZoom(view.zoom)).toInt().coerceAtLeast(0)
+        val total = ((contentHeightUnscaled + reservedMargins.top + reservedMargins.bottom) * effectiveZoom(view.zoom)).toInt().coerceAtLeast(0)
         val extent = viewportHeight.toInt().coerceAtLeast(0)
         val maxValue = (total - extent).coerceAtLeast(0)
         scrollBar.setValues(scrollBar.value.coerceIn(0, maxValue), extent, 0, total)
@@ -463,7 +500,8 @@ open class BasicPaperSheetUI : PaperSheetUI() {
                 measured = measured,
                 pageTops = pageTops,
                 zoom = effectiveZoom(view.zoom),
-                outerMargin = view.outerMargin,
+                outerTop = reservedMargins.top,
+                outerLeft = reservedMargins.left,
                 scrollOffset = scrollOffset(),
                 index = index,
                 selectionStart = selection.start,
@@ -493,12 +531,11 @@ open class BasicPaperSheetUI : PaperSheetUI() {
 
     private fun nearestPage(cyUnscaled: Double): Pair<Int, Double> {
         val doc = measured!!
-        val outer = view.outerMargin
         var pageIndex = 0
         var bestDist = Double.MAX_VALUE
         doc.pages.forEachIndexed { i, page ->
             if (isPageHidden(page)) return@forEachIndexed
-            val top = outer + pageTops[i]
+            val top = reservedMargins.top + pageTops[i]
             val bottom = top + page.effectiveSize.height
             val dist = when {
                 cyUnscaled < top -> top - cyUnscaled
@@ -523,15 +560,14 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         val doc = measured ?: return Cursor.getDefaultCursor()
         if (doc.pages.isEmpty()) return Cursor.getDefaultCursor()
         val zoom = effectiveZoom(view.zoom)
-        val outer = view.outerMargin
         val cx = px / zoom
         val cy = (py + scrollOffset()) / zoom
         val (pageIndex, bandDistance) = nearestPage(cy)
         if (bandDistance > 0.0) return Cursor.getDefaultCursor()
         if (!pageMode(doc.pages[pageIndex]).supportsSelection) return Cursor.getDefaultCursor()
         val contentArea = doc.pages[pageIndex].contentArea
-        val localX = cx - outer - contentArea.x
-        val localY = cy - (outer + pageTops[pageIndex]) - contentArea.y
+        val localX = cx - reservedMargins.left - contentArea.x
+        val localY = cy - (reservedMargins.top + pageTops[pageIndex]) - contentArea.y
         return if (localX in 0.0..contentArea.width && localY in 0.0..contentArea.height) {
             Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR)
         } else {
@@ -545,15 +581,14 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         if (doc.pages.isEmpty() || idx.segments.isEmpty()) return 0
 
         val zoom = effectiveZoom(view.zoom)
-        val outer = view.outerMargin
         val cx = px / zoom
         val cy = (py + scrollOffset()) / zoom
 
         val (pageIndex, _) = nearestPage(cy)
         val page = doc.pages[pageIndex]
         val contentArea = page.contentArea
-        val localX = cx - outer - contentArea.x
-        val localY = cy - (outer + pageTops[pageIndex]) - contentArea.y
+        val localX = cx - reservedMargins.left - contentArea.x
+        val localY = cy - (reservedMargins.top + pageTops[pageIndex]) - contentArea.y
 
         val pageSegments = idx.segments.filter { it.pageIndex == pageIndex }
         if (pageSegments.isEmpty()) {
@@ -591,15 +626,14 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     private fun resolveMouseHit(px: Double, py: Double): Triple<TextPart?, TextBlock?, Page?> {
         val doc = measured?.takeIf { it.pages.isNotEmpty() } ?: return Triple(null, null, null)
         val zoom = effectiveZoom(view.zoom)
-        val outer = view.outerMargin
         val cx = px / zoom
         val cy = (py + scrollOffset()) / zoom
         val (pageIndex, bandDistance) = nearestPage(cy)
         if (bandDistance > 0.0) return Triple(null, null, null)
         val page = doc.pages[pageIndex]
         val contentArea = page.contentArea
-        val localX = cx - outer - contentArea.x
-        val localY = cy - (outer + pageTops[pageIndex]) - contentArea.y
+        val localX = cx - reservedMargins.left - contentArea.x
+        val localY = cy - (reservedMargins.top + pageTops[pageIndex]) - contentArea.y
         val block = page.blocks.firstOrNull { b ->
             val bounds = b.bounds
             localX >= bounds.x && localX <= bounds.x + bounds.width && localY >= bounds.y && localY <= bounds.y + bounds.height

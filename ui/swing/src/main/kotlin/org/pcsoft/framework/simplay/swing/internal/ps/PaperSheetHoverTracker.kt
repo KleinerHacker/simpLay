@@ -17,6 +17,7 @@ import kotlin.math.roundToInt
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.engine.measure.MeasuredTextBlock
 import org.pcsoft.framework.simplay.swing.PaperSheetView
+import org.pcsoft.framework.simplay.uicommon.EdgeReservation
 import org.pcsoft.framework.simplay.uicommon.effectiveZoom
 
 /**
@@ -30,6 +31,7 @@ internal class PaperSheetHoverTracker(
     private val view: PaperSheetView,
     private val measured: () -> MeasuredDocument?,
     private val pageTops: () -> DoubleArray,
+    private val reservedMargins: () -> EdgeReservation = { EdgeReservation(view.outerMargin, view.outerMargin, view.outerMargin, view.outerMargin) },
     private val scrollOffset: () -> Double,
     private val nearestPage: (cyUnscaled: Double) -> Pair<Int, Double>,
 ) {
@@ -50,7 +52,7 @@ internal class PaperSheetHoverTracker(
             return
         }
         val zoom = effectiveZoom(view.zoom)
-        val outer = view.outerMargin
+        val margins = reservedMargins()
         val cx = px / zoom
         val cy = (py + scrollOffset()) / zoom
         val (page, bandDistance) = nearestPage(cy)
@@ -62,8 +64,8 @@ internal class PaperSheetHoverTracker(
         pageIndex = page
         val measuredPage = doc.pages[page]
         val contentArea = measuredPage.contentArea
-        val localX = cx - outer - contentArea.x
-        val localY = cy - (outer + pageTops()[page]) - contentArea.y
+        val localX = cx - margins.left - contentArea.x
+        val localY = cy - (margins.top + pageTops()[page]) - contentArea.y
         val blockIndex = measuredPage.blocks.indexOfFirst { block ->
             val b = block.bounds
             localX >= b.x && localX <= b.x + b.width && localY >= b.y && localY <= b.y + b.height
@@ -135,10 +137,10 @@ internal class PaperSheetHoverTracker(
 
     private fun contentRectToViewport(page: Int, rx: Double, ry: Double, rw: Double, rh: Double): Rectangle {
         val zoom = effectiveZoom(view.zoom)
-        val outer = view.outerMargin
+        val margins = reservedMargins()
         val contentArea = measured()!!.pages[page].contentArea
-        val absX = outer + contentArea.x + rx
-        val absY = outer + pageTops()[page] + contentArea.y + ry
+        val absX = margins.left + contentArea.x + rx
+        val absY = margins.top + pageTops()[page] + contentArea.y + ry
         return Rectangle(
             (absX * zoom).roundToInt(),
             (absY * zoom - scrollOffset()).roundToInt(),
@@ -149,10 +151,10 @@ internal class PaperSheetHoverTracker(
 
     private fun pageRectToViewport(page: Int): Rectangle {
         val zoom = effectiveZoom(view.zoom)
-        val outer = view.outerMargin
+        val margins = reservedMargins()
         val measuredPage = measured()!!.pages[page]
-        val absX = outer
-        val absY = outer + pageTops()[page]
+        val absX = margins.left
+        val absY = margins.top + pageTops()[page]
         return Rectangle(
             (absX * zoom).roundToInt(),
             (absY * zoom - scrollOffset()).roundToInt(),

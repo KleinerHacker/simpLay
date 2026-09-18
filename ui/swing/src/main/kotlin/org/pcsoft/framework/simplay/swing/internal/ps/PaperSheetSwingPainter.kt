@@ -87,7 +87,8 @@ internal class PaperSheetSwingPainter {
         measured: MeasuredDocument?,
         pageTops: DoubleArray,
         zoom: Double,
-        outerMargin: Double,
+        outerTop: Double,
+        outerLeft: Double,
         scrollOffset: Double,
         index: DocumentTextIndex?,
         selectionStart: Int,
@@ -121,11 +122,11 @@ internal class PaperSheetSwingPainter {
         var chrome = 0
         measured.pages.forEachIndexed { i, page ->
             if (isHidden(page)) return@forEachIndexed
-            val sheetTop = outerMargin + pageTops[i]
+            val sheetTop = outerTop + pageTops[i]
             val sheetBottom = sheetTop + page.effectiveSize.height
             if (sheetBottom >= viewTop && sheetTop <= viewBottom) {
                 visible += i
-                val originX = outerMargin
+                val originX = outerLeft
                 val originY = sheetTop - scrollUnscaled
                 val disabled = isDisabled(page)
                 drawSheet(g, page, originX, originY, style, disabled)

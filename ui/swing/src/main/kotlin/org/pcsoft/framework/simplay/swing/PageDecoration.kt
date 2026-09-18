@@ -46,6 +46,13 @@ class PageDecoration {
     /** Extra shift in layout points along the vertical axis; see [PageDecorationPlacement.offsetY]. */
     var offsetY: Double = 0.0
 
+    /** Whether this decoration's natural size should be reserved as extra space around the page stack
+     * (growing `outerMargin`/`pageGap` when the decoration is larger), instead of only being positioned
+     * as a plain overlay that may clip against neighboring content. Defaults to `true`. Swing has no
+     * built-in equivalent of JavaFX's `Node.isManaged`, which the `fx` module's `PageDecoration` reuses
+     * for the same purpose, so this module gets its own explicit flag. */
+    var reserveSpace: Boolean = true
+
     /** The toolkit-agnostic placement built from [edge], [alignment], [offsetX] and [offsetY]. */
     internal val placement: PageDecorationPlacement get() = PageDecorationPlacement(edge, alignment, offsetX, offsetY)
 }

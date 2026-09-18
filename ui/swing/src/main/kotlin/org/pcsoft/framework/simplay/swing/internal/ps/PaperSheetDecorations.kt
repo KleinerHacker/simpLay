@@ -18,8 +18,11 @@ import org.pcsoft.framework.simplay.engine.geometry.Size
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.swing.PageDecoration
 import org.pcsoft.framework.simplay.swing.PaperSheetView
+import org.pcsoft.framework.simplay.uicommon.EdgeReservation
+import org.pcsoft.framework.simplay.uicommon.computePageDecorationReservation
 import org.pcsoft.framework.simplay.uicommon.effectiveZoom
 import org.pcsoft.framework.simplay.uicommon.resolveDecorationBounds
+import kotlin.math.abs
 
 /**
  * The decoration layer stacked on top of the viewport. Transparent and, like the overlay layer, only
@@ -45,13 +48,19 @@ internal class DecorationLayer : JComponent() {
  * instead of a list-change listener the [refresh] reconciles against
  * [PaperSheetView.pageDecorations] on every pass. Unlike [PaperSheetOverlays], a decoration is not
  * tied to a trigger; it is shown for as long as its page resolves and is laid out, regardless of
- * [org.pcsoft.framework.simplay.swing.PaperSheetMode] / page mode.
+ * [org.pcsoft.framework.simplay.swing.PaperSheetMode] / page mode. [reservation] reports the per-edge
+ * extra space the currently measured decorations of a page (or of every page, with a `null` id) need,
+ * so the delegate can grow its layout metrics accordingly; [onReservationChanged] is called at most
+ * once per [refresh] pass, after every decoration has been measured, so the callback never re-enters
+ * the still-running [refresh] loop.
  */
 internal class PaperSheetDecorations(
     private val view: PaperSheetView,
     private val measuredDocument: () -> MeasuredDocument?,
     private val pageTops: () -> DoubleArray,
     private val scrollOffset: () -> Double,
+    private val reservedMargins: () -> EdgeReservation = { EdgeReservation(view.outerMargin, view.outerMargin, view.outerMargin, view.outerMargin) },
+    private val onReservationChanged: () -> Unit = {},
 ) {
 
     /** The decoration layer, to be added on top of the viewport by the delegate. */
@@ -60,15 +69,45 @@ internal class PaperSheetDecorations(
     /** Decorations whose component currently sits in [layer]. */
     private val active = HashSet<PageDecoration>()
 
+    /** The last measured natural size of each decoration's component; feeds [reservation]. */
+    private val measuredSizes = HashMap<PageDecoration, Size>()
+
     /** Resizes and repositions the decoration layer; called from the delegate's viewport re-layout. */
     fun layout(x: Int, y: Int, width: Int, height: Int) {
         layer.setBounds(x, y, width, height)
     }
 
+    /**
+     * The per-edge extra space the currently measured decorations of [pageId] need (every page's, with
+     * a `null` [pageId]), considering only decorations with [PageDecoration.reserveSpace] `true` (the
+     * default); a decoration with `reserveSpace = false` stays a plain overlay and is excluded. Pages
+     * stack vertically, so only a single page's TOP/BOTTOM decorations ever share a given inter-page gap
+     * or the document's own top/bottom edge - the caller resolves [pageIndex] per boundary; LEFT/RIGHT
+     * space is shared by the whole page stack, so the caller passes `null` for those. [pageIndex] is a
+     * position in [MeasuredDocument.pages], not a raw page id: a `FlowPage` can spill across several
+     * measured sheets that all share one raw id, but a decoration always resolves to only the first of
+     * them (see [refresh]), so filtering by raw id here would wrongly attribute it to every sheet of
+     * that raw page instead of just that one.
+     */
+    fun reservation(pageIndex: Int? = null): EdgeReservation {
+        val document = if (pageIndex != null) measuredDocument() else null
+        val entries = view.pageDecorations.mapNotNull { deco ->
+            if (pageIndex != null) {
+                val resolvedIndex = document?.pages?.indexOfFirst { it.raw.id == deco.pageId } ?: -1
+                if (resolvedIndex != pageIndex) return@mapNotNull null
+            }
+            val component = deco.content ?: return@mapNotNull null
+            val size = measuredSizes[deco] ?: return@mapNotNull null
+            Triple(deco.edge, size, deco.reserveSpace)
+        }
+        return computePageDecorationReservation(entries)
+    }
+
     /** Recomputes every registered decoration's visibility and position. */
     fun refresh() {
         val decorations = view.pageDecorations
-        active.toList().forEach { if (it !in decorations) detach(it) }
+        var changed = false
+        active.toList().forEach { if (it !in decorations && detach(it)) changed = true }
         if (decorations.isEmpty() && active.isEmpty()) return
 
         val document = measuredDocument()
@@ -76,15 +115,16 @@ internal class PaperSheetDecorations(
             val component = decoration.content
             val pageIndex = document?.pages?.indexOfFirst { it.raw.id == decoration.pageId } ?: -1
             if (component == null || pageIndex < 0 || !view.effectivePageMode(decoration.pageId).laidOut) {
-                detach(decoration)
+                if (detach(decoration)) changed = true
                 continue
             }
 
             val page = document!!.pages[pageIndex]
             val zoom = effectiveZoom(view.zoom)
+            val margins = reservedMargins()
             val pageBounds = Rect(
-                x = view.outerMargin * zoom,
-                y = (view.outerMargin + pageTops()[pageIndex]) * zoom - scrollOffset(),
+                x = margins.left * zoom,
+                y = (margins.top + pageTops()[pageIndex]) * zoom - scrollOffset(),
                 width = page.effectiveSize.width * zoom,
                 height = page.effectiveSize.height * zoom,
             )
@@ -95,6 +135,11 @@ internal class PaperSheetDecorations(
                 width = if (preferred.width > 0) preferred.width.toDouble() else component.width.toDouble(),
                 height = if (preferred.height > 0) preferred.height.toDouble() else component.height.toDouble(),
             )
+            val previous = measuredSizes[decoration]
+            measuredSizes[decoration] = decorationSize
+            if (previous == null || abs(previous.width - decorationSize.width) > 0.5 || abs(previous.height - decorationSize.height) > 0.5) {
+                changed = true
+            }
             val bounds = resolveDecorationBounds(pageBounds, decoration.placement, decorationSize, view.zoom)
             component.setBounds(
                 bounds.x.toInt(), bounds.y.toInt(), bounds.width.toInt().coerceAtLeast(1), bounds.height.toInt().coerceAtLeast(1),
@@ -103,6 +148,7 @@ internal class PaperSheetDecorations(
         }
         layer.revalidate()
         layer.repaint()
+        if (changed) onReservationChanged()
     }
 
     /** Detaches every decoration; called from the delegate's `uninstallUI`. */
@@ -110,10 +156,13 @@ internal class PaperSheetDecorations(
         active.toList().forEach { detach(it) }
     }
 
-    private fun detach(decoration: PageDecoration) {
+    /** Detaches [decoration]'s component from [layer]; returns whether a cached measured size was removed. */
+    private fun detach(decoration: PageDecoration): Boolean {
         decoration.content?.let { if (it.parent === layer) layer.remove(it) }
         active.remove(decoration)
+        val removed = measuredSizes.remove(decoration) != null
         layer.repaint()
+        return removed
     }
 
     //region Test hooks

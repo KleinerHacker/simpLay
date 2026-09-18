@@ -15,6 +15,7 @@ package org.pcsoft.framework.simplay.swing.internal.ps
 import org.pcsoft.framework.simplay.engine.measure.MeasuredDocument
 import org.pcsoft.framework.simplay.swing.PaperSheetView
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
+import org.pcsoft.framework.simplay.uicommon.EdgeReservation
 import org.pcsoft.framework.simplay.uicommon.effectiveZoom
 
 /**
@@ -38,6 +39,7 @@ internal class PaperSheetScroll(
     private val textIndex: () -> DocumentTextIndex?,
     private val measuredDocument: () -> MeasuredDocument?,
     private val pageTops: () -> DoubleArray,
+    private val reservedMargins: () -> EdgeReservation = { EdgeReservation(view.outerMargin, view.outerMargin, view.outerMargin, view.outerMargin) },
     private val scrollTo: (Double) -> Unit,
 ) : PaperSheetView.ScrollCommands {
 
@@ -45,7 +47,7 @@ internal class PaperSheetScroll(
         val tops = pageTops()
         if (tops.isEmpty()) return
         val p = page.coerceIn(0, tops.lastIndex)
-        scrollTo((view.outerMargin + tops[p]) * effectiveZoom(view.zoom))
+        scrollTo((reservedMargins().top + tops[p]) * effectiveZoom(view.zoom))
     }
 
     override fun scrollToBlock(block: Int) = scrollToLinear(textIndex()?.startOfBlock(block))
@@ -72,7 +74,7 @@ internal class PaperSheetScroll(
             ?: idx.segments.last()
         val pageIndex = seg.pageIndex
         if (pageIndex !in tops.indices || pageIndex !in doc.pages.indices) return
-        val y = view.outerMargin + tops[pageIndex] + doc.pages[pageIndex].contentArea.y + seg.line.lineBox.y
+        val y = reservedMargins().top + tops[pageIndex] + doc.pages[pageIndex].contentArea.y + seg.line.lineBox.y
         scrollTo(y * effectiveZoom(view.zoom))
     }
 }

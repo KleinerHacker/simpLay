@@ -24,6 +24,7 @@ import org.pcsoft.framework.simplay.engine.model.FontStyle
 import org.pcsoft.framework.simplay.engine.model.FontWeight
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
+import org.pcsoft.framework.simplay.uicommon.EdgeReservation
 import org.pcsoft.framework.simplay.uicommon.effectiveZoom
 import org.pcsoft.framework.simplay.uicommon.segmentSpanX
 
@@ -42,6 +43,8 @@ import org.pcsoft.framework.simplay.uicommon.segmentSpanX
  * @property measurer the shared font measurer for the styled runs and the highlight span.
  * @property textIndex the current linear text index, or `null` without a document.
  * @property pageTops unscaled top `y` of each page within the stack (without the outer margin).
+ * @property reservedMargins the per-edge margins currently in effect, grown past `outerMargin` to fit
+ *   a reserving page decoration.
  * @property scrollOffset the current vertical scroll offset in viewport pixels.
  * @property requestRedraw repaints the skin's canvas.
  * @property onProgrammaticChange run before a repaint when a [SelectionCommands] call changed the
@@ -52,6 +55,7 @@ internal class PaperSheetSelection(
     private val measurer: FxFontMeasureCalculator,
     private val textIndex: () -> DocumentTextIndex?,
     private val pageTops: () -> DoubleArray,
+    private val reservedMargins: () -> EdgeReservation = { EdgeReservation(view.outerMargin, view.outerMargin, view.outerMargin, view.outerMargin) },
     private val scrollOffset: () -> Double,
     private val requestRedraw: () -> Unit,
     private val onProgrammaticChange: () -> Unit,
@@ -120,7 +124,7 @@ internal class PaperSheetSelection(
         val idx = textIndex() ?: return null
         if (model.isEmpty) return null
         val zoom = effectiveZoom(view.zoom)
-        val outer = view.outerMargin
+        val margins = reservedMargins()
         val scroll = scrollOffset()
         var minX = Double.MAX_VALUE
         var minY = Double.MAX_VALUE
@@ -132,9 +136,9 @@ internal class PaperSheetSelection(
             if (seg.end <= lo || seg.start >= hi) continue
             val (x0, x1) = segmentSpanX(seg, lo, hi, measurer)
             val contentArea = seg.page.contentArea
-            val absX0 = outer + contentArea.x + x0
-            val absX1 = outer + contentArea.x + x1
-            val absY0 = outer + pageTops()[seg.pageIndex] + contentArea.y + seg.line.lineBox.y
+            val absX0 = margins.left + contentArea.x + x0
+            val absX1 = margins.left + contentArea.x + x1
+            val absY0 = margins.top + pageTops()[seg.pageIndex] + contentArea.y + seg.line.lineBox.y
             val absY1 = absY0 + seg.line.lineBox.height
             minX = min(minX, absX0)
             maxX = max(maxX, absX1)

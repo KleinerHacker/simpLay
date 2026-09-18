@@ -23,6 +23,7 @@ import org.pcsoft.framework.simplay.swing.TextSelectionData
 import org.pcsoft.framework.simplay.swing.TextSelectionModel
 import org.pcsoft.framework.simplay.swing.internal.SwingFontMeasureCalculator
 import org.pcsoft.framework.simplay.uicommon.DocumentTextIndex
+import org.pcsoft.framework.simplay.uicommon.EdgeReservation
 import org.pcsoft.framework.simplay.uicommon.effectiveZoom
 import org.pcsoft.framework.simplay.uicommon.segmentSpanX
 
@@ -43,6 +44,7 @@ internal class PaperSheetSelection(
     private val measurer: SwingFontMeasureCalculator,
     private val textIndex: () -> DocumentTextIndex?,
     private val pageTops: () -> DoubleArray,
+    private val reservedMargins: () -> EdgeReservation = { EdgeReservation(view.outerMargin, view.outerMargin, view.outerMargin, view.outerMargin) },
     private val scrollOffset: () -> Double,
     private val requestRedraw: () -> Unit,
     private val onProgrammaticChange: () -> Unit,
@@ -102,7 +104,7 @@ internal class PaperSheetSelection(
         val idx = textIndex() ?: return null
         if (model.isEmpty) return null
         val zoom = effectiveZoom(view.zoom)
-        val outer = view.outerMargin
+        val margins = reservedMargins()
         val scroll = scrollOffset()
         var minX = Double.MAX_VALUE
         var minY = Double.MAX_VALUE
@@ -114,9 +116,9 @@ internal class PaperSheetSelection(
             if (seg.end <= lo || seg.start >= hi) continue
             val (x0, x1) = segmentSpanX(seg, lo, hi, measurer)
             val contentArea = seg.page.contentArea
-            val absX0 = outer + contentArea.x + x0
-            val absX1 = outer + contentArea.x + x1
-            val absY0 = outer + pageTops()[seg.pageIndex] + contentArea.y + seg.line.lineBox.y
+            val absX0 = margins.left + contentArea.x + x0
+            val absX1 = margins.left + contentArea.x + x1
+            val absY0 = margins.top + pageTops()[seg.pageIndex] + contentArea.y + seg.line.lineBox.y
             val absY1 = absY0 + seg.line.lineBox.height
             minX = min(minX, absX0)
             maxX = max(maxX, absX1)

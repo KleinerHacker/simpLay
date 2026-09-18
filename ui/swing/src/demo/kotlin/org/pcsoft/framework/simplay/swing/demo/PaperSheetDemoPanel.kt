@@ -40,7 +40,9 @@ import org.pcsoft.framework.simplay.uicommon.PageMode
  * Demo tab for the [PaperSheetView]: a [PaperSheetMode] selector, a sample selector, a page number
  * position selector, a zoom slider, a live readout of the current selection length, two floating
  * overlays - a `Copy` button above the text selection and a label above the paragraph under the
- * mouse - and a [PageDecoration] permanently anchored above the first page.
+ * mouse - and three [PageDecoration]s, one per edge (TOP, LEFT, BOTTOM), permanently anchored to the
+ * first page; the TOP one is padded well beyond the outer margin to show that a decoration now
+ * reserves its own layout space instead of clipping against the page.
  *
  * Switching the mode selector is the way to compare the four interaction levels on the same
  * document: [PaperSheetMode.STATIC] has no selection, no caret and the default arrow cursor,
@@ -89,12 +91,43 @@ class PaperSheetDemoPanel : JPanel(BorderLayout()) {
         }
     }
 
-    /** Permanently anchored above the first page of the current document; follows scroll and zoom. */
+    // Padded well beyond the outer margin, so the reserved-space fix is visible: the page shifts
+    // down to fully show the decoration instead of it clipping/overlapping the page.
+    /** Permanently anchored above the first page of the current document; follows scroll and zoom.
+     * Deliberately taller than the outer margin, so it now reserves its own layout space. */
     private val pageDecoration = PageDecoration().apply {
         edge = PageEdge.TOP
         alignment = EdgeAlignment.CENTER
         offsetY = 4.0
-        content = JLabel("Decoration").apply {
+        content = JLabel("Decoration (reserves space)").apply {
+            isOpaque = true
+            background = Color(0x1e, 0x88, 0xe5)
+            foreground = Color.WHITE
+            border = BorderFactory.createEmptyBorder(20, 12, 20, 12)
+        }
+    }
+
+    /** Second decoration, anchored to the left edge of the first page; demonstrates a reserving
+     * decoration on a horizontal edge. */
+    private val leftPageDecoration = PageDecoration().apply {
+        edge = PageEdge.LEFT
+        alignment = EdgeAlignment.CENTER
+        offsetX = 4.0
+        content = JLabel("Left").apply {
+            isOpaque = true
+            background = Color(0x1e, 0x88, 0xe5)
+            foreground = Color.WHITE
+            border = BorderFactory.createEmptyBorder(12, 12, 12, 12)
+        }
+    }
+
+    /** Third decoration, anchored below the first page; demonstrates a reserving decoration on the
+     * bottom edge. */
+    private val bottomPageDecoration = PageDecoration().apply {
+        edge = PageEdge.BOTTOM
+        alignment = EdgeAlignment.CENTER
+        offsetY = 4.0
+        content = JLabel("Bottom").apply {
             isOpaque = true
             background = Color(0x1e, 0x88, 0xe5)
             foreground = Color.WHITE
@@ -106,6 +139,8 @@ class PaperSheetDemoPanel : JPanel(BorderLayout()) {
         addSelectionCopyOverlay()
         addParagraphHoverOverlay()
         view.pageDecorations += pageDecoration
+        view.pageDecorations += leftPageDecoration
+        view.pageDecorations += bottomPageDecoration
 
         val bar = JPanel().apply {
             layout = javax.swing.BoxLayout(this, javax.swing.BoxLayout.Y_AXIS)
@@ -205,9 +240,12 @@ class PaperSheetDemoPanel : JPanel(BorderLayout()) {
         pageModeLabel.text = if (overridden.isEmpty()) "none" else "pages ${overridden.joinToString(", ")}"
     }
 
-    /** Anchors [pageDecoration] to the first page of the current document, if any. */
+    /** Anchors the demo's page decorations to the first page of the current document, if any. */
     private fun updatePageDecoration() {
-        pageDecoration.pageId = view.document?.pages?.firstOrNull()?.id ?: ""
+        val pageId = view.document?.pages?.firstOrNull()?.id ?: ""
+        pageDecoration.pageId = pageId
+        leftPageDecoration.pageId = pageId
+        bottomPageDecoration.pageId = pageId
     }
 
     /** A `Copy` button that floats above the current text selection. */

@@ -199,6 +199,53 @@ class PageDecorationTest : JavaFxTestBase() {
     }
 
     /**
+     * A decoration whose node is larger than [PaperSheetView.outerMargin] grows the reserved layout
+     * space on its edge: the view's [PaperSheetView.contentSize] height ends up taller than it would
+     * be for a document with no decoration at all.
+     */
+    @Test
+    fun oversizedDecorationGrowsReservedSpace() {
+        val decoration = PageDecoration().apply {
+            edge = PageEdge.TOP
+            content = Label("Tall").apply { minHeight = 500.0 }
+        }
+        val plain = fixture()
+        val (view, skin) = fixture(decorations = arrayOf(decoration))
+        onFxThread {
+            decoration.pageId = view.document!!.pages[0].id
+            skin.refreshDecorationsForTest()
+            view.layout()
+        }
+
+        assertTrue(
+            view.contentSize.height > plain.view.contentSize.height + 400.0,
+            "a decoration taller than outerMargin should grow the reserved space",
+        )
+    }
+
+    /**
+     * A decoration whose node is explicitly marked `isManaged = false` (JavaFX's own flag, reused by
+     * this module as the reservation opt-out) stays a plain overlay: it never grows the reserved
+     * space, even when it is larger than [PaperSheetView.outerMargin].
+     */
+    @Test
+    fun unmanagedDecorationDoesNotGrowReservedSpace() {
+        val decoration = PageDecoration().apply {
+            edge = PageEdge.TOP
+            content = Label("Tall").apply { minHeight = 500.0; isManaged = false }
+        }
+        val plain = fixture()
+        val (view, skin) = fixture(decorations = arrayOf(decoration))
+        onFxThread {
+            decoration.pageId = view.document!!.pages[0].id
+            skin.refreshDecorationsForTest()
+            view.layout()
+        }
+
+        assertEquals(plain.view.contentSize.height, view.contentSize.height, 0.5)
+    }
+
+    /**
      * A decoration stays attached while its page is laid out regardless of a restrictive
      * [PageMode] on that page or a non-`STATIC` [PaperSheetMode], unlike a [FloatingOverlay].
      */

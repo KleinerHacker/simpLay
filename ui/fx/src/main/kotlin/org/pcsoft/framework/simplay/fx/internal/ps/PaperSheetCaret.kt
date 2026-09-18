@@ -26,6 +26,7 @@ import org.pcsoft.framework.simplay.fx.CaretModel
 import org.pcsoft.framework.simplay.fx.PaperSheetView
 import org.pcsoft.framework.simplay.fx.asPageMode
 import org.pcsoft.framework.simplay.fx.internal.FxFontMeasureCalculator
+import org.pcsoft.framework.simplay.uicommon.EdgeReservation
 import org.pcsoft.framework.simplay.uicommon.*
 
 /**
@@ -57,6 +58,7 @@ internal class PaperSheetCaret(
     private val textIndex: () -> DocumentTextIndex?,
     private val measuredDocument: () -> MeasuredDocument?,
     private val pageTops: () -> DoubleArray,
+    private val reservedMargins: () -> EdgeReservation = { EdgeReservation(view.outerMargin, view.outerMargin, view.outerMargin, view.outerMargin) },
     private val scrollOffset: () -> Double,
     private val requestRedraw: () -> Unit,
     private val scrollCaretIntoView: () -> Unit,
@@ -136,10 +138,10 @@ internal class PaperSheetCaret(
         val g = geom(position) ?: return null
         if (g.pageIndex !in doc.pages.indices) return null
         val zoom = effectiveZoom(view.zoom)
-        val outer = view.outerMargin
+        val margins = reservedMargins()
         val contentArea = doc.pages[g.pageIndex].contentArea
-        val absX = outer + contentArea.x + g.xContent
-        val absYTop = outer + pageTops()[g.pageIndex] + contentArea.y + g.yContent
+        val absX = margins.left + contentArea.x + g.xContent
+        val absYTop = margins.top + pageTops()[g.pageIndex] + contentArea.y + g.yContent
         val widthPx = if (view.caretMode == CaretMode.OVERWRITE) {
             blockWidth(position)?.times(zoom) ?: CARET_WIDTH_PX
         } else {
