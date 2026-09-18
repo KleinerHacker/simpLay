@@ -4,8 +4,10 @@
 
 ## Implementierungspläne
 
-* IP-01: Gemeinsames Kanten-/Anker-Modell (ui:common) - `FP-005-IP-01-EdgeAnchorModel.md`
-* IP-02: Umsetzung `PageDecoration` (fx & swing) - `FP-005-IP-02-PageDecorationImplementation.md`
+* IP-01: Gemeinsames Kanten-/Anker-Modell (ui:common) - inline im Feature Plan
+  `FP-005-PageSurroundDecorations.md`, keine eigene Datei
+* IP-02: Umsetzung `PageDecoration` (fx & swing) - inline im Feature Plan
+  `FP-005-PageSurroundDecorations.md`, keine eigene Datei
 * IP-03: Dokumentation & Tests - `FP-005-IP-03-DocsAndTests.md`
 
 ## Umsetzungsreihenfolge

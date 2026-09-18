@@ -12,6 +12,12 @@ excluded.
 
 ## [UNRELEASED]
 
+### Added
+
+- `swing`, `fx`: `PageDecoration`, a configurable decoration attached to a
+  page edge (`pageId`, `edge`, `alignment`, `offsetX`, `offsetY`), registered
+  through the new `PaperSheetView.pageDecorations` list.
+
 ## [0.4.1]
 
 ### Fixed

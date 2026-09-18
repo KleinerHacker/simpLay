@@ -122,8 +122,8 @@ Build tasks relevant for consumers and maintainers:
   navigation-anchor jumps (`moveToAnchor` / `scrollToAnchor`), `Ctrl+A`
   select-all, `Ctrl` + mouse wheel and `Ctrl+Plus` / `Ctrl+Minus` / `Ctrl+0`
   zoom shortcuts, `onType` and `onMouseEvent` events, automatic page-number
-  drawing, FXML-compatible floating overlays and JavaFX CSS styling, plus
-  `FxFontProbe` (font availability and fingerprint checks against the JavaFX
+  drawing, FXML-compatible floating overlays, edge-anchored `PageDecoration`s
+  (`pageDecorations`) and JavaFX CSS styling, plus `FxFontProbe` (font availability and fingerprint checks against the JavaFX
   text stack) - built-in mouse-wheel and keyboard shortcuts can be toggled per
   group (`zoomInputControlEnabled`, `clipboardInputControlEnabled`,
   `textInputControlEnabled`, `selectionInputControlEnabled`,
@@ -142,8 +142,9 @@ Build tasks relevant for consumers and maintainers:
   navigation and direct navigation-anchor jumps (`moveToAnchor` /
   `scrollToAnchor`), `Ctrl+A` select-all, `Ctrl` + mouse wheel and
   `Ctrl+Plus` / `Ctrl+Minus` / `Ctrl+0` zoom shortcuts, `onType` and
-  `onMouseEvent` events, automatic page-number drawing, floating overlays and
-  Look-and-Feel styling, plus `SwingFontProbe` (font availability and
+  `onMouseEvent` events, automatic page-number drawing, floating overlays,
+  edge-anchored `PageDecoration`s (`pageDecorations`) and Look-and-Feel
+  styling, plus `SwingFontProbe` (font availability and
   fingerprint checks against the AWT text stack) - built-in mouse-wheel and
   keyboard shortcuts can be toggled per group (`zoomInputControlEnabled`,
   `clipboardInputControlEnabled`, `textInputControlEnabled`,
