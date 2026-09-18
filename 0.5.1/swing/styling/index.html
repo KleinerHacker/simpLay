@@ -1677,6 +1677,18 @@ built-in default. The key names are also available as constants on
 <td><code>#141414</code></td>
 </tr>
 <tr>
+<td><code>PaperSheetView.deactivatedSheetBackground</code></td>
+<td><code>deactivatedSheetBackground</code></td>
+<td><code>java.awt.Paint</code></td>
+<td><code>#EDEDED</code></td>
+</tr>
+<tr>
+<td><code>PaperSheetView.deactivatedOverlayColor</code></td>
+<td><code>deactivatedOverlayColor</code></td>
+<td><code>java.awt.Paint</code></td>
+<td><code>rgba(0,0,0,0.12)</code></td>
+</tr>
+<tr>
 <td><code>PaperSheetView.outerMargin</code></td>
 <td><code>outerMargin</code></td>
 <td><code>Double</code></td>
@@ -1693,7 +1705,11 @@ built-in default. The key names are also available as constants on
 <p>The fill values are <code>java.awt.Paint</code>, so a <code>GradientPaint</code> or <code>TexturePaint</code>
 works too; <code>caretColor</code> is a plain <code>Color</code>. <code>selectionColorNonEditable</code> is used
 for the selection highlight while <code>mode</code> is not <code>PaperSheetMode.EDITABLE</code> and no
-<code>selectionColor</code> was set programmatically.</p>
+<code>selectionColor</code> was set programmatically. <code>deactivatedSheetBackground</code> and
+<code>deactivatedOverlayColor</code> apply to a page whose effective <code>PageMode</code> (view-wide
+<code>mode</code> or a <code>pageModes</code> override) is <code>DISABLED</code> - fill instead of
+<code>sheetBackground</code>, plus the diagonal hatch; see
+<a href="../paper-sheet-component/#per-page-modes">Per-page modes</a>.</p>
 <h2 id="overriding-from-the-look-and-feel">Overriding from the Look-and-Feel<a class="headerlink" href="#overriding-from-the-look-and-feel" title="Permanent link">&para;</a></h2>
 <p>Put the values into <code>UIManager</code> before the view is created:</p>
 <div class="highlight"><pre><span></span><code><span class="n">UIManager</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"PaperSheetView.sheetBackground"</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">(</span><span class="m">0</span><span class="n">x2B</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="n">x2B</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="n">x2B</span><span class="p">))</span>
@@ -1701,6 +1717,8 @@ for the selection highlight while <code>mode</code> is not <code>PaperSheetMode.
 <span class="n">UIManager</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"PaperSheetView.shadowColor"</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">(</span><span class="m">0</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="p">,</span><span class="w"> </span><span class="m">150</span><span class="p">))</span>
 <span class="n">UIManager</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"PaperSheetView.selectionColor"</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">(</span><span class="m">0</span><span class="n">xFF</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="n">xC8</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="n">x50</span><span class="p">,</span><span class="w"> </span><span class="m">100</span><span class="p">))</span>
 <span class="n">UIManager</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"PaperSheetView.caretColor"</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">(</span><span class="m">0</span><span class="n">xF0</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="n">xF0</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="n">xF0</span><span class="p">))</span>
+<span class="n">UIManager</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"PaperSheetView.deactivatedSheetBackground"</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">(</span><span class="m">0</span><span class="n">xDD</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="n">xDD</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="n">xDD</span><span class="p">))</span>
+<span class="n">UIManager</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"PaperSheetView.deactivatedOverlayColor"</span><span class="p">,</span><span class="w"> </span><span class="n">Color</span><span class="p">(</span><span class="m">0</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="p">,</span><span class="w"> </span><span class="m">0</span><span class="p">,</span><span class="w"> </span><span class="m">30</span><span class="p">))</span>
 
 <span class="kd">val</span><span class="w"> </span><span class="nv">view</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PaperSheetView</span><span class="p">()</span><span class="w">   </span><span class="c1">// picks up the values above</span>
 </code></pre></div>

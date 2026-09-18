@@ -1729,6 +1729,20 @@ properties, and a default user-agent stylesheet ships with the module.</p>
 <td>Stroke colour of the edit caret.</td>
 </tr>
 <tr>
+<td><code>-fx-deactivated-sheet-background</code></td>
+<td><code>deactivatedSheetBackground</code></td>
+<td><code>Paint</code></td>
+<td><code>#EDEDED</code></td>
+<td>Fill of a <code>DISABLED</code> page, instead of <code>-fx-sheet-background</code>.</td>
+</tr>
+<tr>
+<td><code>-fx-deactivated-overlay-color</code></td>
+<td><code>deactivatedOverlayColor</code></td>
+<td><code>Paint</code></td>
+<td><code>rgba(0,0,0,0.12)</code></td>
+<td>Colour of the diagonal hatch drawn over a <code>DISABLED</code> page.</td>
+</tr>
+<tr>
 <td><code>-fx-outer-margin</code></td>
 <td><code>outerMargin</code></td>
 <td><code>Double</code></td>
@@ -1745,7 +1759,10 @@ properties, and a default user-agent stylesheet ships with the module.</p>
 </tbody>
 </table>
 <p>Every colour value is a <code>Paint</code>, so a gradient or an image pattern works too -
-except <code>-fx-caret-color</code>, which is a plain <code>Color</code>.</p>
+except <code>-fx-caret-color</code>, which is a plain <code>Color</code>. <code>-fx-deactivated-sheet-background</code>
+and <code>-fx-deactivated-overlay-color</code> apply to a page whose effective <code>PageMode</code>
+(view-wide <code>mode</code> or a <code>pageModes</code> override) is <code>DISABLED</code>; see
+<a href="../paper-sheet-component/#per-page-modes">Per-page modes</a>.</p>
 <p>A programmatic setter (<code>view.selectionColor = ...</code>) always wins over the
 user-agent stylesheet, exactly as elsewhere in JavaFX.</p>
 <h2 id="the-default-user-agent-stylesheet">The default user-agent stylesheet<a class="headerlink" href="#the-default-user-agent-stylesheet" title="Permanent link">&para;</a></h2>
@@ -1761,6 +1778,8 @@ stylesheet. It also greys the selection highlight in the non-editable modes:</p>
 <span class="w">    </span><span class="nv">-fx-shadow-offset</span><span class="p">:</span><span class="w"> </span><span class="mf">4.0</span><span class="p">;</span>
 <span class="w">    </span><span class="nv">-fx-selection-color</span><span class="p">:</span><span class="w"> </span><span class="nb">rgba</span><span class="p">(</span><span class="mi">66</span><span class="p">,</span><span class="w"> </span><span class="mi">133</span><span class="p">,</span><span class="w"> </span><span class="mi">244</span><span class="p">,</span><span class="w"> </span><span class="mf">0.35</span><span class="p">);</span>
 <span class="w">    </span><span class="nv">-fx-caret-color</span><span class="p">:</span><span class="w"> </span><span class="mh">#141414</span><span class="p">;</span>
+<span class="w">    </span><span class="nv">-fx-deactivated-sheet-background</span><span class="p">:</span><span class="w"> </span><span class="mh">#ededed</span><span class="p">;</span>
+<span class="w">    </span><span class="nv">-fx-deactivated-overlay-color</span><span class="p">:</span><span class="w"> </span><span class="nb">rgba</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.12</span><span class="p">);</span>
 <span class="w">    </span><span class="nv">-fx-outer-margin</span><span class="p">:</span><span class="w"> </span><span class="mf">24.0</span><span class="p">;</span>
 <span class="w">    </span><span class="nv">-fx-page-gap</span><span class="p">:</span><span class="w"> </span><span class="mf">16.0</span><span class="p">;</span>
 <span class="p">}</span>
