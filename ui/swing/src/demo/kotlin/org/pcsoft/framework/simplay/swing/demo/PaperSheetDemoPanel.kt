@@ -28,16 +28,19 @@ import org.pcsoft.framework.simplay.swing.FloatingOverlay
 import org.pcsoft.framework.simplay.swing.FloatingOverlayListener
 import org.pcsoft.framework.simplay.swing.FloatingOverlayTrigger
 import org.pcsoft.framework.simplay.swing.OverlayAnchor
+import org.pcsoft.framework.simplay.swing.PageDecoration
 import org.pcsoft.framework.simplay.swing.PaperSheetMode
 import org.pcsoft.framework.simplay.swing.PaperSheetView
 import org.pcsoft.framework.simplay.swing.TextSelectionModel
+import org.pcsoft.framework.simplay.uicommon.EdgeAlignment
+import org.pcsoft.framework.simplay.uicommon.PageEdge
 import org.pcsoft.framework.simplay.uicommon.PageMode
 
 /**
  * Demo tab for the [PaperSheetView]: a [PaperSheetMode] selector, a sample selector, a page number
- * position selector, a zoom slider, a live readout of the current selection length and two floating
+ * position selector, a zoom slider, a live readout of the current selection length, two floating
  * overlays - a `Copy` button above the text selection and a label above the paragraph under the
- * mouse.
+ * mouse - and a [PageDecoration] permanently anchored above the first page.
  *
  * Switching the mode selector is the way to compare the four interaction levels on the same
  * document: [PaperSheetMode.STATIC] has no selection, no caret and the default arrow cursor,
@@ -86,9 +89,23 @@ class PaperSheetDemoPanel : JPanel(BorderLayout()) {
         }
     }
 
+    /** Permanently anchored above the first page of the current document; follows scroll and zoom. */
+    private val pageDecoration = PageDecoration().apply {
+        edge = PageEdge.TOP
+        alignment = EdgeAlignment.CENTER
+        offsetY = 4.0
+        content = JLabel("Decoration").apply {
+            isOpaque = true
+            background = Color(0x1e, 0x88, 0xe5)
+            foreground = Color.WHITE
+            border = BorderFactory.createEmptyBorder(2, 6, 2, 6)
+        }
+    }
+
     init {
         addSelectionCopyOverlay()
         addParagraphHoverOverlay()
+        view.pageDecorations += pageDecoration
 
         val bar = JPanel().apply {
             layout = javax.swing.BoxLayout(this, javax.swing.BoxLayout.Y_AXIS)
@@ -141,11 +158,13 @@ class PaperSheetDemoPanel : JPanel(BorderLayout()) {
         view.addPropertyChangeListener(PaperSheetView.PROP_PAGE_MODES) {
             if (view.pageModes.isEmpty()) resetPageModeBoxes()
         }
+        view.addPropertyChangeListener(PaperSheetView.PROP_DOCUMENT) { updatePageDecoration() }
         view.caretModel.addPropertyChangeListener(CaretModel.PROP_ANCHOR_IDS) { updateAnchorBox() }
 
         selectPageNumberFromSample()
         applySample()
         updateAnchorBox()
+        updatePageDecoration()
     }
 
     /** Refreshes [anchorBox]'s items from the current document's anchors, keeping the selection when possible. */
@@ -184,6 +203,11 @@ class PaperSheetDemoPanel : JPanel(BorderLayout()) {
     private fun updatePageModeLabel() {
         val overridden = pageModeBoxes.withIndex().filter { it.value.selectedItem != null }.map { it.index + 1 }
         pageModeLabel.text = if (overridden.isEmpty()) "none" else "pages ${overridden.joinToString(", ")}"
+    }
+
+    /** Anchors [pageDecoration] to the first page of the current document, if any. */
+    private fun updatePageDecoration() {
+        pageDecoration.pageId = view.document?.pages?.firstOrNull()?.id ?: ""
     }
 
     /** A `Copy` button that floats above the current text selection. */

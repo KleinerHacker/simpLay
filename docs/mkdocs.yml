@@ -70,6 +70,7 @@ nav:
         - Canvas rendering: fx/canvas-rendering.md
         - Paper sheet component: fx/paper-sheet-component.md
         - Floating overlays: fx/floating-overlays.md
+        - Page decorations: fx/page-decorations.md
         - Font probe: fx/font-probe.md
         - Styling: fx/styling.md
       - Java Swing:
@@ -77,6 +78,7 @@ nav:
         - Image rendering: swing/image-rendering.md
         - Paper sheet component: swing/paper-sheet-component.md
         - Floating overlays: swing/floating-overlays.md
+        - Page decorations: swing/page-decorations.md
         - Font probe: swing/font-probe.md
         - Styling: swing/styling.md
       - Console:

@@ -32,8 +32,11 @@ import org.pcsoft.framework.simplay.engine.model.SinglePage
 import org.pcsoft.framework.simplay.engine.model.TextBlock
 import org.pcsoft.framework.simplay.fx.FloatingOverlay
 import org.pcsoft.framework.simplay.fx.FloatingOverlayTrigger
+import org.pcsoft.framework.simplay.fx.PageDecoration
 import org.pcsoft.framework.simplay.fx.PaperSheetMode
 import org.pcsoft.framework.simplay.fx.PaperSheetView
+import org.pcsoft.framework.simplay.uicommon.EdgeAlignment
+import org.pcsoft.framework.simplay.uicommon.PageEdge
 import org.pcsoft.framework.simplay.uicommon.PageMode
 
 /**
@@ -57,7 +60,8 @@ import org.pcsoft.framework.simplay.uicommon.PageMode
  * Two [FloatingOverlay]s show that feature off: a `Copy` bar that follows the text selection
  * ([FloatingOverlayTrigger.SELECTION]) and a small label that tracks the paragraph under the mouse
  * ([FloatingOverlayTrigger.PARAGRAPH_HOVER]). A toolbar label reads back the last triggered
- * paragraph and page index.
+ * paragraph and page index. A [PageDecoration] shows that feature off too: a label permanently
+ * anchored above the first page, following it through scroll and zoom regardless of interaction.
  *
  * Per-page mode overrides are demonstrated by the "Page mode" boxes - one per page of the current
  * document, up to [MAX_OVERRIDE_PAGES] - each a [PageMode] selector left empty for "follow the
@@ -158,6 +162,16 @@ class PaperSheetDemoTab : BorderPane() {
         hoverBadge.textProperty().bind(activeIndexProperty.asString("Paragraph %d"))
     }
 
+    private val decorationBadge = Label("Decoration").apply { style = HOVER_BADGE_STYLE }
+
+    /** Permanently anchored above the first page of the current document; follows scroll and zoom. */
+    private val pageDecoration = PageDecoration().apply {
+        edge = PageEdge.TOP
+        alignment = EdgeAlignment.CENTER
+        offsetY = 4.0
+        content = decorationBadge
+    }
+
     init {
         top = VBox(
             ToolBar(
@@ -199,6 +213,7 @@ class PaperSheetDemoTab : BorderPane() {
         center = view
 
         view.floatingOverlays.addAll(copyOverlay, hoverOverlay)
+        view.pageDecorations.add(pageDecoration)
 
         modeBox.valueProperty().addListener { _, _, v -> if (v != null) view.mode = v }
         smoothCaretBox.selectedProperty().addListener { _, _, v -> view.smoothCaretBlink = v }
@@ -226,7 +241,7 @@ class PaperSheetDemoTab : BorderPane() {
         view.hoveredParagraphProperty.addListener { _, _, _ -> updateOverlayLabel() }
         view.hoveredPageProperty.addListener { _, _, _ -> updateOverlayLabel() }
         view.caretModel.positionProperty.addListener { _, _, _ -> updateCaretLabel() }
-        view.documentProperty.addListener { _, _, _ -> updateDocumentLabel() }
+        view.documentProperty.addListener { _, _, _ -> updateDocumentLabel(); updatePageDecoration() }
         view.caretModel.anchorIdsProperty.addListener { _, _, ids -> updateAnchorBox(ids) }
         // `pageModes` is reset by the view itself whenever the document is reloaded from outside
         // (e.g. a new sample, not an edit); the demo's own boxes and label just follow that reset.
@@ -239,6 +254,7 @@ class PaperSheetDemoTab : BorderPane() {
         updateOverlayLabel()
         updateCaretLabel()
         updateDocumentLabel()
+        updatePageDecoration()
         updateAnchorBox(view.caretModel.anchorIds)
     }
 
@@ -311,6 +327,11 @@ class PaperSheetDemoTab : BorderPane() {
         val chars = doc?.pages?.sumOf { page -> page.blocks.sumOf { it.toString().length } } ?: 0
         val pages = doc?.pages?.size ?: 0
         documentLabel.text = "Document: $chars chars in $pages page(s)"
+    }
+
+    /** Anchors [pageDecoration] to the first page of the current document, if any. */
+    private fun updatePageDecoration() {
+        pageDecoration.pageId = view.document?.pages?.firstOrNull()?.id ?: ""
     }
 
     /** Refreshes [anchorBox]'s items from the current document's anchors, keeping the selection when possible. */

@@ -41,6 +41,7 @@ import org.pcsoft.framework.simplay.engine.model.TextBlock
 import org.pcsoft.framework.simplay.engine.model.TextPart
 import org.pcsoft.framework.simplay.swing.internal.SwingFontMeasureCalculator
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetCaret
+import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetDecorations
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetEditor
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetHoverTracker
 import org.pcsoft.framework.simplay.swing.internal.ps.PaperSheetOverlays
@@ -66,8 +67,9 @@ import org.pcsoft.framework.simplay.uicommon.hitTest
  * the viewport to a page, block, word or symbol regardless of [PaperSheetMode]), [PaperSheetEditor]
  * (the keyboard shortcuts and the [org.pcsoft.framework.simplay.uicommon.DocumentEditor] mutations
  * they trigger, plus drag-and-drop of the selection), [PaperSheetHoverTracker] (the hovered paragraph
- * / sheet) and [PaperSheetOverlays] (the registered [FloatingOverlay]s and the overlay layer on top of
- * the viewport).
+ * / sheet), [PaperSheetOverlays] (the registered [FloatingOverlay]s and the overlay layer on top of
+ * the viewport) and [PaperSheetDecorations] (the registered [PageDecoration]s and the decoration layer
+ * on top of the viewport).
  *
  * Each page's effective [PageMode] ([PaperSheetView.effectivePageMode]) decides whether it is
  * excluded from layout entirely ([PageMode.laidOut]) or drawn specially ([PageMode.paintedDisabled]);
@@ -90,6 +92,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
     private lateinit var editor: PaperSheetEditor
     private lateinit var hover: PaperSheetHoverTracker
     private lateinit var overlays: PaperSheetOverlays
+    private lateinit var decorations: PaperSheetDecorations
     private lateinit var scrollBar: JScrollBar
 
     private var measured: MeasuredDocument? = null
@@ -193,11 +196,19 @@ open class BasicPaperSheetUI : PaperSheetUI() {
             nearestPage = ::nearestPage,
         )
         overlays = PaperSheetOverlays(view, selection, caret, hover, textIndex = { index })
+        decorations = PaperSheetDecorations(
+            view = view,
+            measuredDocument = { measured },
+            pageTops = { pageTops },
+            scrollOffset = ::scrollOffset,
+        )
 
         scrollBar = JScrollBar(JScrollBar.VERTICAL, 0, 0, 0, 0).apply {
             addAdjustmentListener { redraw() }
         }
         c.add(scrollBar)
+        c.add(decorations.layer)
+        c.setComponentZOrder(decorations.layer, 0)
         c.add(overlays.layer)
         c.setComponentZOrder(overlays.layer, 0)
 
@@ -221,8 +232,10 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         view.unregisterScrollCommands(scroll)
         caret.dispose()
         overlays.dispose()
+        decorations.dispose()
         c.remove(scrollBar)
         c.remove(overlays.layer)
+        c.remove(decorations.layer)
         measured = null
         index = null
     }
@@ -364,6 +377,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         val bw = barWidth()
         scrollBar.setBounds(view.width - bw, 0, bw, view.height)
         overlays.layout(0, 0, viewportWidth().toInt(), view.height)
+        decorations.layout(0, 0, viewportWidth().toInt(), view.height)
         updateScrollBar(viewportHeight())
         redraw()
     }
@@ -428,6 +442,7 @@ open class BasicPaperSheetUI : PaperSheetUI() {
         caret.publish()
         hover.publishOutputs()
         overlays.refresh()
+        decorations.refresh()
         view.repaint()
     }
 
@@ -797,6 +812,11 @@ open class BasicPaperSheetUI : PaperSheetUI() {
 
     internal val activeOverlaysForTest: Set<FloatingOverlay> get() = overlays.activeForTest
     internal val overlayNodeCountForTest: Int get() = overlays.nodeCountForTest
+
+    internal fun refreshDecorationsForTest() = decorations.refresh()
+
+    internal val activeDecorationsForTest: Set<PageDecoration> get() = decorations.activeForTest
+    internal val decorationNodeCountForTest: Int get() = decorations.nodeCountForTest
     internal val renderedPageIndicesForTest: List<Int> get() = painter.renderedPageIndices
     internal val sheetChromeDrawCountForTest: Int get() = painter.sheetChromeDrawCount
     internal val caretDrawCountForTest: Int get() = painter.caretDrawCount
