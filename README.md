@@ -59,8 +59,8 @@ development use `./gradlew publishToMavenLocal`.
 
 ```kotlin
 dependencies {
-    implementation("org.pcsoft.framework:simplay-engine:0.5.0")
-    implementation("org.pcsoft.framework:simplay-fx:0.5.0")
+    implementation("org.pcsoft.framework:simplay-engine:0.5.1")
+    implementation("org.pcsoft.framework:simplay-fx:0.5.1")
 }
 ```
 

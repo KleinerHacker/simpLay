@@ -12,6 +12,8 @@ excluded.
 
 ## [UNRELEASED]
 
+## [0.5.1]
+
 ### Fixed
 
 - `swing`, `fx`: a `PageDecoration` larger than `outerMargin`/`pageGap` no
