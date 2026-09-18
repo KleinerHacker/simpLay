@@ -21,13 +21,19 @@ built-in default. The key names are also available as constants on
 | `PaperSheetView.selectionColor` | `selectionColor` | `java.awt.Paint` | `rgba(66,133,244,0.35)` |
 | `PaperSheetView.selectionColorNonEditable` | (none) | `java.awt.Paint` | `rgba(120,120,120,0.30)` |
 | `PaperSheetView.caretColor` | `caretColor` | `java.awt.Color` | `#141414` |
+| `PaperSheetView.deactivatedSheetBackground` | `deactivatedSheetBackground` | `java.awt.Paint` | `#EDEDED` |
+| `PaperSheetView.deactivatedOverlayColor` | `deactivatedOverlayColor` | `java.awt.Paint` | `rgba(0,0,0,0.12)` |
 | `PaperSheetView.outerMargin` | `outerMargin` | `Double` | `24.0` |
 | `PaperSheetView.pageGap` | `pageGap` | `Double` | `16.0` |
 
 The fill values are `java.awt.Paint`, so a `GradientPaint` or `TexturePaint`
 works too; `caretColor` is a plain `Color`. `selectionColorNonEditable` is used
 for the selection highlight while `mode` is not `PaperSheetMode.EDITABLE` and no
-`selectionColor` was set programmatically.
+`selectionColor` was set programmatically. `deactivatedSheetBackground` and
+`deactivatedOverlayColor` apply to a page whose effective `PageMode` (view-wide
+`mode` or a `pageModes` override) is `DISABLED` - fill instead of
+`sheetBackground`, plus the diagonal hatch; see
+[Per-page modes](paper-sheet-component.md#per-page-modes).
 
 ## Overriding from the Look-and-Feel
 
@@ -39,6 +45,8 @@ UIManager.put("PaperSheetView.sheetBorderColor", Color(0x55, 0x59, 0x5D))
 UIManager.put("PaperSheetView.shadowColor", Color(0, 0, 0, 150))
 UIManager.put("PaperSheetView.selectionColor", Color(0xFF, 0xC8, 0x50, 100))
 UIManager.put("PaperSheetView.caretColor", Color(0xF0, 0xF0, 0xF0))
+UIManager.put("PaperSheetView.deactivatedSheetBackground", Color(0xDD, 0xDD, 0xDD))
+UIManager.put("PaperSheetView.deactivatedOverlayColor", Color(0, 0, 0, 30))
 
 val view = PaperSheetView()   // picks up the values above
 ```

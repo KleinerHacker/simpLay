@@ -25,11 +25,16 @@ properties, and a default user-agent stylesheet ships with the module.
 | `-fx-shadow-offset` | `shadowOffset` | `Double` | `4.0` | Offset of the drop shadow to the lower right, in layout units. |
 | `-fx-selection-color` | `selectionColor` | `Paint` | `rgba(66,133,244,0.35)` | Fill of the text selection highlight. |
 | `-fx-caret-color` | `caretColor` | `Color` | `#141414` | Stroke colour of the edit caret. |
+| `-fx-deactivated-sheet-background` | `deactivatedSheetBackground` | `Paint` | `#EDEDED` | Fill of a `DISABLED` page, instead of `-fx-sheet-background`. |
+| `-fx-deactivated-overlay-color` | `deactivatedOverlayColor` | `Paint` | `rgba(0,0,0,0.12)` | Colour of the diagonal hatch drawn over a `DISABLED` page. |
 | `-fx-outer-margin` | `outerMargin` | `Double` | `24.0` | Space around the whole sheet stack, in layout units. |
 | `-fx-page-gap` | `pageGap` | `Double` | `16.0` | Vertical space between two sheets, in layout units. |
 
 Every colour value is a `Paint`, so a gradient or an image pattern works too -
-except `-fx-caret-color`, which is a plain `Color`.
+except `-fx-caret-color`, which is a plain `Color`. `-fx-deactivated-sheet-background`
+and `-fx-deactivated-overlay-color` apply to a page whose effective `PageMode`
+(view-wide `mode` or a `pageModes` override) is `DISABLED`; see
+[Per-page modes](paper-sheet-component.md#per-page-modes).
 
 A programmatic setter (`view.selectionColor = ...`) always wins over the
 user-agent stylesheet, exactly as elsewhere in JavaFX.
@@ -50,6 +55,8 @@ stylesheet. It also greys the selection highlight in the non-editable modes:
     -fx-shadow-offset: 4.0;
     -fx-selection-color: rgba(66, 133, 244, 0.35);
     -fx-caret-color: #141414;
+    -fx-deactivated-sheet-background: #ededed;
+    -fx-deactivated-overlay-color: rgba(0, 0, 0, 0.12);
     -fx-outer-margin: 24.0;
     -fx-page-gap: 16.0;
 }
