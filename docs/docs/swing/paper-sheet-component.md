@@ -45,6 +45,7 @@ shown; register a `java.beans.PropertyChangeListener` to react.
 | `selectionBounds` | `Rectangle?` (read-only) | `null` | Convenience delegate for `selectionModel.bounds`. |
 | `hoveredParagraph` / `hoveredPage` | `Int` (read-only) | `-1` | Ordinal of the paragraph / index of the sheet under the mouse, or `-1`. |
 | `hoveredParagraphBounds` / `hoveredPageBounds` | `Rectangle?` (read-only) | `null` | Their boxes in viewport pixels. |
+| `pageDecorations` | `MutableList<PageDecoration>` | `mutableListOf()` | Registered decorations; see [Page decorations](page-decorations.md). |
 
 The sheet chrome, drop shadow, selection highlight and caret are styled through
 the Look-and-Feel - see [Styling](styling.md).
@@ -230,3 +231,11 @@ modifier (`Ctrl` / `Cmd`) while dropping copies it instead.
 The rendering, measuring, scrolling and input handling live in a `PaperSheetUI`
 delegate (`BasicPaperSheetUI` by default), the Swing counterpart of the `fx`
 module's skin. `getPaperSheetUI()` returns it; a Look-and-Feel may replace it.
+
+## Next
+
+* [Floating overlays](floating-overlays.md) - attaching your own components to
+  selection, hover and caret.
+* [Page decorations](page-decorations.md) - anchoring your own components to
+  a page's edge.
+* [Styling](styling.md) - the Look-and-Feel reference.

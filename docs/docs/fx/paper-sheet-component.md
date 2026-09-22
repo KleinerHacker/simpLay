@@ -73,6 +73,7 @@ the property object and `getXxx()` / `setXxx()` (or `isXxx()`) for the value.
 | `selectedText` | `String` | read-only | Convenience delegate for `selectionModel.text`. |
 | `selectionBounds` | `Bounds?` | read-only | Convenience delegate for `selectionModel.bounds`. |
 | `floatingOverlays` | `ObservableList<FloatingOverlay>` | read-only list | Registered overlays; see [Floating overlays](floating-overlays.md). |
+| `pageDecorations` | `ObservableList<PageDecoration>` | read-only list | Registered decorations; see [Page decorations](page-decorations.md). |
 | `hoveredParagraph` / `hoveredParagraphBounds` | `Int` / `Bounds?` | read-only | Zero-based ordinal and viewport box of the paragraph under the mouse, or `-1` / `null`. |
 | `hoveredPage` / `hoveredPageBounds` | `Int` / `Bounds?` | read-only | Zero-based index and viewport box of the sheet under the mouse, or `-1` / `null`. |
 
@@ -319,5 +320,7 @@ YAML (`kaml`) and JVM serialization work the same way; see
 
 * [Floating overlays](floating-overlays.md) - attaching your own nodes to
   selection, hover and caret.
+* [Page decorations](page-decorations.md) - anchoring your own nodes to a
+  page's edge.
 * [Styling the paper sheet component](styling.md) - the JavaFX CSS reference.
 * [Canvas rendering](canvas-rendering.md) - drawing without a control.
